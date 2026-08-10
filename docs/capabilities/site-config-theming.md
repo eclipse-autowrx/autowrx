@@ -48,7 +48,7 @@ flowchart TD
 
 ### Description
 
-As an admin, I can create, read, update, and delete scoped site-config keys (`site`/`user`/`model`/`prototype`/`api`) with typed values (string/boolean/number/array/object/image_url/color/date) and a `secret` flag so that every behavior, branding, and feature toggle of the instance is configurable in one place. Anyone can read non-secret config; only admins can change it; predefined configs are seeded on startup and never overwrite admin-set values.
+As an admin, I can manage scoped site-config keys from the admin Site Config page so that every behavior, branding, and feature toggle of the instance is configurable in one place. As a user, I see only the non-secret configuration the admin has published. As an admin, my manually-set values are preserved when the instance restarts.
 
 ### Who uses it / value
 
@@ -56,10 +56,19 @@ Admins (configure the platform); end users (consume public config); the app (fea
 
 ### Acceptance criteria
 
-- When I (admin) call `GET/POST /v2/site-config`, `GET /v2/site-config/all`, `POST /v2/site-config/by-keys`, `POST /v2/site-config/bulk-upsert`, `GET/PATCH/DELETE /v2/site-config/:id`, `/key/:key`, or `/:scope/:target_id[/all]`, the system returns `200`/`201`/`204` as appropriate.
-- When I (anyone) call `GET /v2/site-config/public[/:key|/:scope/:target_id[/:key]]`, the system returns only non-secret configs; when I call `GET /v2/site-config/sso/providers`, the system returns enabled providers without secrets.
-- When I mark a config with the `secret` flag, the system encrypts it at rest and never exposes it via public reads.
-- When the instance starts, the system seeds predefined configs but never overwrites values I have already set.
+- When I (admin) create, edit, or delete a config key in the admin Site Config page, the value persists and reappears on reload.
+- When I (admin) upsert by key or bulk-edit multiple keys, the system saves all of them.
+- When I (admin) mark a key as secret, its value is hidden from public/anonymous views and shown only to admins.
+- When I (anyone) browse public config, I see only non-secret values; SSO provider lists show enabled providers without their secrets.
+- When the instance restarts, the predefined defaults are seeded but my admin-set values are not overwritten.
+
+### API contract
+
+- `GET/POST /v2/site-config` → `200`/`201`; `GET /v2/site-config/all`; `POST /v2/site-config/by-keys`; `POST /v2/site-config/bulk-upsert`; `GET/PATCH/DELETE /v2/site-config/:id`; `/key/:key`; `/:scope/:target_id[/all]` → `200`/`201`/`204` as appropriate. Admin CRUD/scope/by-keys/bulk-upsert routes require authentication and `MANAGE_USERS`.
+- `GET /v2/site-config/public[/:key|/:scope/:target_id[/:key]]` (anonymous) → only non-secret configs. `GET /v2/site-config/sso/providers` (anonymous) → enabled providers without `clientSecret`.
+- Caller sends a valid scope enum (`site`/`user`/`model`/`prototype`/`api`), conditional `target_id`, a `valueType` enum (string/boolean/number/array/object/image_url/color/date), and a `secret` boolean; `value` accepts any shape.
+- The `secret` flag excludes values from public reads; `SSO_PROVIDERS.clientSecret` and `EMAIL_CONFIG.apiKey`/`smtpConfig.pass` are encrypted at rest (AES-256-CBC) and decrypted only for admin display.
+- Predefined configs are seeded on startup via `predefinedSiteConfigs.js` (`$setOnInsert`) and never overwrite admin-set values.
 
 ### Quality control
 
@@ -115,15 +124,25 @@ N/A
 
 ### Description
 
-As an admin, I can manage the instance's configuration from a single admin page organized into 11 sections (Public, Home, Site Style, Auth, Model & Prototype, GenAI/ProtoPilot, SSO, Email, Secret, Standard Staging, Privacy), each with edit history I can restore, so all site configuration is centralized in one place.
+As an admin, I can manage the instance's configuration from a single admin page organized into 11 sections (Public, Home, Site Style, Auth, Model & Prototype, GenAI/ProtoPilot, SSO, Email, Secret, Standard Staging, Privacy), each with edit history I can restore, so all site configuration is centralized in one place. As a user, I see the branding, home layout, styling, and privacy policy the admin has published.
 
 ### Who uses it / value
 
-Admins (central configuration).
+Admins (central configuration); end users (see published branding/home/style/privacy).
 
 ### Acceptance criteria
 
-- When I open `/admin/site-config` (requires `MANAGE_USERS`), the system shows the 11 sections; when I edit keys in a section, the system persists them; when I restore from edit history, the system reverts that section to the snapshot.
+- When I (admin) open the Site Config admin page, I see the 11 section tabs in the sidebar; when I select a tab, the corresponding section loads.
+- When I (admin) edit keys in a section and save, the system persists them and they apply site-wide.
+- When I (admin) open a section's edit history and restore a prior entry, the section reverts to that snapshot.
+- When I (admin) open a secret-bearing section, secret values are masked and only revealed for admin display.
+
+### API contract
+
+- Admin site-config routes backing the 11 sections (Public, Home, Site Style, Auth, Model & Prototype, GenAI/ProtoPilot, SSO, Email, Secret, Standard Staging, Privacy) all require authentication and `MANAGE_USERS` — single shared gate.
+- Write endpoints are schema-validated, but `value` accepts any shape (section-specific shapes like home blocks / SSO providers / email config are not validated server-side); global-css `PUT` requires `content` to be a string; `/email/test` requires `to` to be present (controller-level checks only).
+- Secret sections mask values in the UI; SSO `clientSecret` and EMAIL `apiKey`/`smtpConfig.pass` are encrypted at rest (AES-256-CBC) and decrypted only for admin display within the Secret/SSO/Email sections.
+- Edit history is captured in `SiteConfigSnapshot` (deploy snapshot) plus per-section `SiteConfigEditHistory` entries; restore re-checks `MANAGE_USERS` at restore time.
 
 ### Quality control
 
@@ -179,7 +198,7 @@ Edit history (snapshots) retained; secret sections mask values.
 
 ### Description
 
-As an admin, I can set and restore the platform's global stylesheet so the entire instance is themed consistently; as an end user or plugin author, I get a stable themed UI and CSS variables to consume.
+As an admin, I can edit and restore the platform's global stylesheet from the Site Style (CSS) section so the entire instance is themed consistently. As a user or plugin author, I get a stable themed UI and CSS variables to consume.
 
 ### Who uses it / value
 
@@ -187,8 +206,16 @@ Admins (brand the site); end users (themed UI); plugins (consume CSS variables).
 
 ### Acceptance criteria
 
-- When I (anyone) load `/static/global.css`, the system serves the stylesheet publicly with no auth.
-- When I (admin) call `GET /v2/site-config/global-css` (auth + `MANAGE_USERS`), the system returns `200` with the current stylesheet; when I call `PUT /v2/site-config/global-css` (auth + `MANAGE_USERS`), the system returns `200` and applies the new CSS; when I call `POST /v2/site-config/global-css/restore-default` (auth + `MANAGE_USERS`), the system restores the shipped default.
+- When I (admin) open the Site Style (CSS) section, I see the current stylesheet in an editor with a live color preview of the `:root` tokens.
+- When I (admin) edit the CSS and save, the new stylesheet applies across the UI; when I (anyone) load a page, the themed stylesheet is served publicly with no sign-in.
+- When I (admin) choose to restore the default, the shipped styling returns.
+
+### API contract
+
+- `GET /static/global.css` (anonymous) → serves the stylesheet publicly with no auth.
+- `GET /v2/site-config/global-css` (auth + `MANAGE_USERS`) → `200` with the current stylesheet.
+- `PUT /v2/site-config/global-css` (auth + `MANAGE_USERS`) → `200` and applies the new CSS; `content` must be a string (the system returns `400` otherwise); no sanitization or allowlist of CSS rules (`@import`, `url()`, `attr()` permitted).
+- `POST /v2/site-config/global-css/restore-default` (auth + `MANAGE_USERS`) → restores the shipped default (`static/global_org.css`).
 
 ### Quality control
 
@@ -249,15 +276,24 @@ Stylesheet text only; no PII.
 
 ### Description
 
-As an admin, I can compose the landing page from drag-and-drop blocks (hero, feature-list, button-list, news, recent, popular, partner-list, home-footer) with raw JSON, preview, and history, so the home page presents the content my organization wants visitors to see first.
+As an admin, I can compose the landing page from drag-and-drop blocks (hero, feature-list, button-list, news, recent, popular, partner-list, home-footer) with raw JSON, preview, and history, so the home page presents the content my organization wants visitors to see first. As a visitor, I see the composed landing page render the blocks the admin published.
 
 ### Who uses it / value
 
-Admins (compose the landing page).
+Admins (compose the landing page); visitors (see the curated landing page).
 
 ### Acceptance criteria
 
-- When I (admin) edit `CFG_HOME_CONTENT`, the system persists the block list; when a visitor opens the home page, the system renders the blocks and skips any unknown block types.
+- When I (admin) open the Home Config section, I can switch between Edit, Raw JSON, Preview, and History sub-tabs.
+- When I (admin) add, reorder (drag-and-drop), or edit blocks and save, the system persists the block list.
+- When I (admin) use Preview, I see the rendered landing layout without leaving the admin page; when I use Raw JSON, I can edit the block list directly.
+- When a visitor opens the home page, the system renders the published blocks and skips any unknown block types.
+
+### API contract
+
+- Editing `CFG_HOME_CONTENT` requires authentication and `MANAGE_USERS`; public reads of the non-secret config are anonymous (`GET /v2/site-config/public*`).
+- `CFG_HOME_CONTENT` is a non-secret public config value (scope `site`, `secret: false`); the block array shape is not validated server-side (`value` accepts any shape); `image_url` fields are not URL-validated.
+- Edit-history snapshots are stored in `SiteConfigSnapshot`; render uses the `homeComponentMap` on `PageHome`.
 
 ### Quality control
 
@@ -310,7 +346,7 @@ Block content (titles/descriptions/image URLs); `requiredLogin` flags on action 
 
 ### Description
 
-As an admin, I can set the platform's `SITE_TITLE`, `SITE_LOGO_WIDE`, `SITE_FAVICON`, `SITE_THEME_COLOR`, and `SITE_DESCRIPTION` so the instance carries my organization's brand identity consistently across the UI and browser tab.
+As an admin, I can set the platform's title, logo, favicon, theme color, and description from the Public Config section so the instance carries my organization's brand identity consistently across the UI and browser tab. As a user, I see the configured branding in the nav bar, browser tab, and dashboard.
 
 ### Who uses it / value
 
@@ -318,7 +354,14 @@ Admins (brand identity); end users (consistent branding).
 
 ### Acceptance criteria
 
-- When I (admin) set `SITE_TITLE`, `SITE_LOGO_WIDE`, `SITE_FAVICON`, `SITE_THEME_COLOR`, or `SITE_DESCRIPTION`, the system reflects them in the nav bar, root layout, browser tab, and dashboard logo; when anyone reads public config, the system returns these non-secret branding keys.
+- When I (admin) set the site title, logo, favicon, theme color, or description in the Public Config section and save, the system reflects them in the nav bar, root layout, browser tab, and dashboard logo.
+- When I (anyone) read public config, the system returns these non-secret branding keys.
+
+### API contract
+
+- Branding keys: `SITE_TITLE`, `SITE_LOGO_WIDE`, `SITE_FAVICON`, `SITE_THEME_COLOR`, `SITE_DESCRIPTION` (scope `site`, `secret: false`).
+- Public read is anonymous via `GET /v2/site-config/public*` (returns non-secret branding keys); admin write requires authentication and `MANAGE_USERS`.
+- Branding values accept any shape; `SITE_LOGO_WIDE`/`SITE_FAVICON` URLs are stored as-is and not enforced as image URLs server-side.
 
 ### Quality control
 
@@ -364,15 +407,24 @@ Branding asset URLs only.
 
 ### Description
 
-As an admin, I can toggle the platform's access flags `PUBLIC_VIEWING`, `SELF_REGISTRATION`, `SSO_AUTO_REGISTRATION`, and `PASSWORD_MANAGEMENT` (all default `true`) so I control who can browse, sign up, auto-register via SSO, and manage passwords; if config loading fails on a request, the system secure-fails to all-false.
+As an admin, I can toggle the platform's access flags from the Auth Config section so I control who can browse, sign up, auto-register via SSO, and manage passwords. As a user, the sign-in and registration options I see reflect these toggles; if config loading fails on a request, the system secure-fails to denying access.
 
 ### Who uses it / value
 
-Admins (control access/registration); the app (gating).
+Admins (control access/registration); end users (see gated sign-in/registration); the app (gating).
 
 ### Acceptance criteria
 
-- When I (admin) toggle `PUBLIC_VIEWING`, `SELF_REGISTRATION`, `SSO_AUTO_REGISTRATION`, or `PASSWORD_MANAGEMENT`, the system applies the change to auth behavior across the app (see [identity-access.md](./identity-access.md)); when I restore defaults, the system restores the shipped `true` defaults; when config loading fails on a request, the system secure-fails to all-false.
+- When I (admin) open the Auth Config section, I see the four access toggles (browse, self-registration, SSO auto-registration, password management), all on by default.
+- When I (admin) turn a toggle off, the system applies the change to auth behavior across the app (see [identity-access.md](./identity-access.md)) — e.g. signed-out users cannot browse when browsing is off, and registration is refused when self-registration is off.
+- When I (admin) restore defaults, the toggles return to their shipped on defaults.
+- When config loading fails on a request, the system secure-fails to all toggles off (denying access).
+
+### API contract
+
+- Flags: `PUBLIC_VIEWING`, `SELF_REGISTRATION`, `SSO_AUTO_REGISTRATION`, `PASSWORD_MANAGEMENT` (scope `site`, `secret: false`, `valueType: 'boolean'`, `category: 'auth'`, all default `true`).
+- Effective flags are publicly observable via `GET /v2/site-config/public*` (anonymous); changing them requires authentication and `MANAGE_USERS`.
+- Flags are coerced to boolean; cached in memory for up to 5 min and loaded per request; on config-load error the system secure-fails to all-false.
 
 ### Quality control
 
@@ -429,7 +481,7 @@ Boolean flags only.
 
 ### Description
 
-As an admin/DevOps, I can configure SSO providers (with encrypted `clientSecret`) and email delivery (Resend/SMTP/none) and send a test email, so users can sign in via SSO and the platform can send mail; as an end user, I see only the enabled SSO providers (no secrets).
+As an admin/DevOps, I can configure SSO providers and email delivery (Resend/SMTP/none) and send a test email from the SSO and Email sections, so users can sign in via SSO and the platform can send mail. As an end user, I see only the enabled SSO sign-in buttons (no secrets).
 
 ### Who uses it / value
 
@@ -437,7 +489,18 @@ Admins/DevOps (configure SSO + email); end users (SSO buttons).
 
 ### Acceptance criteria
 
-- When I (anyone) call `GET /v2/site-config/sso/providers`, the system returns enabled providers without `clientSecret`; when I (admin) CRUD providers, the system decrypts `clientSecret` for display; when I (admin) call `POST /v2/site-config/email/test`, the system sends a test email.
+- When I (admin) add or edit an SSO provider in the SSO Config section, the system saves it (with the secret encrypted) and the sign-in button appears for users; when I remove it, the button disappears.
+- When I (admin) open the SSO section, the saved provider secret is decrypted only for admin display.
+- When I (anyone) view the sign-in page, I see only the enabled providers, never their secrets.
+- When I (admin) configure email delivery (Resend/SMTP/none) and send a test email from the Email Config section, the system sends it and shows the result.
+
+### API contract
+
+- `GET /v2/site-config/sso/providers` (anonymous) → enabled providers without `clientSecret`.
+- SSO/Email CRUD routes require authentication and `MANAGE_USERS`; `clientSecret` is decrypted only for admin display.
+- `POST /v2/site-config/email/test` (auth + `MANAGE_USERS`) → sends a test email; requires `to` to be present (controller-level check); unthrottled.
+- Provider objects and the `EMAIL_CONFIG` shape are not schema-validated server-side (`value` accepts any shape).
+- `SSO_PROVIDERS[].clientSecret` and `EMAIL_CONFIG.apiKey`/`smtpConfig.pass` are encrypted at rest (AES-256-CBC); `clientSecret` is removed before any public response.
 
 ### Quality control
 
@@ -499,7 +562,7 @@ Secrets (`clientSecret`/`apiKey`/`smtpConfig.pass`) encrypted; email logs may in
 
 ### Description
 
-As an admin/DevOps, I can restore the site config from a deploy snapshot merged with predefined defaults (snapshot wins per key), filtered by keys/categories/secret, and see per-key source (`snapshot`/`predefined`/`mixed`/`none`), so I can recover the instance's configuration after a bad change or migration.
+As an admin/DevOps, I can restore the site config from a deployment snapshot merged with predefined defaults (snapshot wins per key) from the Public Config section's "Restore default" action, so I can recover the instance's configuration after a bad change or migration. As an admin, I can see per-key source (snapshot/predefined/mixed/none) in the restore result.
 
 ### Who uses it / value
 
@@ -507,7 +570,16 @@ Admins/DevOps (recover config after a bad change or migration).
 
 ### Acceptance criteria
 
-- When I (admin) call `POST /v2/site-config/restore-snapshot`, the system returns `200` with the restored config and per-key source; the snapshot is auto-synced when the deploy seeder runs.
+- When I (admin) click "Restore default" in the Public Config section and confirm, the system reverts the public configs to the deployment snapshot where present, otherwise to the predefined default, then reloads the page.
+- When I (admin) cancel the restore confirmation, no changes are made.
+- When I (admin) restore, I can see which keys came from the snapshot vs. predefined defaults (per-key source: snapshot/predefined/mixed/none).
+
+### API contract
+
+- `POST /v2/site-config/restore-snapshot` (auth + `MANAGE_USERS`) → `200` with the restored config and per-key source.
+- Caller may send `keys?: string[]`, `categories?: string[]`, `secret?: boolean`; at least one filter is required (the system returns `400` on an empty filter).
+- The snapshot is auto-synced when the deploy seeder runs; the snapshot preserves `secret`-flagged configs in their encrypted form and restore re-upserts encrypted values (no decryption during restore).
+- Per-key source labels: `snapshot`/`predefined`/`mixed`/`none`; snapshot wins per key.
 
 ### Quality control
 
@@ -563,7 +635,7 @@ Snapshots hold site-scope configs incl. encrypted secrets.
 
 ### Description
 
-As an admin, I can author the public Privacy Policy as markdown (or point to an external `PRIVACY_POLICY_URL`) with edit/preview and history, so end users see the legal terms that apply to the instance.
+As an admin, I can author the public Privacy Policy as markdown (or point to an external URL) with edit and preview from the Privacy Policy section, so end users see the legal terms that apply to the instance. As a user, I see the published privacy policy page.
 
 ### Who uses it / value
 
@@ -571,7 +643,16 @@ End users (legal info); admins (maintain policy).
 
 ### Acceptance criteria
 
-- When anyone opens `/privacy-policy`, the system renders the `PRIVACY_POLICY_CONTENT` markdown publicly; when I (admin) edit and preview the policy, the system saves and previews it; when I set `PRIVACY_POLICY_URL`, the system can redirect there instead.
+- When I (admin) open the Privacy Policy section, I can edit the policy markdown and switch to a Preview tab to see how it renders.
+- When I (admin) save the policy, the public Privacy Policy page updates.
+- When I (admin) set an external privacy policy URL, the public page can redirect there instead.
+- When anyone opens the public Privacy Policy page, the system renders the policy markdown without requiring sign-in.
+
+### API contract
+
+- The public `/privacy-policy` page renders anonymously; editing `PRIVACY_POLICY_CONTENT`/`PRIVACY_POLICY_URL` requires authentication and `MANAGE_USERS`.
+- `PRIVACY_POLICY_CONTENT` (markdown string) and `PRIVACY_POLICY_URL` (string) in `site_configs` (scope `site`, `secret: false`); the markdown is not sanitized server-side (`value` accepts any shape); `PRIVACY_POLICY_URL` is not URL-validated server-side.
+- Edit-history snapshots are stored in `SiteConfigSnapshot`.
 
 ### Quality control
 

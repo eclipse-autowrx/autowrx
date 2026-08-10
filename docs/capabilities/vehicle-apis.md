@@ -40,7 +40,7 @@ flowchart TD
 
 ### Description
 
-As an end user or integrator, list the available VSS (Vehicle Signal Specification) versions and fetch a version's computed CVI (Computed Vehicle Interface) tree so that I can browse the canonical signal catalog and pick a version to build against.
+As an end user or integrator, I can list the available VSS (Vehicle Signal Specification) versions and fetch a version's computed CVI (Computed Vehicle Interface) tree so that I can browse the canonical signal catalog and pick a version to build against.
 
 ### Who uses it / value
 
@@ -48,9 +48,16 @@ End users (browse signals); integrators (pick a VSS version); the platform (cano
 
 ### Acceptance criteria
 
-- When I call `GET /v2/apis/vss`, the system returns `200` a list of versions (e.g. `['4.0','3.1.1',…]`).
-- When I call `GET /v2/apis/vss/:name`, the system returns `200` that version's CVI tree.
-- When I call the static `GET /vss/:version/:filename`, the system serves the raw JSON (1-hour cache; RC→rc normalization).
+- When I browse the VSS catalog, I see a non-empty list of available versions.
+- When I select a version, I get its computed CVI tree.
+- When I fetch a static VSS file for a version, I get the raw JSON back.
+- These are available to anyone without signing in.
+
+### API contract
+
+- `GET /v2/apis/vss` → `200` a list of versions (e.g. `['4.0','3.1.1',…]`).
+- `GET /v2/apis/vss/:name` → `200` that version's CVI tree.
+- Static `GET /vss/:version/:filename` → serves the raw JSON (1-hour cache; RC→rc normalization).
 
 ### Quality control
 
@@ -96,7 +103,7 @@ Static reference data only.
 
 ### Description
 
-As a model owner, define the VSS/COVESA signal set for my model. As an end user, read the computed CVI tree that merges VSS and extended (wishlist) signals into one view so that dashboards and code have a single signal tree to consume.
+As a model owner, I can define the VSS/COVESA signal set for my model. As an end user, I can read the computed CVI tree that merges VSS and extended (wishlist) signals into one view so that dashboards and code have a single signal tree to consume.
 
 ### Who uses it / value
 
@@ -104,8 +111,15 @@ Model owners (define the signal set); end users (consume signals in dashboards/c
 
 ### Acceptance criteria
 
-- When I call `POST /v2/apis` (auth), the system returns `201` the new API; `GET /v2/apis/:id` → `200`; `PATCH` → `200`; `DELETE` → `204`; `GET /v2/apis/model_id/:modelId` → `200` the model's API.
-- When I call `GET /v2/models/:id/api` (optional auth), the system returns `200` the computed CVI (VSS + extended merged); `GET /v2/models/:id/api/:apiName` → `200` one API's detail (`name`, `datatype`, `type`, `unit?`, `min?`, `max?`, `description?`).
+- When I open a model's Vehicle API view, I see the computed CVI tree merging the model's VSS signals with its extended (wishlist) signals.
+- When I (as owner) create, edit, or delete an API for my model, the computed tree updates accordingly.
+- When I look up a specific signal (e.g. Vehicle.Speed), I see its detail (datatype, unit, description, min/max where set).
+- When I'm signed out and public viewing is off, I'm prevented from reading a private model's computed tree.
+
+### API contract
+
+- `POST /v2/apis` (auth) → `201` the new API; `GET /v2/apis/:id` → `200`; `PATCH` → `200`; `DELETE` → `204`; `GET /v2/apis/model_id/:modelId` → `200` the model's API.
+- `GET /v2/models/:id/api` (optional auth) → `200` the computed CVI (VSS + extended merged); `GET /v2/models/:id/api/:apiName` → `200` one API's detail (`name`, `datatype`, `type`, `unit?`, `min?`, `max?`, `description?`).
 
 ### Quality control
 
@@ -159,7 +173,7 @@ API definitions are stored linked to the model and the creating user.
 
 ### Description
 
-As a model owner, replace **all** APIs for my model by pointing the system at a VSS spec JSON URL so that the model's signal set is swapped to a new VSS version.
+As a model owner, I can replace all APIs for my model by pointing the system at a VSS spec JSON URL so that the model's signal set is swapped to a new VSS version.
 
 ### Who uses it / value
 
@@ -167,7 +181,14 @@ Model owners (swap the signal set to a new VSS version).
 
 ### Acceptance criteria
 
-- When I call `POST /v2/models/:id/replace-api {api_data_url}` (requires `WRITE_MODEL`), the system returns `200`; if `api_data_url` is missing, it returns `400`. ⚠️ This is destructive — it replaces all APIs.
+- When I open the "Replace Vehicle API" dialog and provide a VSS spec JSON file/URL and confirm, all of the model's APIs are replaced with the new spec.
+- When I don't provide a spec, I'm prevented from replacing (the action is disabled / I see an error).
+- When the replace succeeds, the computed tree changes to the new spec; the old signal set is lost with no undo.
+- When I lack edit rights, the replace action is hidden and I'm prevented from replacing.
+
+### API contract
+
+- `POST /v2/models/:id/replace-api {api_data_url}` (requires `WRITE_MODEL`) → `200`; if `api_data_url` is missing, it returns `400`. ⚠️ This is destructive — it replaces all APIs.
 
 ### Quality control
 
@@ -228,7 +249,7 @@ Calling replace overwrites the model's API document; the old set is lost (no und
 
 ### Description
 
-As an end user, browse the computed COVESA/VSS APIs in List, Tree, Hierarchical, and a VSS comparator view, and download the computed VSS. As a model owner, upload or replace the VSS and switch VSS version from the UI.
+As an end user, I can browse the computed COVESA/VSS APIs in List, Tree, Hierarchical, and a Version Diff (compare) view, and download the computed VSS. As a model owner, I can upload or replace the VSS and switch VSS version from the UI.
 
 ### Who uses it / value
 
@@ -236,7 +257,16 @@ End users (explore signals); model owners (compare/replace VSS).
 
 ### Acceptance criteria
 
-- When I open `/model/:id/api` or `/model/:id/api/covesa/:api`, the system renders the corresponding view; when I download, it returns the computed VSS JSON; when I replace/upload, the system requires `WRITE_MODEL`.
+- When I open a model's Vehicle API page, I can switch between List, Tree, and Hierarchical views; each renders the computed signals accordingly.
+- When I open the Version Diff view, I can compare two VSS versions and see the diffs.
+- When I click "Download as JSON", the computed VSS JSON downloads.
+- When I (as owner) click "Replace Vehicle API" and upload a spec, the model's APIs are replaced.
+- When I'm signed out and public viewing is off, I'm prevented from browsing a private model's API view.
+- When I lack edit rights, the replace action is hidden.
+
+### API contract
+
+- Opening `/model/:id/api` or `/model/:id/api/covesa/:api` renders the corresponding view; download returns the computed VSS JSON; replace/upload requires `WRITE_MODEL`.
 - Browsing the view is subject to `PUBLIC_VIEWING`; replacing requires `WRITE_MODEL`.
 
 ### Quality control
@@ -283,7 +313,7 @@ The view is computed from stored API/extended-API data; downloading exposes the 
 
 ### Description
 
-As a model owner, add custom per-model signals (wishlist signals) on top of the VSS tree so that my model can expose signals beyond the standard set. As an end user, these extended signals are merged into the computed API I consume.
+As a model owner, I can add custom per-model signals (wishlist signals) on top of the VSS tree so that my model can expose signals beyond the standard set. As an end user, these extended signals are merged into the computed API I consume.
 
 ### Who uses it / value
 
@@ -291,8 +321,15 @@ Model owners (add signals beyond standard VSS); end users (use the extended sign
 
 ### Acceptance criteria
 
-- When I call `GET /v2/extendedApis?model=<id>` (optional auth; I must have model access), the system returns `200` the list; `POST` → `201`; `GET /by-api-and-model?apiName=&model=` → `200`; `GET/PATCH/DELETE /:id` → `200`/`200`/`204`.
-- `GET /` requires a `model` query; `by-api-and-model` requires `apiName` + `model`; without access, the system returns `403`.
+- When I (as owner) add an extended signal to my model, it appears in the computed tree.
+- When I try to create a duplicate signal (same name + model), it's rejected.
+- When I access another user's private model without permission, I'm prevented from reading or writing its extended signals.
+- When I edit or delete an extended signal I own, the computed tree updates.
+
+### API contract
+
+- `GET /v2/extendedApis?model=<id>` (optional auth; I must have model access) → `200` the list; `POST` → `201`; `GET /by-api-and-model?apiName=&model=` → `200`; `GET/PATCH/DELETE /:id` → `200`/`200`/`204`.
+- `GET /` requires a `model` query; `by-api-and-model` requires `apiName` + `model`; without access → `403`.
 - Each `(apiName, model)` combination is unique.
 
 ### Quality control
@@ -348,7 +385,7 @@ Extended signals are stored with a unique `(apiName, model)` index.
 
 ### Description
 
-As an admin, define API schema templates (with `type` tree/list/graph, a JSON `schema`, `id_format`, `relationships`, `tree_config`, `display_mapping`) that integrators use to validate non-COVESA Custom API Sets (e.g. REST/USP).
+As an admin, I can define API schema templates — choosing a structure type (tree, list, or graph), a JSON schema, an id format, relationships, tree config, and display mapping — that integrators use to validate non-COVESA Custom API Sets (e.g. REST/USP).
 
 ### Who uses it / value
 
@@ -356,7 +393,15 @@ Admins (define custom API shapes); integrators (non-COVESA APIs like REST/USP).
 
 ### Acceptance criteria
 
-- When I call `GET /v2/custom-api-schema[/:id]` (public), the system returns the list/get; when I (as admin) call `POST/PATCH/DELETE /v2/custom-api-schema[/:id]`, it returns `201`/`200`/`204`. These are mounted at both `/v2/system/custom-api-schema` (frontend) and the bare `/v2/custom-api-schema`.
+- When I open the Custom API Schema manager, I see the list of schemas.
+- When I (as admin) create a new schema with the required fields, it's created and appears in the list.
+- When I (as admin) edit or delete a schema, the change persists / the schema is removed.
+- When I'm a non-admin, I'm prevented from creating, editing, or deleting schemas.
+- When I submit an invalid or incomplete schema, I'm shown a validation error.
+
+### API contract
+
+- `GET /v2/custom-api-schema[/:id]` (public) → list/get; `POST/PATCH/DELETE /v2/custom-api-schema[/:id]` (admin) → `201`/`200`/`204`. Mounted at both `/v2/system/custom-api-schema` (frontend) and the bare `/v2/custom-api-schema`.
 - To create one I must send `schema` (JSON string); the old `attributes` field is gone.
 - Items are validated against the schema only basically (full JSON-schema validation is a TODO).
 
@@ -411,7 +456,7 @@ Schema definitions stored in `customapischemas` (`code` unique).
 
 ### Description
 
-As a user or admin, create instances of a Custom API Schema and attach them to a model so that consumers see custom APIs alongside COVESA. I can scope a set as system (public) or user (owner-only) and add/update/remove items with validation.
+As a user or admin, I can create instances of a Custom API Schema and attach them to a model so that consumers see custom APIs alongside COVESA. I can scope a set as system (public) or user (owner-only) and add, update, or remove items with validation.
 
 ### Who uses it / value
 
@@ -419,10 +464,18 @@ End users/admins (create per-model API sets); model consumers (view custom APIs 
 
 ### Acceptance criteria
 
-- When I call `GET /v2/custom-api-sets` (optional auth via `PUBLIC_VIEWING`), the system returns `200` (system sets are public, user sets are owner-only); `POST` (auth) → `201`; `GET /:id` (optional auth via `PUBLIC_VIEWING`) → `200`; `PATCH/DELETE /:id` (auth + ownership) → `200`/`204`.
-- When I call `POST /:id/items {item:{…}}`, the system returns `200`; `PATCH/DELETE /:id/items/:itemId` → `200`.
-- The UI is hidden when `DISABLE_CUSTOM_API_SETS=true`; attaching a set to a model requires `WRITE_MODEL`.
-- On create, my `data` is validated against the referenced schema.
+- When I create a system-scoped set, any authenticated user can read it; when I create a user-scoped set, only I (the owner) can read it.
+- When I add, update, or remove items in a set, the changes appear in the set.
+- When I attach a custom API set to a model, it appears as a tab alongside COVESA in the model's Vehicle API view.
+- When the custom API set feature is disabled, the custom API UI (tabs and picker) is hidden.
+- When I create a set, my data is validated against the referenced schema.
+
+### API contract
+
+- `GET /v2/custom-api-sets` (optional auth via `PUBLIC_VIEWING`) → `200` (system sets public, user sets owner-only); `POST` (auth) → `201`; `GET /:id` (optional auth via `PUBLIC_VIEWING`) → `200`; `PATCH/DELETE /:id` (auth + ownership) → `200`/`204`.
+- `POST /:id/items {item:{…}}` → `200`; `PATCH/DELETE /:id/items/:itemId` → `200`.
+- UI is hidden when `DISABLE_CUSTOM_API_SETS=true`; attaching a set to a model requires `WRITE_MODEL`.
+- On create, `data` is validated against the referenced schema.
 
 ### Quality control
 

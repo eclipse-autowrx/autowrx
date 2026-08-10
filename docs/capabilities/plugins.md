@@ -37,7 +37,7 @@ flowchart TD
 
 ### Description
 
-As a plugin author, I can publish a plugin (`type` `prototype_function` or `deploy`) with a slug, image, description, internal/external flag, URL, and config, so that model owners and admins can attach it as a tab or a deploy/staging stage. The slug is auto-generated from the name and edits are ownership-gated.
+As a plugin author, I can publish a plugin (for prototype tabs or for deploy/staging stages) from the plugin form by entering a name, description, image, entry-point URL, and configuration, so that model owners and admins can attach it as a workspace tab or a deploy/staging stage. The slug is generated from the name and edits are ownership-gated.
 
 ### Who uses it / value
 
@@ -45,8 +45,16 @@ Plugin authors (publish plugins); model owners/admins (attach plugins as addon t
 
 ### Acceptance criteria
 
-- When I call `GET /v2/plugin` (public), the system returns the public list; when I call `GET /v2/plugin/{admin,id/:id,slug/:slug}`, the system returns admin/own/by-id/by-slug results; when I call `GET /v2/plugin/mine` (auth), the system returns my own plugins; when I call `POST /v2/plugin` (auth), the system creates the plugin and returns `201`; when I call `PUT /v2/plugin/:id` (auth + ownership/admin), the system updates and returns `200`; when I call `DELETE /v2/plugin/:id` (auth + ownership/admin), the system deletes and returns `204`.
-- When I create a plugin, the system auto-generates a unique `slug` (with auto-suffix); when I update a plugin, the system rejects `slug` (immutable).
+- When I open the plugin create form, fill in the name, description, image, URL, and config, and save, my plugin is created and appears in the plugin list with a slug auto-generated from the name.
+- When I open and edit my own plugin, my changes are saved; when I try to edit or delete another author's plugin, I am prevented (the action is denied).
+- When I edit a plugin, the slug cannot be changed.
+- When I browse the public plugin list, I see all published plugins; when I open my own plugins view, I see only the plugins I own.
+- When the required fields (name, URL) are missing, the Save button is disabled and I cannot publish.
+
+### API contract
+
+- `GET /v2/plugin` (public) → public list; `GET /v2/plugin/{admin,id/:id,slug/:slug}` → admin/own/by-id/by-slug results; `GET /v2/plugin/mine` (auth) → my own plugins; `POST /v2/plugin` (auth) → creates the plugin, returns `201`; `PUT /v2/plugin/:id` (auth + ownership/admin) → updates, returns `200`; `DELETE /v2/plugin/:id` (auth + ownership/admin) → deletes, returns `204`.
+- Create auto-generates a unique `slug` (with auto-suffix); update rejects `slug` (immutable).
 
 ### Quality control
 
@@ -106,7 +114,7 @@ Plugin metadata + `config` (Mixed) stored in `plugins` with `created_by`/`update
 
 ### Description
 
-As a plugin author, I can upload a plugin as a zip and have AutoWRX host it internally, so that it is served at `/plugin/:slug/...` without needing an external CDN. The host extracts the bundle and auto-detects the entry (`index.js`/`index.html`).
+As a plugin author, I can upload a plugin as a zip bundle and have AutoWRX host it for me, so that I do not need an external CDN. AutoWRX extracts the bundle and detects the entry point automatically.
 
 ### Who uses it / value
 
@@ -114,8 +122,14 @@ Plugin authors (host plugins without an external CDN); admins (bundle system plu
 
 ### Acceptance criteria
 
-- When I call `POST /v2/plugin/upload/:slug` (auth; multipart `file`), the system extracts the bundle and returns `200 { plugin, url }`; the plugin is served at `/plugin/<slug>/<entry>` with `is_internal=true`.
-- When I upload to an existing slug owned by another non-admin, the system returns `403`.
+- When I open the plugin form, enter a name, choose "Upload ZIP", and select a zip file, the bundle is uploaded and extracted, and the entry-point URL is filled in for me.
+- When I re-upload to a slug I own, my bundle is updated; when I upload to a slug owned by another non-admin user, I am prevented (the action is denied).
+- When the upload or extraction fails, I see an error message and the URL is not set.
+
+### API contract
+
+- `POST /v2/plugin/upload/:slug` (auth; multipart `file`) → extracts the bundle, returns `200 { plugin, url }`; the plugin is served at `/plugin/<slug>/<entry>` with `is_internal=true`.
+- Upload to an existing slug owned by another non-admin → `403`.
 
 ### Quality control
 
@@ -179,7 +193,7 @@ Plugin bundle served publicly from `/plugin/<slug>/`; the bundle can contain arb
 
 ### Description
 
-As an end user, when I open a plugin tab, the plugin renders inside the tab and stays cached as I switch tabs, so that the experience is fast and stable. A plugin I add runs with full page access (same-origin, unsandboxed), like any script on the page.
+As an end user, when I open a plugin tab, the plugin loads and runs inside the tab so I can use it; switching tabs and coming back keeps the plugin ready without reloading, so the experience is fast and stable.
 
 ### Who uses it / value
 
@@ -187,8 +201,14 @@ End users (plugin renders in tabs); plugin authors (the load contract).
 
 ### Acceptance criteria
 
-- When I open a tab referencing a plugin slug, the system fetches the plugin, loads it, and renders it with `{ data, editable, config, api }`.
-- When I switch tabs and return, the system reuses the cached registration (no reload); when a plugin fails to register within 15 s, the system times out.
+- When I open a tab that shows a plugin, the plugin loads and renders inside the tab.
+- When I switch to another tab and come back, the plugin is still there without reloading.
+- When a plugin fails to load or register in time, I see a loading indicator followed by a timeout/error message instead of the plugin UI.
+- When the plugin has no entry-point URL configured, I see an error message that the plugin has no URL.
+
+### API contract
+
+No HTTP surface — transparent runtime behavior. The loader fetches the plugin, loads it, and renders it with `{ data, editable, config, api }`; reuses the cached registration on tab switch (no reload); times out when a plugin fails to register within 15 s. `editable` is derived from `WRITE_MODEL` (advisory only). Plugin scripts run same-origin, unsandboxed.
 
 ### Quality control
 
@@ -258,7 +278,12 @@ End users (faster tab loads).
 
 ### Acceptance criteria
 
-- When I open a model, the system collects plugin slugs from prototype tabs and staging, and prefetches their scripts on idle (configurable delay).
+- When I open a model that has plugin tabs or staging plugins, the plugin scripts are fetched in the background while the page is idle, so that when I open a plugin tab it appears instantly.
+- I am not blocked or slowed down by the prefetching happening in the background.
+
+### API contract
+
+No HTTP surface — transparent runtime behavior. The system collects plugin slugs from prototype tabs and staging, and prefetches their scripts on idle (configurable delay) via `<link rel=prefetch>` + `fetch(priority=low)` with `credentials:'omit'`.
 
 ### Quality control
 
@@ -323,7 +348,12 @@ Plugin authors (reference implementations).
 
 ### Acceptance criteria
 
-- Both samples demonstrate the page-plugin registration contract; `sample-tsx` ships a build script that externalizes React.
+- When I open a sample plugin, it renders and demonstrates how a plugin registers and runs in a tab.
+- When I build the TSX sample, I get a runnable bundle I can upload and load via the test page.
+
+### API contract
+
+No HTTP surface — static hosting. Sample bundles (`sample-tsx`, `sample-esm`) are served from `backend/static/plugin/`; `sample-tsx` ships a build script that externalizes React. Both demonstrate the `page-plugin` registration contract.
 
 ### Quality control
 
@@ -379,8 +409,15 @@ Model owners (customize workspace); admins.
 
 ### Acceptance criteria
 
-- When I manage tabs, the system requires `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG` (admins are always allowed).
-- When I save, the system stores the tab config on `model.custom_template` (`model_tabs`/`prototype_tabs`/`prototype_sidebar_plugin`/`prototype_right_nav_buttons`).
+- When I open the tab editor for my model, I can add a plugin as a custom tab, reorder tabs, hide tabs, set a variant, configure a sidebar plugin and right-nav action buttons (including the built-in Staging), and choose the open mode (dialog or page).
+- When I am a non-admin without permission to manage addons, the tab editor is unavailable to me; admins can always manage tabs.
+- When I save my tab layout, the configuration persists on the model and the workspace reflects my changes on the next open.
+- When I add an addon tab, it renders the referenced plugin in the workspace.
+
+### API contract
+
+- Tab management requires `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG` (admins always allowed).
+- Saving stores the tab config on `model.custom_template` (`model_tabs`/`prototype_tabs`/`prototype_sidebar_plugin`/`prototype_right_nav_buttons`).
 
 ### Quality control
 
@@ -442,7 +479,7 @@ Tab/layout config on the model document.
 
 ### Description
 
-As a plugin author, I can manage my own plugins from `/me/plugins` (create/edit/delete), so that I can publish and maintain my work. As an admin, I can manage all plugins from `/admin/plugins` across four sections (Prototype Plugin, Deployment Plugin, Vehicle API Schema, Vehicle API/custom sets) and configure deploy plugins per staging stage.
+As a plugin author, I can manage my own plugins from the My Plugins page (create, edit, delete), so that I can publish and maintain my work. As an admin, I can manage all plugins from the admin Plugin Management page across four sections (Prototype Plugin, Deployment Plugin, Vehicle API Schema, Vehicle API/custom sets) and configure deploy plugins per staging stage.
 
 ### Who uses it / value
 
@@ -450,8 +487,16 @@ Plugin authors (manage own plugins); admins (manage all + custom APIs).
 
 ### Acceptance criteria
 
-- When I open `/me/plugins` (auth; shown to non-admins only when `ALLOW_NON_ADMIN_ADDON_CONFIG`), I can CRUD my own plugins.
-- When I open `/admin/plugins` (`MANAGE_USERS`), I see 4 sections; the custom API sections are hidden when `DISABLE_CUSTOM_API_SETS`.
+- When I open the My Plugins page, I can create, edit, and delete my own plugins.
+- When I am a non-admin and addon configuration is restricted to admins, the My Plugins page is hidden from me.
+- When I open the admin Plugin Management page, I see four sections; when custom API sets are disabled for the tenant, the Vehicle API Schema and Vehicle API/custom sets sections are hidden.
+- When I am not an admin and open the admin Plugin Management page, I see an "Access denied" message.
+- When I configure a deploy plugin per staging stage as an admin, that plugin launches from Staging.
+
+### API contract
+
+- `/me/plugins` (auth; shown to non-admins only when `ALLOW_NON_ADMIN_ADDON_CONFIG`) → CRUD own plugins.
+- `/admin/plugins` (`MANAGE_USERS`) → 4 sections; the custom API sections are hidden when `DISABLE_CUSTOM_API_SETS`.
 
 ### Quality control
 

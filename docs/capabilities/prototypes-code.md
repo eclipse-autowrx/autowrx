@@ -53,9 +53,22 @@ Model owners/contributors (manage prototypes); end users (browse/portfolio).
 
 ### Acceptance criteria
 
-- When I open `/model/:id/library[/:tab(list|portfolio)[/:prototype_id]]`, the system renders the library.
-- When I create or import a prototype, the system requires `WRITE_MODEL`; when I browse, the system allows public viewing only while `PUBLIC_VIEWING` is on.
-- When I submit a duplicate name, the system offers alternative name suggestions.
+- When I open a model's Library page, I see the model's prototypes as cards in a list view, and I can switch between List and Portfolio views.
+- When I type in the search box, the list filters to prototypes whose name matches; when I pick a sort option (Last view, First view, Newest, Oldest, Name A-Z, Name Z-A, Rating), the list reorders accordingly.
+- When I am not signed in or lack write permission on the model, the Create New Prototype and Import Prototype controls appear dimmed and are not clickable; when I have write permission, I can open the create dialog or import a prototype.
+- When I import a ZIP, I'm limited to `.zip` files under 10 MB; a non-ZIP or oversized file shows an error message and the import is blocked.
+- When I confirm an import, I'm asked to confirm the prototype name; on success the new prototype appears in the library and I'm taken to its detail page.
+- When I type a prototype (or model) name that already exists, I'm shown a duplicate-name hint with a suggested alternative name, and the Create button stays disabled until I change it.
+- When the library has no prototypes, I see an empty "No prototype found. Please create a new prototype." state.
+- When public viewing is off and I'm not signed in (or can't access a private model), I'm prevented from browsing that model's prototypes.
+
+### API contract
+
+- Page route: `GET /model/:id/library[/:tab(list|portfolio)[/:prototype_id]]` — renders the library (auth optional via `PUBLIC_VIEWING`; private-model reads gated by `READ_MODEL`).
+- Create / import a prototype requires `WRITE_MODEL`.
+- Public browsing is allowed only while `PUBLIC_VIEWING` is on; private models require `READ_MODEL`.
+- Duplicate-name submissions return alternative-name suggestions.
+- ZIP import: `.zip` only, max 10 MB; archive entries are not path-traversal sanitized.
 
 ### Quality control
 
@@ -125,9 +138,19 @@ Model owners (a guided create experience).
 
 ### Acceptance criteria
 
-- When I open `/new-prototype` without signing in, the system redirects me to `/`.
-- When `ENABLE_NEW_PROTOTYPE_PAGE` is on (default `false`), the system enables the `/new-prototype` flow.
-- When I pass `?create-model`, the system supports model-creation mode.
+- When I open the full-page create flow while signed out, I'm redirected to the home page.
+- When signed in and the flow is enabled, I see the selected model's (or default template's) prototype shell — sidebar, tab bar, and plugin preview — rendered behind the create dialog.
+- When I open the flow in model-creation mode (via the `?create-model` query), I get the create-model dialog instead of the create-prototype dialog.
+- When I submit the create form with a valid name (and optionally a chosen template), a new prototype is created and I'm navigated to its detail page.
+- When I close the create dialog without submitting, I'm taken back to where I came from (or the library).
+- When the full-page flow is disabled, the library's Create button opens the inline create dialog instead (CAP-PROTO-01).
+
+### API contract
+
+- Page route: `GET /new-prototype` — requires sign-in (redirects to `/` if signed out); the flow is gated by `ENABLE_NEW_PROTOTYPE_PAGE` (default `false`).
+- `?create-model` query param → model-creation mode.
+- Create submission validated: `model_id` as objectId, `name` up to 255 chars; the underlying create re-checks `WRITE_MODEL` (CAP-PROTO-03).
+- Preview reads the model/default template shell; no data stored by this capability (the subsequent create stores a prototype via CAP-PROTO-03).
 
 ### Quality control
 
@@ -202,12 +225,29 @@ Owners (lifecycle); end users (discover recent/popular); analytics (execution co
 
 ### Acceptance criteria
 
-- When I call `GET /v2/prototypes`, the system returns the list (public browsing when `PUBLIC_VIEWING` is on); when I call `POST /v2/prototypes`, the system requires `WRITE_MODEL` and creates a prototype.
-- When I call `POST /v2/prototypes/bulk`, the system bulk-creates and returns `201`.
-- When I call `GET /v2/prototypes/recent` (signed in), the system returns `200` with my recent prototypes.
-- When I call `GET /v2/prototypes/popular`, the system returns `200` with top-executed/released/public prototypes.
-- When I call `GET /v2/prototypes/:id`, the system returns `200` (private models require `READ_MODEL`); when I call `PATCH /v2/prototypes/:id`, it returns `200`; when I call `DELETE /v2/prototypes/:id`, it returns `204`.
-- When I call `POST /v2/prototypes/:id/execute-code`, the system returns `200` and increments the execution counter.
+- When I browse the library or home page, I see the prototype list; when public viewing is on, anonymous visitors can browse public prototypes, and when it's off they're blocked.
+- When I create a prototype (via the create dialog or ZIP import) with write permission, it's created and I'm taken to it; when I lack write permission, the create/import controls are disabled.
+- When I'm signed in and open the home page, I see a "Recent Prototypes" section listing prototypes I recently visited; when signed out, the section is hidden.
+- When I open the home page, I see a "Popular Prototypes" section (top-executed, released, public prototypes); when public viewing is off and I'm signed out, clicking a popular prototype prompts me to sign in.
+- When I run a prototype's code (staging/runtime), its execution counter is counted so popularity reflects real use.
+- When I open a prototype under a private model I can't access, I'm prevented from viewing it.
+- When an owner/admin deletes a prototype, it's removed from the library and no longer appears.
+
+### API contract
+
+- `GET /v2/prototypes` → `200` (public browsing when `PUBLIC_VIEWING` is on; reads optional via `PUBLIC_VIEWING`).
+- `POST /v2/prototypes` → requires `WRITE_MODEL`, creates a prototype → `201`.
+- `POST /v2/prototypes/bulk` → bulk-creates → `201`.
+- `GET /v2/prototypes/recent` (signed in) → `200` with my recent prototypes.
+- `GET /v2/prototypes/popular` → `200` with top-executed/released/public prototypes.
+- `GET /v2/prototypes/:id` → `200` (private models require `READ_MODEL`).
+- `PATCH /v2/prototypes/:id` → `200`.
+- `DELETE /v2/prototypes/:id` → `204`.
+- `POST /v2/prototypes/:id/execute-code` → `200` and increments the execution counter.
+- Auth: reads optional via `PUBLIC_VIEWING`; writes, `recent`, and `execute-code` require sign-in.
+- Authorization: `WRITE_MODEL` required for `POST`/`PATCH`/`DELETE`/`bulk`; private-model reads gated by `READ_MODEL`.
+- Input validation: `model_id` as objectId, `name` up to 255 chars, valid `state` value.
+- Rate limiting: not applied — bulk-create and execute-code are unguarded.
 
 ### Quality control
 
@@ -280,9 +320,25 @@ Authors (build); reviewers (feedback); operators (staging); end users (view).
 
 ### Acceptance criteria
 
-- When I open `/model/:id/library/prototype/:pid[/:tab]`, the system renders the workspace with tabs `view|journey|code|dashboard|feedback|staging|plug`.
-- When I manage addon tabs, the system requires `WRITE_MODEL` and `ALLOW_NON_ADMIN_ADDON_CONFIG`; when I choose "Save as Template", the system requires admin; Staging requires sign-in and prototype code.
-- I can collapse the plugin sidebar, add/manage addon tabs, and use the "Customize Layout" editor.
+- When I open a prototype's workspace, I see the tab bar with built-in tabs (Overview, Customer Journey, SDV Code, Dashboard, Feedback) plus any custom plugin tabs and a Staging right-nav action; the first visible tab is shown by default.
+- When I click a built-in tab, its content renders; when I click a custom plugin tab, the plugin's page loads.
+- When I have write permission and non-admin addon config is allowed, I see a "+" button to add addon tabs and a "Customize Layout…" menu item; otherwise both are hidden.
+- When I add an addon tab, I pick a plugin and a label; if that plugin is already added, I'm told it's already in the tabs; on success the new tab appears.
+- When I open "Customize Layout", I can reorder, show/hide, and rename tabs, set the sidebar plugin, tab style and border radius, and configure right-nav buttons; on save the layout persists.
+- When I'm an admin, I see a "Save Prototype as Template" menu item; non-admins don't see it.
+- When the prototype has no code, the Staging tab is hidden and I'm redirected to the Code tab; when I'm signed out and open Staging, I'm shown an "Authentication Required" prompt to sign in.
+- When I collapse the plugin sidebar, it collapses to a thin strip and I can expand it again.
+
+### API contract
+
+- Page route: `GET /model/:id/library/prototype/:pid[/:tab]` — renders the workspace with tabs `view|journey|code|dashboard|feedback|staging|plug` (reads optional via `PUBLIC_VIEWING`).
+- Addon tab add/manage requires `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG`.
+- "Save as Template" requires admin (`MANAGE_USERS`).
+- Staging requires sign-in + prototype code.
+- Plugin tabs render via `PluginPageRender` (unsandboxed — a plugin tab can access the page like any other script).
+- Tab/addon config persisted on `prototype.extend` / `model.custom_template` (right-nav, sidebar plugin, tab variant/border-radius).
+- `extend` accepts any JSON; `widget_config` a JSON string — loosely validated.
+- Rate limiting: not applied.
 
 ### Quality control
 
@@ -353,10 +409,23 @@ Prototype authors (write/edit SDV code); GenAI users (generate code).
 
 ### Acceptance criteria
 
-- When I edit code, the system requires `WRITE_MODEL` and auto-saves my changes; the language label reflects Python or Rust.
-- When `SHOW_CODE_API_PANEL=true`, the system shows the Vehicle API panel.
-- When `SHOW_SDV_PROTOPILOT_BUTTON=true` and I have `USE_GEN_AI`, the system shows the SDV ProtoPilot button.
-- When `SHOW_CODE_DIFF=true`, the system shows a code diff after generation.
+- When I open the Code tab, I see the Monaco editor with my prototype's code and a language label (Python or Rust); when I lack write permission, the editor is read-only.
+- When I edit code with write permission, my changes auto-save periodically and on blur, and persist to the prototype.
+- When the Vehicle API panel is shown, I see the vehicle signals list beside the editor, and I can resize or collapse it.
+- When the SDV ProtoPilot button is shown (and I have GenAI permission), I can launch the GenAI dialog, generate code, preview it, and apply it to my editor.
+- When code diff is enabled and my code changes (via GenAI or a plugin), a "Show Diff" toggle appears comparing the previous version with the current; I can show or hide the diff.
+- When my prototype's code is a JSON project (an array), the multi-file project editor (CAP-PROTO-06) loads instead of the single-file Monaco editor.
+
+### API contract
+
+- Editing / auto-save requires `WRITE_MODEL`; persisted via `PATCH /v2/prototypes/:id` with body `{ code }` → `200`.
+- `SHOW_CODE_API_PANEL=true` → Vehicle API panel shown.
+- `SHOW_SDV_PROTOPILOT_BUTTON=true` + `USE_GEN_AI` permission → SDV ProtoPilot button shown.
+- `SHOW_CODE_DIFF=true` → code diff shown after generation.
+- GenAI calls go to the external `GENAI_SDV_APP_ENDPOINT`; GenAI output is applied directly to `prototype.code`.
+- Auto-save is throttled (`captureChange`); no version history.
+- `code` accepts any string (including empty) — no language or safety validation.
+- Auth: required for edit. Rate limiting: not applied.
 
 ### Quality control
 
@@ -434,8 +503,23 @@ Authors of multi-file SDV projects.
 
 ### Acceptance criteria
 
-- When my `prototype.code` is a JSON project, the system activates the project editor; editing requires `WRITE_MODEL`.
-- I can create/rename/delete files and folders, open tabs, save-all, and import/export a ZIP.
+- When my prototype's code is a JSON project (an array), the multi-file project editor activates in the Code tab; otherwise the single-file Monaco editor is used.
+- When I create a file or folder, I enter a name in the tree; an empty name, invalid characters (`:*?"<>|`), reserved names (CON, PRN, …), or leading/trailing spaces show an error; a duplicate name at the target location shows an error.
+- When I rename, move, or delete an item, the tree updates; deleting a folder asks for confirmation and removes its contents; closing a file with unsaved changes asks whether to save, discard, or cancel.
+- When I open multiple files, each opens in its own tab with its own Monaco editor; unsaved files are marked.
+- When I press Ctrl/Cmd+S I save the current file; Ctrl/Cmd+Shift+S saves all; structural changes (add/rename/move/delete) auto-save.
+- When I import a ZIP, a confirmation warns that the current project will be replaced; on success the tree is replaced; on a malformed archive I see an error. When I export, I download a ZIP of all my files named after the prototype.
+- When I lack write permission, editing is disabled.
+
+### API contract
+
+- Activates when `prototype.code` is a JSON project (array); editing requires `WRITE_MODEL`; persisted via `PATCH /v2/prototypes/:id` with `code` = JSON string of the file tree → `200`.
+- File ops act on paths inside the JSON project — `../` traversal is not explicitly validated.
+- ZIP import must sanitize entry names (currently no sanitization — reject `../` and absolute paths).
+- Binary files > 500 KB are ignored on import/export; binary content stored base64-encoded.
+- Partial GitHub auth wiring exists for an intended git sync (not active).
+- No direct HTTP surface of its own — persistence via the CAP-PROTO-03 update endpoint.
+- Auth: required. Rate limiting: not applied.
 
 ### Quality control
 
@@ -507,10 +591,21 @@ Reviewers (give feedback); owners (improve prototypes).
 
 ### Acceptance criteria
 
-- When I call `GET /v2/feedbacks`, the system returns `200` paginated (public browsing when `PUBLIC_VIEWING` is on).
-- When I call `POST /v2/feedbacks` (signed in), the system creates feedback and returns `201`.
-- When I call `PATCH /v2/feedbacks/:id` or `DELETE /v2/feedbacks/:id`, the system returns `200` or `204` and only lets me act on my own feedback.
-- In the UI `feedback` tab, I can list feedback, add it via a form, and delete only my own.
+- When I open the Feedback tab, I see the prototype's overall average star rating and a paginated list of feedback entries (interviewee name, organization, per-criterion star ratings, question, recommendation); when there's no feedback I see "No feedback found."
+- When I'm signed in, I see an "Add Feedback" button; when signed out, I can browse feedback only if public viewing is on, otherwise I'm blocked.
+- When I submit the feedback form, I must provide an interviewee name and the three star ratings (needs addressed, relevance, ease of use); on success my feedback appears in the list and the overall average updates.
+- When I view feedback I authored, I see a "Delete Your Feedback" button; I can delete only my own feedback — other users' entries show no delete control, and deleting asks for confirmation.
+- When I paginate, the page changes and the list updates.
+
+### API contract
+
+- `GET /v2/feedbacks` → `200` paginated (public browsing when `PUBLIC_VIEWING` is on; auth optional via `PUBLIC_VIEWING`).
+- `POST /v2/feedbacks` (signed in) → creates feedback → `201`.
+- `PATCH /v2/feedbacks/:id` → `200`; `DELETE /v2/feedbacks/:id` → `204`; both are own-only (the system returns `FORBIDDEN` for non-owners).
+- Auth: `POST`/`PATCH`/`DELETE` require sign-in; `GET` optional via `PUBLIC_VIEWING`.
+- Authorization: `PATCH`/`DELETE` are own-only.
+- Input validation: scores 1–5, a required `interviewee.name`, and `description`/`question`/`recommendation` up to 2000 chars.
+- Rate limiting: not applied — burner-account spam is possible.
 
 ### Quality control
 
@@ -587,10 +682,23 @@ Admins (standardize starters); authors (quick-start).
 
 ### Acceptance criteria
 
-- When I call `GET /v2/project-template[/:id]`, the system returns the public list or a single template (also available at `/v2/system/project-template`).
-- When I call `POST /v2/project-template` as admin, the system creates a template and returns `201`.
-- When I call `PUT /v2/project-template/:id` as admin, it returns `200`; when I call `DELETE /v2/project-template/:id` as admin, it returns `204`.
-- The system seeds predefined templates at startup and never overwrites my admin edits.
+- As an admin, I can open the Prototype Templates manager and see all templates (public and private) as cards with a language icon, name, description, and visibility badge; when none exist I see an empty "No prototype templates yet" state.
+- As an admin, I can create a new template (name, description, visibility, and code/widget_config/customer_journey data) via "New Template", edit one by clicking its card, and delete one via a confirmation dialog ("permanently delete … cannot be undone").
+- As an author creating a prototype, I can pick a template from the template selector; the chosen template pre-populates my new prototype's code, language, dashboard config, and customer journey.
+- When predefined templates are seeded at startup, they appear in the selector but never overwrite my admin edits.
+- As a non-admin author, I only see public templates in the create selector; I cannot open the template manager.
+
+### API contract
+
+- `GET /v2/project-template[/:id]` → public list or a single template (also available at `/v2/system/project-template`); non-admin reads are filtered to `visibility: 'public'`.
+- `POST /v2/project-template` (admin) → creates a template → `201`.
+- `PUT /v2/project-template/:id` (admin) → `200`.
+- `DELETE /v2/project-template/:id` (admin) → `204`.
+- Auth: reads are public (signed-out can read); writes require sign-in + `ADMIN`.
+- Authorization: `ADMIN` for `POST`/`PUT`/`DELETE`; non-admin reads filtered to `visibility: 'public'`.
+- Input validation: `name` (required, max 255), `data` as a JSON string (required), `visibility` as `public` or `private`.
+- Predefined templates seeded at startup (`predefinedProjectTemplates.js`); the seed never overwrites admin edits.
+- Rate limiting: not applied.
 
 ### Quality control
 

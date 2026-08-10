@@ -41,19 +41,28 @@ flowchart TD
 
 ### Description
 
-As a user, browse vehicle models across three sections — My Models, My Contributions, and Public — to discover models to build on. As a model owner, create a new model or import one from a ZIP archive to start prototyping.
+As a user, I can browse vehicle models in three sections — My Models, My Contributions, and Public — to discover models to build on. As a model owner, I can create a new model or import one from a ZIP file to start prototyping.
 
 ### Who uses it / value
 
-End users (discover models); model owners (create/import); the wider community (public discovery when `PUBLIC_VIEWING`).
+End users (discover models); model owners (create/import); the wider community (public discovery when public viewing is on).
 
 ### Acceptance criteria
 
-- When I call `GET /v2/models` (optional auth via `PUBLIC_VIEWING`), the system returns `200` a paginated list I can filter by (`name`, `visibility`, `state`, `tenant_id`, `vehicle_category`, `main_api`, `id`, `created_by`, `is_contributor`, `include_stats`, `sortBy`, `page`, `limit`, `fields`).
-- When I call `GET /v2/models/all`, the system returns an expanded/unpaginated aggregation of owned + contributed + public-released models (optional auth via `PUBLIC_VIEWING`; owned/contributed only populated for authenticated users).
-- When I call `POST /v2/models` (auth), the system returns `201` a new model. When I call `POST /v2/models/stats` (optional auth), the system returns `200 { statsById: { [modelId]: {...} } }` for the body `ids`.
-- When I import a model from a ZIP archive, the system creates the model from the archive contents.
-- When I'm signed out and `PUBLIC_VIEWING=false`, the system returns `401` on list.
+- When I open the Models page, I see models grouped into My Models, My Contributions, and Public (signed-out users see only Public, when public viewing is allowed).
+- When I search by name, the list filters live; when I switch tabs, the corresponding section scrolls into view.
+- When I click "Create New Model" and fill in the form, my new model is created and I'm taken to its detail page; it appears under "My Models".
+- When I import a model from a ZIP file, the model is created from the archive; if a model with the same name already exists, I'm prompted to choose a different name (with a suggested alternative) before importing.
+- When the archive is invalid or unreadable, I see an "Import failed" message.
+- When I'm signed out and public viewing is off, I'm prompted to sign in instead of seeing the list.
+
+### API contract
+
+- `GET /v2/models` (optional auth via `PUBLIC_VIEWING`) → `200` paginated list; filters: `name`, `visibility`, `state`, `tenant_id`, `vehicle_category`, `main_api`, `id`, `created_by`, `is_contributor`, `include_stats`, `sortBy`, `page`, `limit`, `fields`.
+- `GET /v2/models/all` → expanded/unpaginated aggregation of owned + contributed + public-released models (optional auth via `PUBLIC_VIEWING`; owned/contributed only populated for authenticated users).
+- `POST /v2/models` (auth) → `201` new model. `POST /v2/models/stats` (optional auth) → `200 { statsById: { [modelId]: {...} } }` for the body `ids`.
+- Import from ZIP creates a model from the archive contents.
+- Signed-out with `PUBLIC_VIEWING=false` → `401` on list.
 
 ### Quality control
 
@@ -110,7 +119,7 @@ Model metadata (name, description, visibility, state, images, tags) stored in th
 
 ### Description
 
-As a model owner or contributor, view and edit a model's name, home image, vehicle properties, visibility (public/private), state (draft/released/blocked), and contributors so that the model stays accurate and discoverable. As a consumer, export the model as a ZIP archive or download its computed VSS JSON to use the model elsewhere, and (as owner) delete a model I no longer need.
+As a model owner or contributor, I can view and edit a model's name, home image, vehicle properties, visibility (public/private), state (draft/released/blocked), and contributors so that the model stays accurate and discoverable. As a consumer, I can export the model as a ZIP archive or download its computed VSS JSON to use the model elsewhere, and (as owner) delete a model I no longer need.
 
 ### Who uses it / value
 
@@ -118,10 +127,21 @@ Model owners (maintain models); contributors (collaborate); consumers (export/do
 
 ### Acceptance criteria
 
-- When I call `GET /v2/models/:id` (optional auth), the system returns `200` the model; when I have edit rights, the response includes `contributors`/`members`.
-- When I call `PATCH /v2/models/:id` (requires `WRITE_MODEL`), the system returns `200`. When I call `DELETE /v2/models/:id` (requires `WRITE_MODEL`), the system returns `204`.
-- When I trigger Export ZIP or download computed VSS from the UI, the system returns the archive / JSON.
-- When I lack `WRITE_MODEL`, the system returns `403` on edit/delete.
+- When I open a model's detail page, I see its name, home image, vehicle properties, visibility, state, and contributors.
+- When I have edit rights, I see Edit, Export, Download, and Delete actions; when I don't, those actions are hidden.
+- When I edit the name and save, the model name updates; if a model with that name already exists, I'm shown a duplicate-name hint with a suggested alternative.
+- When I update the home image, the new image uploads and appears.
+- When I change visibility to private, signed-out users can no longer see the model; when I change state to released, it appears publicly; when I set state to blocked, it's marked blocked.
+- When I click Export, a ZIP archive of the model downloads; when I click Download, the computed VSS JSON downloads.
+- When I click Delete and confirm (typing the model name), the model is permanently removed and I'm sent back to the Models list.
+- When I lack edit rights, I'm prevented from editing or deleting the model.
+
+### API contract
+
+- `GET /v2/models/:id` (optional auth) → `200` the model; when I have edit rights, the response includes `contributors`/`members`.
+- `PATCH /v2/models/:id` (requires `WRITE_MODEL`) → `200`. `DELETE /v2/models/:id` (requires `WRITE_MODEL`) → `204`.
+- Export ZIP / download computed VSS triggered from the UI returns the archive / JSON.
+- Lacking `WRITE_MODEL` → `403` on edit/delete.
 
 ### Quality control
 
@@ -183,7 +203,7 @@ The model's visibility controls who can see it; deleting a model removes it from
 
 ### Description
 
-As a model owner, customize the model's tabbed workspace — Overview, Prototype Library, Vehicle API, plus custom plugin tabs — by adding, reordering, or hiding tabs, setting a variant, and configuring a sidebar plugin and right-nav buttons so that collaborators see the layout that fits the model. As an admin, save a layout as a Model Template for other creators to reuse.
+As a model owner, I can customize the model's tabbed workspace — Overview, Prototype Library, Vehicle API, plus custom plugin tabs — by adding, reordering, or hiding tabs, setting a variant, and configuring a sidebar plugin and right-nav buttons so that collaborators see the layout that fits the model. As an admin, I can save a layout as a Model Template for other creators to reuse.
 
 ### Who uses it / value
 
@@ -191,9 +211,17 @@ Model owners (customize the workspace); end users (tailored model views); admins
 
 ### Acceptance criteria
 
-- The tab configuration I save is stored on the model as `model_tabs`, `prototype_tabs`, `prototype_sidebar_plugin`, `prototype_right_nav_buttons`.
-- When I manage addon/tab configuration, the system requires `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG` (admins are always allowed).
-- When I (as admin) choose "Save as Template", the system stores the layout as a Model Template.
+- When I configure tabs (add/reorder/hide) and save, the layout persists on the model and renders for everyone viewing it.
+- When I add a plugin addon tab, it renders in the workspace; when I reorder or hide tabs, the new order/visibility persists.
+- When I set a sidebar plugin or right-nav buttons, they render accordingly.
+- When I'm a non-admin and addon configuration by non-admins is disabled, I'm prevented from configuring addon tabs/plugins.
+- When I'm an admin, I can choose "Save as Template" to store the layout as a Model Template for reuse.
+
+### API contract
+
+- Tab configuration I save is stored on the model as `model_tabs`, `prototype_tabs`, `prototype_sidebar_plugin`, `prototype_right_nav_buttons`.
+- Managing addon/tab configuration requires `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG` (admins always allowed).
+- Admin "Save as Template" stores the layout as a Model Template.
 
 ### Quality control
 
@@ -249,7 +277,7 @@ Layout config stored on the model document; no secrets.
 
 ### Description
 
-As a model owner, add or remove authorized users (contributors/members) on my model so that they can collaborate, and the model shows up in their My Contributions section.
+As a model owner, I can add or remove authorized users (contributors/members) on my model so that they can collaborate, and the model shows up in their My Contributions section.
 
 ### Who uses it / value
 
@@ -257,8 +285,15 @@ Model owners (delegate editing); contributors (gain access).
 
 ### Acceptance criteria
 
-- When I call `POST /v2/models/:id/permissions {userId, role}` (requires `WRITE_MODEL`), the system returns `201` and adds the authorized user.
-- When I call `DELETE /v2/models/:id/permissions?userId=&role=` (requires `WRITE_MODEL`), the system returns `204` and removes the user.
+- When I open the contributor list on my model, I see the current contributors/members.
+- When I add a user as a contributor or member, they gain access and the model appears in their My Contributions section.
+- When I remove a contributor, their access is revoked and the model no longer appears in their My Contributions.
+- When I'm not the model owner (and don't have manage rights), I'm prevented from adding or removing contributors.
+
+### API contract
+
+- `POST /v2/models/:id/permissions {userId, role}` (requires `WRITE_MODEL`) → `201` adds the authorized user.
+- `DELETE /v2/models/:id/permissions?userId=&role=` (requires `WRITE_MODEL`) → `204` removes the user.
 
 ### Quality control
 
@@ -317,7 +352,7 @@ Adding/removing a contributor creates/removes a binding scoped to the model.
 
 ### Description
 
-As a user, request aggregated stats (e.g. prototype counts) for a set of model IDs so that I can show model badges/counts in the UI.
+As a user, I can see aggregated stats (e.g. prototype counts) for a set of models so that model badges/counts show in the UI.
 
 ### Who uses it / value
 
@@ -325,7 +360,13 @@ End users (model badges/counts); owners (overview).
 
 ### Acceptance criteria
 
-- When I call `POST /v2/models/stats {ids:[...]}` (optional auth via `PUBLIC_VIEWING`), the system returns `200 { statsById: { [modelId]: {...} } }`; for empty/missing ids it returns `{ statsById: {} }`.
+- When I view model cards that show counts, the stats (e.g. prototype count) are displayed per model.
+- When the models have no stats, I see empty/zero counts.
+- When I'm signed out, I only see stats for public models; when signed in, I see stats for models I can read.
+
+### API contract
+
+- `POST /v2/models/stats {ids:[...]}` (optional auth via `PUBLIC_VIEWING`) → `200 { statsById: { [modelId]: {...} } }`; for empty/missing ids it returns `{ statsById: {} }`.
 
 ### Quality control
 
@@ -370,7 +411,7 @@ Aggregated only; no operational data persisted.
 
 ### Description
 
-As an admin, manage scaffolds for model layouts (the `custom_template`) — including the single `default` template — so that creators can quick-start a new model from a standard layout.
+As an admin, I can manage scaffolds for model layouts — including the single default template — so that creators can quick-start a new model from a standard layout.
 
 ### Who uses it / value
 
@@ -378,7 +419,15 @@ Admins (standardize layouts); model creators (quick-start from a template).
 
 ### Acceptance criteria
 
-- When I call `GET /v2/model-template[/:id]` (public), the system returns the list/get; when I (as admin) call `POST /v2/model-template`, it returns `201`; `PUT/DELETE /v2/model-template/:id` return `200`/`204`. These are also available at `/v2/system/model-template`.
+- When I open the Model Template manager, I see the list of available templates.
+- When I (as admin) create a new template, it appears in the manager.
+- When I (as admin) edit or delete a template, the change persists / the template is removed.
+- When I'm a non-admin, I'm prevented from creating, editing, or deleting templates.
+- When I create a new model and select a template, its layout is applied to the new model.
+
+### API contract
+
+- `GET /v2/model-template[/:id]` (public) → list/get; `POST /v2/model-template` (admin) → `201`; `PUT /v2/model-template/:id` → `200`; `DELETE /v2/model-template/:id` → `204`. Also available at `/v2/system/model-template`.
 
 ### Quality control
 

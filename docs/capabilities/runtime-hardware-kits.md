@@ -40,7 +40,7 @@ flowchart TD
 
 ### Description
 
-As a prototype author, I can run my prototype's Python/C++/Rust code against the live vehicle API from the runtime panel, watch real-time signals and trace variables, request pip installs, rebuild/revert the vehicle model, point at a custom runtime URL, and stop the run when done.
+As a prototype author, I can run, stop, and watch my prototype's Python/C++/Rust code from the runtime control panel — seeing live terminal output, vehicle signals, and trace variables — and manage dependencies and the vehicle model from the same panel, so that I can test my prototype against a live runtime without leaving the workspace.
 
 ### Who uses it / value
 
@@ -48,9 +48,23 @@ Prototype authors (run/test code); hardware-kit operators.
 
 ### Acceptance criteria
 
-- When I connect a runtime, the system streams live signals and trace variables into the panel; when I press Run, the system executes my Python or Rust app on the connected runtime and streams terminal output back to me; when I press Stop, the system halts execution.
-- The runtime server is set by `RUNTIME_SERVER_URL` / `RUNTIME_SERVER_CONFIG`; a custom runtime URL I enter overrides the instance default for my session.
-- Read requires `READ_MODEL`.
+- When I expand the runtime control panel and pick a runtime from the Runtime selector, the panel connects; when I press Run, my prototype's code executes on the connected runtime and the Terminal tab streams its output; when I press Stop, execution halts and the Run button becomes available again.
+- When I have no runtime selected, the Run button is disabled and shows a hint to select a runtime; when nothing is running, the Stop button is disabled.
+- When I open the Signals Watch tab, I see live values for the vehicle APIs my prototype uses and can write a value back to the runtime; when I open the Vars Watch tab (C++ prototypes), I see trace variables and can write values back.
+- When I choose "Install New Python Library" from the Send Request menu and type a library name, the runtime fetches the dependency and I see the result in the terminal; when I choose "Rebuild Vehicle Model" or "Revert to default Vehicle Model", the runtime applies the change.
+- When I open "Config Runtime Server" and enter a custom runtime URL, my session uses that server instead of the instance default; when I clear it, the panel falls back to the default runtime.
+- When I am not signed in or lack read access to the prototype's model, I am prevented from opening the control panel.
+
+### API contract
+
+No HTTP surface on the backend — the panel talks to the kit/runtime server over a direct Socket.IO channel. Permission gating, config keys, and channel events:
+
+- Read requires `READ_MODEL` permission on the prototype's model (owner bypass).
+- Runtime server set by site-config keys `RUNTIME_SERVER_URL` (server address) and `RUNTIME_SERVER_CONFIG` (Socket.IO connection options, JSON). A custom runtime URL entered in the "Config Runtime Server" dialog overrides the instance default for the session (stored in `localStorage` under `customKitServer`).
+- The runtime channel authenticates to the kit server with an asset access token (CAP-RUNTIME-04).
+- Socket.IO events over the runtime channel: `subscribe_apis`, `run_python_app` / `run_rust_app`, `stop_python_app`, `writeSignalsValue`, `writeVarsValue`, `listPythonLibs`, `requestInstallLib`, `builldVehicleModel`, `revertToDefaultVehicleModel`, `loadMockSignals`, `setMockSignals`; the runtime pushes signals/vars/terminal output and `lsOfRunner` / `lsOfApiSubscriber` info back to the panel.
+- Rust remote compile ships source to an external compiler (`DaRemoteCompileRust`); on `compile-done` the compiled binary is run via `runBinApp`.
+- Widget iframes are notified on run/stop via `postMessage({ action: 'run-app' | 'stop-app' })`.
 
 ### Quality control
 
@@ -119,7 +133,7 @@ Runtime signal values are transient (kept in memory, not persisted); prototype c
 
 ### Description
 
-As a user, I can create, list, share, edit, and delete my cloud-runtime and hardware-kit assets, and choose which runtime is active for my prototype, so that I can manage the runtimes and kits I use.
+As a prototype author, I can add a cloud runtime by its runtime code, rename it, share it with collaborators, remove it from my list, and pick which runtime is active for my prototype, so that I can keep and switch between the runtimes I use.
 
 ### Who uses it / value
 
@@ -127,8 +141,22 @@ End users (manage their runtimes/kits); collaborators (shared access).
 
 ### Acceptance criteria
 
-- When I create, share, edit, or delete a runtime/kit asset, the system applies the change to my assets; when I select an active runtime, the control panel uses it.
-- Auth required.
+- When I open the runtime manager from the control panel ("Add Runtime"), I see my cloud runtimes listed; when I enter a runtime code and click Add, the runtime appears in my list and becomes selectable in the control panel.
+- When I click the edit icon on a runtime and change its name, the list updates to the new name; when I click the delete icon and confirm, the runtime is removed from my list and is no longer selectable.
+- When I click the share icon, the share dialog opens and I can share the runtime with collaborators (CAP-ASSET-04); when a collaborator opens their manager, they see the shared runtime.
+- When I try to add a runtime with an empty name, the Add button is disabled; when a create, rename, or delete fails, I see a failure toast and my list is unchanged.
+- When I am not signed in, I am prevented from opening the manager.
+
+### API contract
+
+The runtime manager is a UI over the asset endpoints (full contract in CAP-ASSET-01). All routes require auth.
+
+- `POST /v2/assets` (auth) → `200` — create asset; body `{ name: string, type: 'CLOUD_RUNTIME', data: any }`.
+- `GET /v2/assets` (auth) → `200` — list own + shared assets; query `name`, `type`, `sortBy`, `limit`, `page`.
+- `PATCH /v2/assets/:id` (auth + `WRITE_ASSET`, owner bypass) → `200` (empty body) — update; body `{ name?, type?, data? }` (min 1 field); `404` if not found.
+- `DELETE /v2/assets/:id` (auth + `WRITE_ASSET`, owner bypass) → `200` — delete; `404` if not found.
+- Sharing: `POST /v2/assets/:id/permissions` / `DELETE /v2/assets/:id/permissions` (see CAP-ASSET-04).
+- The active runtime is chosen in the control panel's Runtime selector (client-side); no endpoint for "set active".
 
 ### Quality control
 
@@ -178,7 +206,7 @@ Asset `data` (e.g. endpoint config) stored in `assets`.
 
 ### Description
 
-As a hardware-kit operator, I can configure my hardware kit's identity and connection so that the runtime connector can target it, and fetch or replace the kit's signal mapping and VSS files.
+As a hardware-kit operator, I can open my hardware kit from My Assets, edit its signal-mapping (Config) and VSS files in a code editor, and push them to or pull them from the kit, so that the runtime connector targets a correctly-configured kit.
 
 ### Who uses it / value
 
@@ -186,8 +214,21 @@ Hardware-kit operators.
 
 ### Acceptance criteria
 
-- When I open a `HARDWARE_KIT` asset from My Assets, the system lets me configure the kit identity the runtime connector targets; auth required.
-- When I fetch or replace the kit's signal mapping or VSS files, the system applies the operation against the connected kit.
+- When I open a `HARDWARE_KIT` asset from My Assets and click the manage (kit) icon, the hardware kit manager opens with Config and VSS tabs.
+- When I click "Load from device" on the Config (or VSS) tab, the kit's current signal-mapping (or VSS) file is loaded into the editor; when I edit the content and click "Set to device", the file is written to the kit.
+- When I set a new VSS file, the kit rebuilds its vehicle model from the new VSS shortly after.
+- When the kit is unreachable or the operation fails, the Load/Set buttons show a loading state and time out without applying the change.
+- When I am not signed in or lack read access to the asset, I am prevented from opening the manager.
+
+### API contract
+
+No HTTP surface on the backend — the manager opens its own Socket.IO channel to the kit server. Asset gating and channel events:
+
+- Asset access gated by `READ_ASSET`/`WRITE_ASSET` on the `HARDWARE_KIT` asset (owner bypass) via the My Assets entry point (CAP-ASSET-01).
+- The manager authenticates to the kit server with an asset access token (CAP-RUNTIME-04) over a `DaRuntimeConnector` channel (`isDeployMode`, `targetPrefix=['Kit-','PilotCar-']`, `forceKitId=<kitName>`).
+- Kit server URL from site-config `RUNTIME_SERVER_URL`.
+- Socket.IO operations: `readFile(filePath)`, `writeFile(filePath, fileContent)`, `builldVehicleModel(vss)`.
+- File paths: `/app/remote_access/signal-config.json` (Config), `/app/remote_access/vss.json` (VSS).
 
 ### Quality control
 
@@ -247,7 +288,7 @@ Kit connection config in the asset `data`; signal/VSS files read/written on the 
 
 ### Description
 
-As a DevOps/integrator, I can mint an access token bound to my asset so that an external runtime or kit client can authenticate as that asset without my user credentials.
+As a DevOps/integrator, I can mint an access token bound to my asset (via the API — there is no in-app button) so that an external runtime or kit client can authenticate as that asset without my user credentials.
 
 ### Who uses it / value
 
@@ -255,8 +296,16 @@ DevOps/integrators (programmatic runtime access); the kit server (authenticating
 
 ### Acceptance criteria
 
-- When I call `POST /v2/assets/:id/generate-token` (auth + `READ_ASSET`), the system returns `200 { tokens: { access } }` — an asset-scoped token with no refresh.
-- When I present that token to the kit server/runtime, the system treats the caller as the asset's identity.
+- When I mint an access token for my asset, I receive a token I can hand to my kit/runtime; when the kit/runtime presents that token, the system treats the caller as my asset's identity.
+- When the kit/runtime calls without a valid token, the request is rejected as unauthenticated.
+- When I lack read access to the asset, I am prevented from minting a token.
+- There is no in-app UI button to mint a token — it is obtained via the API and handed to the kit out of band.
+
+### API contract
+
+- `POST /v2/assets/:id/generate-token` (auth + `READ_ASSET`, owner bypass) → `200 { tokens: { access } }` — asset-scoped JWT, no refresh token; `404` if the asset is not found.
+- Validates `id` (objectId) only; no request body.
+- No rate limiting — `authLimiter` is defined but not wired to the route.
 
 ### Quality control
 
@@ -318,7 +367,7 @@ Token is a bearer credential — treat as a secret; no persistence client-side b
 
 ### Description
 
-As an API caller or frontend integrator, I can reach the kit server through the same-origin `/kit-server/*` path so that browser runtime connections work without exposing a cross-origin endpoint.
+As a prototype author, my browser's runtime connection works against the kit server through the instance's same-origin path, so that my prototype runs against the connected runtime without cross-origin errors; I never configure this directly — I just see my prototype run.
 
 ### Who uses it / value
 
@@ -326,8 +375,17 @@ The frontend runtime connector (a same-origin entry point to the kit server); De
 
 ### Acceptance criteria
 
-- When I send a request to `/kit-server/*`, the system proxies it to `KIT_SERVER_URL` and upgrades websockets.
-- The route is active only when `KIT_SERVER_URL` is configured.
+- When the instance is configured with a kit server, my browser's runtime connection works without cross-origin errors and my prototype runs against the connected runtime.
+- When the instance is not configured with a kit server, the runtime connection is unavailable.
+- I never see or configure the proxy path myself — it is transparent to me.
+
+### API contract
+
+No HTTP surface for users — the backend proxies the kit server transparently. Operator config and proxy behavior:
+
+- `app.use('/kit-server', createProxyMiddleware({ target: KIT_SERVER_URL, changeOrigin: true, ws: true, pathRewrite: { '^/kit-server': '' } }))` — proxies `/kit-server/*` to `KIT_SERVER_URL` (`config.services.kitServer.url`, env `KIT_SERVER_URL`) and upgrades websockets.
+- Active only when `KIT_SERVER_URL` is configured.
+- Passthrough — the backend does not authenticate; the kit server enforces its own auth (asset token). CSP `connect-src` must allow the kit server.
 
 ### Quality control
 
@@ -377,7 +435,7 @@ Proxies runtime traffic; no storage on the backend.
 
 ### Description
 
-As an admin/DevOps, I can point my instance at a runtime/kit server via `RUNTIME_SERVER_URL` (the server address) and `RUNTIME_SERVER_CONFIG` (connection options) so that prototype runtime connections target the right server, and confirm reachability through the health endpoint.
+As an admin, I can point my instance at a runtime/kit server (server address + connection options) from Admin → Site Config, and confirm reachability from the health page, so that prototype runtime connections target the right server.
 
 ### Who uses it / value
 
@@ -385,8 +443,17 @@ Admins/DevOps (point instances at a kit server).
 
 ### Acceptance criteria
 
-- When I read the public site config, the system returns `RUNTIME_SERVER_URL` / `RUNTIME_SERVER_CONFIG`; when I write as admin, the system updates them.
-- When I call the health endpoint, the system reports whether the runtime server is reachable.
+- When I set the runtime server address and connection options in the admin site-config page, prototype runtime connections use the new server.
+- When I open the health page, I see whether the runtime server is reachable and how long the check took.
+- When the runtime server URL is not configured, the health page shows the runtime server as skipped.
+- When I am a non-admin, I am prevented from changing the runtime server config; anonymous users can see only the public value.
+
+### API contract
+
+- Public read: `GET /v2/site-configs/public` / `GET /v2/site-configs/public/:key` → returns `RUNTIME_SERVER_URL` and `RUNTIME_SERVER_CONFIG` (URL/connection options only, no secrets).
+- Admin write: `PATCH /v2/site-configs/...` (admin / `MANAGE_USERS`) → updates `RUNTIME_SERVER_URL` / `RUNTIME_SERVER_CONFIG`; schema-validated.
+- Health: `GET /v2/health` → `runtimeServer` status (`ok` / `skipped` / `error`) with message `Reachable in Xms (URL)` or `RUNTIME_SERVER_URL not configured`.
+- Site-config keys: `RUNTIME_SERVER_URL` (default `https://kit.digitalauto.tech`), `RUNTIME_SERVER_CONFIG` (Socket.IO options).
 
 ### Quality control
 

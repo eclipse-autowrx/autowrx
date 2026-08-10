@@ -51,8 +51,14 @@ End users (visualize prototype behavior); demo audiences.
 
 ### Acceptance criteria
 
-- When I open a dashboard, the system renders the widgets from `widget_config` and streams runtime signal values to each widget; run/stop events are broadcast to all widgets.
-- When I toggle fullscreen, the system shows a fullscreen toolbar (logo + branding from site config).
+- When I open a prototype's dashboard, the widgets render and update live as runtime signal values change.
+- When the prototype starts or stops, every widget reflects the run/stop state.
+- When I toggle fullscreen, I get an immersive view with a toolbar showing the site logo and branding.
+- When I don't have permission to view the prototype, I cannot open the dashboard.
+
+### API contract
+
+No HTTP surface — transparent runtime behavior. The renderer renders widgets from `widget_config`, streams runtime signal values to each widget, and broadcasts run/stop events to all widgets; the fullscreen toolbar shows logo + branding from site config. View access follows the prototype's read-access gating (`READ_MODEL`, optional via `PUBLIC_VIEWING`).
 
 ### Quality control
 
@@ -120,8 +126,16 @@ Prototype authors (compose dashboards).
 
 ### Acceptance criteria
 
-- When I edit the dashboard, the system requires `READ_MODEL` and auto-applies the default dashboard template on first open.
-- When I add a widget (Built-in / Marketplace / URL), edit options/boxes, or move/delete on the grid, the system persists it; "Save as Template" requires admin.
+- When I open the dashboard editor, I can place, move, edit, and delete widgets on the 5×2 grid, add widgets from Built-in, Marketplace, or by URL, edit options and boxes, and use a "used signals" helper.
+- When I open a dashboard for the first time, the default template auto-applies.
+- When I save my layout, it persists to the prototype and shows on the next open.
+- When I try to save the layout as a template, only the admin action succeeds; non-admins do not see the "Save as Template" option.
+- When my widget placement is invalid (discrete cells or overlaps), I see a warning and cannot save that layout.
+
+### API contract
+
+- Edit requires `READ_MODEL` and auto-applies the default dashboard template on first open.
+- Add a widget (Built-in / Marketplace / URL), edit options/boxes, or move/delete on the grid → persisted; "Save as Template" requires admin (`MANAGE_USERS`/`ADMIN`).
 
 ### Quality control
 
@@ -180,7 +194,7 @@ Widget config (URLs/options) stored in `prototype.widget_config`; options may re
 
 ### Description
 
-As an author, I can add widgets from three sources — the Built-in library, the Marketplace (`DEFAULT_MARKETPLACE_URL`), or a direct URL — so that I can pick the right visualization for my dashboard.
+As an author, I can add widgets from three sources — the Built-in library, the Marketplace, or a direct URL — so that I can pick the right visualization for my dashboard.
 
 ### Who uses it / value
 
@@ -188,7 +202,13 @@ Authors (pick widgets); marketplace providers (distribute widgets).
 
 ### Acceptance criteria
 
-- When I add a Built-in widget, it renders from the built-in library; when I add a Marketplace widget, it is fetched from `DEFAULT_MARKETPLACE_URL`; when I add a URL widget, it loads from the given URL.
+- When I open the widget library, I see tabs for Built-in and Marketplace widgets, plus a "by URL" option.
+- When I pick a Built-in widget, it renders from the built-in library; when I pick a Marketplace widget, it is fetched from the configured marketplace; when I provide a direct URL, the widget loads from that URL.
+- When the marketplace is not configured or unreachable, the Marketplace tab is hidden or empty.
+
+### API contract
+
+- Built-in widget → rendered from the built-in library; Marketplace widget → fetched from `DEFAULT_MARKETPLACE_URL`; URL widget → loaded from the given URL.
 
 ### Quality control
 
@@ -248,7 +268,7 @@ Widget URLs/options stored in widget config.
 
 ### Description
 
-As an author, I can add ready-made widget bundles (3d-car, chart-signals, image-by-api-value, signal-list-settable with vss.json, simple-fan, simple-wiper, single-api, terminal) and shared libs (chart.min.js, tailwind/font-awesome, syncer.js) to my dashboard, so that I get instant visualizations without building my own. They are served from `/builtin-widgets`.
+As an author, I can add ready-made widget bundles (3d-car, chart-signals, image-by-api-value, signal-list-settable, simple-fan, simple-wiper, single-api, terminal) to my dashboard from the Built-in library, so that I get instant visualizations without building my own. They are hosted and served for me automatically.
 
 ### Who uses it / value
 
@@ -256,7 +276,12 @@ Authors (ready-made widgets); end users (visualizations).
 
 ### Acceptance criteria
 
-- When I request `GET /builtin-widgets/...`, the system serves the bundle; the editor's Built-in tab lists them.
+- When I browse the Built-in tab in the widget library, I see the ready-made widgets listed.
+- When I add a builtin widget to my dashboard, it renders and works without any extra setup.
+
+### API contract
+
+No HTTP surface — static hosting. Builtin widget bundles and shared libs (chart.min.js, tailwind/font-awesome, syncer.js) are served from `GET /builtin-widgets/...` (public, no auth); `signal-list-settable` ships with `vss.json`.
 
 ### Quality control
 
@@ -304,7 +329,7 @@ Static assets only.
 
 ### Description
 
-As an admin, I can create named `widget_config` presets (with a single `is_default` template and public/private visibility) so that authors get a standard dashboard layout to start from.
+As an admin, I can create named dashboard layout presets (with one default template and public/private visibility) so that authors get a standard dashboard layout to start from.
 
 ### Who uses it / value
 
@@ -312,8 +337,16 @@ Admins (standardize dashboards); authors (quick-start).
 
 ### Acceptance criteria
 
-- When I call `GET /v2/dashboard-template[/:id]` (public), the system returns the list/get; when I call `POST` (admin), the system creates and returns `201`; when I call `PUT /:id` (admin), the system updates and returns `200`; when I call `DELETE /:id` (admin), the system deletes and returns `204`. Also available at `/v2/system/dashboard-template`.
-- When I open a dashboard, the default template auto-applies.
+- When I open the dashboard template manager, I see the list of templates; when I create a new template (name, description, layout), it appears in the manager.
+- When I set a template as default, it auto-applies to new dashboards on first open.
+- When I edit or delete a template, my changes take effect in the manager.
+- When I am a non-admin, I cannot create, edit, or delete templates (the admin actions are unavailable).
+- When I open a dashboard and a default template exists, the default layout auto-applies.
+
+### API contract
+
+- `GET /v2/dashboard-template[/:id]` (public) → list/get; `POST` (admin) → creates, returns `201`; `PUT /:id` (admin) → updates, returns `200`; `DELETE /:id` (admin) → deletes, returns `204`. Also available at `/v2/system/dashboard-template`.
+- Default template auto-applies on dashboard open.
 
 ### Quality control
 
@@ -377,6 +410,10 @@ Authors (generate widgets without coding).
 ### Acceptance criteria
 
 - When I open the widget library, I see a "coming soon" placeholder — not implemented yet.
+
+### API contract
+
+No HTTP surface — not implemented (roadmap; placeholder "coming soon" in the widget library).
 
 ### Quality control
 

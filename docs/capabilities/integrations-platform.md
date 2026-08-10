@@ -62,7 +62,7 @@ flowchart TD
 
 ### Description
 
-As a prototype author with GenAI access, I can generate an SDV Python app from a prompt, preview it, and apply it to my prototype so I can bootstrap code quickly.
+As a prototype author, I can open the SDV ProtoPilot from the Code tab, describe what I want in a prompt, preview the generated Python code, and apply it to my prototype so I can bootstrap code quickly.
 
 ### Who uses it / value
 
@@ -70,8 +70,18 @@ Prototype authors (bootstrap code); GenAI-capable users.
 
 ### Acceptance criteria
 
-- When I open the Code tab with `SHOW_SDV_PROTOPILOT_BUTTON=true` and the `USE_GEN_AI` permission, the system shows the SDV ProtoPilot button; when I submit a prompt, the system generates code, shows a preview, and on apply writes it to `prototype.code`.
-- When `SHOW_CODE_DIFF=true`, the system shows a code diff in the preview.
+- When I open the Code tab and I have GenAI permission, I see the SDV ProtoPilot button; when I lack permission or the button is hidden by config, I do not see it.
+- When I submit a prompt in the ProtoPilot dialog, I see the generated code in a preview; when I apply it, my prototype's code is updated and the dialog closes.
+- When code-diff display is enabled, the preview shows me what changed between my previous code and the generated code; when it is disabled, I see only the generated code.
+
+### API contract
+
+No dedicated HTTP surface — the ProtoPilot dialog calls the GenAI proxy (see CAP-INTEG-02). UI gating and apply target:
+
+- `SHOW_SDV_PROTOPILOT_BUTTON` site-config flag (default `true`) + `USE_GEN_AI` (`generativeAI`) permission — both required for the button to render.
+- `SHOW_CODE_DIFF` site-config flag (default `false`) — toggles code-diff view in the preview.
+- Generated code is applied to `prototype.code` (Prototype document in MongoDB).
+- External GenAI endpoints: `GENAI_SDV_APP_ENDPOINT` (SDV Copilot), `GENAI_MARKETPLACE_URL` (Marketplace).
 
 ### Quality control
 
@@ -128,7 +138,7 @@ Prompt + generated code transit the GenAI service; generated code stored in the 
 
 ### Description
 
-As an API caller, I can send authenticated requests to `/v2/genai/*` and receive SSE-streamed responses from the configured GenAI service so that my frontend can stream generated content.
+As a user, when I use GenAI features (such as SDV ProtoPilot), the platform streams generated content back to me so I see the result streamed live rather than waiting for the whole response.
 
 ### Who uses it / value
 
@@ -136,8 +146,14 @@ The frontend (GenAI calls); integrators (GenAI backend).
 
 ### Acceptance criteria
 
-- When I send an authenticated request to `ALL /v2/genai/*`, the system proxies it to `GENAI_URL` and streams the SSE response back to me.
-- When `GENAI_URL` is unset, the route is inactive.
+- When I use a GenAI feature, I see generated content stream back to me progressively; when the GenAI backend is not configured, the feature is unavailable and I get no streamed response.
+- When my session is not authenticated, I am prevented from using GenAI features.
+
+### API contract
+
+- `ALL /v2/genai/*` (auth required — JWT) → proxies to `GENAI_URL` and streams the SSE response back (passthrough).
+- When `GENAI_URL` is unset, the route returns `500 "not implemented"` (inactive).
+- No server-side `USE_GEN_AI` check on the proxy (JWT only — risk noted).
 
 ### Quality control
 
@@ -195,7 +211,7 @@ Proxies prompts/responses; no backend storage.
 
 ### Description
 
-As a user, I can link my GitHub account to AutoWRX for git sync in the project editor, and sign in via GitHub SSO, so I can reuse my GitHub identity without a separate password.
+As a user, I can sign in with GitHub (when my admin has configured GitHub SSO) so I can reuse my GitHub identity without a separate password; as an author, I can link my GitHub account to AutoWRX so the platform can sync with my repositories.
 
 ### Who uses it / value
 
@@ -203,9 +219,18 @@ Authors (git sync intent); end users (GitHub login).
 
 ### Acceptance criteria
 
-- When I complete GitHub authorization, the system exchanges the code via `GET /v2/auth/github/callback` and delivers the token to my authenticated socket.
-- When I start SSO via `GET /v2/auth/github-sso/{start,callback}`, the system logs me in via GitHub.
-- Requires `GITHUB_CLIENT_ID/SECRET` (env or per-provider config).
+- When my admin has configured a GitHub SSO provider, I see a "Sign in with GitHub" button on the sign-in page; when I click it, I am redirected to GitHub to authorize, then returned to the platform logged in.
+- When I link my GitHub account from the project editor, I am redirected to GitHub to authorize; when authorization completes, my GitHub account is linked and I see my GitHub identity in the platform.
+- When GitHub authorization fails or is cancelled, I see an error message and am not logged in / my account is not linked.
+
+### API contract
+
+- `GET /v2/auth/github/callback` — exchanges the OAuth `code` query param server-side (`POST github.com/login/oauth/access_token`); delivers the token over the authenticated socket (`auth/github` event).
+- `GET /v2/auth/github-sso/start` — starts GitHub SSO login.
+- `GET /v2/auth/github-sso/callback` — completes GitHub SSO login.
+- Requires `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` (env or per-provider config).
+- Socket events: `auth/github` (token), `auth/github/error` (error message).
+- Frontend store: `githubAuthStore` (Zustand `persist` → browser localStorage).
 
 ### Quality control
 
@@ -267,7 +292,7 @@ GitHub tokens stored in `githubAuthStore` (persisted); treat as credentials.
 
 ### Description
 
-As a user, I receive transactional emails (welcome, password reset code, verification) so I can complete account flows; as an admin, I can send a test email to verify the configured Resend/SMTP provider.
+As a user, I receive transactional emails (welcome, password-reset code, verification) so I can complete account flows; as an admin, I can send a test email to verify the configured email provider.
 
 ### Who uses it / value
 
@@ -275,9 +300,16 @@ End users (account flows); admins (test config).
 
 ### Acceptance criteria
 
-- When an admin calls `POST /v2/site-config/email/test`, the system sends a test email via the configured provider.
-- When I register, request a password reset, or verify my account, the system emails the welcome/reset/verify message.
-- When the welcome email fails, the system still completes registration (non-blocking).
+- When I register, request a password reset, or verify my account, I receive the corresponding email with the welcome message / reset code / verification code.
+- When I am an admin and I trigger a test email, the platform sends a test email via the configured provider and I can confirm the provider is working.
+- When the welcome email fails to send, my registration still completes; I am not blocked by the email failure.
+
+### API contract
+
+- `POST /v2/site-config/email/test` (admin-only — auth + `ADMIN` permission) → sends a test email via the configured provider (Resend or SMTP).
+- Auth-flow emails (welcome / reset / verify) triggered internally by `POST /v2/auth/register`, `POST /v2/auth/forgot-password`, `POST /v2/auth/verify-email` (and `POST /v2/auth/send-verification-email`).
+- Email config (provider, from, encrypted `apiKey`/smtp `pass`) stored in `SiteConfig`; Resend `apiKey` / SMTP `pass` encrypted at rest, decrypted at send time.
+- Welcome-email failure is non-blocking (registration proceeds).
 
 ### Quality control
 
@@ -341,8 +373,16 @@ Widget authors.
 
 ### Acceptance criteria
 
-- When I use the Web Studio entry, the system creates/opens a widget via the external bewebstudio service.
-- The create-from-scratch button is currently disabled in the UI; the underlying service remains available.
+- When I open the dashboard editor and choose to create a widget from scratch, the platform creates a widget via the external Web Studio service and opens it in a new tab so I can build it.
+- When the "create from scratch" entry is disabled in the UI, I cannot create a widget this way (the underlying service remains available to integrators).
+
+### API contract
+
+No backend HTTP surface — the frontend calls the external bewebstudio service directly at `studioBeUrl` (`config.studioBeUrl`).
+
+- `createNewWidgetByWebStudio(name, uid)` → `POST ${studioBeUrl}project`, `POST ${studioBeUrl}/project/${projectName}/file`, returns `${studioBeUrl}/data/projects/${projectName}/index.html`.
+- The "Create widget with Studio" UI entry is currently commented out / disabled in `DaDashboardEditor.tsx`.
+- No backend route; the external service handles auth.
 
 ### Quality control
 
@@ -387,7 +427,7 @@ Widget URL only.
 
 ### Description
 
-As a user, I can search accessible models and prototypes by name/description, find a user by email, and find prototypes containing a given signal, so I can discover content and collaborators; a Global search UI is available in the nav bar.
+As a user, I can open a global search dialog from the navigation bar, type a query, and see accessible models and prototypes so I can discover content; I can also find a user by email or find prototypes containing a given signal.
 
 ### Who uses it / value
 
@@ -395,10 +435,17 @@ End users (discover); sharing flows (find users).
 
 ### Acceptance criteria
 
-- When I call `GET /v2/search?q=&sortBy=&limit=&page=` (optional auth via `PUBLIC_VIEWING`), the system returns `200` with models + prototypes accessible to me.
-- When I call `GET /v2/search/email/:email`, the system returns `200` (user found) or `404`.
-- When I call `GET /v2/search/prototypes/by-signal/:signal`, the system returns matching prototypes.
-- A Global search UI with type filters is available in the nav bar.
+- When I open the global search dialog from the nav bar and type a term, I see matching models and prototypes that are accessible to me; results I'm not allowed to see do not appear.
+- When I search as a signed-out visitor and public viewing is enabled, I see only public results; when public viewing is disabled, I see no results until I sign in.
+- When I search for a user by email, I see whether a user account exists for that email; when no user exists, I see that no user was found.
+- When I search prototypes by signal, I see prototypes whose code contains that signal.
+
+### API contract
+
+- `GET /v2/search?q=&sortBy=&limit=&page=` (optional auth via `PUBLIC_VIEWING`) → `200` with models + prototypes accessible to the caller.
+- `GET /v2/search/email/:email` (optional auth via `PUBLIC_VIEWING`) → `200` (user found) or `404`.
+- `GET /v2/search/prototypes/by-signal/:signal` (optional auth via `PUBLIC_VIEWING`) → matching prototypes (code scan).
+- Access-scope filter enforced server-side on every search query.
 
 ### Quality control
 
@@ -453,7 +500,7 @@ The email-lookup endpoint exposes whether a user account exists for a given emai
 
 ### Description
 
-As a collaborator, I can post threaded comments on any resource (identified by `ref`+`ref_type`) and reply with an optional `parent`, so I can discuss resources with my team; the list returns top-level threads only.
+As a collaborator, I can post threaded comments on any resource and reply to existing comments so I can discuss resources with my team; the list shows top-level threads only.
 
 ### Who uses it / value
 
@@ -461,9 +508,17 @@ Collaborators/reviewers (comment on resources).
 
 ### Acceptance criteria
 
-- When I call `GET /v2/discussions?ref=<id>` (optional auth), the system returns `200` top-level threads (`ref` query required for list).
-- When I call `POST /v2/discussions` (auth), the system creates a thread and returns `201`.
-- When I call `PATCH/DELETE /:id` (auth), the system returns `200`/`204`.
+- When I open the discussions view for a resource, I see the top-level threads for that resource; replies are nested under their parent.
+- When I add a comment, it appears in the list; when I reply to a comment, my reply is nested under it.
+- When I edit or delete my own comment, the change is applied; when I try to edit or delete someone else's comment, I am prevented from doing so.
+- When I am signed out and public viewing is enabled, I can read discussions; when public viewing is disabled, I must sign in to read them.
+
+### API contract
+
+- `GET /v2/discussions?ref=<id>` (optional auth via `PUBLIC_VIEWING`) → `200` top-level threads (`ref` query required for list).
+- `POST /v2/discussions` (auth) → `201` (creates a thread; body: `ref`, `ref_type`, `content`, optional `parent`).
+- `PATCH /v2/discussions/:id` (auth, own only) → `200`.
+- `DELETE /v2/discussions/:id` (auth, own only) → `204`.
 
 ### Quality control
 
@@ -517,8 +572,16 @@ Reviewers; prototype owners.
 
 ### Acceptance criteria
 
-- When I call `GET /v2/feedbacks` (optional auth), the system returns the list; when I call `POST /v2/feedbacks` (auth), the system creates an entry.
-- When I call `PATCH/DELETE /:id` (auth, own), the system returns `200`/`204`.
+- When I open the feedback form for a prototype and submit my scores and interviewee details, my feedback is saved and visible in the prototype's feedback list.
+- When I edit or delete my own feedback, the change is applied; when I try to edit or delete someone else's feedback, I am prevented from doing so.
+- When I am signed out and public viewing is enabled, I can read feedback; when public viewing is disabled, I must sign in to read it.
+
+### API contract
+
+- `GET /v2/feedbacks` (optional auth via `PUBLIC_VIEWING`) → list of feedback entries.
+- `POST /v2/feedbacks` (auth) → creates an entry (body: scores 1–5, interviewee metadata, `ref`/`ref_type`).
+- `PATCH /v2/feedbacks/:id` (auth, own only) → `200`.
+- `DELETE /v2/feedbacks/:id` (auth, own only) → `204`; `403` for non-owner.
 
 ### Quality control
 
@@ -564,7 +627,7 @@ Scores + interviewee metadata stored.
 
 ### Description
 
-As an operator, I can call a single health endpoint to see the consolidated status of MongoDB, JWT, auth login, upload dir, runtime server, and SSO reachability, so I can monitor platform health.
+As an operator, I can open the platform health page to see the consolidated status of MongoDB, JWT, auth login, upload dir, runtime server, and SSO reachability so I can monitor platform health.
 
 ### Who uses it / value
 
@@ -572,8 +635,15 @@ DevOps/monitoring.
 
 ### Acceptance criteria
 
-- When I call `GET /v2/health` (public), the system returns `200` with per-service messages for `ok`/`degraded`, or `503` for `error`.
-- When I open `/health`, the system shows status badges.
+- When I open the health page, I see status badges for each platform service (MongoDB, JWT, auth, upload, runtime server, SSO) with an ok / degraded / error indicator and a hint for what to check when a service is unhealthy.
+- When I refresh the health view, the statuses are rechecked and updated.
+- When a service is down (e.g. MongoDB unreachable), its badge shows an error/degraded state with a message.
+
+### API contract
+
+- `GET /v2/health` (public — no auth) → `200` with per-service messages for `ok`/`degraded`, or `503` for `error`.
+- Services checked: MongoDB, JWT sign/verify, auth login, upload dir, runtime server, SSO reachability.
+- Operator UI: `/health` page (`PageHealth.tsx`) shows status badges.
 
 ### Quality control
 
@@ -632,7 +702,7 @@ Status info only (no secrets).
 
 ### Description
 
-As a user, I can upload a single file (up to 50 MB) and receive a URL where it is served, so I can attach images to models/prototypes; images are auto-scaled (max 1024 px) and served at `/d/...` with a 1-year cache.
+As a user, I can upload a single file (up to 50 MB) and get a URL where it is served so I can attach images/files to models and prototypes; images are auto-scaled and served with a long cache.
 
 ### Who uses it / value
 
@@ -640,8 +710,17 @@ End users (avatars, model/prototype images); the app (asset hosting).
 
 ### Acceptance criteria
 
-- When I call `POST /v2/file/upload/store-be` (auth) with a single file, the system returns `200 { url }`.
-- When the file is an image, the system auto-scales it and serves it at `/d/...` with a 1-year cache.
+- When I pick a file to upload (e.g. an avatar or model/prototype image), the platform uploads it and gives me a URL where the file is served.
+- When the file is an image, the platform auto-scales it (max 1024 px) and serves it at the returned URL with a long cache lifetime.
+- When I upload a file larger than 50 MB, the upload is rejected and I see an error.
+
+### API contract
+
+- `POST /v2/file/upload/store-be` (auth) — `multipart` single file (`file` field) → `200 { url }`.
+- File size cap: 50 MB (Multer); field size cap: 10 MB.
+- Images auto-scaled via `sharp` (max 1024 px); served at `/d/...` with a 1-year cache header.
+- Any file type accepted (no MIME/extension validation).
+- Stored under `static/uploads/YYYY-MM-DD/`.
 
 ### Quality control
 
@@ -704,7 +783,7 @@ Files served publicly under `/d/`; retention = files persist until deleted (no a
 
 ### Description
 
-As an admin/auditor, I can view a paginated audit trail of CREATE/UPDATE/DELETE changes on Models and Prototypes (with field diffs), so I can trace who changed what; frequent `code` updates are batched into throttled entries.
+As an admin/auditor, I can view a paginated audit trail of create/update/delete changes on Models and Prototypes (with field diffs) so I can trace who changed what; frequent code updates are batched into throttled entries.
 
 ### Who uses it / value
 
@@ -712,8 +791,16 @@ Admins/auditors (trace changes).
 
 ### Acceptance criteria
 
-- When I call `GET /v2/change-logs` (auth + `MANAGE_USERS`), the system returns `200` paginated audit entries (`action`, `changes`, `ref`).
-- When `code` is updated frequently, the system batches changes into throttled entries (~60 s).
+- When I open the change logs view as an admin, I see a paginated list of audit entries showing the action, the changed fields, and who made the change.
+- When I am not an admin, I am prevented from viewing the change logs.
+- When a prototype's code is updated frequently, the changes are batched into throttled entries rather than logged one-by-one.
+
+### API contract
+
+- `GET /v2/change-logs` (optional auth via `PUBLIC_VIEWING` but `ADMIN` permission enforced via `checkPermission(ADMIN)`) → `200` paginated audit entries (`action`, `changes`, `ref`).
+- Non-admins get `403`.
+- `code` updates batched into throttled entries (~60 s).
+- `changelogs` is a capped collection (`LOGS_MAX_SIZE`, default 100 MB).
 
 ### Quality control
 
@@ -770,7 +857,7 @@ N/A.
 
 ### Description
 
-As a user/integrator, I can fetch static assets at `/static`, `/images`, `/plugin`, `/builtin-widgets`, and `/d`, load the SPA at any unknown route (production `index.html` fallback), and pull VSS JSONs at `/vss/:version/:filename` (1-hour cache).
+As a user, the platform serves the app and its static assets to my browser so I can load pages, assets, and VSS data without configuring anything.
 
 ### Who uses it / value
 
@@ -778,9 +865,18 @@ All users (the app + assets); integrators (VSS data).
 
 ### Acceptance criteria
 
-- When I request `/static`, `/images`, `/plugin`, `/builtin-widgets`, or `/d`, the system serves the static asset with the correct MIME type.
-- When I request an unknown route in production, the system serves `index.html` (SPA fallback); in dev, requests proxy to Vite `:3210`.
-- When I request `/vss/:version/:filename`, the system returns the VSS JSON (1-hour cache).
+- When I open the app root or any unknown route in production, the platform serves the single-page app so client-side routing works.
+- When I request a static asset (images, plugins, built-in widgets, uploaded files), the platform serves it with the correct MIME type.
+- When I request a VSS JSON for a given version and filename, the platform returns the JSON; when the version/filename doesn't exist, I see that it is not found.
+
+### API contract
+
+No dedicated HTTP surface — static serving / SPA fallback / VSS route mounted in `backend/src/app.js`.
+
+- Static mounts: `/static`, `/images`, `/plugin`, `/builtin-widgets`, `/d` (correct MIME types).
+- SPA fallback: unknown routes serve `index.html` in production; in dev, requests proxy to Vite `:3210`.
+- `GET /vss/:version/:filename` (public) → VSS JSON with 1-hour cache; `:version` validated via regex (`/^v\d+\./`).
+- Static paths are path-traversal protected; uploads under `/d/` carry a 1-year cache header.
 
 ### Quality control
 
@@ -835,7 +931,7 @@ Static assets only.
 
 ### Description
 
-As an operator, I rely on the platform's global security middleware — a regex CORS allowlist (`CORS_ORIGINS`), a wildcard-open CSP (only `objectSrc` is `'none'`), input sanitization, gzip, and `trust proxy` — so that browsers load the app securely.
+As a user, every page I load is protected by security headers (CSP, HSTS) and cross-origin rules so my session is protected from inline-script injection and rogue sites.
 
 ### Who uses it / value
 
@@ -843,9 +939,19 @@ DevOps (deploy securely); the app (browser loading).
 
 ### Acceptance criteria
 
-- When I configure `CORS_ORIGINS`, the system allows those origins (http/https auto-prefixed) and rejects others.
-- When a browser loads the app, the system sets CSP headers (wildcard-open; only `objectSrc` is `'none'`).
-- The system sanitizes inputs and enables `trust proxy`.
+- When my browser loads any platform page, the platform sets security headers (CSP, HSTS) on the response.
+- When a request comes from an origin not in the configured allowlist, the platform rejects the cross-origin request.
+- When I load the app, inputs I submit are sanitized so NoSQL-injection payloads are stripped before reaching the database.
+
+### API contract
+
+No HTTP surface — global middleware in `backend/src/app.js` (applied to all requests).
+
+- CORS allowlist: `CORS_ORIGINS` env-driven regex (http/https auto-prefixed); rejects non-allowlisted origins.
+- Helmet CSP: wildcard-open (only `objectSrc` is `'none'`) — known permissive gap.
+- `mongo-sanitize` strips `$`/`.` keys from inputs; `cookie-parser` parses cookies; gzip compression applied.
+- `trust proxy` enabled.
+- `authLimiter` defined (15 min / 20 req, `skipSuccessful`) but NOT applied to any route — known gap.
 
 ### Quality control
 
@@ -904,7 +1010,7 @@ mongo-sanitize strips `$`/`.` keys from inputs; cookies httpOnly.
 
 ### Description
 
-As a client, I can open a JWT-authenticated Socket.IO connection (token via `access_token` query) and receive realtime auth events (GitHub OAuth token/errors) so I can complete OAuth flows without polling.
+As a user, I see real-time runtime updates (such as GitHub OAuth completion) without refreshing the page so I can complete flows without polling.
 
 ### Who uses it / value
 
@@ -912,8 +1018,17 @@ Auth flows (GitHub token delivery); future realtime features.
 
 ### Acceptance criteria
 
-- When I connect with a valid `access_token` (JWT) query param, the system verifies it and attaches my user context (`socket.user`).
-- When an auth flow completes, the system emits `auth/github` (token) or `auth/github/error` events to my socket.
+- When I complete a GitHub OAuth flow, the platform pushes the result to my browser in real time so I see the linked token / login outcome without refreshing.
+- When my session is not authenticated, I cannot open a realtime connection.
+- When an auth flow errors, the platform pushes the error to my browser in real time.
+
+### API contract
+
+No HTTP surface — Socket.IO connection (JWT-authenticated handshake).
+
+- Connect with `access_token` query param (JWT); verified on handshake; `socket.user` attached; unauthenticated sockets rejected.
+- Events: `auth/github` (token), `auth/github/error` (error message) — emitted to the user's socket.
+- JWT travels as a query string (commonly logged by proxies/CDNs — risk noted).
 
 ### Quality control
 
@@ -972,7 +1087,7 @@ Token in query string (use TLS in prod); event payloads may include GitHub token
 
 ### Description
 
-As a DevOps operator, the platform forwards audit and forgot-password events to a configured `LOG_URL` and pulls recent-prototype activity from a configured `CACHE_URL`, so I can centralize logs and activity views.
+As an operator, the platform forwards audit and forgot-password events to my configured log service and pulls recent-prototype activity from my configured cache service so I can centralize logs and activity views.
 
 ### Who uses it / value
 
@@ -980,8 +1095,16 @@ DevOps (centralized logs/activity).
 
 ### Acceptance criteria
 
-- When `LOG_URL` is configured, the system forwards audit/forgot-password events; when unset, forwarding is inactive.
-- When `CACHE_URL` is configured, the system pulls recent-prototype activity; when unset, the pull is inactive.
+- When I configure a log service URL, the platform forwards audit and forgot-password events to it; when I don't configure it, forwarding is inactive.
+- When I configure a cache service URL, the platform pulls recent-prototype activity from it; when I don't configure it, the pull is inactive.
+- When either service fails, the main platform flows are not blocked.
+
+### API contract
+
+No HTTP surface — outbound internal clients in `backend/src/config/axios.js`.
+
+- `LOG_URL` env: forwards audit / forgot-password events; inactive when unset.
+- `CACHE_URL` env: pulls recent-prototype activity; inactive when unset.
 - Failures in either client are non-blocking for the main flows.
 
 ### Quality control

@@ -38,7 +38,7 @@ flowchart TD
 
 ### Description
 
-As a user, I can create, list, view, update, and delete my own assets of the types enabled by `USER_ASSET_TYPES` (default `CLOUD_RUNTIME`, `HARDWARE_KIT`, `GENAI-PYTHON`) with arbitrary `data`, so that I keep my runtime, kit, and GenAI configurations in one place.
+As a user, I can create, view, edit, and delete my own assets of the types enabled on the instance (default: Cloud Runtime, Hardware Kit, GenAI Python), so that I keep my runtime, kit, and GenAI configurations in one place.
 
 ### Who uses it / value
 
@@ -46,8 +46,22 @@ End users (manage their runtimes/kits/GenAI configs); admins (oversight).
 
 ### Acceptance criteria
 
-- When I call `GET /v2/assets` (auth), the system returns `200` with my assets plus those shared with me; when I `POST` (auth), the system creates the asset and returns `200`; when I `GET /v2/assets/:id` (auth + `READ_ASSET`), the system returns `200`; when I `PATCH` (auth + `WRITE_ASSET`), the system updates and returns `200` (empty body); when I `DELETE` (auth + `WRITE_ASSET`), the system deletes and returns `200`.
-- Asset types I can create are restricted to `USER_ASSET_TYPES`.
+- When I create an asset (pick a type from the enabled types, enter a name, and save), it appears in My Assets; when I open it, I see its details; when I edit it, the change persists; when I delete it and confirm, it is gone from my list.
+- When I try to create an asset of a type not enabled on the instance, that type is not offered in the type picker.
+- When I try to view, edit, or delete another user's asset that hasn't been shared with me, I am prevented from accessing it.
+- When I am not signed in, I am prevented from opening My Assets or performing any asset action.
+- When a create, edit, or delete fails, I see an error and my list is unchanged.
+
+### API contract
+
+- `GET /v2/assets` (auth) → `200` — list own + shared assets; query `name`, `type`, `sortBy`, `limit`, `page`.
+- `POST /v2/assets` (auth) → `200` — create; body `{ name: string, type: string, data: any }`.
+- `GET /v2/assets/:id` (auth + `READ_ASSET`, owner bypass) → `200` — get asset (includes `readAccessUsers` / `writeAccessUsers` when caller has `WRITE_ASSET`); `404` if not found.
+- `PATCH /v2/assets/:id` (auth + `WRITE_ASSET`, owner bypass) → `200` (empty body) — update; body `{ name?, type?, data? }` (min 1 field); `404` if not found.
+- `DELETE /v2/assets/:id` (auth + `WRITE_ASSET`, owner bypass) → `200` — delete; `404` if not found.
+- Asset types are restricted to the `USER_ASSET_TYPES` site-config (default `['CLOUD_RUNTIME','HARDWARE_KIT','GENAI-PYTHON']`) — enforced in the UI type picker, not at the validation layer (`type` is `Joi.string().required()`, not constrained to the allow-list).
+- `data` is `Joi.any()` — no schema or size guard.
+- No rate limiting — `authLimiter` is defined but not wired to the asset routes.
 
 ### Quality control
 
@@ -111,7 +125,7 @@ Asset `data` (arbitrary config — endpoint URLs, tokens, kit identity) stored i
 
 ### Description
 
-As an admin, I can view every user's assets across the instance so that I can provide oversight and support.
+As an admin, I can retrieve every user's assets across the instance (via the API — there is no in-app admin all-assets page) so that I can provide oversight and support.
 
 ### Who uses it / value
 
@@ -119,7 +133,15 @@ Admins (oversight/support).
 
 ### Acceptance criteria
 
-- When I call `GET /v2/assets/manage` (auth + `MANAGE_USERS`), the system returns `200` with all assets across users.
+- When I request the admin all-assets view, I see every user's assets across the instance, and can filter by name/type or sort the results.
+- When I am a non-admin, I am prevented from accessing the all-assets view.
+- There is no in-app admin page for this — it is reached via the API.
+
+### API contract
+
+- `GET /v2/assets/manage` (auth + `MANAGE_USERS` / admin) → `200` — returns all assets across users; query `name`, `type`, `sortBy`, `limit`, `page`.
+- No rate limiting — `authLimiter` is not wired to the route.
+- Returns all asset `data` (may include GenAI tokens / runtime credentials) to admins — no per-record secret redaction.
 
 ### Quality control
 
@@ -169,7 +191,7 @@ Exposes all asset records to admins (incl. `data` which may hold tokens — admi
 
 ### Description
 
-As a user, I can manage my assets from the My Assets page, and configure a GenAI endpoint (method/URL/token/request/response fields) for a `GENAI-PYTHON` asset, so that GenAI flows use my endpoint.
+As a user, I can manage my assets from the My Assets page — filtered by type, with create/edit/share/delete actions per asset — and configure a GenAI endpoint (method, URL, access token, request/response fields) for a GenAI Python asset, so that GenAI flows use my endpoint.
 
 ### Who uses it / value
 
@@ -177,7 +199,23 @@ End users (manage assets); GenAI integrators (configure endpoints).
 
 ### Acceptance criteria
 
-- When I open `/my-assets` (auth), the system lists my assets and lets me create/edit/delete/share them; when I open a `GENAI-PYTHON` asset, the editor captures my endpoint config.
+- When I open the My Assets page, I see my assets grouped by type tabs (with counts) and can create, edit, share, or delete them from the row actions.
+- When I create or edit a GenAI Python asset, the editor captures my endpoint config (method, URL, access token, request field, response field); when I save, the config is stored on the asset and used by GenAI flows.
+- When I switch type tabs, the list filters to that type; when I have no assets, the page tells me I have none.
+- When I am not signed in, I am prevented from opening the My Assets page.
+- When a create, edit, or delete fails, I see an error and my list is unchanged.
+
+### API contract
+
+The My Assets page is a UI over the asset endpoints (CAP-ASSET-01). All routes require auth.
+
+- `GET /v2/assets` (auth) → `200` — list own + shared assets.
+- `POST /v2/assets` (auth) → `200` — create; body `{ name, type, data }`.
+- `GET /v2/assets/:id` (auth + `READ_ASSET`, owner bypass) → `200` — get asset.
+- `PATCH /v2/assets/:id` (auth + `WRITE_ASSET`, owner bypass) → `200` (empty body) — update; body `{ name?, type?, data? }`.
+- `DELETE /v2/assets/:id` (auth + `WRITE_ASSET`, owner bypass) → `200` — delete.
+- Sharing: `POST /v2/assets/:id/permissions` / `DELETE /v2/assets/:id/permissions` (CAP-ASSET-04).
+- The type tabs are driven by the `USER_ASSET_TYPES` site-config (default `['CLOUD_RUNTIME','HARDWARE_KIT','GENAI-PYTHON']`); the GenAI editor writes endpoint config (method/URL/token/request/response fields) into asset `data` (no schema or size guard; no client-side secret redaction).
 
 ### Quality control
 
@@ -243,8 +281,18 @@ Asset owners (delegate runtime/kit access); collaborators (gain access).
 
 ### Acceptance criteria
 
-- When I call `POST /v2/assets/:id/permissions {userId, role}` (auth + `WRITE_ASSET`), the system grants access and returns `201` (role enum `read_asset`/`write_asset`); when I call `DELETE /v2/assets/:id/permissions?userId=&role=` (auth + `WRITE_ASSET`), the system revokes access and returns `204`.
-- Shared users then see the asset in their list.
+- When I open the share dialog for an asset and add a user (by email) with an access level, that user gains the access I chose and the asset appears in their list.
+- When I remove a user's access from the shared-user list, the asset disappears from their list and they can no longer use or modify it.
+- When I am not the owner (or lack write access), I am prevented from sharing or revoking access.
+- When the share or revoke fails, I see an error and the shared-user list is unchanged.
+
+### API contract
+
+- `POST /v2/assets/:id/permissions` (auth + `WRITE_ASSET`, owner bypass) → `201` — grant access; body `{ userId: objectId|comma-list, role: 'read_asset' | 'write_asset' }`.
+- `DELETE /v2/assets/:id/permissions?userId=&role=` (auth + `WRITE_ASSET`, owner bypass) → `204` — revoke access; query `userId` (objectId), `role` (`read_asset` | `write_asset`).
+- Roles are the enum `read_asset` / `write_asset`.
+- Recipient resolution uses CAP-ASSET-07 (`GET /v2/search/email/:email`).
+- No rate limiting — `authLimiter` is not wired to the route.
 
 ### Quality control
 
@@ -309,7 +357,7 @@ Creates/removes authorized-user bindings on the asset; no secrets duplicated.
 
 ### Description
 
-As a model owner, I can add or remove contributors on my model so that they see it under "My Contributions" and gain edit access (with `writeModel`).
+As a model owner, I can add or remove contributors on my model so that they see it under "My Contributions" and gain edit access.
 
 ### Who uses it / value
 
@@ -317,7 +365,15 @@ Model owners (delegate); contributors (gain access).
 
 ### Acceptance criteria
 
-- When I call `POST /v2/models/:id/permissions` (requires `WRITE_MODEL`), the system adds the contributor and returns `201`; when I call `DELETE /v2/models/:id/permissions?userId=&role=` (requires `WRITE_MODEL`), the system removes them and returns `204`.
+- When I add a contributor to my model (via the model's contributor/permission UI), they gain edit access and the model appears in their "My Contributions"; when I remove a contributor, the model disappears from their "My Contributions" and they lose edit access.
+- When I am not the owner (or lack write access on the model), I am prevented from adding or removing contributors.
+- When the add or remove fails, I see an error and the contributor list is unchanged.
+
+### API contract
+
+- `POST /v2/models/:id/permissions` (auth + `WRITE_MODEL`, owner bypass) → `201` — add contributor; body `{ userId, role }`.
+- `DELETE /v2/models/:id/permissions?userId=&role=` (auth + `WRITE_MODEL`, owner bypass) → `204` — remove contributor.
+- No rate limiting — `authLimiter` is not wired to the route.
 
 ### Quality control
 
@@ -381,7 +437,7 @@ UserRole bindings scoped to the model.
 
 ### Description
 
-As an object owner, I can invite users to my model or asset by email with a chosen access level, and remove a user's access, so that I can delegate collaboration without leaving the page.
+As an object owner, I can invite users to my model or asset by email with a chosen access level, and remove a user's access, from the access-invitation dialog, so that I can delegate collaboration without leaving the page.
 
 ### Who uses it / value
 
@@ -389,7 +445,19 @@ Object owners (invite collaborators).
 
 ### Acceptance criteria
 
-- When I open the access-invitation dialog on a model or asset, I can pick an access level and invite a user, or remove a user's access; the dialog calls the underlying model/asset permission endpoints.
+- When I open the access-invitation dialog on a model or asset, I can pick an access level, search for and select one or more users, and click Invite to grant them that access.
+- When I remove a user's access from the dialog, that user loses access to the object.
+- When I am not the owner (or lack write access), I am prevented from opening the dialog or its actions fail.
+- When an invite or remove fails, I see an error toast and the access list is unchanged.
+
+### API contract
+
+The dialog is UI-only — it calls the underlying asset/model permission endpoints (no separate data store).
+
+- Asset sharing: `POST /v2/assets/:id/permissions` / `DELETE /v2/assets/:id/permissions` (auth + `WRITE_ASSET`, owner bypass) — see CAP-ASSET-04.
+- Model contributors: `POST /v2/models/:id/permissions` / `DELETE /v2/models/:id/permissions` (auth + `WRITE_MODEL`, owner bypass) — see CAP-ASSET-05.
+- Recipient lookup: `GET /v2/search/email/:email` (optional auth via `PUBLIC_VIEWING`) — see CAP-ASSET-07.
+- No rate limiting — `authLimiter` is not wired to the underlying routes.
 
 ### Quality control
 
@@ -447,7 +515,7 @@ Driven by the underlying permission endpoints (no separate data store).
 
 ### Description
 
-As a user sharing an object, I can look up a recipient by exact email and get back their id/name/image so that I can address a sharing invitation.
+As a user sharing an object, I can look up a recipient by exact email from the invite/search field and get back their name and avatar so that I can address a sharing invitation.
 
 ### Who uses it / value
 
@@ -455,7 +523,17 @@ Anyone sharing (find recipients).
 
 ### Acceptance criteria
 
-- When I call `GET /v2/search/email/:email` (optional auth via `PUBLIC_VIEWING`), the system returns `200` with the user or `404` if not found.
+- When I type an email into the collaborator search field and the email matches a user, I see that user (name/avatar) and can select them as a recipient.
+- When the email does not match any user, I am told no user was found.
+- When I am not signed in and the instance does not allow anonymous browsing, I am prevented from looking up users by email.
+- When I submit an invalid email format, the lookup is rejected.
+
+### API contract
+
+- `GET /v2/search/email/:email` (optional auth via `PUBLIC_VIEWING`) → `200` with the matched user (`id` / `name` / `image_file`) or `404` if not found; `401` when anonymous and `PUBLIC_VIEWING=false`.
+- `email` must be a valid email format.
+- Returns minimal fields (`id` / `name` / `image_file`) — no email echo beyond the queried one.
+- No rate limiting — `authLimiter` is not wired; enumeration is unthrottled.
 
 ### Quality control
 

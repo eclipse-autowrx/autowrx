@@ -58,7 +58,7 @@ flowchart TD
 
 ### Description
 
-As a user, I can sign in with email + password to start a session; my session is kept alive by a silent refresh; I can sign out to end it.
+As a user, I can sign in with my email and password from the sign-in dialog, stay signed in across page reloads via a silent background refresh, and sign out from the user menu so that my session is convenient yet remains under my control.
 
 ### Who uses it / value
 
@@ -66,10 +66,18 @@ All end users (sign in); every downstream capability depends on a valid session.
 
 ### Acceptance criteria
 
-- When I call `POST /v2/auth/login {email,password}`, the system returns `200` with `{ user, tokens }` where `tokens` contains only `access` (refresh is **not** in the body) and sets the `token` cookie (httpOnly; `Secure`+`SameSite=None` in prod, `Lax` in dev; `domain` only in prod). With invalid credentials → `401`. With an SSO-only account (no password) → `401` (the password-mismatch path; an SSO-only user has no password to match).
-- When I call `POST /v2/auth/refresh-tokens` with the cookie, the system returns `200` `{ access }` + a rotated cookie. With a missing/expired/revoked cookie → `401`.
-- When I call `POST /v2/auth/logout` with the cookie, the system returns `204`, deletes my refresh token, and clears the cookie.
-- When a 401 occurs on `/auth/refresh-tokens`, `/auth/login`, `/auth/logout`, the system does **not** retry (no refresh loop); on other 401s the system silently refreshes once and replays my queued requests, then signs me out if refresh fails.
+- When I open the sign-in dialog and submit my email + password, I am signed in, the dialog closes, and my avatar appears in the navbar.
+- When I submit the wrong password, or an email belonging to an SSO-only account that has no password, I see an error message in the dialog and I remain signed out.
+- When I reload the page while my session is still valid, I stay signed in without being prompted again.
+- When my session expires while I am using the platform, the system silently refreshes it once and continues my pending action without prompting me; if the refresh fails, I am signed out and the next protected action sends me back to the sign-in dialog.
+- When I choose Logout from the user menu, I am signed out and sent to the home page; the next time I try a protected action, I am prompted to sign in again.
+
+### API contract
+
+- `POST /v2/auth/login {email,password}` → `200` `{ user, tokens }` where `tokens` contains only `access` (refresh is **not** in the body); sets the `token` cookie (httpOnly; `Secure`+`SameSite=None` in prod, `Lax` in dev; `domain` only in prod). Invalid credentials → `401`. SSO-only account (no password) → `401` (the password-mismatch path; an SSO-only user has no password to match).
+- `POST /v2/auth/refresh-tokens` (cookie) → `200` `{ access }` + a rotated cookie. Missing/expired/revoked cookie → `401`.
+- `POST /v2/auth/logout` (cookie) → `204`, deletes the refresh token, and clears the cookie.
+- On a `401` from `/auth/refresh-tokens`, `/auth/login`, or `/auth/logout`, the system does **not** retry (no refresh loop); on other `401`s it silently refreshes once and replays queued requests, then signs the user out if refresh fails.
 
 ### Quality control
 
@@ -141,7 +149,7 @@ My refresh-token document is operational session state; access tokens are epheme
 
 ### Description
 
-As a new user, I can create my own account when self-registration is enabled, so that I can start using the platform without an admin provisioning me.
+As a new visitor, I can create my own account from the sign-in dialog's "Register" link so that I can start using the platform without an admin having to provision me, when self-registration is enabled by the site.
 
 ### Who uses it / value
 
@@ -149,9 +157,17 @@ New end users (sign up); admins benefit from reduced account-provisioning load.
 
 ### Acceptance criteria
 
-- When I call `POST /v2/auth/register`, the system returns `201` `{ user, tokens }` (refresh in cookie only) when `SELF_REGISTRATION` is enabled.
-- When `SELF_REGISTRATION` is disabled → `403`. With a duplicate email → `400` (`email already taken`).
-- On success the system sends me a welcome email (non-blocking — failure doesn't fail my registration).
+- When self-registration is enabled, I see a "Register" link in the sign-in dialog; switching to the register form, I fill in my name, email, password, and password confirmation, and on submit I am signed in immediately.
+- When I submit mismatched passwords or leave required fields blank, I see a validation error in the form and am not registered.
+- When I register with an email that is already taken, I see an "email already taken" error and am not registered.
+- When self-registration is disabled by the site, the "Register" link is hidden in the sign-in dialog, and I cannot self-create an account.
+- On successful registration the site sends me a welcome email (non-blocking — a mail failure does not block my registration).
+
+### API contract
+
+- `POST /v2/auth/register` → `201` `{ user, tokens }` (refresh in cookie only) when `SELF_REGISTRATION` is enabled.
+- `SELF_REGISTRATION` disabled → `403`. Duplicate email → `400` (`email already taken`).
+- On success the system sends a welcome email (non-blocking — failure doesn't fail registration).
 
 ### Quality control
 
@@ -213,7 +229,7 @@ The welcome email is an operational side-effect of account creation; my `User` d
 
 ### Description
 
-As a user, I can reset a forgotten password using a 6-digit code emailed to me, so that I can regain access without an admin; I can also verify my email to mark it as trusted. A legacy token-based reset path is also available.
+As a user, I can recover a forgotten password from the sign-in dialog by entering my email, receiving a 6-digit code, and choosing a new password — without an admin's help — so that I can regain access to my account; I can also verify my email so the site marks it as trusted.
 
 ### Who uses it / value
 
@@ -221,9 +237,18 @@ End users who lost a password or need to verify email; admins (fewer password re
 
 ### Acceptance criteria
 
-- When I call `POST /v2/auth/forgot-password {email}`, the system returns `200 { message }` (always, to avoid user enumeration) and emails me a 6-digit code (60 min). Reset events are logged.
-- When I call `POST /v2/auth/reset-password` with `{email, code, password}` (primary) → `204`; or with `?token` + `{password}` (legacy) → `204`. With both missing → `400`. With a wrong/expired code → `400`.
-- When I call `POST /v2/auth/send-verification-email` (auth), the system returns `204` and emails me a verify token; when I call `POST /v2/auth/verify-email?token=…` → `204` and the system sets `email_verified=true`.
+- When I click "Forget Password" in the sign-in dialog and enter my email, I see the next step asking for the 6-digit code that was emailed to me, regardless of whether that email exists (the site does not reveal which addresses are registered).
+- When I enter the 6-digit code and a new password (twice, matching, at least 8 characters), my password is reset and I see a success screen that lets me return to sign in with the new password.
+- When I enter a wrong or expired code, or mismatched/too-short passwords, I see an error and my password is not changed.
+- When I didn't receive the code, I can resend it from the same screen; I can also go back to use a different email.
+- When I click the verify-email link in the email the site sends me, my email is marked as verified. (There is no dedicated verify-email screen in the UI — the link confirms my address and lands me on the site.)
+- Password reset/verify actions are only available when password management is enabled by the site.
+
+### API contract
+
+- `POST /v2/auth/forgot-password {email}` → `200 { message }` (always, to avoid user enumeration) and emails a 6-digit code (60 min). Reset events are logged.
+- `POST /v2/auth/reset-password` with `{email, code, password}` (primary) → `204`; or with `?token` + `{password}` (legacy) → `204`. Both missing → `400`. Wrong/expired code → `400`.
+- `POST /v2/auth/send-verification-email` (auth) → `204` and emails a verify token; `POST /v2/auth/verify-email?token=…` → `204` and sets `email_verified=true`.
 - Password changes require the `PASSWORD_MANAGEMENT` flag.
 
 ### Quality control
@@ -295,7 +320,7 @@ My reset/verify tokens are one-time, short-lived operational secrets, deleted on
 
 ### Description
 
-As a user, I can sign in through a configured SSO provider (Microsoft-style OIDC or GitHub) so that I don't need a platform password; my account is created automatically on first SSO login when auto-registration is enabled.
+As a user, I can sign in through a configured SSO provider (Microsoft-style OIDC or GitHub) from a "Sign in with …" button under the sign-in form so that I do not need a platform password; my account is created automatically on my first SSO sign-in when auto-registration is enabled.
 
 ### Who uses it / value
 
@@ -303,10 +328,19 @@ End users (passwordless login); enterprises (SSO integration); DevOps/integrator
 
 ### Acceptance criteria
 
-- When I call `POST /v2/auth/sso {providerId, idToken}`, the system validates the provider is enabled, decodes the ID token, creates/updates my user, issues tokens + cookie → `200 { user, tokens }`. With a disabled/invalid provider → `400`.
-- When I open `GET /v2/auth/github-sso/start`, the system redirects me to GitHub; on `GET /v2/auth/github-sso/callback` the system exchanges the code, fetches my profile/emails, and logs me in.
-- On my first SSO login the system creates my account only if `SSO_AUTO_REGISTRATION` is true; otherwise a matching existing account is required.
-- When I open `GET /v2/auth/github/callback` (legacy), the system exchanges the code and emits the token over my socket for account linking.
+- When at least one SSO provider is configured and enabled, I see an "Or continue with" section with a "Sign in with <provider>" button under the sign-in form.
+- When I click the SSO button (Microsoft), a popup opens to authenticate me with the provider; on success I am signed in, the popup closes, and I see a welcome toast. If I cancel the popup, I see a "Login Cancelled" toast and remain signed out. If the popup is blocked, I see a "Popup Blocked" toast.
+- When I click the GitHub SSO button, I am redirected to GitHub to authorize, then redirected back to the site signed in.
+- When the provider is disabled or its configuration is invalid, the SSO button is hidden (or I see an SSO configuration error toast), and I am not signed in.
+- When auto-registration is enabled, my account is created on my first SSO sign-in; when it is disabled, a matching existing account is required for me to sign in.
+- When email login is disabled by the site, the sign-in dialog shows only the SSO provider button(s).
+
+### API contract
+
+- `POST /v2/auth/sso {providerId, idToken}` → validates provider is enabled, decodes the ID token, creates/updates user, issues tokens + cookie → `200 { user, tokens }`. Disabled/invalid provider → `400`.
+- `GET /v2/auth/github-sso/start` → redirects to GitHub; `GET /v2/auth/github-sso/callback` → exchanges the code, fetches profile/emails, logs me in.
+- First SSO login creates the account only if `SSO_AUTO_REGISTRATION` is true; otherwise a matching existing account is required.
+- `GET /v2/auth/github/callback` (legacy) → exchanges the code and emits the token over my socket for account linking.
 
 ### Quality control
 
@@ -381,7 +415,7 @@ SSO provider configuration (secrets, enabled flags) is operational config; my SS
 
 ### Description
 
-As a user, I can read and update my display name and avatar, and change my password when password management is enabled, so that I keep my identity current.
+As a signed-in user, I can open the Profile page to view my identity and update my display name, avatar, and (when password management is enabled) my password so that I keep my identity current.
 
 ### Who uses it / value
 
@@ -389,7 +423,17 @@ End users (manage their identity/avatar).
 
 ### Acceptance criteria
 
-- When I call `GET /v2/users/self` (auth), the system returns `200` with my current user. When I call `PATCH /v2/users/self`, the system returns `200` with my updated user (name/avatar; password only when `PASSWORD_MANAGEMENT=true`).
+- When I open the Profile page, I see my avatar, my display name, and my email (read-only).
+- When I click "Change name", edit my name, and save, my updated name appears immediately on the page and across the UI (navbar, etc.); clicking Cancel reverts without saving.
+- When I click the avatar edit button and choose an image file, my avatar updates immediately on the page.
+- When password management is enabled, I see a "Change password" button that opens a dialog where I enter a new password twice; on submit I see a success message and am redirected to sign in again with the new password. When the two passwords don't match, I see an error and the password is not changed.
+- When password management is disabled, the password section is not shown.
+- When I am not signed in, the Profile page does not show my identity (I am prompted to sign in for protected access).
+
+### API contract
+
+- `GET /v2/users/self` (auth) → `200` with my current user.
+- `PATCH /v2/users/self` (auth) → `200` with my updated user (name/avatar; password only when `PASSWORD_MANAGEMENT=true`).
 
 ### Quality control
 
@@ -454,7 +498,7 @@ My avatar is stored as a file path; my password is hashed and `private` (never r
 
 ### Description
 
-As an admin, I can create, list, update, and delete users so that I can provision and manage accounts; as a visitor I can browse discoverable profiles when public viewing is enabled, with emails masked.
+As an admin, I can open the Manage Users page to browse, search, create, update, and delete user accounts so that I can provision and manage the platform's directory; as a visitor I can browse discoverable profiles when public viewing is enabled, with emails masked.
 
 ### Who uses it / value
 
@@ -462,8 +506,18 @@ Admins (provision/manage users); end users (discoverable profiles when `PUBLIC_V
 
 ### Acceptance criteria
 
-- When I call `GET /v2/users` (optional auth via `PUBLIC_VIEWING`), the system returns `200` with a paginated list (emails masked). When I call `POST /v2/users` (admin) → `201`. When I call `GET /v2/users/:userId` (optional auth via `PUBLIC_VIEWING`) → `200`; `PATCH/DELETE /v2/users/:userId` (admin) → `200`/`204`.
-- On a non-admin write → `403`. The `includeFullDetails` query requires admin.
+- When I open the Manage Users page as an admin, I see a paginated list of users with their name, avatar, and created-at timestamp, a total count, a "Create new user" button, and a search box that filters by name or email.
+- When I click "Create new user" and fill in name/email/password, the new user appears in the list with a success toast; if the email is already taken or input is invalid, I see an error toast and no user is created.
+- When I click a user's edit button, a dialog opens pre-filled with their name/email; saving updates the list with a success toast.
+- When I click a user's delete button, I am asked to confirm; confirming removes the user from the list with a success toast. Cancelling keeps the user.
+- When there are more users than fit on one page, a "Load more" button loads the next page; when there are no more, I see "No more users to load." (or "No matches." if the search returned nothing).
+- When I am a non-admin, the "Manage Users" nav entry is hidden and writes are refused; when public viewing is off and I am signed out, I cannot read the directory and am prompted to sign in.
+- As a signed-out visitor with public viewing on, I can browse the public user list but emails are masked and full details are admin-only.
+
+### API contract
+
+- `GET /v2/users` (optional auth via `PUBLIC_VIEWING`) → `200` paginated list (emails masked). `POST /v2/users` (admin) → `201`. `GET /v2/users/:userId` (optional auth via `PUBLIC_VIEWING`) → `200`; `PATCH/DELETE /v2/users/:userId` (admin) → `200`/`204`.
+- Non-admin write → `403`. `includeFullDetails` query requires admin.
 
 ### Quality control
 
@@ -526,7 +580,7 @@ The `users` collection is the operational identity directory; admin writes are o
 
 ### Description
 
-As a model/asset owner or admin, I can grant resource-scoped roles to users so that they can act on specific models or assets; as a user I only see what I've been granted, and as an owner I bypass permission checks on my own resources.
+As a model/asset owner or admin, I can grant resource-scoped permissions to other users so that they can act on specific models or assets; as a user I only see what I've been granted, and as the owner of a resource I am not blocked from acting on my own resource.
 
 ### Who uses it / value
 
@@ -534,9 +588,17 @@ Model/asset owners (grant access); admins (assign global roles); end users (only
 
 ### Acceptance criteria
 
-- When I call `GET /v2/permissions/self` (auth), the system returns my own roles. `GET /v2/permissions` → all permissions. `GET /v2/permissions/has-permission?permissions=readModel,writeModel:modelId` → a `boolean[]` in order (defaults denied).
-- When I call `POST /v2/permissions {user,role,ref}` (admin), the system returns `201` and assigns the role. `DELETE /v2/permissions?user=&role=` (admin) → `204` and removes it.
-- When I call `GET /v2/permissions/users-by-roles` (admin), the system returns users grouped by role (no `role` filter).
+- As an admin, when I assign a user a permission on a resource (e.g. the right to edit a given model), that user can now perform the matching action on that resource in the UI; when I remove the permission, their attempts to perform that action are blocked (they see a denial / the action is unavailable).
+- As a user, I only see and act on resources for which I hold the relevant permission; actions I lack permission for are hidden or refused.
+- As the owner of a resource, I can act on it (edit, manage) even when I have not explicitly granted myself a permission — ownership bypasses the check.
+- As an admin, I can view which users hold which permissions, and which users are grouped by role, to audit access.
+- When a permission I query does not exist or I lack it, the system treats it as denied (I do not get access).
+
+### API contract
+
+- `GET /v2/permissions/self` (auth) → my own roles. `GET /v2/permissions` → all permissions. `GET /v2/permissions/has-permission?permissions=readModel,writeModel:modelId` → a `boolean[]` in order (defaults denied).
+- `POST /v2/permissions {user,role,ref}` (admin) → `201` and assigns the role. `DELETE /v2/permissions?user=&role=` (admin) → `204` and removes it.
+- `GET /v2/permissions/users-by-roles` (admin) → users grouped by role (no `role` filter).
 - As the owner of a resource, I bypass the permission check for that resource.
 
 ### Quality control
@@ -609,7 +671,7 @@ Yes — user IDs and their capability mappings (relationship/capability data lin
 
 ### Description
 
-As an integrator calling the internal authorize endpoint, I can ask the system whether a subject may perform an action on an object, so that programmatic authorization decisions can be made; this is a partial second-generation path that coexists with the primary RBAC.
+As a user/admin, my permissions are additionally checked against a second-generation (Casbin) policy so that the system can decide whether a subject may perform an action on an object; this is a partial, internal path that coexists with the primary RBAC and is not directly surfaced as a dedicated screen in the UI — I observe it only through whether my actions are allowed or denied.
 
 ### Who uses it / value
 
@@ -617,7 +679,14 @@ Integrators building programmatic auth checks; future migration target.
 
 ### Acceptance criteria
 
-- When I call `POST /v2/auth/authorize` (internal; no auth barrier on the route), the system returns `200 { message: 'Authorized' }` on success, `403` on denial.
+- As a user, when the system routes one of my actions through the v2 policy, I experience the same allow/deny outcome as a permission check: permitted actions succeed, denied actions are blocked.
+- As an admin, policy assignments I make via the v2 path take effect for the subject on subsequent actions.
+- Because v1 remains the primary path for most resource checks, I may see allow/deny outcomes driven by v1 for some resources and v2 for others during the partial migration — the system does not expose which path was used.
+- No dedicated user/admin UI screen is provided for the v2 authorize decision; it is observed only via the allow/deny outcome of my actions.
+
+### API contract
+
+- `POST /v2/auth/authorize` (internal; no auth barrier on the route) → `200 { message: 'Authorized' }` on success, `403` on denial.
 - `hasPermissionV2` / `assignRoleToUserV2` are available in `permission.service`.
 
 ### Quality control
@@ -680,7 +749,7 @@ Casbin policies are the operational v2 capability graph; no secrets are stored.
 
 ### Description
 
-As an admin, I can manage users and assign feature/role capabilities through dedicated admin pages, so that I can provision accounts and control who can do what across the platform.
+As an admin, I can use the dedicated Manage Users and Manage Features pages to provision accounts and grant or revoke feature/role capabilities per user so that I can control who can do what across the platform.
 
 ### Who uses it / value
 
@@ -688,8 +757,16 @@ Admins (provision users, grant capabilities).
 
 ### Acceptance criteria
 
-- On `/admin/manage-users`: I get a paginated list with search, create-user, and per-user role/permission actions.
-- On `/manage-features`: I get a feature categories sidebar (permission roles) + add/remove users per feature.
+- On the Manage Users page, I get a paginated, searchable list of users with a "Create new user" action and per-user edit/delete actions (same UI as CAP-IDENTITY-06).
+- On the Manage Features page, I see a "Feature Categories" sidebar listing the available feature/permission roles; selecting a category shows the users currently granted that feature, with a count and an "Add User" button.
+- When I click "Add User" on a feature and pick a user, that user is added to the feature with a success toast; when I click a user's remove button, they are removed from the feature with a success toast. Errors show a destructive toast.
+- When a feature has no users, I see "No users found for this feature."; when no categories exist, I see "No features available"; when none is selected, I see "Please select a feature category".
+- As a non-admin, the "Manage Users" and "Manage Features" nav entries are hidden and the pages do not grant me access; I cannot perform grants or edits.
+
+### API contract
+
+- On `/admin/manage-users`: paginated list with search, create-user, and per-user role/permission actions.
+- On `/manage-features`: feature categories sidebar (permission roles) + add/remove users per feature.
 - As a non-admin → `403`.
 
 ### Quality control
