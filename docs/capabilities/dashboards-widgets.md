@@ -71,6 +71,13 @@ sequenceDiagram
 
 Read `READ_MODEL`. Widgets are third-party iframes — same-origin policy depends on the widget URL.
 
+**Coverage:**
+- **Auth:** optional via `PUBLIC_VIEWING` — dashboard is viewed under the prototype's read access (unauthenticated browsing when `PUBLIC_VIEWING` is on; otherwise auth required).
+- **Authorization:** `READ_MODEL` to view the prototype/dashboard.
+- **Input validation:** N/A — renderer consumes `widget_config` from the prototype; no server-side validation of widget URLs at render time.
+- **Rate limiting:** not applied — `authLimiter` defined but not used on prototype/dashboard read routes.
+- **Secrets:** none — runtime signal values passed via `postMessage`; no secrets/tokens sent to widget iframes.
+
 **Risks:**
 - **Untrusted iframe content:** widgets are third-party iframes rendered into the dashboard; a malicious or compromised widget URL can run arbitrary script in a victim's browser (XSS, token theft) whenever the dashboard is opened.
 - **postMessage leakage:** runtime signal values are broadcast to all widget iframes on the dashboard; a hostile widget receives every signal the prototype emits, even values it was not meant to see.
@@ -79,9 +86,20 @@ Read `READ_MODEL`. Widgets are third-party iframes — same-origin policy depend
 
 `widget_config` (widget definitions/options) stored in `prototype.widget_config`; signal values are runtime/transient.
 
+**Coverage:**
+- **Stored data:** `prototype.widget_config` (widget definitions/options) in MongoDB; signal values are runtime/transient (not persisted).
+- **PII:** no.
+- **Retention:** indefinite — `widget_config` lives with the prototype; signal values are transient (runtime only).
+- **Encryption:** TLS in transit; no at-rest encryption beyond MongoDB defaults; signals are in-memory/runtime.
+- **Logging:** none — client-side `postMessage`; no server logging of signal values.
+
 **Risks:**
 - **Cross-widget signal exposure:** because signals are broadcast to every iframe, a single untrusted widget can exfiltrate the prototype's full runtime signal stream to a remote endpoint.
 - **Config tampering:** `widget_config` is mutable via the editor; a tampered config can point every widget at an attacker-controlled URL, persisting the leak across dashboard opens.
+
+### Test coverage
+- **E2E (Playwright):** 0 — not covered — SITEMAP: ⚠️
+- **Unit (Jest):** none
 
 ## CAP-DASHBOARD-02 — Dashboard editor
 
@@ -115,6 +133,13 @@ flowchart LR
 
 Edit `READ_MODEL`; save-as-template admin. Marketplace widgets from `DEFAULT_MARKETPLACE_URL` (third-party).
 
+**Coverage:**
+- **Auth:** required — edit is a write action on the prototype; "Save as Template" requires admin auth.
+- **Authorization:** edit gated by `READ_MODEL`; "Save as Template" gated by admin (`MANAGE_USERS`/`ADMIN`).
+- **Input validation:** widget config (URLs/options) stored as Mixed on the prototype; editor JSON options not strictly validated; `widget_config` is `Joi.any()` where validated.
+- **Rate limiting:** not applied — `authLimiter` defined but not used on prototype update routes.
+- **Secrets:** none — widget URLs/options only; no secrets in widget config.
+
 **Risks:**
 - **Config injection via editor:** a `READ_MODEL`-only gate lets any authorized contributor embed arbitrary widget URLs/options into the dashboard; viewers who open that dashboard then run those widgets, turning a low-privilege contributor into an XSS vector.
 - **Marketplace supply chain:** Marketplace widgets are pulled from `DEFAULT_MARKETPLACE_URL`; a compromised marketplace entry becomes an attack surface for every author who adds it.
@@ -124,9 +149,20 @@ Edit `READ_MODEL`; save-as-template admin. Marketplace widgets from `DEFAULT_MAR
 
 Widget config (URLs/options) stored in `prototype.widget_config`; options may reference runtime signals.
 
+**Coverage:**
+- **Stored data:** `prototype.widget_config` (widget URLs/options) in MongoDB.
+- **PII:** no.
+- **Retention:** indefinite — lives with the prototype document.
+- **Encryption:** TLS in transit; no at-rest encryption beyond MongoDB defaults.
+- **Logging:** standard request logging on prototype save.
+
 **Risks:**
 - **Persistent widget-config tampering:** a malicious `widget_config` (URLs/options) is persisted on the prototype and re-rendered for every viewer until manually fixed, repeatedly steering users toward untrusted widgets.
 - **Signal-reference leakage:** options that reference runtime signals encode which signals the prototype exposes; a tampered config can be crafted to surface and exfiltrate sensitive signals.
+
+### Test coverage
+- **E2E (Playwright):** 0 — not covered — SITEMAP: ✅
+- **Unit (Jest):** none
 
 ## CAP-DASHBOARD-03 — Widget sources (Built-in / Marketplace / URL)
 
@@ -161,6 +197,13 @@ flowchart TD
 
 Marketplace/URL widgets are remote third-party content — render in iframes; verify URLs are trusted.
 
+**Coverage:**
+- **Auth:** N/A — source selection is an authoring action gated by the editor's `READ_MODEL`.
+- **Authorization:** authoring gated by `READ_MODEL` (via the editor); no per-source authorization.
+- **Input validation:** no allowlist on widget URLs; marketplace fetched from `DEFAULT_MARKETPLACE_URL`; "by URL" source accepts any URL (no validation/scheme enforcement).
+- **Rate limiting:** not applied — marketplace list fetch and URL widget load are client-side; `authLimiter` not used.
+- **Secrets:** none — widget URLs/options only.
+
 **Risks:**
 - **Arbitrary remote widget URL:** the "by URL" source lets an author embed any remote page as a widget; there is no allowlist, so any signed-in author can pivot a dashboard into a launcher for attacker-hosted content.
 - **Marketplace trust boundary:** widgets listed by `DEFAULT_MARKETPLACE_URL` are not vetted by this platform; a malicious marketplace listing is presented to authors as if it were trusted.
@@ -170,8 +213,19 @@ Marketplace/URL widgets are remote third-party content — render in iframes; ve
 
 No PII; widget URLs/options stored in widget config.
 
+**Coverage:**
+- **Stored data:** widget URLs/options in `prototype.widget_config` (MongoDB).
+- **PII:** no.
+- **Retention:** indefinite — lives with the prototype document.
+- **Encryption:** TLS in transit (marketplace fetch over HTTPS if configured); URL widgets may be HTTP (mixed-content risk).
+- **Logging:** none — client-side source fetch/listing.
+
 **Risks:**
 - **URL persistence as exfil channel:** widget URLs are persisted in `widget_config`; a URL pointing to an attacker endpoint can receive (via postMessage or query params) runtime data every time the dashboard renders.
+
+### Test coverage
+- **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Unit (Jest):** none
 
 ## CAP-DASHBOARD-04 — Builtin widgets hosting
 
@@ -195,6 +249,13 @@ Request a builtin widget asset → served with correct MIME; add one to a dashbo
 
 Public static; no auth.
 
+**Coverage:**
+- **Auth:** N/A — public static serving via `express.static` at `/builtin-widgets` (`app.js`); no auth.
+- **Authorization:** none — public unauthenticated access.
+- **Input validation:** N/A — static file serving; relies on `express.static` path normalization (no custom validation).
+- **Rate limiting:** not applied — static serving has no rate limit; `authLimiter` not used.
+- **Secrets:** none — static bundles; `vss.json` embeds signal metadata but no secrets.
+
 **Risks:**
 - **Path traversal on static root:** if `/builtin-widgets/...` is not strictly path-normalized, an attacker could request `../` sequences to read files outside the widget bundles (config, source) from the server.
 - **Unauthed asset enumeration:** public unauthenticated serving lets anyone enumerate and fingerprint the platform's widget versions and shared libraries for targeted exploits.
@@ -203,8 +264,19 @@ Public static; no auth.
 
 Static assets only.
 
+**Coverage:**
+- **Stored data:** static files under `backend/static/builtin-widgets/` (widget bundles + shared libs: chart.min.js, tailwind/font-awesome, syncer.js).
+- **PII:** no.
+- **Retention:** indefinite — static files; no TTL.
+- **Encryption:** TLS in transit; no at-rest encryption for static files.
+- **Logging:** standard static-serving access logs.
+
 **Risks:**
 - **Bundled data exposure:** some bundles embed data such as `vss.json`; if a bundle accidentally includes prototype or tenant data, public unauthed serving would leak it to anyone.
+
+### Test coverage
+- **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Unit (Jest):** none
 
 ## CAP-DASHBOARD-05 — Dashboard templates
 
@@ -236,6 +308,13 @@ flowchart LR
 
 Read public; write `MANAGE_USERS`.
 
+**Coverage:**
+- **Auth:** reads public (`GET /v2/dashboard-template` and `/:id` have no `auth()`); writes require auth.
+- **Authorization:** writes gated by `checkPermission(PERMISSIONS.ADMIN)` = `manageUsers` = `MANAGE_USERS` (`dashboardTemplate.route.js`).
+- **Input validation:** Joi validation (`dashboardTemplate.validation.js`) on list/get/create/update/remove; `widget_config` is `Joi.any()` (untyped Mixed); `visibility` enum-validated.
+- **Rate limiting:** not applied — `authLimiter` defined but not imported into `dashboardTemplate.route.js`.
+- **Secrets:** none — templates hold `widget_config` only; no secrets.
+
 **Risks:**
 - **Platform-wide payload:** templates auto-apply to dashboards on first open. A compromised admin could seed a `is_default` template embedding a malicious widget URL, pushing untrusted content to every new dashboard.
 - **Visibility misconfiguration:** a template's public/private visibility controls who can use it; a wrong default could expose a private template's widget layout to all authors.
@@ -244,8 +323,19 @@ Read public; write `MANAGE_USERS`.
 
 Template `widget_config` stored; no secrets.
 
+**Coverage:**
+- **Stored data:** `dashboardTemplates` collection — name, description, image, visibility, is_default, widget_config (Mixed), created_by, updated_by, timestamps.
+- **PII:** no.
+- **Retention:** indefinite — hard delete via `DELETE /:id` (`deleteOne()`); no soft delete/TTL.
+- **Encryption:** TLS in transit; no at-rest encryption beyond MongoDB defaults; no hashing (no passwords).
+- **Logging:** standard request logging.
+
 **Risks:**
 - **Persistent distribution channel:** a malicious template propagates its widget URLs/options to all dashboards derived from it until an admin notices and removes it, repeatedly exposing users to untrusted widget content.
+
+### Test coverage
+- **E2E (Playwright):** 0 — not covered — SITEMAP: ✅
+- **Unit (Jest):** none
 
 ## CAP-DASHBOARD-06 — Widget ProtoPilot (GenAI widgets) — roadmap
 
@@ -269,6 +359,13 @@ N/A (not functional).
 
 N/A.
 
+**Coverage:**
+- **Auth:** N/A — not implemented (placeholder "coming soon").
+- **Authorization:** N/A — not implemented.
+- **Input validation:** N/A — not implemented.
+- **Rate limiting:** N/A — not implemented.
+- **Secrets:** N/A — not implemented.
+
 **Risks:**
 - **Future generated-code execution:** once implemented, GenAI-generated widgets would run as third-party iframes; without sandboxing/output validation, prompt-injection could yield widgets that exfiltrate runtime signals.
 
@@ -276,5 +373,16 @@ N/A.
 
 N/A.
 
+**Coverage:**
+- **Stored data:** N/A — not implemented.
+- **PII:** N/A — not implemented.
+- **Retention:** N/A — not implemented.
+- **Encryption:** N/A — not implemented.
+- **Logging:** N/A — not implemented.
+
 **Risks:**
 - **Prompt-derived widget content:** when implemented, generated widget code persisted in `widget_config` could embed sensitive signal references the author did not intend to expose.
+
+### Test coverage
+- **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Unit (Jest):** none

@@ -72,6 +72,13 @@ flowchart LR
 
 Create/import `WRITE_MODEL`; reads respect `PUBLIC_VIEWING` + `READ_MODEL` for private models.
 
+**Coverage:**
+- **Auth:** Optional via `PUBLIC_VIEWING` for reads; required for create/import (`auth()`).
+- **Authorization:** `WRITE_MODEL` for create/import (controller `hasPermission`); reads scoped via `listReadableModelIds`; private models gated by `READ_MODEL`.
+- **Input validation:** Joi `prototypeValidation.listPrototypes`/`createPrototype` (`model_id` objectId, `name` max 255); ZIP import parsed via `zipUtils.tsx` — path traversal not explicitly sanitized.
+- **Rate limiting:** not applied (`authLimiter` defined but unused).
+- **Secrets:** none.
+
 **Risks:**
 - **Private-prototype enumeration:** if server-side access scoping lags behind `PUBLIC_VIEWING`, a signed-out or cross-tenant user could enumerate private prototypes through list/portfolio filters, leaking proprietary SDV code.
 - **Malicious ZIP import:** import reads archive contents; an attacker-crafted archive could exploit path traversal or oversized payloads during extraction to corrupt storage or inject code.
@@ -80,9 +87,20 @@ Create/import `WRITE_MODEL`; reads respect `PUBLIC_VIEWING` + `READ_MODEL` for p
 
 Prototype metadata + code stored in `prototypes`; import reads archive contents.
 
+**Coverage:**
+- **Stored data:** `prototypes` collection (name, code, model_id, description, image_file, created_by, etc.); ZIP archive contents read during import.
+- **PII:** no — only prototype metadata + author reference.
+- **Retention:** indefinite (hard delete on `DELETE`, no soft-delete/TTL).
+- **Encryption:** none at rest; TLS in transit via platform.
+- **Logging:** `logger.warn` on `extend`/`requirements_data` JSON parse failures; `captureChange` records create/update/remove.
+
 **Risks:**
 - **Source data loss on bad import:** a malformed or hostile ZIP could overwrite or shadow existing prototype code during import without a rollback path.
 - **Code exposure via visibility:** a prototype under a private model still stores full source code; a misapplied `PUBLIC_VIEWING` toggle exposes that code to anonymous users.
+
+### Test coverage
+- **E2E (Playwright):** 4 test case(s) in `prototype.spec.ts` + `prototype-extended.spec.ts` — SITEMAP: ✅
+- **Unit (Jest):** none
 
 ## CAP-PROTO-02 — New prototype layout
 
@@ -122,6 +140,13 @@ sequenceDiagram
 
 Auth required.
 
+**Coverage:**
+- **Auth:** required (redirects to `/` if signed out); feature-flagged on `ENABLE_NEW_PROTOTYPE_PAGE`.
+- **Authorization:** `WRITE_MODEL` re-checked on the underlying create endpoint (CAP-PROTO-03).
+- **Input validation:** submit runs Joi `createPrototype`; preview reads model/template shell; flag-gated.
+- **Rate limiting:** not applied.
+- **Secrets:** none.
+
 **Risks:**
 - **Flag-bypass create:** if the `ENABLE_NEW_PROTOTYPE_PAGE` guard were bypassed or the underlying create endpoint didn't re-check `WRITE_MODEL`, an unauthenticated user reaching `/new-prototype` could open a model-scoped create flow.
 - **Template-driven code injection:** the shell preview loads a template's plugin config; a compromised template could render unsandboxed plugin code during creation.
@@ -130,8 +155,19 @@ Auth required.
 
 No extra data; reads model/template to preview.
 
+**Coverage:**
+- **Stored data:** none directly (preview only); the subsequent create stores a prototype via CAP-PROTO-03.
+- **PII:** no.
+- **Retention:** N/A (no data stored by this capability).
+- **Encryption:** none (preview read of model/template).
+- **Logging:** none specific.
+
 **Risks:**
 - **Template data leakage:** previewing the default template exposes template layout/plugin references to any author; a misconfigured template could leak references to private plugins or internal assets.
+
+### Test coverage
+- **E2E (Playwright):** 1 test case(s) in `prototype.spec.ts` — SITEMAP: ✅
+- **Unit (Jest):** none
 
 ## CAP-PROTO-03 — Prototype CRUD / bulk / recent / popular / execute-code
 
@@ -167,6 +203,13 @@ flowchart TD
 
 Write `WRITE_MODEL`; recent requires auth; reads respect `PUBLIC_VIEWING` + model access.
 
+**Coverage:**
+- **Auth:** reads optional via `PUBLIC_VIEWING`; writes/`recent`/`execute-code` require auth (`auth()`).
+- **Authorization:** `WRITE_MODEL` on `POST`/`PATCH`/`DELETE`/`bulk` (route `checkPermission` + controller `hasPermission`); private reads gated by `READ_MODEL` (`getPrototypeById`).
+- **Input validation:** Joi `createPrototype`/`updatePrototype`/`bulkCreatePrototypes`/`executeCode`/`listPrototypes`; `model_id` objectId, `name` max 255, `state` enum.
+- **Rate limiting:** not applied (`authLimiter` unused) — bulk-create and execute-code unguarded.
+- **Secrets:** none.
+
 **Risks:**
 - **Bulk-create abuse:** `POST /v2/prototypes/bulk` without rate limiting lets an attacker spawn many prototypes, exhausting storage and polluting the model namespace.
 - **Counter inflation:** `execute-code` is unauthenticated relative to popularity ranking; an attacker could inflate `executed_turns` to manipulate the popular list.
@@ -176,9 +219,20 @@ Write `WRITE_MODEL`; recent requires auth; reads respect `PUBLIC_VIEWING` + mode
 
 `last_viewed`, `executed_turns`, `rated_by` (Map), `state` stored per prototype.
 
+**Coverage:**
+- **Stored data:** `prototypes` (last_viewed, executed_turns, rated_by Map, state, code); recent list sourced from external `CACHE_URL` (`/get-recent-activities/:userId`).
+- **PII:** no direct PII; recent list is a per-user activity trail (prototype ids + times) tied to userId.
+- **Retention:** indefinite (hard delete via `deleteOne`, no soft-delete; recent cache retention governed by external cache service).
+- **Encryption:** none at rest; TLS in transit.
+- **Logging:** `logger.error` on cache fetch failures; `captureChange` records create/update/remove.
+
 **Risks:**
 - **Activity profiling:** `last_viewed` and recent lists are per-user activity trails; a compromised account exposes which prototypes a user touched and when.
 - **Irreversible delete:** `DELETE /v2/prototypes/:id` hard-removes the prototype (no soft-delete), so accidental or malicious deletion is permanent source-data loss.
+
+### Test coverage
+- **E2E (Playwright):** 4 test case(s) in `prototype.spec.ts` + `prototype-extended.spec.ts` + `prototype-runtime.spec.ts` — SITEMAP: ⚠️
+- **Unit (Jest):** none
 
 ## CAP-PROTO-04 — Prototype workspace (tabs)
 
@@ -214,6 +268,13 @@ flowchart TD
 
 Tab management `WRITE_MODEL` + addon flag; Staging auth-gated. Plugins unsandboxed.
 
+**Coverage:**
+- **Auth:** read optional via `PUBLIC_VIEWING`; addon/tab management requires auth + `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG`; Staging requires auth.
+- **Authorization:** `WRITE_MODEL` for addon add/manage; "Save as Template" requires admin (`MANAGE_USERS`).
+- **Input validation:** tab/addon config persisted via `updatePrototype` — `extend` is `Joi.any()`, `widget_config` is `jsonString` (loosely validated); plugin tabs run unsandboxed via `PluginPageRender`.
+- **Rate limiting:** not applied.
+- **Secrets:** none.
+
 **Risks:**
 - **Malicious addon tab:** plugins run unsandboxed via `PluginPageRender`; if the `ALLOW_NON_ADMIN_ADDON_CONFIG` gate were bypassed, a non-admin could inject a hostile tab into every visitor's view (XSS / token theft).
 - **Staging bypass:** Staging requires auth + prototype code; a missing check could expose staging execution to anonymous users or code-less prototypes.
@@ -222,9 +283,20 @@ Tab management `WRITE_MODEL` + addon flag; Staging auth-gated. Plugins unsandbox
 
 Tab config + `extend` (plugin data sink) stored on the prototype; `last_viewed` updated on visit.
 
+**Coverage:**
+- **Stored data:** `prototype.extend` (Mixed, plugin data sink), tab/right-nav config, `last_viewed` updated per visit.
+- **PII:** no direct PII; `last_viewed` is a viewing log tied to the visitor session.
+- **Retention:** indefinite (lives with the prototype; hard delete on prototype delete).
+- **Encryption:** none at rest; TLS in transit.
+- **Logging:** `captureChange` records updates; view tracking persisted to `last_viewed`.
+
 **Risks:**
 - **Plugin data sink persistence:** `extend` stores arbitrary plugin-supplied data on the prototype; a malicious plugin could persist hostile payloads that re-activate on every visit.
 - **View-tracking exposure:** `last_viewed` updates on every visit, creating a fine-grained viewing log tied to the visitor's session.
+
+### Test coverage
+- **E2E (Playwright):** 8 test case(s) in `prototype.spec.ts` + `prototype-extended.spec.ts` + `prototype-tabs.spec.ts` — SITEMAP: ⚠️
+- **Unit (Jest):** none
 
 ## CAP-PROTO-05 — Code editor
 
@@ -266,6 +338,13 @@ sequenceDiagram
 
 Edit `WRITE_MODEL`; GenAI gated by `USE_GEN_AI` + flag.
 
+**Coverage:**
+- **Auth:** required for edit (`auth()`).
+- **Authorization:** `WRITE_MODEL` (route `checkPermission`).
+- **Input validation:** `code` is `Joi.string().allow('')` — no language/safety validation; GenAI output applied directly to `prototype.code`.
+- **Rate limiting:** not applied; GenAI calls routed to external `GENAI_SDV_APP_ENDPOINT`.
+- **Secrets:** GenAI endpoint config (`GENAI_SDV_APP_ENDPOINT`, `USE_GEN_AI`) held in site-config, not in the prototype.
+
 **Risks:**
 - **GenAI prompt-injection:** generated code from ProtoPilot is applied to `prototype.code`; a malicious prompt could inject code that runs in staging or exfiltrates prototype data when later executed.
 - **Unauthed auto-save:** if the `WRITE_MODEL` check were skipped on the auto-save path, any viewer could overwrite an author's code with no version history to revert.
@@ -274,9 +353,20 @@ Edit `WRITE_MODEL`; GenAI gated by `USE_GEN_AI` + flag.
 
 Code (potentially large text) stored in `prototype.code`; auto-save writes frequently (throttled by `captureChange`).
 
+**Coverage:**
+- **Stored data:** `prototype.code` (string or JSON project descriptor); auto-save writes via `captureChange` throttling.
+- **PII:** no (source code only).
+- **Retention:** indefinite (no version history; hard delete on prototype delete).
+- **Encryption:** none at rest; TLS in transit.
+- **Logging:** `captureChange` records updates (change log); code content not logged by this path.
+
 **Risks:**
 - **Source data loss on autosave:** frequent auto-save with no history means a bad paste or GenAI apply can irreversibly overwrite the author's prior code with no recovery trail.
 - **Large-payload bloat:** unthrottled code growth could bloat the `prototypes` document, degrading backups and reads.
+
+### Test coverage
+- **E2E (Playwright):** 2 test case(s) in `prototype-tabs.spec.ts` + `prototype-runtime.spec.ts` — SITEMAP: ⚠️
+- **Unit (Jest):** none
 
 ## CAP-PROTO-06 — Project editor (multi-file)
 
@@ -311,6 +401,13 @@ flowchart TD
 
 Edit `WRITE_MODEL`. GitHub auth wiring available for intended git sync (partial).
 
+**Coverage:**
+- **Auth:** required (`auth()`).
+- **Authorization:** `WRITE_MODEL`.
+- **Input validation:** file ops (create/rename/delete) operate on JSON project paths — `../` traversal not explicitly validated; ZIP import via `zipUtils.tsx` must sanitize entry names.
+- **Rate limiting:** not applied.
+- **Secrets:** partial GitHub auth wiring for intended git sync (not active).
+
 **Risks:**
 - **Path traversal in file ops:** create/rename/delete operate on paths inside the JSON project; without validation an attacker could craft `../` paths to escape the project root and overwrite unrelated files.
 - **ZIP import traversal:** importing a ZIP with malicious entry names (`../`) could write files outside the project tree if extraction doesn't sanitize paths.
@@ -320,9 +417,20 @@ Edit `WRITE_MODEL`. GitHub auth wiring available for intended git sync (partial)
 
 Whole project stored as JSON in `prototype.code`; export contains all files.
 
+**Coverage:**
+- **Stored data:** entire project as JSON in `prototype.code`; export ZIP bundles all files.
+- **PII:** no (project source files).
+- **Retention:** indefinite (no per-file history; whole project overwritten on save-all).
+- **Encryption:** none at rest; TLS in transit.
+- **Logging:** `captureChange` records updates.
+
 **Risks:**
 - **Bulk source loss:** a single destructive file delete or a corrupt save-all overwrites the entire project JSON; with no per-file history, the whole project can be lost at once.
 - **Export exfiltration:** export ZIP bundles every project file, so a leaked edit token lets an attacker steal the complete multi-file source in one action.
+
+### Test coverage
+- **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Unit (Jest):** none
 
 ## CAP-PROTO-07 — Prototype feedback
 
@@ -363,6 +471,13 @@ sequenceDiagram
 
 Add requires sign-in; delete limited to own.
 
+**Coverage:**
+- **Auth:** `POST`/`PATCH`/`DELETE` require auth (`auth()`); `GET` optional via `PUBLIC_VIEWING`.
+- **Authorization:** `PATCH`/`DELETE` own-only (service checks `String(feedback.created_by) !== userId` → FORBIDDEN).
+- **Input validation:** Joi `feedbackValidation.createFeedback`/`updateFeedback` — scores 1–5, `interviewee.name` required, `description`/`question`/`recommendation` max 2000.
+- **Rate limiting:** not applied — burner-account spam possible.
+- **Secrets:** none.
+
 **Risks:**
 - **Impersonated feedback:** if the own-only check on `PATCH/DELETE` is missing, a user could delete or alter others' feedback, manipulating a prototype's averaged scores.
 - **Anonymous spam:** `POST` only requires sign-in, so a burner account could flood feedback with biased ratings to inflate or tank a prototype's score.
@@ -371,9 +486,20 @@ Add requires sign-in; delete limited to own.
 
 Feedback stores `interviewee` (name/organization), scores, `ref`/`model_id`; no secrets.
 
+**Coverage:**
+- **Stored data:** `feedbacks` collection (interviewee name/organization, scores, description, ref/ref_type/model_id, created_by, avg_score).
+- **PII:** yes — `interviewee` name + organization; `created_by` user reference.
+- **Retention:** indefinite (hard delete on `DELETE`; no soft-delete/TTL).
+- **Encryption:** none at rest; TLS in transit.
+- **Logging:** standard request logging; no sensitive data explicitly logged.
+
 **Risks:**
 - **PII exposure:** `interviewee` name/organization is PII; a public `GET /v2/feedbacks` could expose reviewer and interviewee identities to anonymous users.
 - **Relationship inference:** feedback records tie a reviewer and interviewee to a specific prototype and model, leaking business relationships.
+
+### Test coverage
+- **E2E (Playwright):** 1 test case(s) in `prototype-extended.spec.ts` — SITEMAP: ✅
+- **Unit (Jest):** none
 
 ## CAP-PROTO-08 — Project templates
 
@@ -407,6 +533,13 @@ flowchart LR
 
 Read public; write `MANAGE_USERS`.
 
+**Coverage:**
+- **Auth:** reads `auth({ optional: true })` (public); writes require auth + `ADMIN` permission (`checkPermission(PERMISSIONS.ADMIN)`).
+- **Authorization:** `ADMIN` for `POST`/`PUT`/`DELETE`; non-admin reads filtered to `visibility: 'public'`.
+- **Input validation:** Joi `projectTemplateValidation.create`/`update` — `name` required max 255, `data` required `jsonString`, `visibility` enum public/private.
+- **Rate limiting:** not applied.
+- **Secrets:** none.
+
 **Risks:**
 - **Platform-wide payload:** templates apply to every prototype created from them. A compromised admin could seed a template embedding hostile code, pushing it to all new projects.
 - **Seed-supply chain:** the predefined seed (`predefinedProjectTemplates.js`) runs at startup; a compromised seed file silently seeds malicious starter code into every deployment.
@@ -415,6 +548,17 @@ Read public; write `MANAGE_USERS`.
 
 Template data (code/widget_config/journey) stored; no secrets.
 
+**Coverage:**
+- **Stored data:** `projecttemplates` collection (name, description, data JSON, visibility, created_by, updated_by); seeded at startup via `seedProjectTemplates` (`$setOnInsert`, never overwrites admin edits).
+- **PII:** no.
+- **Retention:** indefinite (hard delete on `DELETE`; seeded defaults re-insert only if absent).
+- **Encryption:** none at rest; TLS in transit.
+- **Logging:** `logger.info`/`logger.error` on seed outcome; no sensitive data logged.
+
 **Risks:**
 - **Persistent distribution channel:** a malicious template propagates its code, widget config, and journey to all derived prototypes until an admin notices and removes it.
 - **Starter-code IP leakage:** templates are public-read; any proprietary starter code placed in a template is exposed to anonymous users.
+
+### Test coverage
+- **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Unit (Jest):** none

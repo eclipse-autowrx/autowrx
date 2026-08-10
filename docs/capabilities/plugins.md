@@ -64,6 +64,13 @@ flowchart LR
 
 Reads public; writes require auth + ownership (or admin). The `checkPermission(ADMIN)` on the upload route is commented out — any authenticated user can upload (subject to per-slug ownership).
 
+**Coverage:**
+- **Auth:** Reads public (`GET /v2/plugin`, `/admin`, `/id/:id`, `/slug/:slug` have no `auth()`); writes require auth (`router.use(auth())` applied before POST/PUT/DELETE/mine).
+- **Authorization:** Update/delete enforce owner-or-admin in `plugin.service` (`isOwner`/`isAdmin`); create has no admin gate; upload admin gate commented out (`// checkPermission(PERMISSIONS.ADMIN)`).
+- **Input validation:** Joi validation on create/update/list/get (`plugin.validation.js`); `slug` forbidden on update; `config` is `Joi.any()` (untyped Mixed); `url` URI-validated only for external plugins.
+- **Rate limiting:** not applied — `authLimiter` is defined in `middlewares/rateLimiter.js` but not imported into `plugin.route.js` (or any route).
+- **Secrets:** none handled by CRUD; the untyped `config` field could hold author-supplied secrets but the backend does not protect or surface them specially.
+
 **Risks:**
 - **Anonymous-style metadata spoofing:** public read access lets attackers enumerate all plugin slugs, URLs, and config, mapping the attack surface for later exploitation or impersonation via look-alike slugs.
 - **Ownership bypass on update/delete:** a broken ownership check would let any authenticated user overwrite or delete another author's plugin, swapping a trusted bundle for a malicious one (supply-chain takeover).
@@ -73,9 +80,20 @@ Reads public; writes require auth + ownership (or admin). The `checkPermission(A
 
 Plugin metadata + `config` (Mixed) stored in `plugins` with `created_by`/`updated_by`.
 
+**Coverage:**
+- **Stored data:** Plugin docs in MongoDB `plugins` collection — name, slug, image, description, is_internal, url, config (Mixed), type, created_by, updated_by, timestamps.
+- **PII:** no direct PII; `created_by`/`updated_by` are user ObjectIds (author identity is exposed via public read).
+- **Retention:** indefinite — hard delete via `deleteOne()` on DELETE; no soft delete, no TTL.
+- **Encryption:** TLS in transit (HTTPS); no at-rest encryption beyond MongoDB defaults; no hashing (no passwords).
+- **Logging:** standard request logging only; no sensitive-data logging identified.
+
 **Risks:**
 - **Config secret leakage:** the `config` field is Mixed/untyped; if an author stores API keys or tokens in plugin config, the public `GET /v2/plugin` read exposes them to every visitor.
 - **Author identity disclosure:** `created_by`/`updated_by` on a public-read document leaks which users author which plugins, enabling targeted harassment or account takeover of high-value authors.
+
+### Test coverage
+- **E2E (Playwright):** 3 test case(s) in `plugin-management.spec.ts`, `my-plugins.spec.ts` — SITEMAP: ✅
+- **Unit (Jest):** none
 
 ## CAP-PLUGIN-02 — Internal plugin upload & static hosting
 
@@ -114,6 +132,13 @@ sequenceDiagram
 
 Auth required; ownership enforced on existing slug. Upload accepts any file type (50 MB limit) and runs system `unzip` — treat as trusted code. Admin gate commented out (see above).
 
+**Coverage:**
+- **Auth:** required — `auth()` applied on `POST /v2/plugin/upload/:slug`.
+- **Authorization:** ownership enforced on existing slug (owner or admin in controller); admin gate commented out (`// checkPermission(PERMISSIONS.ADMIN)`); a new slug can be uploaded by any authenticated user.
+- **Input validation:** Joi `uploadInternal` validates the `slug` param only; multer `fileFilter` accepts any file type; 50 MB size limit via `upload.js` `limits.fileSize`; no zip-content validation.
+- **Rate limiting:** not applied — `authLimiter` defined but not imported into the upload route.
+- **Secrets:** none handled by the route; bundle contents are code (authors could embed secrets, but the backend does not inspect or protect them).
+
 **Risks:**
 - **Zip-slip / arbitrary file write:** invoking system `unzip` on untrusted archives risks path-traversal (zip-slip) writing files outside `static/plugin/:slug`, potentially overwriting server code or config.
 - **Malicious bundle execution:** the uploaded bundle runs unsandboxed in every visitor's browser; a compromised or rogue author can push XSS, token theft, or data-exfiltration code to all users who open the tab.
@@ -123,9 +148,20 @@ Auth required; ownership enforced on existing slug. Upload accepts any file type
 
 Plugin bundle served publicly from `/plugin/<slug>/`; the bundle can contain arbitrary JS (executes in users' browsers).
 
+**Coverage:**
+- **Stored data:** extracted bundle files on disk at `backend/static/plugin/<slug>/`; plugin doc updated with `is_internal=true` + `url`; multer temp file in `static/uploads/<date>/` (unlinked after extract).
+- **PII:** no — bundle is code; not designed to hold PII (embedded data is an author responsibility).
+- **Retention:** bundle files persist on disk indefinitely; not cleaned when the plugin record is deleted (stale files remain reachable).
+- **Encryption:** TLS in transit; bundle served same-origin over HTTP/HTTPS; no at-rest encryption for extracted files.
+- **Logging:** `console.error` on temp-file unlink failure; standard request logging.
+
 **Risks:**
 - **Public bundle exposure:** once hosted, the bundle is world-readable; any sensitive data baked into the bundle (author secrets, tenant data) is permanently exfiltrated and irretrievable.
 - **Bundle persistence after delete:** extracted files under `backend/static/plugin/:slug` may persist on disk even if the registry record is deleted, leaving stale malicious code publicly reachable.
+
+### Test coverage
+- **E2E (Playwright):** 1 test case in `plugin-management.spec.ts` (ZIP upload) — SITEMAP: ✅
+- **Unit (Jest):** none
 
 ## CAP-PLUGIN-03 — Plugin loader
 
@@ -162,6 +198,13 @@ flowchart TD
 
 Same-origin, unsandboxed — full DOM/window access. Only public site configs surfaced (secrets never exposed). `editable` from `WRITE_MODEL` permission; advisory only (plugin can ignore).
 
+**Coverage:**
+- **Auth:** N/A — client-side loader; tab access relies on upstream model-read auth gating.
+- **Authorization:** `editable` flag derived from `WRITE_MODEL` permission; advisory only (plugin can ignore); no enforcement on the plugin side.
+- **Input validation:** N/A — loader fetches the plugin URL from the registry; no client-side validation of bundle contents.
+- **Rate limiting:** N/A — client-side fetch; no rate limit on script injection/polling.
+- **Secrets:** none — `PluginAPI` exposes only public site config (no tokens/secrets); no auth tokens passed to the plugin.
+
 **Risks:**
 - **Unsandboxed code execution:** a loaded plugin has full access to `window`, DOM, cookies, and `localStorage`, enabling XSS, session-token theft, and silent exfiltration of any data the page holds.
 - **Global namespace pollution:** priming `window.React`, `window.ReactDOM`, the `require` shim, and `__webpack_require__.cache` lets a malicious plugin tamper with shared globals, breaking or hijacking other plugins and the host app.
@@ -171,9 +214,20 @@ Same-origin, unsandboxed — full DOM/window access. Only public site configs su
 
 Plugin receives `data` (model/prototype), public site `config`, and the `PluginAPI`; no auth tokens/secrets passed.
 
+**Coverage:**
+- **Stored data:** none — runtime only; registrations cached in memory per slug (cleared on page unload).
+- **PII:** no direct PII; `data` (model/prototype contents) may carry proprietary vehicle data passed to the plugin.
+- **Retention:** N/A — in-memory registration cache; no persistence by the loader.
+- **Encryption:** TLS in transit (script fetched over HTTPS); bundle executes same-origin, unsandboxed.
+- **Logging:** none — client-side; console only.
+
 **Risks:**
 - **Model/prototype data exposure:** `data` passed to the plugin includes model and prototype contents; an unsandboxed plugin can exfiltrate proprietary vehicle data to an external endpoint.
 - **`PluginAPI` abuse:** the `PluginAPI` surface, even without tokens, may expose endpoints a plugin can call to read or modify data the user didn't intend to expose.
+
+### Test coverage
+- **E2E (Playwright):** 2 test case(s) in `plugin-management.spec.ts` (plugin detail page renders) — SITEMAP: ✅
+- **Unit (Jest):** none
 
 ## CAP-PLUGIN-04 — Plugin preloading
 
@@ -206,6 +260,13 @@ flowchart LR
 
 Prefetches external URLs with `credentials:'omit'`.
 
+**Coverage:**
+- **Auth:** N/A — client-side prefetch; no auth on prefetch requests.
+- **Authorization:** N/A — prefetch targets derived from tab/staging config; no permission check at prefetch time.
+- **Input validation:** N/A — uses plugin URLs from the registry; no validation or allowlist on prefetch targets.
+- **Rate limiting:** N/A — client-side; throttled via `requestIdleCallback` + `fetch(priority='low')`.
+- **Secrets:** none — `credentials:'omit'` on prefetch; no tokens sent.
+
 **Risks:**
 - **External URL prefetch leak:** prefetching external plugin URLs reveals the user's browsing of a model to the external host (timing + access logs) even if the tab is never opened.
 - **Untrusted bundle warmed:** prefetching warms the cache for a bundle that will execute unsandboxed; a compromised external host can swap the bundle between prefetch and load, defeating integrity assumptions.
@@ -214,8 +275,19 @@ Prefetches external URLs with `credentials:'omit'`.
 
 Only fetches public bundle URLs.
 
+**Coverage:**
+- **Stored data:** none — browser HTTP cache only.
+- **PII:** no.
+- **Retention:** N/A — browser cache; cleared per browser policy.
+- **Encryption:** TLS in transit (HTTPS prefetch); `credentials:'omit'` sends no cookies.
+- **Logging:** none — client-side.
+
 **Risks:**
 - **User activity inference:** prefetch patterns (which slugs, how many) can reveal which models a user visits, leaking usage patterns to external plugin hosts via referer/log entries.
+
+### Test coverage
+- **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Unit (Jest):** none
 
 ## CAP-PLUGIN-05 — Sample plugins
 
@@ -239,6 +311,13 @@ Build sample-tsx → `index.js`; load via the test page → renders.
 
 Same as any plugin (unsandboxed).
 
+**Coverage:**
+- **Auth:** N/A — static assets served publicly; no auth to read samples.
+- **Authorization:** N/A — public static files; no authorization gate.
+- **Input validation:** N/A — prebuilt static bundles; no runtime validation.
+- **Rate limiting:** not applied — static serving has no rate limit.
+- **Secrets:** none — static reference bundles.
+
 **Risks:**
 - **Copy-paste of insecure patterns:** samples are the template authors copy; if a sample ships an insecure pattern (e.g. trusting `data`, calling `eval`), it propagates to community plugins.
 - **Static asset tampering:** samples live under `backend/static/plugin/`; if write access is not restricted, an attacker who can modify them can poison the reference implementation every author trusts.
@@ -247,8 +326,19 @@ Same as any plugin (unsandboxed).
 
 Static sample assets.
 
+**Coverage:**
+- **Stored data:** static files under `backend/static/plugin/` (`sample-tsx`, `sample-esm` builds + shared libs).
+- **PII:** no.
+- **Retention:** indefinite — static files; no TTL.
+- **Encryption:** TLS in transit; no at-rest encryption for static files.
+- **Logging:** standard static-serving access logs.
+
 **Risks:**
 - **No user data involved:** samples are static reference bundles with no user data; the residual risk is only that a tampered sample misleads authors into embedding malicious code.
+
+### Test coverage
+- **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Unit (Jest):** none
 
 ## CAP-PLUGIN-06 — Addon select / custom tab editor
 
@@ -285,6 +375,13 @@ sequenceDiagram
 
 `WRITE_MODEL` + addon flag. Plugins unsandboxed.
 
+**Coverage:**
+- **Auth:** required — tab management is a write action on the model (gated by model write auth).
+- **Authorization:** `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG` (admins always allowed); non-admins gated by the addon flag.
+- **Input validation:** tab config stored on `model.custom_template` (Mixed); validated at the model-update layer, not plugin-specific; no allowlist on referenced plugin IDs/slugs.
+- **Rate limiting:** not applied — `authLimiter` defined but not used on model-update routes.
+- **Secrets:** none — tab config references plugin IDs/slugs and layout only.
+
 **Risks:**
 - **Malicious tab injection:** a non-admin bypassing `ALLOW_NON_ADMIN_ADDON_CONFIG` could inject a hostile plugin tab into every visitor's view, running arbitrary unsandboxed code (XSS / token theft) across the whole model audience.
 - **Sidebar/right-nav persistence:** sidebar and right-nav buttons are always-visible surfaces; a malicious plugin placed there executes on every model open, not just when a tab is activated.
@@ -294,9 +391,20 @@ sequenceDiagram
 
 Tab/layout config on the model document.
 
+**Coverage:**
+- **Stored data:** `model.custom_template` (`model_tabs`/`prototype_tabs`/`prototype_sidebar_plugin`/`prototype_right_nav_buttons`) in MongoDB.
+- **PII:** no.
+- **Retention:** indefinite — lives with the model document; removed when the model is deleted.
+- **Encryption:** TLS in transit; no at-rest encryption beyond MongoDB defaults.
+- **Logging:** standard request logging on model save.
+
 **Risks:**
 - **Untrusted-code distribution channel:** the tab layout is a persisted delivery channel — a malicious layout keeps steering visitors toward running untrusted plugins until it is noticed and removed.
 - **Layout as metadata leak:** `custom_template` reveals which plugins and staging stages a model relies on, exposing internal architecture to anyone with read access.
+
+### Test coverage
+- **E2E (Playwright):** 2 test case(s) in `plugin-management.spec.ts` (add plugin tab via + button) — SITEMAP: ✅
+- **Unit (Jest):** none
 
 ## CAP-PLUGIN-07 — My Plugins & admin Plugin management
 
@@ -334,6 +442,13 @@ flowchart TD
 
 My Plugins auth; admin `MANAGE_USERS`; non-admin visibility gated by addon flag.
 
+**Coverage:**
+- **Auth:** required — `/me/plugins` and `/admin/plugins` require auth; non-admin visibility gated by `ALLOW_NON_ADMIN_ADDON_CONFIG`.
+- **Authorization:** `/me/plugins` → own plugins (auth); `/admin/plugins` → `MANAGE_USERS` (admin).
+- **Input validation:** same Joi validation as CAP-PLUGIN-01 (create/update via shared `/v2/plugin` endpoints); `config` is `Joi.any()` (untyped).
+- **Rate limiting:** not applied — `authLimiter` defined but not used on plugin routes.
+- **Secrets:** none — admin UI manages plugin records and per-stage mapping; no secrets handled.
+
 **Risks:**
 - **Flag misconfiguration widens authoring:** if `ALLOW_NON_ADMIN_ADDON_CONFIG` defaults to true, any authenticated user can author and publish plugins, enlarging the supply-chain attack surface.
 - **Admin plugin takeover:** a stolen `MANAGE_USERS` session lets an attacker reconfigure or replace any plugin (including deploy plugins that run during staging), turning admin actions into platform-wide compromise.
@@ -343,6 +458,17 @@ My Plugins auth; admin `MANAGE_USERS`; non-admin visibility gated by addon flag.
 
 Plugin records + per-stage config (`STAGING_FRAME` site config holds stage → plugin mapping).
 
+**Coverage:**
+- **Stored data:** plugin records in MongoDB `plugins`; `STAGING_FRAME` site config (stage → plugin mapping) in site config.
+- **PII:** no direct PII; `created_by`/`updated_by` are user ObjectIds.
+- **Retention:** indefinite — hard delete via `DELETE /v2/plugin/:id`; no soft delete/TTL.
+- **Encryption:** TLS in transit; no at-rest encryption beyond MongoDB defaults.
+- **Logging:** standard request logging.
+
 **Risks:**
 - **Stage-to-plugin mapping exposure:** the `STAGING_FRAME` mapping reveals deployment topology (which stages run which plugins); an attacker can target the weakest plugin or stage for disruption.
 - **Custom API set persistence:** Vehicle API/custom set records persist admin-defined API shapes; a malicious or compromised admin can silently alter API contracts that downstream consumers depend on.
+
+### Test coverage
+- **E2E (Playwright):** 3 test case(s) in `plugin-management.spec.ts`, `my-plugins.spec.ts` — SITEMAP: ✅
+- **Unit (Jest):** none

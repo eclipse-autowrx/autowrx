@@ -71,6 +71,13 @@ flowchart LR
 
 Read optional via `PUBLIC_VIEWING`; create requires auth. Filters don't leak private models (server filters by access).
 
+**Coverage:**
+- **Auth:** Read optional via `PUBLIC_VIEWING`; create requires auth (JWT access token).
+- **Authorization:** List — server-side access scoping in `queryModels` (public + owned + role-permissioned); create — any authenticated user (becomes owner); 3-model cap for non-admins without `UNLIMITED_MODEL`. No `checkPermission` on create.
+- **Input validation:** Joi (`modelValidation.createModel`/`listModels`/`listAllModels`).
+- **Rate limiting:** not applied (`authLimiter` defined in `rateLimiter.js` but unused on every route).
+- **Secrets:** none (no credentials in model metadata).
+
 **Risks:**
 - **Private-model enumeration:** without server-side access scoping, a signed-out or cross-tenant user could enumerate private models through list filters, leaking proprietary vehicle data and model IP.
 - **Anonymous model creation:** a missing auth check on `POST` would let anonymous users spawn models inside any tenant, polluting namespaces and consuming storage.
@@ -79,9 +86,20 @@ Read optional via `PUBLIC_VIEWING`; create requires auth. Filters don't leak pri
 
 Model metadata (name, description, visibility, state, images, tags) stored in `models`; images uploaded via the file service.
 
+**Coverage:**
+- **Stored data:** `models` collection (name, description, visibility, state, images, tags, `created_by`, `custom_template`, `custom_api_sets`).
+- **PII:** no (model metadata is not personal; `created_by` is a user ref, email not stored on the model).
+- **Retention:** indefinite until hard delete (no soft-delete, no TTL).
+- **Encryption:** bcrypt for user passwords (separate collection); TLS in transit; model data not encrypted at rest beyond Mongo defaults.
+- **Logging:** request logs via `logger`; no sensitive data logged (model metadata only).
+
 **Risks:**
 - **Visibility misconfiguration:** an over-broad `WRITE_MODEL` grant or a wrong default could expose private models publicly.
 - **Irreversible deletion:** deleted models are hard-removed (no soft-delete), so accidental or malicious deletion is permanent user-data loss.
+
+### Test coverage
+- **E2E (Playwright):** 4 test case(s) in `vehicle-models.spec.ts` — SITEMAP: ✅
+- **Unit (Jest):** none
 
 ## CAP-MODEL-02 — Model detail / edit
 
@@ -121,6 +139,13 @@ stateDiagram-v2
 
 Read `READ_MODEL`; write `WRITE_MODEL` (owner/admin/contributor). Owners bypass.
 
+**Coverage:**
+- **Auth:** Read optional via `PUBLIC_VIEWING`; `PATCH`/`DELETE` require auth (JWT access token).
+- **Authorization:** Private-model read enforced by `getModelById` (`READ_MODEL`, owner bypass); `PATCH`/`DELETE` gated by `checkPermission(WRITE_MODEL)` (owner bypass).
+- **Input validation:** Joi (`modelValidation.getModel`/`updateModel`/`deleteModel`).
+- **Rate limiting:** not applied (`authLimiter` defined but unused).
+- **Secrets:** none (no credentials on the model document).
+
 **Risks:**
 - **Unauthorized state/visibility flip:** a broken `WRITE_MODEL` check would let any user flip a private model to `public`/`released`, exposing it.
 - **Unauthorized delete:** missing checks would let a non-owner delete others' models — irreversible data loss.
@@ -130,9 +155,20 @@ Read `READ_MODEL`; write `WRITE_MODEL` (owner/admin/contributor). Owners bypass.
 
 Visibility controls exposure; deleted models removed from the collection (no soft-delete). Export includes prototype code/data.
 
+**Coverage:**
+- **Stored data:** `models` collection (visibility, state, props, `custom_template`); export bundles the model's prototype code/data.
+- **PII:** no — contributor/member emails are masked via `maskUserEmail` in the `getModel` response when the caller has `WRITE_MODEL`.
+- **Retention:** hard delete (no soft-delete, no snapshot); export data persists as long as the model exists.
+- **Encryption:** bcrypt for user passwords (separate); TLS in transit; model data not encrypted at rest beyond Mongo defaults.
+- **Logging:** request logs; template-fetch warnings logged; no sensitive data.
+
 **Risks:**
 - **Public exposure of embedded data:** flipping visibility to public exposes the model and its embedded prototype code/data to everyone — including data the owner believed was private.
 - **Permanent destruction:** hard-delete means a compromised or malicious contributor can permanently destroy model data with no recovery trail.
+
+### Test coverage
+- **E2E (Playwright):** 4 test case(s) in `vehicle-models.spec.ts` — SITEMAP: ⚠️
+- **Unit (Jest):** none
 
 ## CAP-MODEL-03 — Model tabs & addons
 
@@ -168,6 +204,13 @@ flowchart TD
 
 Tab management gated by `WRITE_MODEL` + the addon-config flag. Plugins run unsandboxed (see [plugins.md](./plugins.md)).
 
+**Coverage:**
+- **Auth:** Write requires auth (JWT); reads optional via `PUBLIC_VIEWING`.
+- **Authorization:** `WRITE_MODEL` (owner bypass) + `ALLOW_NON_ADMIN_ADDON_CONFIG` flag (admins always allowed).
+- **Input validation:** Joi `updateModel` — `custom_template` is `Joi.any()` (shape not strictly validated).
+- **Rate limiting:** not applied (`authLimiter` defined but unused).
+- **Secrets:** none.
+
 **Risks:**
 - **Malicious tab injection:** a plugin addon tab embeds arbitrary code running unsandboxed in visitors' browsers. If the `ALLOW_NON_ADMIN_ADDON_CONFIG` gate were bypassed, a non-admin could inject a hostile tab into every visitor's view (XSS / token theft).
 - **Plugin supply chain:** a tab config references plugin IDs; a compromised or rogue plugin becomes an attack surface for all models using that layout.
@@ -176,8 +219,19 @@ Tab management gated by `WRITE_MODEL` + the addon-config flag. Plugins run unsan
 
 Layout config stored on the model document; no secrets.
 
+**Coverage:**
+- **Stored data:** `model.custom_template` (`model_tabs`, `prototype_tabs`, `prototype_sidebar_plugin`, `prototype_right_nav_buttons`) on the model doc.
+- **PII:** no.
+- **Retention:** follows the model (hard-deleted with it).
+- **Encryption:** none beyond Mongo defaults / TLS in transit.
+- **Logging:** request logs; no sensitive data.
+
 **Risks:**
 - **Untrusted-code distribution:** the tab config is a persistence channel — a malicious layout can repeatedly steer users toward running untrusted plugins until it is noticed and removed.
+
+### Test coverage
+- **E2E (Playwright):** 2 test case(s) in `plugin-management.spec.ts` — SITEMAP: ✅
+- **Unit (Jest):** none
 
 ## CAP-MODEL-04 — Model contributors & permissions
 
@@ -217,6 +271,13 @@ sequenceDiagram
 
 Both operations require `WRITE_MODEL` on the model. Owners bypass.
 
+**Coverage:**
+- **Auth:** required (JWT access token).
+- **Authorization:** `checkPermission(WRITE_MODEL)` at the route; `addAuthorizedUser` re-checks `WRITE_MODEL` in the service (owner bypass).
+- **Input validation:** Joi (`addAuthorizedUser`: `userId` required, `role` ∈ {`model_contributor`,`model_member`}; `deleteAuthorizedUser`: `userId`/`role` query).
+- **Rate limiting:** not applied (`authLimiter` defined but unused).
+- **Secrets:** none.
+
 **Risks:**
 - **Privilege escalation:** a missing `WRITE_MODEL` check would let any user grant themselves or others write access to private models — escalation to data theft or tampering.
 
@@ -224,9 +285,20 @@ Both operations require `WRITE_MODEL` on the model. Owners bypass.
 
 Creates/removes UserRole bindings scoped to the model `ref`.
 
+**Coverage:**
+- **Stored data:** `userroles` collection (`user`, `role`, `ref` = model id).
+- **PII:** yes — contributor/member user identities (user ↔ model relationship); `getModel` masks emails via `maskUserEmail`, but bindings reveal who collaborates on which model.
+- **Retention:** bindings persist until explicitly revoked (hard delete); no TTL, no audit trail of permission changes.
+- **Encryption:** none beyond Mongo defaults / TLS in transit.
+- **Logging:** request logs; no sensitive data.
+
 **Risks:**
 - **Relationship leak:** contributor bindings reveal who collaborates on which model (users ↔ business assets).
 - **Persistence of mis-grants:** a leaked grant persists until manually revoked; with no audit trail of permission changes, mis-grants are hard to detect after the fact.
+
+### Test coverage
+- **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Unit (Jest):** none
 
 ## CAP-MODEL-05 — Model stats
 
@@ -250,6 +322,13 @@ Request stats for a few model IDs → counts returned; request none → empty ma
 
 Optional auth; respects access scoping.
 
+**Coverage:**
+- **Auth:** optional via `PUBLIC_VIEWING`.
+- **Authorization:** access-scoped — anonymous gets only public models; authenticated users filtered to readable ids via `permissionService.listReadableModelIds` (returns `*` for global read).
+- **Input validation:** Joi `listModelStats` (`ids`: array of objectId, min 1).
+- **Rate limiting:** not applied (`authLimiter` defined but unused).
+- **Secrets:** none.
+
 **Risks:**
 - **Metadata enumeration:** if the aggregation didn't respect access scoping, an attacker could probe arbitrary model IDs to confirm the existence and size of private models even when the list endpoint is locked down.
 
@@ -257,8 +336,19 @@ Optional auth; respects access scoping.
 
 Aggregated only; no PII.
 
+**Coverage:**
+- **Stored data:** none — counts computed on demand and cached per request (`getModelStatsSummaryByIds`).
+- **PII:** no (aggregated counts only).
+- **Retention:** N/A (not persisted).
+- **Encryption:** N/A (no stored data); TLS in transit.
+- **Logging:** request logs; no sensitive data.
+
 **Risks:**
 - **Existence/scale inference:** counts alone reveal the existence and scale of models; combined with a listing gap this could confirm private assets.
+
+### Test coverage
+- **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Unit (Jest):** none
 
 ## CAP-MODEL-06 — Model templates
 
@@ -290,6 +380,13 @@ flowchart LR
 
 Read public; write requires `MANAGE_USERS`.
 
+**Coverage:**
+- **Auth:** Read public (no auth); write requires auth (JWT access token).
+- **Authorization:** Write gated by `checkPermission(PERMISSIONS.ADMIN)` = `manageUsers` (admin only); reads public.
+- **Input validation:** Joi (`modelTemplateValidation.list`/`get`/`create`/`update`/`remove`).
+- **Rate limiting:** not applied (`authLimiter` defined but unused).
+- **Secrets:** none.
+
 **Risks:**
 - **Platform-wide payload:** templates apply to every model created from them. A compromised admin could seed a default template embedding a malicious plugin tab, pushing untrusted code to all future models.
 
@@ -297,5 +394,16 @@ Read public; write requires `MANAGE_USERS`.
 
 Template config (tabs/prototype tabs/sidebar) stored; no secrets.
 
+**Coverage:**
+- **Stored data:** `modeltemplates` collection (config layout, referenced plugin IDs, `created_by`, `updated_by`).
+- **PII:** no.
+- **Retention:** indefinite until hard delete (no soft-delete, no TTL).
+- **Encryption:** none beyond Mongo defaults / TLS in transit.
+- **Logging:** request logs; no sensitive data.
+
 **Risks:**
 - **Persistent distribution channel:** a malicious template propagates its layout and referenced plugins to all derived models until an admin notices and removes it.
+
+### Test coverage
+- **E2E (Playwright):** 1 test case(s) in `admin-extended.spec.ts` — SITEMAP: ✅
+- **Unit (Jest):** none
