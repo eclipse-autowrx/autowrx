@@ -1,6 +1,8 @@
 # Cluster: Dashboards & Widgets
 
-Visual run-time dashboards of widget iframes fed runtime signal values. Frontend: `components/molecules/dashboard/`. Backend: builtin-widget static hosting + dashboard template routes.
+Dashboards render a prototype's widgets as a live grid of widget panels fed by runtime signal values, so that end users and demo audiences can visualize prototype behavior. As an author, I can compose dashboards from built-in, marketplace, or URL widgets; as an admin, I can standardize layouts via dashboard templates.
+
+**Implementation:** `components/molecules/dashboard/` (frontend), builtin-widget static hosting + dashboard template routes (backend).
 
 ```mermaid
 flowchart TD
@@ -41,7 +43,7 @@ flowchart TD
 
 ### Description
 
-Renders a prototype's widget dashboard: widget iframes fed runtime signal values from the connected runtime; supports fullscreen mode and notifies widget iframes of run/stop.
+As an end user, I can view a prototype's dashboard and watch widgets update live with runtime signal values, so that I can visualize the prototype's behavior. The dashboard supports a fullscreen mode and notifies widgets of run/stop events.
 
 ### Who uses it / value
 
@@ -49,12 +51,12 @@ End users (visualize prototype behavior); demo audiences.
 
 ### Acceptance criteria
 
-- Renders `widget_config` widgets; signals flow from `runtimeStore` to widget iframes via postMessage/runtime values; run/stop events broadcast to widgets.
-- Fullscreen toolbar (logo + branding from site config).
+- When I open a dashboard, the system renders the widgets from `widget_config` and streams runtime signal values to each widget; run/stop events are broadcast to all widgets.
+- When I toggle fullscreen, the system shows a fullscreen toolbar (logo + branding from site config).
 
 ### Quality control
 
-Run a prototype with a dashboard → widgets render and update as signals change; toggle fullscreen → immersive view; stop → widgets reflect stopped state.
+- When I run a prototype with a dashboard, the widgets render and update as signals change; when I toggle fullscreen, I get an immersive view; when I stop, the widgets reflect the stopped state.
 
 ```mermaid
 sequenceDiagram
@@ -72,11 +74,11 @@ sequenceDiagram
 Read `READ_MODEL`. Widgets are third-party iframes — same-origin policy depends on the widget URL.
 
 **Coverage:**
-- **Auth:** optional via `PUBLIC_VIEWING` — dashboard is viewed under the prototype's read access (unauthenticated browsing when `PUBLIC_VIEWING` is on; otherwise auth required).
+- **Auth:** optional via `PUBLIC_VIEWING` — the dashboard is viewed under the prototype's read access (unauthenticated browsing when `PUBLIC_VIEWING` is on; otherwise auth required).
 - **Authorization:** `READ_MODEL` to view the prototype/dashboard.
-- **Input validation:** N/A — renderer consumes `widget_config` from the prototype; no server-side validation of widget URLs at render time.
+- **Input validation:** N/A — the renderer consumes `widget_config` from the prototype; widget URLs are not validated server-side at render time.
 - **Rate limiting:** not applied — `authLimiter` defined but not used on prototype/dashboard read routes.
-- **Secrets:** none — runtime signal values passed via `postMessage`; no secrets/tokens sent to widget iframes.
+- **Secrets:** none — runtime signal values are delivered to widget iframes only; no secrets/tokens are sent to widgets.
 
 **Risks:**
 - **Untrusted iframe content:** widgets are third-party iframes rendered into the dashboard; a malicious or compromised widget URL can run arbitrary script in a victim's browser (XSS, token theft) whenever the dashboard is opened.
@@ -105,7 +107,7 @@ Read `READ_MODEL`. Widgets are third-party iframes — same-origin policy depend
 
 ### Description
 
-Visual 5×2 grid editor: place/move/edit/delete widgets; add from Built-in / Marketplace / by URL; edit options (JSON), boxes, URL/path; "used signals" helper; open in Web Studio; auto-applies the default dashboard template.
+As a prototype author, I can compose a dashboard on a 5×2 grid — place, move, edit, and delete widgets from Built-in / Marketplace / by URL, edit options and boxes, use a "used signals" helper, and open in Web Studio — so that my prototype has a tailored live view. The default dashboard template auto-applies on first open.
 
 ### Who uses it / value
 
@@ -113,12 +115,12 @@ Prototype authors (compose dashboards).
 
 ### Acceptance criteria
 
-- Edit requires `READ_MODEL`; auto-applies the default dashboard template on first open.
-- Add widget from Built-in / Marketplace / URL; edit options/boxes; move/delete on the grid; "Save as Template" requires admin.
+- When I edit the dashboard, the system requires `READ_MODEL` and auto-applies the default dashboard template on first open.
+- When I add a widget (Built-in / Marketplace / URL), edit options/boxes, or move/delete on the grid, the system persists it; "Save as Template" requires admin.
 
 ### Quality control
 
-Add a builtin widget → renders on the grid; edit options → widget reflects them; save-as-template (admin) → appears in dashboard templates.
+- When I add a builtin widget, it renders on the grid; when I edit options, the widget reflects them; when I save as template (admin), it appears in dashboard templates.
 
 ```mermaid
 flowchart LR
@@ -135,8 +137,8 @@ Edit `READ_MODEL`; save-as-template admin. Marketplace widgets from `DEFAULT_MAR
 
 **Coverage:**
 - **Auth:** required — edit is a write action on the prototype; "Save as Template" requires admin auth.
-- **Authorization:** edit gated by `READ_MODEL`; "Save as Template" gated by admin (`MANAGE_USERS`/`ADMIN`).
-- **Input validation:** widget config (URLs/options) stored as Mixed on the prototype; editor JSON options not strictly validated; `widget_config` is `Joi.any()` where validated.
+- **Authorization:** edit requires `READ_MODEL`; "Save as Template" requires admin (`MANAGE_USERS`/`ADMIN`).
+- **Input validation:** widget config (URLs/options) is stored as Mixed on the prototype; editor JSON options are not strictly validated; `widget_config` is not validated (accepted as-is).
 - **Rate limiting:** not applied — `authLimiter` defined but not used on prototype update routes.
 - **Secrets:** none — widget URLs/options only; no secrets in widget config.
 
@@ -168,7 +170,7 @@ Widget config (URLs/options) stored in `prototype.widget_config`; options may re
 
 ### Description
 
-Three sources to add widgets: Built-in library (`data/builtinWidgets.ts`), Marketplace (`useListMarketplaceWidgets` from `DEFAULT_MARKETPLACE_URL`), and by direct URL.
+As an author, I can add widgets from three sources — the Built-in library, the Marketplace (`DEFAULT_MARKETPLACE_URL`), or a direct URL — so that I can pick the right visualization for my dashboard.
 
 ### Who uses it / value
 
@@ -176,11 +178,11 @@ Authors (pick widgets); marketplace providers (distribute widgets).
 
 ### Acceptance criteria
 
-- Built-in widgets render from `data/builtinWidgets.ts`; marketplace widgets fetched from `DEFAULT_MARKETPLACE_URL`; URL widgets load from the given URL.
+- When I add a Built-in widget, it renders from the built-in library; when I add a Marketplace widget, it is fetched from `DEFAULT_MARKETPLACE_URL`; when I add a URL widget, it loads from the given URL.
 
 ### Quality control
 
-Add a builtin widget → renders; browse marketplace → list loads (if URL configured); add by URL → loads.
+- When I add a builtin widget, it renders; when I browse the marketplace, the list loads (if the URL is configured); when I add by URL, it loads.
 
 ```mermaid
 flowchart TD
@@ -199,8 +201,8 @@ Marketplace/URL widgets are remote third-party content — render in iframes; ve
 
 **Coverage:**
 - **Auth:** N/A — source selection is an authoring action gated by the editor's `READ_MODEL`.
-- **Authorization:** authoring gated by `READ_MODEL` (via the editor); no per-source authorization.
-- **Input validation:** no allowlist on widget URLs; marketplace fetched from `DEFAULT_MARKETPLACE_URL`; "by URL" source accepts any URL (no validation/scheme enforcement).
+- **Authorization:** authoring requires `READ_MODEL` (via the editor); no per-source authorization.
+- **Input validation:** no allowlist on widget URLs; marketplace is fetched from `DEFAULT_MARKETPLACE_URL`; the "by URL" source accepts any URL (no validation/scheme enforcement).
 - **Rate limiting:** not applied — marketplace list fetch and URL widget load are client-side; `authLimiter` not used.
 - **Secrets:** none — widget URLs/options only.
 
@@ -231,7 +233,7 @@ No PII; widget URLs/options stored in widget config.
 
 ### Description
 
-Prebuilt widget bundles (3d-car, chart-signals, image-by-api-value, signal-list-settable with vss.json, simple-fan, simple-wiper, single-api, terminal) plus shared libs (chart.min.js, tailwind/font-awesome, syncer.js), served from `/builtin-widgets`.
+As an author, I can add ready-made widget bundles (3d-car, chart-signals, image-by-api-value, signal-list-settable with vss.json, simple-fan, simple-wiper, single-api, terminal) and shared libs (chart.min.js, tailwind/font-awesome, syncer.js) to my dashboard, so that I get instant visualizations without building my own. They are served from `/builtin-widgets`.
 
 ### Who uses it / value
 
@@ -239,20 +241,20 @@ Authors (ready-made widgets); end users (visualizations).
 
 ### Acceptance criteria
 
-- Static `GET /builtin-widgets/...` serves the bundles; the editor's Built-in tab lists them.
+- When I request `GET /builtin-widgets/...`, the system serves the bundle; the editor's Built-in tab lists them.
 
 ### Quality control
 
-Request a builtin widget asset → served with correct MIME; add one to a dashboard → renders.
+- When I request a builtin widget asset, it is served with the correct MIME; when I add one to a dashboard, it renders.
 
 ### Security
 
 Public static; no auth.
 
 **Coverage:**
-- **Auth:** N/A — public static serving via `express.static` at `/builtin-widgets` (`app.js`); no auth.
+- **Auth:** N/A — public static serving at `/builtin-widgets`; no auth.
 - **Authorization:** none — public unauthenticated access.
-- **Input validation:** N/A — static file serving; relies on `express.static` path normalization (no custom validation).
+- **Input validation:** N/A — static file serving; relies on path normalization (no custom validation).
 - **Rate limiting:** not applied — static serving has no rate limit; `authLimiter` not used.
 - **Secrets:** none — static bundles; `vss.json` embeds signal metadata but no secrets.
 
@@ -282,7 +284,7 @@ Static assets only.
 
 ### Description
 
-Named `widget_config` presets with a single `is_default` template and public/private visibility; admin CRUD.
+As an admin, I can create named `widget_config` presets (with a single `is_default` template and public/private visibility) so that authors get a standard dashboard layout to start from.
 
 ### Who uses it / value
 
@@ -290,12 +292,12 @@ Admins (standardize dashboards); authors (quick-start).
 
 ### Acceptance criteria
 
-- `GET /v2/dashboard-template[/:id]` (public) → list/get; `POST` → `201` (admin); `PUT/DELETE /:id` → `200`/`204` (admin). Also at `/v2/system/dashboard-template`.
-- The default template auto-applies on dashboard open.
+- When I call `GET /v2/dashboard-template[/:id]` (public), the system returns the list/get; when I call `POST` (admin), the system creates and returns `201`; when I call `PUT /:id` (admin), the system updates and returns `200`; when I call `DELETE /:id` (admin), the system deletes and returns `204`. Also available at `/v2/system/dashboard-template`.
+- When I open a dashboard, the default template auto-applies.
 
 ### Quality control
 
-Admin creates a template → appears in the manager; it auto-applies on new dashboards.
+- As an admin, when I create a template, it appears in the manager and auto-applies on new dashboards.
 
 ```mermaid
 flowchart LR
@@ -309,10 +311,10 @@ flowchart LR
 Read public; write `MANAGE_USERS`.
 
 **Coverage:**
-- **Auth:** reads public (`GET /v2/dashboard-template` and `/:id` have no `auth()`); writes require auth.
-- **Authorization:** writes gated by `checkPermission(PERMISSIONS.ADMIN)` = `manageUsers` = `MANAGE_USERS` (`dashboardTemplate.route.js`).
-- **Input validation:** Joi validation (`dashboardTemplate.validation.js`) on list/get/create/update/remove; `widget_config` is `Joi.any()` (untyped Mixed); `visibility` enum-validated.
-- **Rate limiting:** not applied — `authLimiter` defined but not imported into `dashboardTemplate.route.js`.
+- **Auth:** reads are public (`GET /v2/dashboard-template` and `/:id`); writes require auth.
+- **Authorization:** writes gated by `MANAGE_USERS` (`manageUsers`).
+- **Input validation:** validated on list/get/create/update/remove; `widget_config` is not validated (accepted as-is); `visibility` is enum-validated.
+- **Rate limiting:** not applied — `authLimiter` defined but not wired into the dashboard-template route.
 - **Secrets:** none — templates hold `widget_config` only; no secrets.
 
 **Risks:**
@@ -326,7 +328,7 @@ Template `widget_config` stored; no secrets.
 **Coverage:**
 - **Stored data:** `dashboardTemplates` collection — name, description, image, visibility, is_default, widget_config (Mixed), created_by, updated_by, timestamps.
 - **PII:** no.
-- **Retention:** indefinite — hard delete via `DELETE /:id` (`deleteOne()`); no soft delete/TTL.
+- **Retention:** indefinite — hard delete via `DELETE /:id`; no soft delete/TTL.
 - **Encryption:** TLS in transit; no at-rest encryption beyond MongoDB defaults; no hashing (no passwords).
 - **Logging:** standard request logging.
 
@@ -341,7 +343,7 @@ Template `widget_config` stored; no secrets.
 
 ### Description
 
-GenAI-based widget generation from a prompt.
+As an author, I will be able to generate a widget from a prompt (roadmap), so that I can add custom visualizations without writing widget code.
 
 ### Who uses it / value
 
@@ -349,7 +351,7 @@ Authors (generate widgets without coding).
 
 ### Acceptance criteria
 
-- Currently a placeholder ("coming soon") in the widget library UI — not implemented.
+- When I open the widget library, I see a "coming soon" placeholder — not implemented yet.
 
 ### Quality control
 

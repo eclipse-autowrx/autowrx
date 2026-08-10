@@ -1,6 +1,8 @@
 # Cluster: Plugins
 
-The loadable-plugin system: a plugin is a standalone React bundle AutoWRX loads dynamically at runtime and renders inside a model/prototype tab or a deploy/staging stage. Backend: `routes/v2/system/plugin.route.js`, `controllers/plugin.controller.js`. Frontend: `components/organisms/{PluginPageRender,PluginForm}.tsx`. See the [Plugin Development guide](../guides/plugin/README.md) for authoring.
+Plugins are standalone bundles that AutoWRX loads at runtime and renders inside a model/prototype tab or a deploy/staging stage. As a plugin author, I can publish and host plugins; as a model owner or admin, I can attach them as addon tabs or staging stages; as an end user, I see them render in the workspace. See the [Plugin Development guide](../guides/plugin/README.md) for authoring.
+
+**Implementation:** `routes/v2/system/plugin.route.js`, `controllers/plugin.controller.js`, `components/organisms/{PluginPageRender,PluginForm}.tsx`
 
 ```mermaid
 flowchart TD
@@ -35,7 +37,7 @@ flowchart TD
 
 ### Description
 
-Catalog of plugins (`type` `prototype_function` or `deploy`) with slug, image, description, internal/external flag, URL, config; slug auto-generated from name; ownership-gated edits.
+As a plugin author, I can publish a plugin (`type` `prototype_function` or `deploy`) with a slug, image, description, internal/external flag, URL, and config, so that model owners and admins can attach it as a tab or a deploy/staging stage. The slug is auto-generated from the name and edits are ownership-gated.
 
 ### Who uses it / value
 
@@ -43,12 +45,12 @@ Plugin authors (publish plugins); model owners/admins (attach plugins as addon t
 
 ### Acceptance criteria
 
-- `GET /v2/plugin` (public) → list; `GET /v2/plugin/{admin,id/:id,slug/:slug}` → admin/own/by-id/by-slug; `GET /v2/plugin/mine` (auth) → own; `POST /v2/plugin` (auth) → `201`; `PUT /v2/plugin/:id` (auth + ownership/admin) → `200`; `DELETE /v2/plugin/:id` (auth + ownership/admin) → `204`.
-- `slug` forbidden on update (immutable); auto-generated on create (unique with auto-suffix).
+- When I call `GET /v2/plugin` (public), the system returns the public list; when I call `GET /v2/plugin/{admin,id/:id,slug/:slug}`, the system returns admin/own/by-id/by-slug results; when I call `GET /v2/plugin/mine` (auth), the system returns my own plugins; when I call `POST /v2/plugin` (auth), the system creates the plugin and returns `201`; when I call `PUT /v2/plugin/:id` (auth + ownership/admin), the system updates and returns `200`; when I call `DELETE /v2/plugin/:id` (auth + ownership/admin), the system deletes and returns `204`.
+- When I create a plugin, the system auto-generates a unique `slug` (with auto-suffix); when I update a plugin, the system rejects `slug` (immutable).
 
 ### Quality control
 
-Create a plugin → slug generated; list shows it (public read); edit your own → ok; edit another user's → `403`; delete → `204`.
+- When I create a plugin, I see the auto-generated slug; when I read the public list, my plugin appears; when I edit my own plugin, it succeeds; when I try to edit another user's plugin, the system returns `403`; when I delete my own plugin, the system returns `204`.
 
 ```mermaid
 flowchart LR
@@ -62,14 +64,14 @@ flowchart LR
 
 ### Security
 
-Reads public; writes require auth + ownership (or admin). The `checkPermission(ADMIN)` on the upload route is commented out — any authenticated user can upload (subject to per-slug ownership).
+Reads public; writes require auth + ownership (or admin). The upload admin gate is commented out — any authenticated user can upload (subject to per-slug ownership).
 
 **Coverage:**
-- **Auth:** Reads public (`GET /v2/plugin`, `/admin`, `/id/:id`, `/slug/:slug` have no `auth()`); writes require auth (`router.use(auth())` applied before POST/PUT/DELETE/mine).
-- **Authorization:** Update/delete enforce owner-or-admin in `plugin.service` (`isOwner`/`isAdmin`); create has no admin gate; upload admin gate commented out (`// checkPermission(PERMISSIONS.ADMIN)`).
-- **Input validation:** Joi validation on create/update/list/get (`plugin.validation.js`); `slug` forbidden on update; `config` is `Joi.any()` (untyped Mixed); `url` URI-validated only for external plugins.
-- **Rate limiting:** not applied — `authLimiter` is defined in `middlewares/rateLimiter.js` but not imported into `plugin.route.js` (or any route).
-- **Secrets:** none handled by CRUD; the untyped `config` field could hold author-supplied secrets but the backend does not protect or surface them specially.
+- **Auth:** Reads are public (`GET /v2/plugin`, `/admin`, `/id/:id`, `/slug/:slug`); writes (POST/PUT/DELETE/`mine`) require authentication.
+- **Authorization:** Update/delete require owner-or-admin; create has no admin gate; the upload admin gate is disabled (commented out), so any authenticated user can upload.
+- **Input validation:** Caller must send valid plugin fields (validated on create/update/list/get); `slug` is rejected on update; `config` is not validated (accepted as-is); `url` is URI-validated only for external plugins.
+- **Rate limiting:** not applied — `authLimiter` is defined but not wired into any plugin route (or any route at all).
+- **Secrets:** none handled by CRUD; the untyped `config` field could hold author-supplied secrets, but they are not protected or surfaced specially.
 
 **Risks:**
 - **Anonymous-style metadata spoofing:** public read access lets attackers enumerate all plugin slugs, URLs, and config, mapping the attack surface for later exploitation or impersonation via look-alike slugs.
@@ -83,7 +85,7 @@ Plugin metadata + `config` (Mixed) stored in `plugins` with `created_by`/`update
 **Coverage:**
 - **Stored data:** Plugin docs in MongoDB `plugins` collection — name, slug, image, description, is_internal, url, config (Mixed), type, created_by, updated_by, timestamps.
 - **PII:** no direct PII; `created_by`/`updated_by` are user ObjectIds (author identity is exposed via public read).
-- **Retention:** indefinite — hard delete via `deleteOne()` on DELETE; no soft delete, no TTL.
+- **Retention:** indefinite — hard delete on DELETE; no soft delete, no TTL.
 - **Encryption:** TLS in transit (HTTPS); no at-rest encryption beyond MongoDB defaults; no hashing (no passwords).
 - **Logging:** standard request logging only; no sensitive-data logging identified.
 
@@ -99,7 +101,7 @@ Plugin metadata + `config` (Mixed) stored in `plugins` with `created_by`/`update
 
 ### Description
 
-Upload a plugin zip, extract via system `unzip` into `backend/static/plugin/:slug`, auto-detect entry (`index.js`/`index.html`), serve at `/plugin/:slug/...`.
+As a plugin author, I can upload a plugin as a zip and have AutoWRX host it internally, so that it is served at `/plugin/:slug/...` without needing an external CDN. The host extracts the bundle and auto-detects the entry (`index.js`/`index.html`).
 
 ### Who uses it / value
 
@@ -107,12 +109,12 @@ Plugin authors (host plugins without an external CDN); admins (bundle system plu
 
 ### Acceptance criteria
 
-- `POST /v2/plugin/upload/:slug` (auth; multipart `file`) → `200 { plugin, url }`; extracted to `backend/static/plugin/<slug>/`; served at `/plugin/<slug>/<entry>` with `is_internal=true`.
-- Existing slug owned by another non-admin → `403`.
+- When I call `POST /v2/plugin/upload/:slug` (auth; multipart `file`), the system extracts the bundle and returns `200 { plugin, url }`; the plugin is served at `/plugin/<slug>/<entry>` with `is_internal=true`.
+- When I upload to an existing slug owned by another non-admin, the system returns `403`.
 
 ### Quality control
 
-Upload a zip → extracted + served; re-upload same slug (owner) → updates; upload to another user's slug → `403`.
+- When I upload a zip, it is extracted and served; when I re-upload to my own slug, the system updates it; when I upload to another user's slug, the system returns `403`.
 
 ```mermaid
 sequenceDiagram
@@ -133,11 +135,11 @@ sequenceDiagram
 Auth required; ownership enforced on existing slug. Upload accepts any file type (50 MB limit) and runs system `unzip` — treat as trusted code. Admin gate commented out (see above).
 
 **Coverage:**
-- **Auth:** required — `auth()` applied on `POST /v2/plugin/upload/:slug`.
-- **Authorization:** ownership enforced on existing slug (owner or admin in controller); admin gate commented out (`// checkPermission(PERMISSIONS.ADMIN)`); a new slug can be uploaded by any authenticated user.
-- **Input validation:** Joi `uploadInternal` validates the `slug` param only; multer `fileFilter` accepts any file type; 50 MB size limit via `upload.js` `limits.fileSize`; no zip-content validation.
-- **Rate limiting:** not applied — `authLimiter` defined but not imported into the upload route.
-- **Secrets:** none handled by the route; bundle contents are code (authors could embed secrets, but the backend does not inspect or protect them).
+- **Auth:** required for `POST /v2/plugin/upload/:slug`.
+- **Authorization:** ownership is enforced on existing slug (owner or admin); the admin gate is commented out, so a new slug can be uploaded by any authenticated user.
+- **Input validation:** only the `slug` param is validated; the file filter accepts any file type; 50 MB size limit (`limits.fileSize`); no zip-content validation.
+- **Rate limiting:** not applied — `authLimiter` defined but not wired into the upload route.
+- **Secrets:** none handled by the route; bundle contents are code (authors could embed secrets, but the system does not inspect or protect them).
 
 **Risks:**
 - **Zip-slip / arbitrary file write:** invoking system `unzip` on untrusted archives risks path-traversal (zip-slip) writing files outside `static/plugin/:slug`, potentially overwriting server code or config.
@@ -167,7 +169,7 @@ Plugin bundle served publicly from `/plugin/<slug>/`; the bundle can contain arb
 
 ### Description
 
-Fetches the plugin URL, injects a `<script>` (module first, classic fallback), primes `window.React`/`ReactDOM`/`require` shim + `__webpack_require__.cache`, polls `window.DAPlugins['page-plugin']` up to 15 s, renders `components.Page` or wraps imperative `mount`/`unmount`; caches registrations per slug.
+As an end user, when I open a plugin tab, the plugin renders inside the tab and stays cached as I switch tabs, so that the experience is fast and stable. A plugin I add runs with full page access (same-origin, unsandboxed), like any script on the page.
 
 ### Who uses it / value
 
@@ -175,12 +177,12 @@ End users (plugin renders in tabs); plugin authors (the load contract).
 
 ### Acceptance criteria
 
-- A tab referencing a plugin slug → host fetches metadata, injects script, plugin registers on `window.DAPlugins['page-plugin']`, renders with `{ data, editable, config, api }`.
-- Registrations cached across unmounts (switching tabs doesn't re-inject). 15 s timeout on registration.
+- When I open a tab referencing a plugin slug, the system fetches the plugin, loads it, and renders it with `{ data, editable, config, api }`.
+- When I switch tabs and return, the system reuses the cached registration (no reload); when a plugin fails to register within 15 s, the system times out.
 
 ### Quality control
 
-Open a plugin tab → plugin renders; switch tabs and back → no reload (cached); a plugin that fails to register in 15 s → timeout.
+- When I open a plugin tab, the plugin renders; when I switch tabs and back, it does not reload (cached); when a plugin fails to register within 15 s, I see a timeout.
 
 ```mermaid
 flowchart TD
@@ -199,11 +201,11 @@ flowchart TD
 Same-origin, unsandboxed — full DOM/window access. Only public site configs surfaced (secrets never exposed). `editable` from `WRITE_MODEL` permission; advisory only (plugin can ignore).
 
 **Coverage:**
-- **Auth:** N/A — client-side loader; tab access relies on upstream model-read auth gating.
-- **Authorization:** `editable` flag derived from `WRITE_MODEL` permission; advisory only (plugin can ignore); no enforcement on the plugin side.
-- **Input validation:** N/A — loader fetches the plugin URL from the registry; no client-side validation of bundle contents.
-- **Rate limiting:** N/A — client-side fetch; no rate limit on script injection/polling.
-- **Secrets:** none — `PluginAPI` exposes only public site config (no tokens/secrets); no auth tokens passed to the plugin.
+- **Auth:** N/A — tab access follows the model's read-access gating; the loader itself adds no auth.
+- **Authorization:** the `editable` flag is derived from `WRITE_MODEL`; it is advisory only — a plugin can ignore it, and the system does not enforce it on the plugin side.
+- **Input validation:** N/A — the loader fetches the plugin URL from the registry; bundle contents are not validated client-side.
+- **Rate limiting:** N/A — client-side fetch; no rate limit on load/polling.
+- **Secrets:** none — the plugin API exposes only public site config (no tokens/secrets); no auth tokens are passed to the plugin.
 
 **Risks:**
 - **Unsandboxed code execution:** a loaded plugin has full access to `window`, DOM, cookies, and `localStorage`, enabling XSS, session-token theft, and silent exfiltration of any data the page holds.
@@ -233,7 +235,7 @@ Plugin receives `data` (model/prototype), public site `config`, and the `PluginA
 
 ### Description
 
-Background-prefetches plugin scripts for tabs/staging via `<link rel=prefetch>` + `fetch(priority=low)`.
+As an end user, when I open a model with plugin tabs, the system prefetches plugin scripts in the background so that opening a tab is instant.
 
 ### Who uses it / value
 
@@ -241,11 +243,11 @@ End users (faster tab loads).
 
 ### Acceptance criteria
 
-- Collects plugin slugs from prototype tabs + staging; prefetches on idle (`requestIdleCallback`, configurable delay).
+- When I open a model, the system collects plugin slugs from prototype tabs and staging, and prefetches their scripts on idle (configurable delay).
 
 ### Quality control
 
-Open a model with plugin tabs → scripts prefetched → tab open is instant.
+- When I open a model with plugin tabs, the scripts are prefetched and opening a tab is instant.
 
 ```mermaid
 flowchart LR
@@ -261,11 +263,11 @@ flowchart LR
 Prefetches external URLs with `credentials:'omit'`.
 
 **Coverage:**
-- **Auth:** N/A — client-side prefetch; no auth on prefetch requests.
-- **Authorization:** N/A — prefetch targets derived from tab/staging config; no permission check at prefetch time.
-- **Input validation:** N/A — uses plugin URLs from the registry; no validation or allowlist on prefetch targets.
-- **Rate limiting:** N/A — client-side; throttled via `requestIdleCallback` + `fetch(priority='low')`.
-- **Secrets:** none — `credentials:'omit'` on prefetch; no tokens sent.
+- **Auth:** N/A — prefetch is client-side; no auth on prefetch requests.
+- **Authorization:** N/A — prefetch targets come from tab/staging config; no permission check at prefetch time.
+- **Input validation:** N/A — uses plugin URLs from the registry; no allowlist on prefetch targets.
+- **Rate limiting:** N/A — client-side; throttled to idle, low-priority fetching.
+- **Secrets:** none — prefetch uses `credentials:'omit'`; no tokens are sent.
 
 **Risks:**
 - **External URL prefetch leak:** prefetching external plugin URLs reveals the user's browsing of a model to the external host (timing + access logs) even if the tab is never opened.
@@ -293,7 +295,7 @@ Only fetches public bundle URLs.
 
 ### Description
 
-`sample-tsx` (esbuild IIFE bundle) and `sample-esm` (no bundler) under `backend/static/plugin/`, demonstrating the registration contract.
+As a plugin author, I can reference two sample plugins (`sample-tsx` and `sample-esm`) to learn the registration contract, so that I can build my own plugin correctly.
 
 ### Who uses it / value
 
@@ -301,18 +303,18 @@ Plugin authors (reference implementations).
 
 ### Acceptance criteria
 
-- Both register on `window.DAPlugins['page-plugin']`; `sample-tsx/build.sh` builds with esbuild (externalizes React).
+- Both samples demonstrate the page-plugin registration contract; `sample-tsx` ships a build script that externalizes React.
 
 ### Quality control
 
-Build sample-tsx → `index.js`; load via the test page → renders.
+- When I build `sample-tsx`, I get `index.js`; when I load it via the test page, it renders.
 
 ### Security
 
 Same as any plugin (unsandboxed).
 
 **Coverage:**
-- **Auth:** N/A — static assets served publicly; no auth to read samples.
+- **Auth:** N/A — sample assets are public; no auth to read them.
 - **Authorization:** N/A — public static files; no authorization gate.
 - **Input validation:** N/A — prebuilt static bundles; no runtime validation.
 - **Rate limiting:** not applied — static serving has no rate limit.
@@ -344,7 +346,7 @@ Static sample assets.
 
 ### Description
 
-Pick a plugin addon to add as a custom tab; reorder/edit/hide tabs; set variant; configure a sidebar plugin + right-nav action buttons (incl. built-in Staging); choose open mode (dialog/page).
+As a model owner (or admin), I can add a plugin as a custom tab, reorder/edit/hide tabs, set a variant, configure a sidebar plugin and right-nav action buttons (including the built-in Staging), and choose the open mode (dialog/page), so that I can customize the workspace for my model.
 
 ### Who uses it / value
 
@@ -352,12 +354,12 @@ Model owners (customize workspace); admins.
 
 ### Acceptance criteria
 
-- Tab management requires `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG` (admins always allowed).
-- Tab config stored on `model.custom_template` (`model_tabs`/`prototype_tabs`/`prototype_sidebar_plugin`/`prototype_right_nav_buttons`).
+- When I manage tabs, the system requires `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG` (admins are always allowed).
+- When I save, the system stores the tab config on `model.custom_template` (`model_tabs`/`prototype_tabs`/`prototype_sidebar_plugin`/`prototype_right_nav_buttons`).
 
 ### Quality control
 
-Add an addon tab → it renders via `PluginPageRender`; reorder/hide → persists; configure Staging right-nav button → appears.
+- When I add an addon tab, it renders; when I reorder or hide tabs, the change persists; when I configure a Staging right-nav button, it appears.
 
 ```mermaid
 sequenceDiagram
@@ -376,9 +378,9 @@ sequenceDiagram
 `WRITE_MODEL` + addon flag. Plugins unsandboxed.
 
 **Coverage:**
-- **Auth:** required — tab management is a write action on the model (gated by model write auth).
-- **Authorization:** `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG` (admins always allowed); non-admins gated by the addon flag.
-- **Input validation:** tab config stored on `model.custom_template` (Mixed); validated at the model-update layer, not plugin-specific; no allowlist on referenced plugin IDs/slugs.
+- **Auth:** required — tab management is a write action on the model.
+- **Authorization:** requires `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG` (admins always allowed); non-admins are gated by the addon flag.
+- **Input validation:** tab config is stored on `model.custom_template` (Mixed); validated at the model-update layer, not plugin-specific; no allowlist on referenced plugin IDs/slugs.
 - **Rate limiting:** not applied — `authLimiter` defined but not used on model-update routes.
 - **Secrets:** none — tab config references plugin IDs/slugs and layout only.
 
@@ -410,7 +412,7 @@ Tab/layout config on the model document.
 
 ### Description
 
-Per-user plugin list (`/me/plugins`) + create/edit/delete; admin management (`/admin/plugins`) with four sections (Prototype Plugin, Deployment Plugin, Vehicle API Schema, Vehicle API/custom sets); configure deploy plugins per staging stage.
+As a plugin author, I can manage my own plugins from `/me/plugins` (create/edit/delete), so that I can publish and maintain my work. As an admin, I can manage all plugins from `/admin/plugins` across four sections (Prototype Plugin, Deployment Plugin, Vehicle API Schema, Vehicle API/custom sets) and configure deploy plugins per staging stage.
 
 ### Who uses it / value
 
@@ -418,12 +420,12 @@ Plugin authors (manage own plugins); admins (manage all + custom APIs).
 
 ### Acceptance criteria
 
-- `/me/plugins` (auth; shown to non-admins only when `ALLOW_NON_ADMIN_ADDON_CONFIG`) → CRUD own plugins.
-- `/admin/plugins` (`MANAGE_USERS`) → 4 sections; custom API sections hidden when `DISABLE_CUSTOM_API_SETS`.
+- When I open `/me/plugins` (auth; shown to non-admins only when `ALLOW_NON_ADMIN_ADDON_CONFIG`), I can CRUD my own plugins.
+- When I open `/admin/plugins` (`MANAGE_USERS`), I see 4 sections; the custom API sections are hidden when `DISABLE_CUSTOM_API_SETS`.
 
 ### Quality control
 
-Author creates a plugin via `/me/plugins` → usable as an addon; admin configures a deploy plugin per staging stage → it launches from Staging.
+- As an author, when I create a plugin via `/me/plugins`, it is usable as an addon; as an admin, when I configure a deploy plugin per staging stage, it launches from Staging.
 
 ```mermaid
 flowchart TD
@@ -443,11 +445,11 @@ flowchart TD
 My Plugins auth; admin `MANAGE_USERS`; non-admin visibility gated by addon flag.
 
 **Coverage:**
-- **Auth:** required — `/me/plugins` and `/admin/plugins` require auth; non-admin visibility gated by `ALLOW_NON_ADMIN_ADDON_CONFIG`.
-- **Authorization:** `/me/plugins` → own plugins (auth); `/admin/plugins` → `MANAGE_USERS` (admin).
-- **Input validation:** same Joi validation as CAP-PLUGIN-01 (create/update via shared `/v2/plugin` endpoints); `config` is `Joi.any()` (untyped).
+- **Auth:** required for `/me/plugins` and `/admin/plugins`; non-admin visibility is gated by `ALLOW_NON_ADMIN_ADDON_CONFIG`.
+- **Authorization:** `/me/plugins` → my own plugins (auth); `/admin/plugins` → `MANAGE_USERS` (admin).
+- **Input validation:** same validation as CAP-PLUGIN-01 (create/update via shared `/v2/plugin` endpoints); `config` is not validated (accepted as-is).
 - **Rate limiting:** not applied — `authLimiter` defined but not used on plugin routes.
-- **Secrets:** none — admin UI manages plugin records and per-stage mapping; no secrets handled.
+- **Secrets:** none — the admin UI manages plugin records and per-stage mapping; no secrets handled.
 
 **Risks:**
 - **Flag misconfiguration widens authoring:** if `ALLOW_NON_ADMIN_ADDON_CONFIG` defaults to true, any authenticated user can author and publish plugins, enlarging the supply-chain attack surface.

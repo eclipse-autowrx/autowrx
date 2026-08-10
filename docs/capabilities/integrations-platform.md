@@ -1,6 +1,8 @@
 # Cluster: Integrations & Platform
 
-External integrations (GenAI, GitHub, email, Web Studio), search/content, and platform/system capabilities (health, upload, audit, static serving, security middleware, realtime, log/cache).
+As a user, admin, or operator of AutoWRX, I can connect external services (GenAI code generation, GitHub login/sync, email, Web Studio widgets), discover content through search and discussions, send feedback, and rely on platform-wide health, file upload, audit, static/SPA/VSS serving, security headers, realtime updates, and log/cache forwarding.
+
+**Implementation:** `backend/src/routes/v2/system/` (genai, github, email, search, discussion, feedback, health, file, changeLog, static/vss routes), `backend/src/config/socket.js`, `backend/src/config/axios.js` (LOG_URL/CACHE_URL clients), `backend/src/app.js` (CORS/Helmet/static), `frontend/src/stores/githubAuthStore.ts`, `frontend/src/services/webStudio.service.ts`.
 
 ```mermaid
 flowchart TD
@@ -60,7 +62,7 @@ flowchart TD
 
 ### Description
 
-Generate an SDV Python app from a prompt; built-in "SDV Copilot" (`GENAI_SDV_APP_ENDPOINT`) + marketplace generators (`GENAI_MARKETPLACE_URL`); preview then apply to the prototype.
+As a prototype author with GenAI access, I can generate an SDV Python app from a prompt, preview it, and apply it to my prototype so I can bootstrap code quickly.
 
 ### Who uses it / value
 
@@ -68,12 +70,12 @@ Prototype authors (bootstrap code); GenAI-capable users.
 
 ### Acceptance criteria
 
-- Button shown when `SHOW_SDV_PROTOPILOT_BUTTON=true` and the user has `USE_GEN_AI`; generates code → preview → apply writes to `prototype.code`.
-- Code diff shown when `SHOW_CODE_DIFF=true`.
+- When I open the Code tab with `SHOW_SDV_PROTOPILOT_BUTTON=true` and the `USE_GEN_AI` permission, the system shows the SDV ProtoPilot button; when I submit a prompt, the system generates code, shows a preview, and on apply writes it to `prototype.code`.
+- When `SHOW_CODE_DIFF=true`, the system shows a code diff in the preview.
 
 ### Quality control
 
-With the flag + permission, open ProtoPilot on Code tab → prompt → generated code preview → apply → code updated.
+With `SHOW_SDV_PROTOPILOT_BUTTON=true` and `USE_GEN_AI`, I open ProtoPilot on the Code tab, enter a prompt, preview the generated code, and apply it — my prototype's code is updated.
 
 ```mermaid
 flowchart LR
@@ -90,11 +92,11 @@ flowchart LR
 Gated by `USE_GEN_AI` permission + `SHOW_SDV_PROTOPILOT_BUTTON`. Backend proxy requires auth.
 
 **Coverage:**
-- **Auth:** Required — backend `/v2/genai/*` proxy enforces JWT via `auth()`; the ProtoPilot UI is additionally gated by `USE_GEN_AI` permission + `SHOW_SDV_PROTOPILOT_BUTTON` flag (frontend gate).
-- **Authorization:** `USE_GEN_AI` (`generativeAI`) permission checked client-side; the proxy route enforces JWT only — no server-side `USE_GEN_AI` permission check (risk noted).
-- **Input validation:** Not validated — the prompt is forwarded to the GenAI endpoint without Joi validation; generated code is applied to `prototype.code` without schema validation.
+- **Auth:** Required — the `/v2/genai/*` proxy requires a JWT; the ProtoPilot UI is additionally gated by `USE_GEN_AI` permission + `SHOW_SDV_PROTOPILOT_BUTTON` flag.
+- **Authorization:** Only callers with `USE_GEN_AI` (`generativeAI`) can open the ProtoPilot UI; the `/v2/genai/*` proxy enforces JWT only — no server-side `USE_GEN_AI` check (risk noted).
+- **Input validation:** Not validated — prompts are forwarded to the GenAI endpoint without validation; generated code is applied to `prototype.code` without schema validation.
 - **Rate limiting:** Not applied (`authLimiter` defined but unused).
-- **Secrets:** `GENAI_SDV_APP_ENDPOINT`/`GENAI_MARKETPLACE_URL` are env-driven (no secrets in transit); no client secrets handled here.
+- **Secrets:** `GENAI_SDV_APP_ENDPOINT`/`GENAI_MARKETPLACE_URL` are env-driven; the caller handles no secrets here.
 
 **Risks:**
 - **Permission gate bypass:** if `USE_GEN_AI` were not enforced server-side, any user could consume GenAI compute (cost abuse) and inject generated code into prototypes they don't own.
@@ -123,7 +125,7 @@ Prompt + generated code transit the GenAI service; generated code stored in the 
 
 ### Description
 
-Reverse-proxies `/v2/genai/*` to the GenAI microservice (`GENAI_URL`) with SSE streaming.
+As an API caller, I can send authenticated requests to `/v2/genai/*` and receive SSE-streamed responses from the configured GenAI service so that my frontend can stream generated content.
 
 ### Who uses it / value
 
@@ -131,11 +133,12 @@ The frontend (GenAI calls); integrators (GenAI backend).
 
 ### Acceptance criteria
 
-- `ALL /v2/genai/*` proxied to `GENAI_URL` (SSE streamed); auth required; inactive if `GENAI_URL` unset.
+- When I send an authenticated request to `ALL /v2/genai/*`, the system proxies it to `GENAI_URL` and streams the SSE response back to me.
+- When `GENAI_URL` is unset, the route is inactive.
 
 ### Quality control
 
-With `GENAI_URL` set, ProtoPilot calls succeed; without it, the route is inactive.
+With `GENAI_URL` set, my ProtoPilot calls succeed; without it, the route is inactive.
 
 ```mermaid
 sequenceDiagram
@@ -154,11 +157,11 @@ sequenceDiagram
 Auth required; SSE streaming passthrough.
 
 **Coverage:**
-- **Auth:** Required — `router.use(auth())` enforces JWT on all `/v2/genai/*`; the route is inactive (returns 500 "not implemented") when `GENAI_URL` is unset.
-- **Authorization:** None beyond auth — no permission check on the proxy; any authenticated user can call.
-- **Input validation:** Not validated — http-proxy-middleware passthrough (`fixRequestBody`); path/body forwarded as-is.
+- **Auth:** Required — all `/v2/genai/*` requests require a JWT; the route returns `500 "not implemented"` when `GENAI_URL` is unset.
+- **Authorization:** None beyond auth — any authenticated user can call `/v2/genai/*`; no permission check.
+- **Input validation:** Not validated — the path and body are forwarded as-is.
 - **Rate limiting:** Not applied.
-- **Secrets:** `GENAI_URL` is env-driven (SSRF watch if attacker-controllable); no secrets handled by the proxy itself.
+- **Secrets:** `GENAI_URL` is env-driven (SSRF watch if attacker-controllable); the proxy handles no secrets.
 
 **Risks:**
 - **SSRF via proxy path:** if the path/host were not validated, an attacker could steer `/v2/genai/*` requests at internal endpoints through a controllable `GENAI_URL`.
@@ -186,7 +189,7 @@ Proxies prompts/responses; no backend storage.
 
 ### Description
 
-Connect a GitHub account (socket-based callback emits the token) for project-editor git sync; GitHub SSO for login.
+As a user, I can link my GitHub account to AutoWRX for git sync in the project editor, and sign in via GitHub SSO, so I can reuse my GitHub identity without a separate password.
 
 ### Who uses it / value
 
@@ -194,12 +197,13 @@ Authors (git sync intent); end users (GitHub login).
 
 ### Acceptance criteria
 
-- `GET /v2/auth/github/callback` → exchanges code, emits token over the user's socket; `GET /v2/auth/github-sso/{start,callback}` → SSO login.
+- When I complete GitHub authorization, the system exchanges the code via `GET /v2/auth/github/callback` and delivers the token to my authenticated socket.
+- When I start SSO via `GET /v2/auth/github-sso/{start,callback}`, the system logs me in via GitHub.
 - Requires `GITHUB_CLIENT_ID/SECRET` (env or per-provider config).
 
 ### Quality control
 
-Connect GitHub → account linked; deeper git-sync UI is partial.
+I connect GitHub and my account is linked; the deeper git-sync UI is partial.
 
 ```mermaid
 sequenceDiagram
@@ -221,11 +225,11 @@ sequenceDiagram
 OAuth code exchange server-side; token delivered via authenticated socket.
 
 **Coverage:**
-- **Auth:** OAuth code exchange server-side (`POST github.com/login/oauth/access_token`); SSO start/callback exchange tokens server-side; token delivered over the user's authenticated socket.
-- **Authorization:** Account linking bound to the logged-in `userId` (from the callback query); SSO creates/links the account via the `sso` controller; no extra RBAC.
-- **Input validation:** `code` query param forwarded to GitHub (no Joi); SSO body validated via `validate(authValidation.sso)`.
+- **Auth:** OAuth code exchange happens server-side (`POST github.com/login/oauth/access_token`); SSO start/callback exchange tokens server-side; the token is delivered over my authenticated socket.
+- **Authorization:** Account linking is bound to my logged-in `userId`; SSO creates/links the account; no extra RBAC.
+- **Input validation:** The `code` query param is forwarded to GitHub without validation; the SSO body is validated.
 - **Rate limiting:** Not applied (`authLimiter` defined but unused on `/v2/auth/github*`).
-- **Secrets:** `GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET` env-driven, used server-side only in the token exchange.
+- **Secrets:** `GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET` are env-driven, used server-side only in the token exchange.
 
 **Risks:**
 - **Token delivery to wrong socket:** the token is emitted over the user's socket; a mismatched socket-to-session binding could deliver a GitHub token to the wrong user, granting account linking to an attacker.
@@ -254,7 +258,7 @@ GitHub tokens stored in `githubAuthStore` (persisted); treat as credentials.
 
 ### Description
 
-Transactional email (welcome, reset code, verification, test) via Resend or SMTP (site-configured, encrypted secrets), with legacy env fallback; welcome email non-blocking.
+As a user, I receive transactional emails (welcome, password reset code, verification) so I can complete account flows; as an admin, I can send a test email to verify the configured Resend/SMTP provider.
 
 ### Who uses it / value
 
@@ -262,11 +266,13 @@ End users (account flows); admins (test config).
 
 ### Acceptance criteria
 
-- `POST /v2/site-config/email/test` (admin) sends a test email; auth flows send welcome/reset/verify emails; failure of welcome doesn't block registration.
+- When an admin calls `POST /v2/site-config/email/test`, the system sends a test email via the configured provider.
+- When I register, request a password reset, or verify my account, the system emails the welcome/reset/verify message.
+- When the welcome email fails, the system still completes registration (non-blocking).
 
 ### Quality control
 
-Configure Resend/SMTP → test send succeeds; trigger forgot-password → reset code emailed.
+As an admin I configure Resend/SMTP and the test send succeeds; as a user I trigger forgot-password and the reset code is emailed.
 
 ```mermaid
 flowchart LR
@@ -282,11 +288,11 @@ flowchart LR
 Secrets encrypted at rest; admin-only config.
 
 **Coverage:**
-- **Auth:** Auth flows (welcome/reset/verify) are invoked internally by authenticated auth flows; `POST /v2/site-config/email/test` is admin-only (`auth()` + `checkPermission(ADMIN)` in the site-management router).
-- **Authorization:** `ADMIN` (`manageUsers`) required for the test-email endpoint; auth-flow triggers run server-side only.
-- **Input validation:** Trigger endpoints Joi-validated (`forgotPassword`/`register`/`resetPassword`); the recipient `to` in `sendEmail` is not Joi-validated.
+- **Auth:** Auth-flow emails (welcome/reset/verify) are triggered internally by authenticated flows; `POST /v2/site-config/email/test` is admin-only (requires auth + `ADMIN` permission).
+- **Authorization:** `ADMIN` (`manageUsers`) is required for the test-email endpoint; auth-flow triggers run server-side only.
+- **Input validation:** Trigger endpoints are validated (`forgotPassword`/`register`/`resetPassword`); the recipient `to` in `sendEmail` is not validated.
 - **Rate limiting:** Not applied (`authLimiter` defined but unused on forgot-password/reset).
-- **Secrets:** Resend `apiKey` / SMTP `pass` encrypted at rest in `SiteConfig`, decrypted at send time via `decrypt()`.
+- **Secrets:** Resend `apiKey` / SMTP `pass` are encrypted at rest in `SiteConfig`, decrypted at send time.
 
 **Risks:**
 - **Secret decryption failure:** encrypted Resend/SMTP secrets decrypted at send time; a key rotation mishap could brick all transactional email (reset/verify) silently.
@@ -315,7 +321,7 @@ Recipient email + content sent to the provider; reset codes are one-time.
 
 ### Description
 
-Create/embed a widget via the external bewebstudio service.
+As a widget author, I can create and embed a widget through the external bewebstudio service so I can add custom widgets to my dashboards.
 
 ### Who uses it / value
 
@@ -323,22 +329,23 @@ Widget authors.
 
 ### Acceptance criteria
 
-- `webStudio.service` creates/opens a widget; the create-from-scratch button is commented out in the current UI but the service exists.
+- When I use the Web Studio entry, the system creates/opens a widget via the external bewebstudio service.
+- The create-from-scratch button is currently disabled in the UI; the underlying service remains available.
 
 ### Quality control
 
-Service callable; UI entry currently disabled.
+The service is callable from the frontend; the UI entry is currently disabled.
 
 ### Security
 
 External service; same caveats as remote widgets.
 
 **Coverage:**
-- **Auth:** Frontend-only service (`webStudio.service.ts` axios calls to `studioBeUrl`); no backend route — relies on the external bewebstudio service for auth.
-- **Authorization:** None on backend (no backend route); the external service handles access.
-- **Input validation:** Not validated on backend (frontend posts widget name/uid directly).
+- **Auth:** Frontend-only — calls go to the external bewebstudio service (`studioBeUrl`); no backend route — the external service handles auth.
+- **Authorization:** None on the backend (no backend route); the external service handles access.
+- **Input validation:** Not validated on the backend (widget name/uid posted directly to the external service).
 - **Rate limiting:** Not applied.
-- **Secrets:** `studioBeUrl` config (external endpoint); no secrets handled by the backend.
+- **Secrets:** `studioBeUrl` config (external endpoint); no secrets on the backend.
 
 **Risks:**
 - **Unvetted remote widget:** widgets created via the external bewebstudio service execute remotely and load into the platform; a compromised service could inject hostile scripts into authorized sessions.
@@ -365,7 +372,7 @@ Widget URL only.
 
 ### Description
 
-Regex search across accessible models & prototypes by name/description; user-by-email; prototypes-by-signal; plus a Global search UI in the nav bar.
+As a user, I can search accessible models and prototypes by name/description, find a user by email, and find prototypes containing a given signal, so I can discover content and collaborators; a Global search UI is available in the nav bar.
 
 ### Who uses it / value
 
@@ -373,13 +380,14 @@ End users (discover); sharing flows (find users).
 
 ### Acceptance criteria
 
-- `GET /v2/search?q=&sortBy=&limit=&page=` (optional auth via `PUBLIC_VIEWING`) → `200` models + prototypes accessible to the caller.
-- `GET /v2/search/email/:email` → `200` user or `404`; `GET /v2/search/prototypes/by-signal/:signal` → matching prototypes.
-- Global search UI (`DaGlobalSearch`) with type filters.
+- When I call `GET /v2/search?q=&sortBy=&limit=&page=` (optional auth via `PUBLIC_VIEWING`), the system returns `200` with models + prototypes accessible to me.
+- When I call `GET /v2/search/email/:email`, the system returns `200` (user found) or `404`.
+- When I call `GET /v2/search/prototypes/by-signal/:signal`, the system returns matching prototypes.
+- A Global search UI with type filters is available in the nav bar.
 
 ### Quality control
 
-Search a term → accessible results only; search an inaccessible model → not returned; by-signal → prototypes whose code contains the signal.
+I search a term and see only accessible results; I search an inaccessible model and it is not returned; by-signal returns prototypes whose code contains the signal.
 
 ```mermaid
 flowchart TD
@@ -395,9 +403,9 @@ flowchart TD
 Optional auth via `PUBLIC_VIEWING`; scoped to accessible resources (no leakage).
 
 **Coverage:**
-- **Auth:** Optional via `PUBLIC_VIEWING` on all three endpoints (`/search`, `/search/email/:email`, `/search/prototypes/by-signal/:signal`); private results require auth + access scoping.
+- **Auth:** Optional via `PUBLIC_VIEWING` on all three endpoints (`/v2/search`, `/v2/search/email/:email`, `/v2/search/prototypes/by-signal/:signal`); private results require auth + access scoping.
 - **Authorization:** Scoped to accessible models/prototypes server-side (access-scope filter); no resource-level permission check on `/email/:email` or `/by-signal/:signal` (enumeration risk).
-- **Input validation:** Joi validated — `validate(searchValidation.search/searchUserByEmail/searchPrototypesBySignal)` applied.
+- **Input validation:** Validated — inputs for `/search`, `/email/:email`, and `/by-signal/:signal` are validated.
 - **Rate limiting:** Not applied.
 - **Secrets:** None.
 
@@ -427,7 +435,7 @@ Optional auth via `PUBLIC_VIEWING`; scoped to accessible resources (no leakage).
 
 ### Description
 
-Threaded comments on any resource (`ref`+`ref_type`) with optional `parent` for replies; top-level-only list.
+As a collaborator, I can post threaded comments on any resource (identified by `ref`+`ref_type`) and reply with an optional `parent`, so I can discuss resources with my team; the list returns top-level threads only.
 
 ### Who uses it / value
 
@@ -435,20 +443,22 @@ Collaborators/reviewers (comment on resources).
 
 ### Acceptance criteria
 
-- `GET /v2/discussions?ref=<id>` (optional auth) → `200` top-level threads; `POST` (auth) → `201`; `PATCH/DELETE /:id` → `200`/`204`. `ref` query required for list.
+- When I call `GET /v2/discussions?ref=<id>` (optional auth), the system returns `200` top-level threads (`ref` query required for list).
+- When I call `POST /v2/discussions` (auth), the system creates a thread and returns `201`.
+- When I call `PATCH/DELETE /:id` (auth), the system returns `200`/`204`.
 
 ### Quality control
 
-Create a discussion on a resource → appears in list; reply via `parent`; list returns top-level only.
+I create a discussion on a resource and it appears in the list; I reply via `parent`; the list returns top-level only.
 
 ### Security
 
 List optional; write auth. **Partial** — no dedicated routed page; wired contextually.
 
 **Coverage:**
-- **Auth:** List optional via `PUBLIC_VIEWING`; create/patch/delete require `auth()`.
-- **Authorization:** Ownership enforced on PATCH/DELETE (`req.user.id` passed to service); no access check on the referenced `ref` resource (cross-resource spam risk).
-- **Input validation:** Joi validated — `validate(discussionValidation.create/list/update/delete)` applied.
+- **Auth:** List optional via `PUBLIC_VIEWING`; create/patch/delete require auth.
+- **Authorization:** Ownership enforced on PATCH/DELETE (own only); no access check on the referenced `ref` resource (cross-resource spam risk).
+- **Input validation:** Validated — create/list/update/delete inputs are validated.
 - **Rate limiting:** Not applied.
 - **Secrets:** None.
 
@@ -478,7 +488,7 @@ List optional; write auth. **Partial** — no dedicated routed page; wired conte
 
 ### Description
 
-Structured feedback with scores (1–5) + interview metadata (see [prototypes-code.md](./prototypes-code.md) for the UI).
+As a reviewer, I can submit structured feedback with scores (1–5) and interview metadata on a prototype so the owner can act on review insights (UI covered in [prototypes-code.md](./prototypes-code.md)).
 
 ### Who uses it / value
 
@@ -486,20 +496,21 @@ Reviewers; prototype owners.
 
 ### Acceptance criteria
 
-- `GET/POST /v2/feedbacks` (list optional, write auth); `PATCH/DELETE /:id` → `200`/`204` (own).
+- When I call `GET /v2/feedbacks` (optional auth), the system returns the list; when I call `POST /v2/feedbacks` (auth), the system creates an entry.
+- When I call `PATCH/DELETE /:id` (auth, own), the system returns `200`/`204`.
 
 ### Quality control
 
-Add feedback → persisted; delete own → `204`; delete others' → `403`.
+I add feedback and it is persisted; I delete my own and get `204`; I delete others' and get `403`.
 
 ### Security
 
 Add auth; delete own only.
 
 **Coverage:**
-- **Auth:** List optional via `PUBLIC_VIEWING`; create/patch/delete require `auth()`.
-- **Authorization:** Ownership enforced on PATCH/DELETE (`req.user.id` passed to service); own-only delete.
-- **Input validation:** Joi validated — `validate(feedbackValidation.create/list/update/delete)` applied.
+- **Auth:** List optional via `PUBLIC_VIEWING`; create/patch/delete require auth.
+- **Authorization:** Ownership enforced on PATCH/DELETE (own only).
+- **Input validation:** Validated — create/list/update/delete inputs are validated.
 - **Rate limiting:** Not applied.
 - **Secrets:** None.
 
@@ -529,7 +540,7 @@ Scores + interviewee metadata stored.
 
 ### Description
 
-Consolidated status of MongoDB, JWT sign/verify, auth login, upload dir, runtime server, SSO reachability.
+As an operator, I can call a single health endpoint to see the consolidated status of MongoDB, JWT, auth login, upload dir, runtime server, and SSO reachability, so I can monitor platform health.
 
 ### Who uses it / value
 
@@ -537,11 +548,12 @@ DevOps/monitoring.
 
 ### Acceptance criteria
 
-- `GET /v2/health` (public) → `200` for `ok`/`degraded`, `503` for `error`, with per-service messages; page `/health` shows badges.
+- When I call `GET /v2/health` (public), the system returns `200` with per-service messages for `ok`/`degraded`, or `503` for `error`.
+- When I open `/health`, the system shows status badges.
 
 ### Quality control
 
-Hit `/v2/health` → status + per-service messages; stop Mongo → degraded.
+I hit `/v2/health` and see the status plus per-service messages; if I stop Mongo, the status degrades.
 
 ```mermaid
 flowchart TD
@@ -593,7 +605,7 @@ Status info only (no secrets).
 
 ### Description
 
-Multer single-file upload to `static/uploads/YYYY-MM-DD/`; auto-scales images (sharp, max 1024 px); served at `/d/...` (1-year cache). 50 MB file / 10 MB field limits.
+As a user, I can upload a single file (up to 50 MB) and receive a URL where it is served, so I can attach images to models/prototypes; images are auto-scaled (max 1024 px) and served at `/d/...` with a 1-year cache.
 
 ### Who uses it / value
 
@@ -601,11 +613,12 @@ End users (avatars, model/prototype images); the app (asset hosting).
 
 ### Acceptance criteria
 
-- `POST /v2/file/upload/store-be` (auth) → `200 { url }`; images auto-scaled; served at `/d/...` with long cache.
+- When I call `POST /v2/file/upload/store-be` (auth) with a single file, the system returns `200 { url }`.
+- When the file is an image, the system auto-scales it and serves it at `/d/...` with a 1-year cache.
 
 ### Quality control
 
-Upload an image → returned URL serves a scaled image; upload >50 MB → rejected.
+I upload an image and the returned URL serves a scaled image; I upload >50 MB and the request is rejected.
 
 ```mermaid
 sequenceDiagram
@@ -628,9 +641,9 @@ sequenceDiagram
 Auth required; any file type allowed (50 MB cap) — validate on use.
 
 **Coverage:**
-- **Auth:** Required — `auth()` on `POST /v2/file/upload/store-be`.
+- **Auth:** Required — `POST /v2/file/upload/store-be` requires auth.
 - **Authorization:** Any authenticated user — no per-user quota or permission check.
-- **Input validation:** Multer limits enforced (`fileSize` 50 MB, `fieldSize` 10 MB); `fileFilter` accepts ANY file type (no MIME/extension validation).
+- **Input validation:** Limits enforced — file size 50 MB, field size 10 MB; any file type accepted (no MIME/extension validation).
 - **Rate limiting:** Not applied.
 - **Secrets:** None.
 
@@ -661,7 +674,7 @@ Files served publicly under `/d/`; retention = files persist until deleted (no a
 
 ### Description
 
-`captureChange` Mongoose plugin on Model & Prototype records CREATE/UPDATE/DELETE with field diffs (throttled/batched for frequent updates like `code`); admin paginated list.
+As an admin/auditor, I can view a paginated audit trail of CREATE/UPDATE/DELETE changes on Models and Prototypes (with field diffs), so I can trace who changed what; frequent `code` updates are batched into throttled entries.
 
 ### Who uses it / value
 
@@ -669,12 +682,12 @@ Admins/auditors (trace changes).
 
 ### Acceptance criteria
 
-- `GET /v2/change-logs` (auth + `MANAGE_USERS`) → `200` paginated audit entries (`action`, `changes`, `ref`).
-- Frequent `code` updates batched into throttled entries (~60 s).
+- When I call `GET /v2/change-logs` (auth + `MANAGE_USERS`), the system returns `200` paginated audit entries (`action`, `changes`, `ref`).
+- When `code` is updated frequently, the system batches changes into throttled entries (~60 s).
 
 ### Quality control
 
-Update a model → a `changelogs` entry appears; admin can list/filter; non-admin → `403`.
+I update a model and a `changelogs` entry appears; as an admin I can list/filter; as a non-admin I get `403`.
 
 ```mermaid
 flowchart LR
@@ -688,10 +701,10 @@ flowchart LR
 
 ### Security
 
-`MANAGE_USERS` (read optional via `PUBLIC_VIEWING` but `checkPermission(ADMIN)` enforced).
+`MANAGE_USERS` (read optional via `PUBLIC_VIEWING` but `ADMIN` enforced).
 
 **Coverage:**
-- **Auth:** Optional via `PUBLIC_VIEWING` on list, but `checkPermission(ADMIN)` is enforced — admin-only in effect.
+- **Auth:** Optional via `PUBLIC_VIEWING` on list, but `ADMIN` permission is enforced — admin-only in effect.
 - **Authorization:** `ADMIN` (`manageUsers`) permission required to list change logs.
 - **Input validation:** N/A — read-only paginated list (filter via query).
 - **Rate limiting:** Not applied.
@@ -706,7 +719,7 @@ flowchart LR
 `changelogs` is a **capped** collection (bounded size); stores field diffs (may include code/content).
 
 **Coverage:**
-- **Stored data:** `changelogs` (ChangeLog) — `action`, `changes` (field diffs incl. `code`), `ref`/`ref_type`/`created_by`; the collection is CAPPED via `convertLogsCap.js` (`LOGS_MAX_SIZE`, default 100 MB).
+- **Stored data:** `changelogs` (ChangeLog) — `action`, `changes` (field diffs incl. `code`), `ref`/`ref_type`/`created_by`; the collection is size-capped (`LOGS_MAX_SIZE`, default 100 MB).
 - **PII:** Potentially — diffs may include user-identifying content; `created_by` references the user.
 - **Retention:** Capped collection — oldest entries are evicted on overflow (audit eviction risk); no controlled TTL.
 - **Encryption:** At rest via the MongoDB platform default; in transit TLS.
@@ -724,7 +737,7 @@ flowchart LR
 
 ### Description
 
-Serves `/static`, `/images`, `/plugin`, `/builtin-widgets`, `/d`; production serves the built SPA with index.html fallback; dev proxies to Vite `:3210`; VSS JSONs at `/vss/:version/:filename` (1-hour cache).
+As a user/integrator, I can fetch static assets at `/static`, `/images`, `/plugin`, `/builtin-widgets`, and `/d`, load the SPA at any unknown route (production `index.html` fallback), and pull VSS JSONs at `/vss/:version/:filename` (1-hour cache).
 
 ### Who uses it / value
 
@@ -732,11 +745,13 @@ All users (the app + assets); integrators (VSS data).
 
 ### Acceptance criteria
 
-- Static assets served with correct MIME; SPA fallback serves `index.html` for unknown routes (production); `/vss/:version/:filename` returns JSON.
+- When I request `/static`, `/images`, `/plugin`, `/builtin-widgets`, or `/d`, the system serves the static asset with the correct MIME type.
+- When I request an unknown route in production, the system serves `index.html` (SPA fallback); in dev, requests proxy to Vite `:3210`.
+- When I request `/vss/:version/:filename`, the system returns the VSS JSON (1-hour cache).
 
 ### Quality control
 
-Hit the app root → SPA loads; an asset URL → served; `/vss/4.0/vss.json` → JSON.
+I hit the app root and the SPA loads; I hit an asset URL and it is served; I hit `/vss/4.0/vss.json` and get JSON.
 
 ```mermaid
 flowchart TD
@@ -754,7 +769,7 @@ Public; Helmet CSP applies (wildcard in both envs — known permissive).
 **Coverage:**
 - **Auth:** Public — no auth on `/static`, `/d`, `/vss/:version/:filename`, or the SPA fallback.
 - **Authorization:** None (public static serving).
-- **Input validation:** VSS `:version` validated via regex (`/^v\d+\./`); static paths resolved by `express.static` (path-traversal protected by Express).
+- **Input validation:** VSS `:version` validated via regex (`/^v\d+\./`); static paths are path-traversal protected.
 - **Rate limiting:** Not applied.
 - **Secrets:** None.
 
@@ -784,7 +799,7 @@ Static assets only.
 
 ### Description
 
-Regex CORS allowlist (`CORS_ORIGINS`), cookie-parser, mongo-sanitize, gzip, Helmet CSP (wildcard-open in both dev and prod — only `objectSrc` is `'none'`), `trust proxy`.
+As an operator, I rely on the platform's global security middleware — a regex CORS allowlist (`CORS_ORIGINS`), a wildcard-open CSP (only `objectSrc` is `'none'`), input sanitization, gzip, and `trust proxy` — so that browsers load the app securely.
 
 ### Who uses it / value
 
@@ -792,11 +807,13 @@ DevOps (deploy securely); the app (browser loading).
 
 ### Acceptance criteria
 
-- CORS allows configured origins (http/https auto-prefixed); CSP headers set; sanitize inputs; `trust proxy` enabled.
+- When I configure `CORS_ORIGINS`, the system allows those origins (http/https auto-prefixed) and rejects others.
+- When a browser loads the app, the system sets CSP headers (wildcard-open; only `objectSrc` is `'none'`).
+- The system sanitizes inputs and enables `trust proxy`.
 
 ### Quality control
 
-Check response headers → CORS + CSP present; cross-origin script loads with `crossOrigin=anonymous`.
+I check response headers and CORS + CSP are present; cross-origin script loads with `crossOrigin=anonymous`.
 
 ```mermaid
 flowchart LR
@@ -816,7 +833,7 @@ flowchart LR
 **Coverage:**
 - **Auth:** N/A — global middleware (not an endpoint).
 - **Authorization:** N/A — middleware applied to all requests.
-- **Input validation:** `mongo-sanitize` strips `$`/`.` keys from inputs; `cookie-parser` parses cookies; `compression` (gzip) applied.
+- **Input validation:** `mongo-sanitize` strips `$`/`.` keys from inputs; cookies parsed; gzip compression applied.
 - **Rate limiting:** `authLimiter` defined (15 min / 20 req, skipSuccessful) but NOT applied to any route — known gap.
 - **Secrets:** `CORS_ORIGINS` env-driven regex allowlist; no secrets in middleware.
 
@@ -848,7 +865,7 @@ mongo-sanitize strips `$`/`.` keys from inputs; cookies httpOnly.
 
 ### Description
 
-JWT-authenticated Socket.IO (token via `access_token` query); pushes auth events (GitHub OAuth token/errors).
+As a client, I can open a JWT-authenticated Socket.IO connection (token via `access_token` query) and receive realtime auth events (GitHub OAuth token/errors) so I can complete OAuth flows without polling.
 
 ### Who uses it / value
 
@@ -856,11 +873,12 @@ Auth flows (GitHub token delivery); future realtime features.
 
 ### Acceptance criteria
 
-- Handshake verifies JWT, attaches `socket.user`; `auth/github`/`auth/github/error` events emitted.
+- When I connect with a valid `access_token` (JWT) query param, the system verifies it and attaches my user context (`socket.user`).
+- When an auth flow completes, the system emits `auth/github` (token) or `auth/github/error` events to my socket.
 
 ### Quality control
 
-Connect with a valid access token → connected; invalid → rejected.
+I connect with a valid access token and I am connected; with an invalid one I am rejected.
 
 ```mermaid
 sequenceDiagram
@@ -879,8 +897,8 @@ sequenceDiagram
 JWT verified on handshake.
 
 **Coverage:**
-- **Auth:** JWT verified on handshake (`jwt.verify` of the `access_token` query param); unauthenticated sockets are rejected.
-- **Authorization:** `socket.user` attached after `jwtVerify`; per-event authorization is not enforced beyond the handshake.
+- **Auth:** JWT verified on handshake (the `access_token` query param); unauthenticated sockets are rejected.
+- **Authorization:** `socket.user` attached after verification; per-event authorization is not enforced beyond the handshake.
 - **Input validation:** None — event payloads are not validated.
 - **Rate limiting:** Not applied.
 - **Secrets:** JWT secret used for verification; GitHub OAuth tokens are carried in `auth/github` event payloads.
@@ -912,7 +930,7 @@ Token in query string (use TLS in prod); event payloads may include GitHub token
 
 ### Description
 
-Forward audit/forgot-password events to `LOG_URL`; pull recent-prototype activity from `CACHE_URL`.
+As a DevOps operator, the platform forwards audit and forgot-password events to a configured `LOG_URL` and pulls recent-prototype activity from a configured `CACHE_URL`, so I can centralize logs and activity views.
 
 ### Who uses it / value
 
@@ -920,11 +938,13 @@ DevOps (centralized logs/activity).
 
 ### Acceptance criteria
 
-- Internal clients; active when `LOG_URL`/`CACHE_URL` configured; failures non-blocking for the main flows.
+- When `LOG_URL` is configured, the system forwards audit/forgot-password events; when unset, forwarding is inactive.
+- When `CACHE_URL` is configured, the system pulls recent-prototype activity; when unset, the pull is inactive.
+- Failures in either client are non-blocking for the main flows.
 
 ### Quality control
 
-Configure the URLs → events forwarded / recent activity served.
+I configure the URLs and events are forwarded / recent activity is served.
 
 ```mermaid
 flowchart LR
@@ -939,7 +959,7 @@ flowchart LR
 Internal clients; configure with appropriate auth on the target services.
 
 **Coverage:**
-- **Auth:** Internal axios clients (`logAxios` to `LOG_URL`, prototype cache pull from `CACHE_URL`) — no client-side auth; target services are expected to self-authenticate.
+- **Auth:** Internal clients (forward to `LOG_URL`, pull from `CACHE_URL`) — no client-side auth; target services are expected to self-authenticate.
 - **Authorization:** N/A — outbound clients.
 - **Input validation:** Event payloads forwarded as-is (no validation); cache response consumed as-is.
 - **Rate limiting:** Not applied.

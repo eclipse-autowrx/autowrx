@@ -1,6 +1,8 @@
 # Cluster: Models
 
-The vehicle-model domain and its layout. Backend: `routes/v2/vehicle-data/model.route.js`, `models/model.model.js`. Frontend: `pages/{PageModelList,PageModelDetail}.tsx`, `layouts/ModelDetailLayout.tsx`.
+Discover, create, and manage vehicle models — the container for every signal set, prototype, and dashboard built on the platform.
+
+**Implementation:** `routes/v2/vehicle-data/model.route.js`, `models/model.model.js` (backend); `pages/{PageModelList,PageModelDetail}.tsx`, `layouts/ModelDetailLayout.tsx` (frontend).
 
 ```mermaid
 flowchart TD
@@ -39,7 +41,7 @@ flowchart TD
 
 ### Description
 
-Browse models in three sections (My Models, My Contributions, Public); create a model; import a model from a ZIP archive.
+As a user, browse vehicle models across three sections — My Models, My Contributions, and Public — to discover models to build on. As a model owner, create a new model or import one from a ZIP archive to start prototyping.
 
 ### Who uses it / value
 
@@ -47,15 +49,15 @@ End users (discover models); model owners (create/import); the wider community (
 
 ### Acceptance criteria
 
-- `GET /v2/models` (optional auth via `PUBLIC_VIEWING`) → `200` paginated list with query filters (`name`, `visibility`, `state`, `tenant_id`, `vehicle_category`, `main_api`, `id`, `created_by`, `is_contributor`, `include_stats`, `sortBy`, `page`, `limit`, `fields`).
-- `GET /v2/models/all` → expanded/unpaginated aggregation of owned + contributed + public-released models (optional auth via `PUBLIC_VIEWING`; owned/contributed only populated for authenticated users).
-- `POST /v2/models` (auth) → `201` new model. `POST /v2/models/stats` (optional auth) → `200 { statsById: { [modelId]: {...} } }` for the body `ids`.
-- Import from ZIP (`zipUtils.ts`) creates a model from the archive contents.
-- Signed-out with `PUBLIC_VIEWING=false` → `401` on list.
+- When I call `GET /v2/models` (optional auth via `PUBLIC_VIEWING`), the system returns `200` a paginated list I can filter by (`name`, `visibility`, `state`, `tenant_id`, `vehicle_category`, `main_api`, `id`, `created_by`, `is_contributor`, `include_stats`, `sortBy`, `page`, `limit`, `fields`).
+- When I call `GET /v2/models/all`, the system returns an expanded/unpaginated aggregation of owned + contributed + public-released models (optional auth via `PUBLIC_VIEWING`; owned/contributed only populated for authenticated users).
+- When I call `POST /v2/models` (auth), the system returns `201` a new model. When I call `POST /v2/models/stats` (optional auth), the system returns `200 { statsById: { [modelId]: {...} } }` for the body `ids`.
+- When I import a model from a ZIP archive, the system creates the model from the archive contents.
+- When I'm signed out and `PUBLIC_VIEWING=false`, the system returns `401` on list.
 
 ### Quality control
 
-Create a model → appears in "My Models"; import a valid model ZIP → model created; sign out + `PUBLIC_VIEWING=true` → public models listed; `PUBLIC_VIEWING=false` → `401`.
+After I create a model, it appears in My Models; after I import a valid model ZIP, the model is created; when I sign out with `PUBLIC_VIEWING=true`, public models are listed; with `PUBLIC_VIEWING=false`, the list returns `401`.
 
 ```mermaid
 flowchart LR
@@ -69,13 +71,13 @@ flowchart LR
 
 ### Security
 
-Read optional via `PUBLIC_VIEWING`; create requires auth. Filters don't leak private models (server filters by access).
+Reading is optional via `PUBLIC_VIEWING`; creating a model requires me to be signed in. I only see models that are public or that I own/contribute to (owner bypass) — private models aren't leaked through list filters.
 
 **Coverage:**
 - **Auth:** Read optional via `PUBLIC_VIEWING`; create requires auth (JWT access token).
-- **Authorization:** List — server-side access scoping in `queryModels` (public + owned + role-permissioned); create — any authenticated user (becomes owner); 3-model cap for non-admins without `UNLIMITED_MODEL`. No `checkPermission` on create.
-- **Input validation:** Joi (`modelValidation.createModel`/`listModels`/`listAllModels`).
-- **Rate limiting:** not applied (`authLimiter` defined in `rateLimiter.js` but unused on every route).
+- **Authorization:** List — I only see public models plus ones I own or have a role-permission for (owner bypass); create — any signed-in user becomes the owner of the new model; non-admins are capped at 3 models unless they hold `UNLIMITED_MODEL`.
+- **Input validation:** my query and body params are validated (create / list / listAll); invalid input is rejected.
+- **Rate limiting:** not applied (`authLimiter` exists but is unused on every route).
 - **Secrets:** none (no credentials in model metadata).
 
 **Risks:**
@@ -84,14 +86,14 @@ Read optional via `PUBLIC_VIEWING`; create requires auth. Filters don't leak pri
 
 ### Data protection
 
-Model metadata (name, description, visibility, state, images, tags) stored in `models`; images uploaded via the file service.
+Model metadata (name, description, visibility, state, images, tags) is stored on the model; images are uploaded via the file service.
 
 **Coverage:**
 - **Stored data:** `models` collection (name, description, visibility, state, images, tags, `created_by`, `custom_template`, `custom_api_sets`).
 - **PII:** no (model metadata is not personal; `created_by` is a user ref, email not stored on the model).
 - **Retention:** indefinite until hard delete (no soft-delete, no TTL).
 - **Encryption:** bcrypt for user passwords (separate collection); TLS in transit; model data not encrypted at rest beyond Mongo defaults.
-- **Logging:** request logs via `logger`; no sensitive data logged (model metadata only).
+- **Logging:** request logs; no sensitive data logged (model metadata only).
 
 **Risks:**
 - **Visibility misconfiguration:** an over-broad `WRITE_MODEL` grant or a wrong default could expose private models publicly.
@@ -105,7 +107,7 @@ Model metadata (name, description, visibility, state, images, tags) stored in `m
 
 ### Description
 
-View/edit a model's name, home image, vehicle properties, visibility (public/private), state (draft/released/blocked), contributors; export the model as ZIP; download the computed VSS JSON; delete.
+As a model owner or contributor, view and edit a model's name, home image, vehicle properties, visibility (public/private), state (draft/released/blocked), and contributors so that the model stays accurate and discoverable. As a consumer, export the model as a ZIP archive or download its computed VSS JSON to use the model elsewhere, and (as owner) delete a model I no longer need.
 
 ### Who uses it / value
 
@@ -113,13 +115,14 @@ Model owners (maintain models); contributors (collaborate); consumers (export/do
 
 ### Acceptance criteria
 
-- `GET /v2/models/:id` (optional auth) → `200` model (authorized users get `contributors`/`members` injected). `PATCH /v2/models/:id` → `200` (requires `WRITE_MODEL`). `DELETE /v2/models/:id` → `204` (requires `WRITE_MODEL`).
-- Export ZIP / download computed VSS from the UI actions.
-- No `WRITE_MODEL` → `403` on edit/delete.
+- When I call `GET /v2/models/:id` (optional auth), the system returns `200` the model; when I have edit rights, the response includes `contributors`/`members`.
+- When I call `PATCH /v2/models/:id` (requires `WRITE_MODEL`), the system returns `200`. When I call `DELETE /v2/models/:id` (requires `WRITE_MODEL`), the system returns `204`.
+- When I trigger Export ZIP or download computed VSS from the UI, the system returns the archive / JSON.
+- When I lack `WRITE_MODEL`, the system returns `403` on edit/delete.
 
 ### Quality control
 
-Edit visibility to private → signed-out users can't see it; change state to released → appears publicly; export → valid ZIP; delete → gone from list.
+When I set visibility to private, signed-out users can no longer see the model; when I set state to released, it appears publicly; when I export, I get a valid ZIP; when I delete, it's gone from the list.
 
 ```mermaid
 stateDiagram-v2
@@ -137,13 +140,13 @@ stateDiagram-v2
 
 ### Security
 
-Read `READ_MODEL`; write `WRITE_MODEL` (owner/admin/contributor). Owners bypass.
+I can read a model with `READ_MODEL` (owner/admin/contributor bypass), and edit or delete it with `WRITE_MODEL` (owner bypass).
 
 **Coverage:**
 - **Auth:** Read optional via `PUBLIC_VIEWING`; `PATCH`/`DELETE` require auth (JWT access token).
-- **Authorization:** Private-model read enforced by `getModelById` (`READ_MODEL`, owner bypass); `PATCH`/`DELETE` gated by `checkPermission(WRITE_MODEL)` (owner bypass).
-- **Input validation:** Joi (`modelValidation.getModel`/`updateModel`/`deleteModel`).
-- **Rate limiting:** not applied (`authLimiter` defined but unused).
+- **Authorization:** private-model read requires `READ_MODEL` (owner bypass); `PATCH`/`DELETE` require `WRITE_MODEL` (owner bypass).
+- **Input validation:** my params/body are validated (get / update / delete); invalid input is rejected.
+- **Rate limiting:** not applied (`authLimiter` exists but is unused).
 - **Secrets:** none (no credentials on the model document).
 
 **Risks:**
@@ -153,11 +156,11 @@ Read `READ_MODEL`; write `WRITE_MODEL` (owner/admin/contributor). Owners bypass.
 
 ### Data protection
 
-Visibility controls exposure; deleted models removed from the collection (no soft-delete). Export includes prototype code/data.
+The model's visibility controls who can see it; deleting a model removes it from the collection (no soft-delete). The export ZIP includes the model's prototype code/data.
 
 **Coverage:**
 - **Stored data:** `models` collection (visibility, state, props, `custom_template`); export bundles the model's prototype code/data.
-- **PII:** no — contributor/member emails are masked via `maskUserEmail` in the `getModel` response when the caller has `WRITE_MODEL`.
+- **PII:** no — contributor/member emails are masked in the model response when I have `WRITE_MODEL`.
 - **Retention:** hard delete (no soft-delete, no snapshot); export data persists as long as the model exists.
 - **Encryption:** bcrypt for user passwords (separate); TLS in transit; model data not encrypted at rest beyond Mongo defaults.
 - **Logging:** request logs; template-fetch warnings logged; no sensitive data.
@@ -174,7 +177,7 @@ Visibility controls exposure; deleted models removed from the collection (no sof
 
 ### Description
 
-Tabbed model layout (Overview / Prototype Library / Vehicle API + custom plugin tabs); owners add/reorder/hide tabs, set variant, configure a sidebar plugin and right-nav buttons; save the layout as a Model Template.
+As a model owner, customize the model's tabbed workspace — Overview, Prototype Library, Vehicle API, plus custom plugin tabs — by adding, reordering, or hiding tabs, setting a variant, and configuring a sidebar plugin and right-nav buttons so that collaborators see the layout that fits the model. As an admin, save a layout as a Model Template for other creators to reuse.
 
 ### Who uses it / value
 
@@ -182,13 +185,13 @@ Model owners (customize the workspace); end users (tailored model views); admins
 
 ### Acceptance criteria
 
-- Tab configuration stored on `model.custom_template` (`model_tabs`, `prototype_tabs`, `prototype_sidebar_plugin`, `prototype_right_nav_buttons`).
-- Addon/tab management requires `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG` (admins always allowed).
-- "Save as Template" (admin) stores the layout as a Model Template.
+- The tab configuration I save is stored on the model as `model_tabs`, `prototype_tabs`, `prototype_sidebar_plugin`, `prototype_right_nav_buttons`.
+- When I manage addon/tab configuration, the system requires `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG` (admins are always allowed).
+- When I (as admin) choose "Save as Template", the system stores the layout as a Model Template.
 
 ### Quality control
 
-Add a plugin addon tab → it renders via `PluginPageRender`; reorder/hide tabs → layout persists; as non-admin with `ALLOW_NON_ADMIN_ADDON_CONFIG=false` → addon config blocked.
+When I add a plugin addon tab, it renders in the workspace; when I reorder or hide tabs, the layout persists; as a non-admin with `ALLOW_NON_ADMIN_ADDON_CONFIG=false`, addon configuration is blocked.
 
 ```mermaid
 flowchart TD
@@ -207,7 +210,7 @@ Tab management gated by `WRITE_MODEL` + the addon-config flag. Plugins run unsan
 **Coverage:**
 - **Auth:** Write requires auth (JWT); reads optional via `PUBLIC_VIEWING`.
 - **Authorization:** `WRITE_MODEL` (owner bypass) + `ALLOW_NON_ADMIN_ADDON_CONFIG` flag (admins always allowed).
-- **Input validation:** Joi `updateModel` — `custom_template` is `Joi.any()` (shape not strictly validated).
+- **Input validation:** my `custom_template` payload is accepted as-is (shape not strictly validated).
 - **Rate limiting:** not applied (`authLimiter` defined but unused).
 - **Secrets:** none.
 
@@ -237,7 +240,7 @@ Layout config stored on the model document; no secrets.
 
 ### Description
 
-Add/remove authorized users (contributors/members) on a model; the model appears in their "My Contributions".
+As a model owner, add or remove authorized users (contributors/members) on my model so that they can collaborate, and the model shows up in their My Contributions section.
 
 ### Who uses it / value
 
@@ -245,12 +248,12 @@ Model owners (delegate editing); contributors (gain access).
 
 ### Acceptance criteria
 
-- `POST /v2/models/:id/permissions {userId, role}` (requires `WRITE_MODEL`) → `201` adds authorized user.
-- `DELETE /v2/models/:id/permissions?userId=&role=` (requires `WRITE_MODEL`) → `204` removes.
+- When I call `POST /v2/models/:id/permissions {userId, role}` (requires `WRITE_MODEL`), the system returns `201` and adds the authorized user.
+- When I call `DELETE /v2/models/:id/permissions?userId=&role=` (requires `WRITE_MODEL`), the system returns `204` and removes the user.
 
 ### Quality control
 
-Add a contributor → they see the model under "My Contributions" and can edit (if `writeModel`); remove → access revoked.
+After I add a contributor, they see the model under My Contributions and can edit (if granted `writeModel`); after I remove them, their access is revoked.
 
 ```mermaid
 sequenceDiagram
@@ -269,13 +272,13 @@ sequenceDiagram
 
 ### Security
 
-Both operations require `WRITE_MODEL` on the model. Owners bypass.
+Both add and remove require `WRITE_MODEL` on the model (owner bypass).
 
 **Coverage:**
 - **Auth:** required (JWT access token).
-- **Authorization:** `checkPermission(WRITE_MODEL)` at the route; `addAuthorizedUser` re-checks `WRITE_MODEL` in the service (owner bypass).
-- **Input validation:** Joi (`addAuthorizedUser`: `userId` required, `role` ∈ {`model_contributor`,`model_member`}; `deleteAuthorizedUser`: `userId`/`role` query).
-- **Rate limiting:** not applied (`authLimiter` defined but unused).
+- **Authorization:** both add and remove require `WRITE_MODEL` on the model (owner bypass).
+- **Input validation:** I must send `userId` (required) and `role` ∈ {`model_contributor`,`model_member`} to add, and `userId`/`role` as query params to delete; invalid input is rejected.
+- **Rate limiting:** not applied (`authLimiter` exists but is unused).
 - **Secrets:** none.
 
 **Risks:**
@@ -283,11 +286,11 @@ Both operations require `WRITE_MODEL` on the model. Owners bypass.
 
 ### Data protection
 
-Creates/removes UserRole bindings scoped to the model `ref`.
+Adding/removing a contributor creates/removes a binding scoped to the model.
 
 **Coverage:**
 - **Stored data:** `userroles` collection (`user`, `role`, `ref` = model id).
-- **PII:** yes — contributor/member user identities (user ↔ model relationship); `getModel` masks emails via `maskUserEmail`, but bindings reveal who collaborates on which model.
+- **PII:** yes — contributor/member user identities (user ↔ model relationship); the model response masks emails, but bindings reveal who collaborates on which model.
 - **Retention:** bindings persist until explicitly revoked (hard delete); no TTL, no audit trail of permission changes.
 - **Encryption:** none beyond Mongo defaults / TLS in transit.
 - **Logging:** request logs; no sensitive data.
@@ -304,7 +307,7 @@ Creates/removes UserRole bindings scoped to the model `ref`.
 
 ### Description
 
-Aggregated stats (e.g. prototype counts) by model IDs, cached per request.
+As a user, request aggregated stats (e.g. prototype counts) for a set of model IDs so that I can show model badges/counts in the UI.
 
 ### Who uses it / value
 
@@ -312,21 +315,21 @@ End users (model badges/counts); owners (overview).
 
 ### Acceptance criteria
 
-- `POST /v2/models/stats {ids:[...]}` (optional auth via `PUBLIC_VIEWING`) → `200 { statsById: { [modelId]: {...} } }`; empty/missing → `{ statsById: {} }`.
+- When I call `POST /v2/models/stats {ids:[...]}` (optional auth via `PUBLIC_VIEWING`), the system returns `200 { statsById: { [modelId]: {...} } }`; for empty/missing ids it returns `{ statsById: {} }`.
 
 ### Quality control
 
-Request stats for a few model IDs → counts returned; request none → empty map.
+When I request stats for a few model IDs, counts are returned; when I request none, I get an empty map.
 
 ### Security
 
-Optional auth; respects access scoping.
+Optional auth; I only get stats for models I can read.
 
 **Coverage:**
 - **Auth:** optional via `PUBLIC_VIEWING`.
-- **Authorization:** access-scoped — anonymous gets only public models; authenticated users filtered to readable ids via `permissionService.listReadableModelIds` (returns `*` for global read).
-- **Input validation:** Joi `listModelStats` (`ids`: array of objectId, min 1).
-- **Rate limiting:** not applied (`authLimiter` defined but unused).
+- **Authorization:** access-scoped — as an anonymous user I get stats only for public models; as a signed-in user I get stats only for models I can read (a global-read grant expands this to all).
+- **Input validation:** I must send `ids` as an array of objectId (min 1); invalid input is rejected.
+- **Rate limiting:** not applied (`authLimiter` exists but is unused).
 - **Secrets:** none.
 
 **Risks:**
@@ -337,7 +340,7 @@ Optional auth; respects access scoping.
 Aggregated only; no PII.
 
 **Coverage:**
-- **Stored data:** none — counts computed on demand and cached per request (`getModelStatsSummaryByIds`).
+- **Stored data:** none — counts are computed on demand and cached per request.
 - **PII:** no (aggregated counts only).
 - **Retention:** N/A (not persisted).
 - **Encryption:** N/A (no stored data); TLS in transit.
@@ -354,7 +357,7 @@ Aggregated only; no PII.
 
 ### Description
 
-Admin-managed scaffolds for model layouts (`custom_template`), with a single `default` template; seeded/managed via the templates admin page.
+As an admin, manage scaffolds for model layouts (the `custom_template`) — including the single `default` template — so that creators can quick-start a new model from a standard layout.
 
 ### Who uses it / value
 
@@ -362,11 +365,11 @@ Admins (standardize layouts); model creators (quick-start from a template).
 
 ### Acceptance criteria
 
-- `GET /v2/model-template[/:id]` (public) → list/get; `POST /v2/model-template` → `201` (admin); `PUT/DELETE /v2/model-template/:id` → `200`/`204` (admin). Also at `/v2/system/model-template`.
+- When I call `GET /v2/model-template[/:id]` (public), the system returns the list/get; when I (as admin) call `POST /v2/model-template`, it returns `201`; `PUT/DELETE /v2/model-template/:id` return `200`/`204`. These are also available at `/v2/system/model-template`.
 
 ### Quality control
 
-Admin creates a template → it appears in the model-template manager; select it when creating a model → layout applied.
+After I (as admin) create a template, it appears in the model-template manager; when I select it while creating a model, its layout is applied.
 
 ```mermaid
 flowchart LR
@@ -378,13 +381,13 @@ flowchart LR
 
 ### Security
 
-Read public; write requires `MANAGE_USERS`.
+Anyone can read templates; writing requires `MANAGE_USERS` (admin).
 
 **Coverage:**
 - **Auth:** Read public (no auth); write requires auth (JWT access token).
-- **Authorization:** Write gated by `checkPermission(PERMISSIONS.ADMIN)` = `manageUsers` (admin only); reads public.
-- **Input validation:** Joi (`modelTemplateValidation.list`/`get`/`create`/`update`/`remove`).
-- **Rate limiting:** not applied (`authLimiter` defined but unused).
+- **Authorization:** write requires `manageUsers` (admin only); reads are public.
+- **Input validation:** my params/body are validated (list / get / create / update / remove); invalid input is rejected.
+- **Rate limiting:** not applied (`authLimiter` exists but is unused).
 - **Secrets:** none.
 
 **Risks:**

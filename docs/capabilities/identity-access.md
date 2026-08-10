@@ -1,6 +1,8 @@
 # Cluster: Identity & Access
 
-Authentication, identity, and authorization. Backend: `routes/v2/user-management/`, `services/auth.service.js`, `services/token.service.js`, `config/passport.js`, `config/roles.js`. Frontend: `stores/authStore.ts`, `hooks/usePermissionHook.ts`.
+As a user or admin, I can establish an identity, sign in, recover access, and have my permissions enforced across every downstream capability.
+
+**Implementation:** `routes/v2/user-management/`, `services/auth.service.js`, `services/token.service.js`, `config/passport.js`, `config/roles.js`, `stores/authStore.ts`, `hooks/usePermissionHook.ts`
 
 ```mermaid
 flowchart TD
@@ -56,7 +58,7 @@ flowchart TD
 
 ### Description
 
-Email+password login issuing a short-lived JWT access token (returned in the response body) and a long-lived refresh token set as an `httpOnly` cookie; refresh rotates the cookie and returns a new access token; logout revokes the refresh token and clears the cookie.
+As a user, I can sign in with email + password to start a session; my session is kept alive by a silent refresh; I can sign out to end it.
 
 ### Who uses it / value
 
@@ -64,14 +66,14 @@ All end users (sign in); every downstream capability depends on a valid session.
 
 ### Acceptance criteria
 
-- `POST /v2/auth/login {email,password}` → `200` with `{ user, tokens }` where `tokens` contains only `access` (refresh is **not** in the body); sets the `token` cookie (httpOnly; `Secure`+`SameSite=None` in prod, `Lax` in dev; `domain` only in prod). Invalid credentials → `401`. SSO-only account (no password) → `401` (the password-mismatch path; an SSO-only user has no password to match).
-- `POST /v2/auth/refresh-tokens` with the cookie → `200` `{ access }` + rotated cookie. Missing/expired/revoked cookie → `401`.
-- `POST /v2/auth/logout` with the cookie → `204`, refresh token document deleted, cookie cleared.
-- 401s on `/auth/refresh-tokens`, `/auth/login`, `/auth/logout` are **not** retried (no refresh loop); other 401s trigger a single-flight refresh + queued-request replay, then `logOut()` on refresh failure.
+- When I call `POST /v2/auth/login {email,password}`, the system returns `200` with `{ user, tokens }` where `tokens` contains only `access` (refresh is **not** in the body) and sets the `token` cookie (httpOnly; `Secure`+`SameSite=None` in prod, `Lax` in dev; `domain` only in prod). With invalid credentials → `401`. With an SSO-only account (no password) → `401` (the password-mismatch path; an SSO-only user has no password to match).
+- When I call `POST /v2/auth/refresh-tokens` with the cookie, the system returns `200` `{ access }` + a rotated cookie. With a missing/expired/revoked cookie → `401`.
+- When I call `POST /v2/auth/logout` with the cookie, the system returns `204`, deletes my refresh token, and clears the cookie.
+- When a 401 occurs on `/auth/refresh-tokens`, `/auth/login`, `/auth/logout`, the system does **not** retry (no refresh loop); on other 401s the system silently refreshes once and replays my queued requests, then signs me out if refresh fails.
 
 ### Quality control
 
-Sign in via UI → confirm `token` cookie present and `authStore.access` populated → reload keeps session; wrong password → error toast; let access token expire → silent refresh keeps session; logout → cookie gone, protected routes redirect to sign-in.
+As a user, I sign in via the UI → confirm the `token` cookie is present and my session is established → reload keeps me signed in; wrong password → error toast; let my access token expire → silent refresh keeps me signed in; sign out → cookie gone, protected routes send me to sign-in.
 
 ```mermaid
 sequenceDiagram
@@ -93,14 +95,14 @@ sequenceDiagram
 
 ### Security
 
-Access token short-lived (`JWT_ACCESS_EXPIRATION_MINUTES`, 30 min prod / 30 days in dev), never persisted. Refresh token persisted server-side (`Token` collection, no TTL index), revoked on logout. `trust proxy` enabled. ⚠️ `authLimiter` is defined (`rateLimiter.js`) but **not applied to any route** — login endpoints are effectively unrate-limited (known gap).
+Access token short-lived (`JWT_ACCESS_EXPIRATION_MINUTES`, 30 min prod / 30 days in dev), never persisted. Refresh token persisted server-side (`Token` collection, no TTL index), revoked on logout. `trust proxy` enabled. ⚠️ `authLimiter` is defined but **not applied to any route** — login endpoints are effectively unrate-limited (known gap).
 
 **Coverage:**
-- **Auth:** Email+password login; JWT access token returned in the response body (`{ user, tokens: { access } }`), refresh token set as an httpOnly cookie. SSO-only account (no password) → 401. No auth barrier on `/login`, `/logout`, `/refresh-tokens` themselves.
-- **Authorization:** N/A — login establishes identity; logout/refresh authorize via the refresh-token cookie (verified against the `Token` collection).
-- **Input validation:** Joi `authValidation.login` (email, password required). `refreshTokens`/`logout` rely on the cookie-bound token (no Joi body validation on the route).
-- **Rate limiting:** not applied — `authLimiter` is defined in `rateLimiter.js` but not wired to any route; `/login`, `/refresh-tokens`, `/logout` are unthrottled (known gap).
-- **Secrets:** JWT secret (`config.jwt.secret`) signs access/refresh tokens; bcrypt-hashed passwords; refresh tokens persisted server-side in the `Token` collection.
+- **Auth:** I sign in with email + password; the system returns an access token in the response body (`{ user, tokens: { access } }`) and sets the refresh token as an httpOnly cookie. An SSO-only account (no password) → `401`. The `/login`, `/logout`, `/refresh-tokens` endpoints themselves require no prior session.
+- **Authorization:** N/A — sign-in establishes my identity; sign-out/refresh authorize me via the refresh-token cookie (verified against the `Token` collection).
+- **Input validation:** I must send a valid email and password (validated). `refreshTokens`/`logout` rely on the cookie-bound token (no body validation on the route).
+- **Rate limiting:** not applied — no rate limit protects me from credential brute-force on `/login`, `/refresh-tokens`, `/logout` (`authLimiter` is defined but not wired to any route; known gap).
+- **Secrets:** My access/refresh tokens are signed with the JWT secret (`config.jwt.secret`); my password is bcrypt-hashed; my refresh token is stored server-side in the `Token` collection.
 
 **Risks:**
 - **Credential brute-force / online guessing:** `authLimiter` is defined but not wired to any route, so `POST /v2/auth/login` can be hammered without throttling — weak passwords are exposed to online brute-force and credential-stuffing attacks.
@@ -109,14 +111,14 @@ Access token short-lived (`JWT_ACCESS_EXPIRATION_MINUTES`, 30 min prod / 30 days
 
 ### Data protection
 
-Passwords hashed (`bcrypt`) and marked `private` (never returned in user objects). Refresh cookie is `httpOnly` (no JS access); `Secure`/`SameSite=None`/`domain` apply only in production. Access tokens live only in memory (`authStore`), not persisted client-side.
+My password is hashed (`bcrypt`) and never returned in user objects. My refresh cookie is `httpOnly` (no JS access); `Secure`/`SameSite=None`/`domain` apply only in production. My access token lives only in memory (`authStore`), not persisted client-side.
 
 **Coverage:**
-- **Stored data:** Refresh-token documents in the `Token` collection (`type=REFRESH`, `expires`, `blacklisted`); no TTL index. Access tokens are not persisted server-side.
-- **PII:** yes — email, password (hashed). Email returned in the user object; password marked `private`.
-- **Retention:** Refresh tokens indefinite until logout/revocation (no TTL index — revoked/abandoned tokens accumulate); access token short-lived (`JWT_ACCESS_EXPIRATION_MINUTES`, 30 min prod / 30 days dev).
-- **Encryption:** bcrypt password hashing (8 rounds); JWT signed with `config.jwt.secret`; refresh cookie `Secure`+`SameSite=None` in prod, `Lax` in dev; no at-rest encryption for token docs.
-- **Logging:** Auth failures logged via `logger` in the `auth` middleware; no credentials/tokens logged.
+- **Stored data:** My refresh-token document in the `Token` collection (`type=REFRESH`, `expires`, `blacklisted`); no TTL index. Access tokens are not stored server-side.
+- **PII:** yes — my email and password (hashed). Email is returned in my user object; password is never returned (`private`).
+- **Retention:** My refresh token stays valid until I sign out or it's revoked (no TTL index — revoked/abandoned tokens accumulate); my access token is short-lived (`JWT_ACCESS_EXPIRATION_MINUTES`, 30 min prod / 30 days dev).
+- **Encryption:** My password is bcrypt-hashed (8 rounds); tokens are JWT-signed with `config.jwt.secret`; my refresh cookie is `Secure`+`SameSite=None` in prod, `Lax` in dev; token documents have no at-rest encryption.
+- **Logging:** Auth failures are logged via `logger` in the `auth` middleware; no credentials or tokens are logged.
 
 **Risks:**
 - **Password exposure on transport:** in dev the cookie is `Lax`/non-`Secure`, so a refresh cookie captured on a non-HTTPS dev/demo network exposes a long-lived session.
@@ -130,7 +132,7 @@ Passwords hashed (`bcrypt`) and marked `private` (never returned in user objects
 
 ### Description
 
-Self-service account creation that issues tokens and sets the refresh cookie.
+As a new user, I can create my own account when self-registration is enabled, so that I can start using the platform without an admin provisioning me.
 
 ### Who uses it / value
 
@@ -138,13 +140,13 @@ New end users (sign up); admins benefit from reduced account-provisioning load.
 
 ### Acceptance criteria
 
-- `POST /v2/auth/register` → `201` `{ user, tokens }` (refresh in cookie only) when `SELF_REGISTRATION` is enabled.
-- When `SELF_REGISTRATION` is disabled → `403`. Duplicate email → `400` (`email already taken`).
-- A welcome email is sent (non-blocking — failure doesn't fail registration).
+- When I call `POST /v2/auth/register`, the system returns `201` `{ user, tokens }` (refresh in cookie only) when `SELF_REGISTRATION` is enabled.
+- When `SELF_REGISTRATION` is disabled → `403`. With a duplicate email → `400` (`email already taken`).
+- On success the system sends me a welcome email (non-blocking — failure doesn't fail my registration).
 
 ### Quality control
 
-With `SELF_REGISTRATION=true` register a new email → `201` + session cookie; with it `false` → `403`; reuse an existing email → `400`.
+As a new user, with `SELF_REGISTRATION=true` I register a new email → `201` + session cookie; with it `false` → `403`; reusing an existing email → `400`.
 
 ```mermaid
 flowchart TD
@@ -159,14 +161,14 @@ flowchart TD
 
 ### Security
 
-Gated by the `SELF_REGISTRATION` site auth flag; no admin needed. Email uniqueness enforced.
+Registration is gated by the `SELF_REGISTRATION` site auth flag; no admin needed. Email uniqueness enforced.
 
 **Coverage:**
-- **Auth:** None on the route itself; gated by the `SELF_REGISTRATION` site auth flag (403 if disabled). Issues tokens + sets refresh cookie on success.
+- **Auth:** None on the route itself; I'm gated by the `SELF_REGISTRATION` site auth flag (`403` if disabled). On success the system issues me tokens + sets the refresh cookie.
 - **Authorization:** N/A — open self-service when the flag is enabled; no admin or role required.
-- **Input validation:** Joi `authValidation.register` (email required + `.email()`, password required with custom `password` validator, name required; `image_file`/`provider` optional).
-- **Rate limiting:** not applied — `authLimiter` gap; `/register` is unthrottled.
-- **Secrets:** bcrypt-hashed password stored; JWT access/refresh tokens issued.
+- **Input validation:** I must send a valid email, a password, and a name; `image_file`/`provider` are optional (validated).
+- **Rate limiting:** not applied — no rate limit protects me from account-spam on `/register` (`authLimiter` gap).
+- **Secrets:** My password is bcrypt-hashed and stored; the system issues me JWT access/refresh tokens.
 
 **Risks:**
 - **Account-spam / namespace squatting:** with `SELF_REGISTRATION` enabled and no rate limit (the `authLimiter` gap), an attacker can bulk-create accounts to squat names/emails or enumerate which addresses are already registered via the `400` duplicate signal.
@@ -174,14 +176,14 @@ Gated by the `SELF_REGISTRATION` site auth flag; no admin needed. Email uniquene
 
 ### Data protection
 
-Stores `email` (unique, lowercased), hashed `password`, `email_verified=false`. Email masked in public list responses.
+My `email` (unique, lowercased), hashed `password`, and `email_verified=false` are stored. My email is masked in public list responses.
 
 **Coverage:**
-- **Stored data:** `User` document (name, email unique+lowercased, hashed password, `email_verified=false`, provider, timestamps).
-- **PII:** yes — email, name, password (hashed). Email masked in public list responses (`name,id,image_file` only).
-- **Retention:** indefinite — no TTL/soft-delete; the user record persists until an admin deletes it.
-- **Encryption:** bcrypt hashing (8 rounds) on save and on `findOneAndUpdate`/`updateOne`; no at-rest encryption beyond hashing.
-- **Logging:** Welcome email sent non-blocking; errors logged via `logger`. No PII logged.
+- **Stored data:** My `User` document (name, email unique+lowercased, hashed password, `email_verified=false`, provider, timestamps).
+- **PII:** yes — my email, name, password (hashed). My email is masked in public list responses (`name,id,image_file` only).
+- **Retention:** indefinite — my user record persists until an admin deletes it (no TTL/soft-delete).
+- **Encryption:** My password is bcrypt-hashed (8 rounds); no at-rest encryption beyond hashing.
+- **Logging:** The welcome email is sent non-blocking; errors are logged via `logger`. No PII logged.
 
 **Risks:**
 - **Email enumeration via duplicate signal:** the `400 email already taken` response lets an attacker probe which addresses are registered, enabling account-enumeration and targeted phishing.
@@ -195,7 +197,7 @@ Stores `email` (unique, lowercased), hashed `password`, `email_verified=false`. 
 
 ### Description
 
-Code-based password reset (primary): a 6-digit code is emailed, valid 60 minutes, verified with `{email, code, password}`. Legacy token-based reset (`?token`) retained. Email verification issues a verify token.
+As a user, I can reset a forgotten password using a 6-digit code emailed to me, so that I can regain access without an admin; I can also verify my email to mark it as trusted. A legacy token-based reset path is also available.
 
 ### Who uses it / value
 
@@ -203,14 +205,14 @@ End users who lost a password or need to verify email; admins (fewer password re
 
 ### Acceptance criteria
 
-- `POST /v2/auth/forgot-password {email}` → `200 { message }` (always, to avoid user enumeration) and emails a 6-digit code (60 min). Reset events are logged.
-- `POST /v2/auth/reset-password` with `{email, code, password}` (primary) → `204`; or `?token` + `{password}` (legacy) → `204`. Missing both → `400`. Wrong/expired code → `400`.
-- `POST /v2/auth/send-verification-email` (auth) → `204` and emails a verify token; `POST /v2/auth/verify-email?token=…` → `204`, sets `email_verified=true`.
+- When I call `POST /v2/auth/forgot-password {email}`, the system returns `200 { message }` (always, to avoid user enumeration) and emails me a 6-digit code (60 min). Reset events are logged.
+- When I call `POST /v2/auth/reset-password` with `{email, code, password}` (primary) → `204`; or with `?token` + `{password}` (legacy) → `204`. With both missing → `400`. With a wrong/expired code → `400`.
+- When I call `POST /v2/auth/send-verification-email` (auth), the system returns `204` and emails me a verify token; when I call `POST /v2/auth/verify-email?token=…` → `204` and the system sets `email_verified=true`.
 - Password changes require the `PASSWORD_MANAGEMENT` flag.
 
 ### Quality control
 
-Trigger forgot-password → receive code → reset → log in with new password; try an expired/wrong code → `400`; verify-email → `email_verified` flips true.
+As a user, I trigger forgot-password → receive a code → reset → log in with my new password; an expired/wrong code → `400`; verify-email → `email_verified` flips true.
 
 ```mermaid
 sequenceDiagram
@@ -232,14 +234,14 @@ sequenceDiagram
 
 ### Security
 
-Reset codes persisted in `Token` (`type=RESET_PASSWORD`); existing reset tokens for the user are deleted on each `forgot-password` (single-use). Password change gated by `PASSWORD_MANAGEMENT`. Forgot-password logs the event (to the log service).
+My reset code is persisted in `Token` (`type=RESET_PASSWORD`); existing reset tokens for me are deleted on each `forgot-password` (single-use). Password change is gated by `PASSWORD_MANAGEMENT`. Forgot-password logs the event (to the log service).
 
 **Coverage:**
-- **Auth:** `forgot-password`/`reset-password`/`verify-email` anonymous (the code/token is the bearer); `send-verification-email` requires auth. Password change gated by the `PASSWORD_MANAGEMENT` site flag.
-- **Authorization:** N/A for reset/forgot/verify (the emailed code/token authorizes the action); `send-verification-email` is self-scoped to the authenticated user.
-- **Input validation:** Joi `forgotPassword` (email), `resetPassword` (query `token` optional; body `email`/`code` optional + `password` required with custom validator), `verifyEmail` (query `token` required).
-- **Rate limiting:** not applied — `authLimiter` gap; `/reset-password` can be brute-forced within the 60-min code window.
-- **Secrets:** 6-digit reset code (`crypto.randomInt`), JWT legacy reset token, JWT verify-email token; new password bcrypt-hashed.
+- **Auth:** `forgot-password`/`reset-password`/`verify-email` are anonymous for me (the code/token is the bearer); `send-verification-email` requires me to be signed in. Password change is gated by the `PASSWORD_MANAGEMENT` site flag.
+- **Authorization:** N/A for reset/forgot/verify (the emailed code/token authorizes my action); `send-verification-email` is self-scoped to me as the authenticated user.
+- **Input validation:** I must send a valid email (validated); for reset, the query `token` is optional and body `email`/`code` are optional with `password` required (validated); for verify, the query `token` is required (validated).
+- **Rate limiting:** not applied — no rate limit protects me from brute-force on `/reset-password` within the 60-min code window (`authLimiter` gap).
+- **Secrets:** I receive a 6-digit reset code (`crypto.randomInt`), a JWT legacy reset token, and a JWT verify-email token; my new password is bcrypt-hashed.
 
 **Risks:**
 - **6-digit code brute-force:** the primary reset is a 6-digit code with no documented rate limit on `POST /v2/auth/reset-password`; an attacker holding an email can attempt codes until success within the 60-minute window (only ~1M space, and the always-`200` forgot-password response prevents enumeration but not guessing).
@@ -248,14 +250,14 @@ Reset codes persisted in `Token` (`type=RESET_PASSWORD`); existing reset tokens 
 
 ### Data protection
 
-Codes/tokens are one-time, short-lived, and deleted on use. Passwords hashed; never logged. Email is the recovery handle.
+My codes/tokens are one-time, short-lived, and deleted on use. My password is hashed and never logged. My email is the recovery handle.
 
 **Coverage:**
-- **Stored data:** `Token` docs (`type=RESET_PASSWORD` 60-min expiry, `type=VERIFY_EMAIL`); deleted on success. Password updated (hashed) on the `User` doc.
-- **PII:** yes — email (recovery handle), new password (hashed).
-- **Retention:** Reset/verify tokens single-use, deleted on success; 60-min code expiry; no TTL index so abandoned codes persist until expiry check. Password retained indefinitely.
-- **Encryption:** bcrypt hashing for the new password; JWT-signed reset/verify tokens; 6-digit codes stored as plaintext in the `Token` collection.
-- **Logging:** `forgot_password` and `password_reset` events logged via `logService` (origin/referer captured); no code/token logged.
+- **Stored data:** My `Token` docs (`type=RESET_PASSWORD` 60-min expiry, `type=VERIFY_EMAIL`); deleted on success. My password is updated (hashed) on my `User` doc.
+- **PII:** yes — my email (recovery handle), my new password (hashed).
+- **Retention:** My reset/verify tokens are single-use, deleted on success; 60-min code expiry; no TTL index so abandoned codes persist until the expiry check. My password is retained indefinitely.
+- **Encryption:** My new password is bcrypt-hashed; reset/verify tokens are JWT-signed; my 6-digit code is stored as plaintext in the `Token` collection.
+- **Logging:** `forgot_password` and `password_reset` events are logged via `logService` (origin/referer captured); no code/token is logged.
 
 **Risks:**
 - **Recovery-handle hijack:** email is the sole recovery handle; anyone controlling the mailbox receives the 6-digit code and can take over the account, regardless of password strength.
@@ -269,7 +271,7 @@ Codes/tokens are one-time, short-lived, and deleted on use. Passwords hashed; ne
 
 ### Description
 
-Single sign-on via configurable providers in `SSO_PROVIDERS`. Microsoft-style providers use an OIDC ID-token flow (`parseIdToken`); GitHub uses a full OAuth code-exchange. Auto-registers on first login when `SSO_AUTO_REGISTRATION` is enabled. A legacy GitHub callback links an existing account.
+As a user, I can sign in through a configured SSO provider (Microsoft-style OIDC or GitHub) so that I don't need a platform password; my account is created automatically on first SSO login when auto-registration is enabled.
 
 ### Who uses it / value
 
@@ -277,14 +279,14 @@ End users (passwordless login); enterprises (SSO integration); DevOps/integrator
 
 ### Acceptance criteria
 
-- `POST /v2/auth/sso {providerId, idToken}` → validates the provider is enabled, decodes the ID token, creates/updates the user, issues tokens + cookie → `200 { user, tokens }`. Disabled/invalid provider → `400`.
-- `GET /v2/auth/github-sso/start` → redirects to GitHub; `GET /v2/auth/github-sso/callback` → exchanges code, fetches profile/emails, logs in.
-- First SSO login creates an account only if `SSO_AUTO_REGISTRATION` is true; otherwise a matching existing account is required.
-- `GET /v2/auth/github/callback` (legacy) → exchanges code and emits the token over the user's socket for account linking.
+- When I call `POST /v2/auth/sso {providerId, idToken}`, the system validates the provider is enabled, decodes the ID token, creates/updates my user, issues tokens + cookie → `200 { user, tokens }`. With a disabled/invalid provider → `400`.
+- When I open `GET /v2/auth/github-sso/start`, the system redirects me to GitHub; on `GET /v2/auth/github-sso/callback` the system exchanges the code, fetches my profile/emails, and logs me in.
+- On my first SSO login the system creates my account only if `SSO_AUTO_REGISTRATION` is true; otherwise a matching existing account is required.
+- When I open `GET /v2/auth/github/callback` (legacy), the system exchanges the code and emits the token over my socket for account linking.
 
 ### Quality control
 
-Configure a provider in Admin → Site Config → SSO; sign in via the provider button → account created/linked and session established; disable the provider → button hidden / `400`.
+As an admin, I configure a provider in Admin → Site Config → SSO; as a user, I sign in via the provider button → my account is created/linked and a session is established; when the provider is disabled → the button is hidden / I get `400`.
 
 ```mermaid
 sequenceDiagram
@@ -310,14 +312,14 @@ sequenceDiagram
 
 ### Security
 
-Provider `clientSecret`s are **encrypted at rest** (`utils/encryption.js`), decrypted only for admin display. `callMsGraph` is deprecated (ID-token flow uses only OpenID scopes). Auto-registration gated by `SSO_AUTO_REGISTRATION`.
+Provider `clientSecret`s are **encrypted at rest**, decrypted only for admin display. Auto-registration is gated by `SSO_AUTO_REGISTRATION`.
 
 **Coverage:**
-- **Auth:** SSO endpoints are anonymous — `/sso` validates the provider is enabled + decodes the ID token; `/github-sso/start`/`/callback` run the OAuth code exchange; `/github/callback` (legacy) emits a token over the user's socket. Auto-registration gated by `SSO_AUTO_REGISTRATION`.
-- **Authorization:** N/A — the provider-issued ID token / OAuth code governs access; admins configure providers in `SSO_PROVIDERS`.
-- **Input validation:** Joi `authValidation.sso` (`providerId`, `idToken` required); GitHub start/callback query params (`providerId`, `code`, `state`) validated manually in the controller.
-- **Rate limiting:** not applied — `authLimiter` gap; SSO routes are unthrottled.
-- **Secrets:** Provider `clientSecret`s encrypted at rest (`utils/encryption.js`); GitHub `client_secret` used for code exchange; JWT access/refresh tokens issued on success.
+- **Auth:** SSO endpoints are anonymous for me — `/sso` validates the provider is enabled + decodes my ID token; `/github-sso/start`/`/callback` run the OAuth code exchange; `/github/callback` (legacy) emits a token over my socket. Auto-registration is gated by `SSO_AUTO_REGISTRATION`.
+- **Authorization:** N/A — the provider-issued ID token / OAuth code governs my access; admins configure providers in `SSO_PROVIDERS`.
+- **Input validation:** I must send `providerId` and `idToken` (validated); on GitHub start/callback my query params (`providerId`, `code`, `state`) are validated manually in the controller.
+- **Rate limiting:** not applied — no rate limit protects me from abuse on SSO routes (`authLimiter` gap).
+- **Secrets:** Provider `clientSecret`s are encrypted at rest; the GitHub `client_secret` is used for code exchange; JWT access/refresh tokens are issued to me on success.
 
 **Risks:**
 - **ID-token replay / acceptance of forged tokens:** `POST /v2/auth/sso` trusts a client-supplied `idToken`; if the provider's signature/issuer/audience is not strictly validated (or a stolen ID token is replayed within its lifetime), an attacker can impersonate any user by submitting a captured or crafted token.
@@ -326,14 +328,14 @@ Provider `clientSecret`s are **encrypted at rest** (`utils/encryption.js`), decr
 
 ### Data protection
 
-SSO provider secrets never exposed to non-admins (public list returns only enabled providers without secrets). SSO-linked users store `provider`/`provider_user_id`/`provider_data`; password optional for SSO accounts.
+SSO provider secrets are never exposed to me as a non-admin (the public list returns only enabled providers without secrets). My SSO-linked account stores `provider`/`provider_user_id`/`provider_data`; a password is optional for SSO accounts.
 
 **Coverage:**
-- **Stored data:** `User` doc (`provider`, `provider_user_id`, `provider_data[]`, `email_verified=true` for SSO-created users, avatar `image_file`); updated on each SSO login.
-- **PII:** yes — email, display name, avatar URL, provider profile data (`provider_data`).
-- **Retention:** `provider_data` retained indefinitely; SSO user persists until admin delete.
-- **Encryption:** Provider `clientSecret`s encrypted at rest; JWT signed with `config.jwt.secret`; HTTPS to provider endpoints.
-- **Logging:** Parse/exchange errors logged via `logger`; ID-token claim JSON may be included in error messages (`logger.error`).
+- **Stored data:** My `User` doc (`provider`, `provider_user_id`, `provider_data[]`, `email_verified=true` for SSO-created users, avatar `image_file`); updated on each SSO login.
+- **PII:** yes — my email, display name, avatar URL, and provider profile data (`provider_data`).
+- **Retention:** My `provider_data` is retained indefinitely; my SSO user persists until an admin deletes it.
+- **Encryption:** Provider `clientSecret`s are encrypted at rest; my JWT is signed with `config.jwt.secret`; HTTPS is used to provider endpoints.
+- **Logging:** Parse/exchange errors are logged via `logger`; my ID-token claim JSON may be included in error messages (`logger.error`).
 
 **Risks:**
 - **Provider-data persistence:** `provider_data` (profile/emails from the IdP) is stored indefinitely; if the provider later revokes or changes the user's identity, stale `provider_user_id` bindings keep pointing at the local account, enabling identity confusion or takeovers after an email change at the IdP.
@@ -347,7 +349,7 @@ SSO provider secrets never exposed to non-admins (public list returns only enabl
 
 ### Description
 
-Self-service read/update of display name and avatar; change password (when `PASSWORD_MANAGEMENT` is enabled).
+As a user, I can read and update my display name and avatar, and change my password when password management is enabled, so that I keep my identity current.
 
 ### Who uses it / value
 
@@ -355,11 +357,11 @@ End users (manage their identity/avatar).
 
 ### Acceptance criteria
 
-- `GET /v2/users/self` (auth) → `200` current user. `PATCH /v2/users/self` → `200` updated user (name/avatar; password only when `PASSWORD_MANAGEMENT=true`).
+- When I call `GET /v2/users/self` (auth), the system returns `200` with my current user. When I call `PATCH /v2/users/self`, the system returns `200` with my updated user (name/avatar; password only when `PASSWORD_MANAGEMENT=true`).
 
 ### Quality control
 
-Open `/profile` → edit name → save → name updates across the UI; change password → log in with new password.
+As a user, I open `/profile` → edit my name → save → my name updates across the UI; change my password → log in with the new password.
 
 ```mermaid
 sequenceDiagram
@@ -376,14 +378,14 @@ sequenceDiagram
 
 ### Security
 
-Auth required; self only (no cross-user self-edit).
+I must be signed in; I can edit only myself (no cross-user self-edit).
 
 **Coverage:**
-- **Auth:** required — `auth()` on `GET`/`PATCH /v2/users/self`.
-- **Authorization:** self only — the route operates on `req.user`; no cross-user self-edit. Password change additionally gated server-side by the `PASSWORD_MANAGEMENT` site flag (route-level check).
-- **Input validation:** Joi `userValidation.updateSelfUser` (name/avatar; password only accepted when `PASSWORD_MANAGEMENT` is on).
-- **Rate limiting:** not applied — no rate limiter on user routes.
-- **Secrets:** bcrypt-hashed password (marked `private`, never returned); `PASSWORD_MANAGEMENT` gate enforced server-side.
+- **Auth:** required — I must be signed in (`auth()`) for `GET`/`PATCH /v2/users/self`.
+- **Authorization:** self only — the route operates on me; I cannot edit another user. Password change is additionally gated server-side by the `PASSWORD_MANAGEMENT` site flag (route-level check).
+- **Input validation:** I can send name/avatar (validated); a password is only accepted when `PASSWORD_MANAGEMENT` is on.
+- **Rate limiting:** not applied — no rate limiter protects me on user routes.
+- **Secrets:** My password is bcrypt-hashed (marked `private`, never returned); the `PASSWORD_MANAGEMENT` gate is enforced server-side.
 
 **Risks:**
 - **Password-change bypass:** if the `PASSWORD_MANAGEMENT` gate is checked client-side only, a direct `PATCH /v2/users/self` with a `password` field could change a password without the flag, defeating the policy.
@@ -391,14 +393,14 @@ Auth required; self only (no cross-user self-edit).
 
 ### Data protection
 
-Avatar stored as a file path; password hashed and `private` (never returned).
+My avatar is stored as a file path; my password is hashed and `private` (never returned).
 
 **Coverage:**
-- **Stored data:** `User` doc (name, `image_file` path, password hashed if changed).
-- **PII:** yes — name, email, avatar (file path). Password never returned (`private`).
-- **Retention:** indefinite — user-controlled name/avatar; no TTL.
-- **Encryption:** bcrypt hashing for password; avatar stored as a file path (no encryption).
-- **Logging:** errors logged via `logger`; no PII logged.
+- **Stored data:** My `User` doc (name, `image_file` path, password hashed if changed).
+- **PII:** yes — my name, email, avatar (file path). My password is never returned (`private`).
+- **Retention:** indefinite — my name/avatar are user-controlled; no TTL.
+- **Encryption:** My password is bcrypt-hashed; my avatar is stored as a file path (no encryption).
+- **Logging:** Errors are logged via `logger`; no PII logged.
 
 **Risks:**
 - **Avatar path injection:** storing an avatar as a file path (rather than an opaque asset id) opens the door to path traversal or SSRF if the path is rendered/loaded without normalization.
@@ -412,7 +414,7 @@ Avatar stored as a file path; password hashed and `private` (never returned).
 
 ### Description
 
-Admin CRUD over users; public listing gated by `PUBLIC_VIEWING`; emails masked in responses.
+As an admin, I can create, list, update, and delete users so that I can provision and manage accounts; as a visitor I can browse discoverable profiles when public viewing is enabled, with emails masked.
 
 ### Who uses it / value
 
@@ -420,12 +422,12 @@ Admins (provision/manage users); end users (discoverable profiles when `PUBLIC_V
 
 ### Acceptance criteria
 
-- `GET /v2/users` (optional auth via `PUBLIC_VIEWING`) → `200` paginated list (emails masked). `POST /v2/users` → `201` (admin). `GET /v2/users/:userId` (optional auth via `PUBLIC_VIEWING`) → `200`; `PATCH/DELETE /v2/users/:userId` (admin) → `200`/`204`.
-- Non-admin write → `403`. `includeFullDetails` query requires admin.
+- When I call `GET /v2/users` (optional auth via `PUBLIC_VIEWING`), the system returns `200` with a paginated list (emails masked). When I call `POST /v2/users` (admin) → `201`. When I call `GET /v2/users/:userId` (optional auth via `PUBLIC_VIEWING`) → `200`; `PATCH/DELETE /v2/users/:userId` (admin) → `200`/`204`.
+- On a non-admin write → `403`. The `includeFullDetails` query requires admin.
 
 ### Quality control
 
-As admin, create/list/update/delete a user → works; as non-admin, writes → `403`; with `PUBLIC_VIEWING=false` and signed-out, list → `401`.
+As an admin, I create/list/update/delete a user → it works; as a non-admin, writes → `403`; with `PUBLIC_VIEWING=false` and signed-out, the list → `401`.
 
 ```mermaid
 flowchart LR
@@ -439,14 +441,14 @@ flowchart LR
 
 ### Security
 
-Writes require `MANAGE_USERS`. Read of `includeFullDetails` admin-gated.
+Writes require `MANAGE_USERS`. The `includeFullDetails` read is admin-gated.
 
 **Coverage:**
-- **Auth:** required for writes (`auth()` on POST/PATCH/DELETE); reads optional via `PUBLIC_VIEWING` (`auth({ optional: (req) => req.authConfig.PUBLIC_VIEWING })`).
-- **Authorization:** `checkPermission(PERMISSIONS.ADMIN)` (`manageUsers`) on POST/PATCH/DELETE; `includeFullDetails` admin-gated (non-admin list returns `name,id,image_file` only).
-- **Input validation:** Joi `userValidation.createUser`/`getUsers`/`getUser`/`updateUser`/`deleteUser`.
+- **Auth:** I must be signed in for writes (`auth()` on POST/PATCH/DELETE); reads are optional via `PUBLIC_VIEWING` (signed-out can read public content when the flag is on).
+- **Authorization:** I need `MANAGE_USERS` (`manageUsers`) for POST/PATCH/DELETE; `includeFullDetails` is admin-gated (a non-admin list returns `name,id,image_file` only).
+- **Input validation:** My input is validated.
 - **Rate limiting:** not applied.
-- **Secrets:** bcrypt-hashed passwords (marked `private`); emails masked in public list responses.
+- **Secrets:** Passwords are bcrypt-hashed (marked `private`); emails are masked in public list responses.
 
 **Risks:**
 - **Privilege escalation via user edit:** a missing or weak `MANAGE_USERS` check on `PATCH /v2/users/:userId` could let an attacker elevate a victim to admin (or elevate their own account), granting platform-wide control.
@@ -455,14 +457,14 @@ Writes require `MANAGE_USERS`. Read of `includeFullDetails` admin-gated.
 
 ### Data protection
 
-Email masking in list responses; `password` field `private`; `includeFullDetails` admin-only.
+Emails are masked in list responses; the `password` field is `private`; `includeFullDetails` is admin-only.
 
 **Coverage:**
-- **Stored data:** `users` collection (full `User` docs); deleted hard via `user.deleteOne()`.
+- **Stored data:** `users` collection (full `User` docs); deleted hard (no soft-delete).
 - **PII:** yes — name, email (masked in public list), password (hashed, `private`).
 - **Retention:** indefinite; hard delete (no soft-delete / no audit trail of deletes).
-- **Encryption:** bcrypt hashing for passwords; no at-rest encryption for user docs.
-- **Logging:** errors logged via `logger`; no audit trail of admin user edits.
+- **Encryption:** Passwords are bcrypt-hashed; no at-rest encryption for user docs.
+- **Logging:** Errors are logged via `logger`; no audit trail of admin user edits.
 
 **Risks:**
 - **PII leakage via masked-but-recoverable emails:** masked emails still leak structure (domain, length, prefix length); combined with the public list when `PUBLIC_VIEWING=true`, this enables user-enumeration and targeted phishing.
@@ -476,7 +478,7 @@ Email masking in list responses; `password` field `private`; `includeFullDetails
 
 ### Description
 
-Resource-scoped roles granting permissions bound to a `ref` (model/asset id or `*`); owners bypass checks. Used by `checkPermission` middleware and `usePermissionHook`.
+As a model/asset owner or admin, I can grant resource-scoped roles to users so that they can act on specific models or assets; as a user I only see what I've been granted, and as an owner I bypass permission checks on my own resources.
 
 ### Who uses it / value
 
@@ -484,14 +486,14 @@ Model/asset owners (grant access); admins (assign global roles); end users (only
 
 ### Acceptance criteria
 
-- `GET /v2/permissions/self` (auth) → own roles. `GET /v2/permissions` → all permissions. `GET /v2/permissions/has-permission?permissions=readModel,writeModel:modelId` → `boolean[]` in order (defaults denied).
-- `POST /v2/permissions {user,role,ref}` (admin) → `201` assigns role. `DELETE /v2/permissions?user=&role=` (admin) → `204` removes.
-- `GET /v2/permissions/users-by-roles` (admin) → users grouped by role (no `role` filter).
-- Owner of a resource bypasses the permission check for that resource.
+- When I call `GET /v2/permissions/self` (auth), the system returns my own roles. `GET /v2/permissions` → all permissions. `GET /v2/permissions/has-permission?permissions=readModel,writeModel:modelId` → a `boolean[]` in order (defaults denied).
+- When I call `POST /v2/permissions {user,role,ref}` (admin), the system returns `201` and assigns the role. `DELETE /v2/permissions?user=&role=` (admin) → `204` and removes it.
+- When I call `GET /v2/permissions/users-by-roles` (admin), the system returns users grouped by role (no `role` filter).
+- As the owner of a resource, I bypass the permission check for that resource.
 
 ### Quality control
 
-Assign a user `writeModel:<modelId>` → they can edit that model; remove it → edits `403`; `has-permission` with a missing/unknown permission → `false`.
+As an admin, I assign a user `writeModel:<modelId>` → they can edit that model; remove it → their edits get `403`; `has-permission` with a missing/unknown permission → `false`.
 
 ```mermaid
 sequenceDiagram
@@ -514,12 +516,12 @@ sequenceDiagram
 
 ### Security
 
-Assign/remove require `MANAGE_USERS`; `has-permission` requires auth. Owners bypass — ensure ownership transfers are intentional.
+Assign/remove require `MANAGE_USERS`; `has-permission` requires me to be signed in. Owners bypass — ownership transfers should be intentional.
 
 **Coverage:**
-- **Auth:** required on all permission routes (`auth()` on `/self`, `/`, `/has-permission`, `/roles`, `/users-by-roles`, POST/DELETE `/`).
-- **Authorization:** assign/remove + `users-by-roles` require `checkPermission(PERMISSIONS.ADMIN)` (`manageUsers`); `has-permission`/`get`/`self` require auth; owner of a resource bypasses the check for that `ref`.
-- **Input validation:** Joi `permissionValidation` (`getSelfUsers`, `getPermissions`, `hasPermission`, `assignRoleToUser`, `removeRoleFromUser`).
+- **Auth:** I must be signed in on all permission routes (`auth()` on `/self`, `/`, `/has-permission`, `/roles`, `/users-by-roles`, POST/DELETE `/`).
+- **Authorization:** I need `MANAGE_USERS` (`manageUsers`) to assign/remove + `users-by-roles`; `has-permission`/`get`/`self` require me to be signed in; as the owner of a resource I bypass the check for that `ref`.
+- **Input validation:** My input is validated.
 - **Rate limiting:** not applied.
 - **Secrets:** none — UserRole bindings carry no credentials.
 
@@ -530,12 +532,12 @@ Assign/remove require `MANAGE_USERS`; `has-permission` requires auth. Owners byp
 
 ### Data protection
 
-UserRole records bind `(user, role, ref)` (unique); no secrets stored.
+UserRole records bind `(user, role, ref)` (unique); no secrets are stored.
 
 **Coverage:**
 - **Stored data:** `UserRole` documents (`user`, `role`, `ref`; unique compound); no secrets.
 - **PII:** yes — user IDs and their capability mappings (relationship/capability data).
-- **Retention:** indefinite — bindings persist until manually revoked; no audit trail of changes.
+- **Retention:** Bindings persist indefinitely until manually revoked; no audit trail of changes.
 - **Encryption:** none (no secrets stored).
 - **Logging:** none / N/A — no permission-change audit log.
 
@@ -551,7 +553,7 @@ UserRole records bind `(user, role, ref)` (unique); no secrets stored.
 
 ### Description
 
-Second-generation authorization using Casbin + mongoose adapter with `owner/writer/reader` grouping policies and `enforce(sub, act, obj)` via the internal authorize endpoint.
+As an integrator calling the internal authorize endpoint, I can ask the system whether a subject may perform an action on an object, so that programmatic authorization decisions can be made; this is a partial second-generation path that coexists with the primary RBAC.
 
 ### Who uses it / value
 
@@ -559,12 +561,12 @@ Integrators building programmatic auth checks; future migration target.
 
 ### Acceptance criteria
 
-- `POST /v2/auth/authorize` (internal; no auth barrier on the route) → `200 { message: 'Authorized' }` on success, `403` on denial.
-- `hasPermissionV2` / `assignRoleToUserV2` available in `permission.service`.
+- When I call `POST /v2/auth/authorize` (internal; no auth barrier on the route), the system returns `200 { message: 'Authorized' }` on success, `403` on denial.
+- `hasPermissionV2` / `assignRoleToUserV2` are available in `permission.service`.
 
 ### Quality control
 
-Call `/authorize` with a permitted subject/action/object → `true`; with a denied one → `false`.
+As an integrator, I call `/authorize` with a permitted subject/action/object → `true`; with a denied one → `false`.
 
 ```mermaid
 flowchart TD
@@ -577,12 +579,12 @@ flowchart TD
 
 ### Security
 
-Auth required; policy assignment is admin. **Partial** — v1 remains the primary path for most resource checks.
+Auth is required; policy assignment is admin-only. **Partial** — v1 remains the primary path for most resource checks.
 
 **Coverage:**
-- **Auth:** `POST /v2/auth/authorize` has **no auth barrier** on the route (marked INTERNAL ONLY by comment); only `validate(authValidation.authorize)`. `hasPermissionV2`/`assignRoleToUserV2` are internal service calls.
-- **Authorization:** Casbin `enforce(sub, act, obj)` decides; policy assignment (`assignRoleToUserV2`) is admin-controlled. v1 remains the primary path for most resource checks.
-- **Input validation:** Joi `authValidation.authorize` (`permissions`/`permissionQuery`/`userId`, min 1 key).
+- **Auth:** `POST /v2/auth/authorize` has **no auth barrier** on the route (marked INTERNAL ONLY by comment); only input validation is applied. `hasPermissionV2`/`assignRoleToUserV2` are internal service calls.
+- **Authorization:** The system decides via Casbin `enforce(sub, act, obj)`; policy assignment (`assignRoleToUserV2`) is admin-controlled. v1 remains the primary path for most resource checks.
+- **Input validation:** My input is validated (`permissions`/`permissionQuery`/`userId`, min 1 key).
 - **Rate limiting:** not applied.
 - **Secrets:** none — Casbin policies carry no credentials.
 
@@ -593,10 +595,10 @@ Auth required; policy assignment is admin. **Partial** — v1 remains the primar
 
 ### Data protection
 
-Casbin policies stored via mongoose adapter; no secrets.
+Casbin policies are stored in the policy store; no secrets.
 
 **Coverage:**
-- **Stored data:** Casbin policies via the mongoose adapter (owner/writer/reader grouping policies); no secrets.
+- **Stored data:** Casbin policies in the policy store (owner/writer/reader grouping policies); no secrets.
 - **PII:** yes — subject/user identifiers embedded in policies.
 - **Retention:** indefinite — the policy store persists until rewritten.
 - **Encryption:** none (no secrets stored).
@@ -614,7 +616,7 @@ Casbin policies stored via mongoose adapter; no secrets.
 
 ### Description
 
-Admin UIs to manage users (`/admin/manage-users`) and feature/role assignments (`/manage-features`).
+As an admin, I can manage users and assign feature/role capabilities through dedicated admin pages, so that I can provision accounts and control who can do what across the platform.
 
 ### Who uses it / value
 
@@ -622,13 +624,13 @@ Admins (provision users, grant capabilities).
 
 ### Acceptance criteria
 
-- `/admin/manage-users`: paginated list with search, create user, per-user role/permission actions.
-- `/manage-features`: feature categories sidebar (permission roles) + add/remove users per feature.
-- Non-admin → `403`.
+- On `/admin/manage-users`: I get a paginated list with search, create-user, and per-user role/permission actions.
+- On `/manage-features`: I get a feature categories sidebar (permission roles) + add/remove users per feature.
+- As a non-admin → `403`.
 
 ### Quality control
 
-As admin, create a user and grant a feature role → the user gains that capability; revoke → loses it; as non-admin, page → `403`/hidden.
+As an admin, I create a user and grant a feature role → the user gains that capability; revoke → loses it; as a non-admin, the page → `403`/hidden.
 
 ```mermaid
 flowchart TD
@@ -641,14 +643,14 @@ flowchart TD
 
 ### Security
 
-Both require `MANAGE_USERS`.
+Both pages require `MANAGE_USERS`.
 
 **Coverage:**
-- **Auth:** required — page-level admin guard (logged-in session).
-- **Authorization:** both `/admin/manage-users` and `/manage-features` require `MANAGE_USERS` (`manageUsers`); non-admin → `403`/hidden.
-- **Input validation:** underlying `/v2/users` and `/v2/permissions` Joi validation; UI inputs validated client-side.
+- **Auth:** required — I need a logged-in admin session (page-level admin guard).
+- **Authorization:** Both `/admin/manage-users` and `/manage-features` require me to have `MANAGE_USERS` (`manageUsers`); as a non-admin → `403`/hidden.
+- **Input validation:** My input is validated by the underlying `/v2/users` and `/v2/permissions` validation; UI inputs are validated client-side.
 - **Rate limiting:** not applied.
-- **Secrets:** none surfaced — passwords are `private`; emails visible to admins via the directory.
+- **Secrets:** none surfaced to me — passwords are `private`; emails are visible to me as an admin via the directory.
 
 **Risks:**
 - **Bulk privilege grant:** the manage-features UI grants feature roles to users in bulk; a compromised admin can sweep-grant admin-tier capabilities across many accounts in one action.
@@ -657,11 +659,11 @@ Both require `MANAGE_USERS`.
 
 ### Data protection
 
-Operates on user/role records; no secrets surfaced beyond what user management already exposes.
+These pages operate on user/role records; no secrets are surfaced beyond what user management already exposes.
 
 **Coverage:**
 - **Stored data:** `User` and `UserRole` records (via the underlying `/v2/users` and `/v2/permissions` endpoints).
-- **PII:** yes — full user directory (name, email) surfaced and editable by admin.
+- **PII:** yes — the full user directory (name, email) is surfaced and editable by me as an admin.
 - **Retention:** indefinite — matches user management (no TTL/soft-delete).
 - **Encryption:** bcrypt for passwords; none for directory/role data.
 - **Logging:** none beyond the underlying endpoints — feature-role grants leave a thin forensic trail.

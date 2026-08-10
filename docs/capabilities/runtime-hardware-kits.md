@@ -1,6 +1,8 @@
 # Cluster: Runtime & Hardware Kits
 
-Executing prototype code on cloud/hardware runtimes. The frontend connects **directly** to the runtime/kit server; the backend reverse-proxies and issues asset tokens. Frontend: `components/molecules/{DaRuntimeControl,DaRuntimeConnector}.tsx`, `stores/runtimeStore.ts`. Backend: `app.js` (kit proxy), `controllers/asset.controller.js` (generateToken).
+Run your prototype's Python/C++/Rust code on cloud or hardware runtimes, watch live signals and trace variables, and manage the runtime/kit assets you connect to.
+
+**Implementation:** `frontend/src/components/molecules/{DaRuntimeControl,DaRuntimeConnector}.tsx`, `frontend/src/stores/runtimeStore.ts`, `backend/src/app.js` (kit proxy), `backend/src/controllers/asset.controller.js` (generateToken).
 
 ```mermaid
 flowchart TD
@@ -38,7 +40,7 @@ flowchart TD
 
 ### Description
 
-Right-side panel on Code/Dashboard tabs: select/connect a runtime (cloud or hardware kit), Run/Stop, terminal output, signals watch, vars watch (C++), mock services, runtime usage, request pip install, rebuild/revert vehicle model, custom runtime URL, Rust remote compile; notifies widget iframes of run/stop.
+As a prototype author, I can run my prototype's Python/C++/Rust code against the live vehicle API from the runtime panel, watch real-time signals and trace variables, request pip installs, rebuild/revert the vehicle model, point at a custom runtime URL, and stop the run when done.
 
 ### Who uses it / value
 
@@ -46,13 +48,13 @@ Prototype authors (run/test code); hardware-kit operators.
 
 ### Acceptance criteria
 
-- Connect to a runtime → `subscribe_apis` over Socket.IO → signals/vars stream into the UI; Run → `run_python_app`/`run_rust_app`; Stop → `stop_python_app`; terminal + trace vars update.
-- Server URL from `RUNTIME_SERVER_URL`, options from `RUNTIME_SERVER_CONFIG`; custom runtime URL overrides (localStorage).
+- When I connect a runtime, the system streams live signals and trace variables into the panel; when I press Run, the system executes my Python or Rust app on the connected runtime and streams terminal output back to me; when I press Stop, the system halts execution.
+- The runtime server is set by `RUNTIME_SERVER_URL` / `RUNTIME_SERVER_CONFIG`; a custom runtime URL I enter overrides the instance default for my session.
 - Read requires `READ_MODEL`.
 
 ### Quality control
 
-Connect a cloud runtime → Run a Python prototype → terminal shows output + signals update; Stop → execution halts; pip install → dependency fetched; rebuild vehicle model → kit rebuilds.
+Connect a cloud runtime, run a Python prototype, and confirm the terminal shows output and signals update; press Stop and confirm execution halts; request a pip install and confirm the dependency is fetched; trigger a vehicle-model rebuild and confirm the kit rebuilds.
 
 ```mermaid
 sequenceDiagram
@@ -76,11 +78,11 @@ sequenceDiagram
 Read `READ_MODEL`. Direct Socket.IO to external kit server (auth via asset token). Rust remote compile sends code to a remote compiler.
 
 **Coverage:**
-- **Auth:** Required — the runtime connection authenticates to the external kit server via Socket.IO `handshake.query.access_token` (asset-scoped JWT); the control panel itself is gated by `READ_MODEL`.
-- **Authorization:** `READ_MODEL` permission on the prototype's model (owner bypass); the kit server authorizes actions by asset-token scope.
-- **Input validation:** Not backend-validated — code and commands (`run_python_app`/`run_rust_app`/`stop_python_app`/pip install) flow over the direct frontend→kit Socket.IO channel; no Joi validation on this path.
-- **Rate limiting:** Not applied — the direct Socket.IO channel to the kit server has no limiter; `authLimiter` is defined but not wired to any route.
-- **Secrets:** Asset access token is carried in the Socket.IO query string and treated as a bearer secret; no other secrets handled by the panel.
+- **Auth:** Required — opening the control panel requires `READ_MODEL`; the runtime connection authenticates to the kit server with an asset-scoped JWT (asset access token).
+- **Authorization:** `READ_MODEL` on the prototype's model (owner bypass); the kit server authorizes each action by the asset token's scope.
+- **Input validation:** Not backend-validated — code and run/stop/pip-install commands flow over the direct runtime channel; no validation on this path.
+- **Rate limiting:** Not applied — the direct runtime channel has no limiter; `authLimiter` is defined but not wired to any route.
+- **Secrets:** The asset access token is a bearer secret carried on the runtime channel; no other secrets handled by the panel.
 
 **Risks:**
 - **Workspace escape via runtime:** the connected kit server executes arbitrary prototype code (Python/Rust); a compromised or rogue kit could reach back into browser context or shared storage and escape the prototype workspace.
@@ -89,14 +91,14 @@ Read `READ_MODEL`. Direct Socket.IO to external kit server (auth via asset token
 
 ### Data protection
 
-Runtime signal values are transient (`runtimeStore`); prototype code sent to the kit/remote compiler for execution.
+Runtime signal values are transient (kept in memory, not persisted); prototype code sent to the kit/remote compiler for execution.
 
 **Coverage:**
-- **Stored data:** None on the backend — signal/var values are transient in frontend `runtimeStore`; the panel does not persist code.
+- **Stored data:** None on the backend — signal/var values are transient in the browser session; the panel does not persist code.
 - **PII:** No — signal/var values and prototype code are not personal data.
-- **Retention:** N/A — transient, session-scoped in `runtimeStore`; not persisted.
-- **Encryption:** In transit via Socket.IO (TLS deployment-dependent); nothing stored at rest by the panel.
-- **Logging:** Standard logger only; the Socket.IO server logs "a user connected" — no signal/code/token logging observed.
+- **Retention:** N/A — transient, session-scoped in the browser; not persisted.
+- **Encryption:** In transit on the runtime channel (TLS deployment-dependent); nothing stored at rest by the panel.
+- **Logging:** Standard logger only; the runtime server logs "a user connected" — no signal/code/token logging observed.
 
 **Risks:**
 - **Prototype code exposure:** code is sent to the kit server / remote compiler for execution — a compromised runtime retains and exfiltrates prototype IP.
@@ -110,7 +112,7 @@ Runtime signal values are transient (`runtimeStore`); prototype code sent to the
 
 ### Description
 
-Dialog to create/list/share/edit/delete cloud-runtime and hardware-kit assets; select the active runtime.
+As a user, I can create, list, share, edit, and delete my cloud-runtime and hardware-kit assets, and choose which runtime is active for my prototype, so that I can manage the runtimes and kits I use.
 
 ### Who uses it / value
 
@@ -118,23 +120,23 @@ End users (manage their runtimes/kits); collaborators (shared access).
 
 ### Acceptance criteria
 
-- Create/share/edit/delete assets; selecting an active runtime drives the control panel.
+- When I create, share, edit, or delete a runtime/kit asset, the system applies the change to my assets; when I select an active runtime, the control panel uses it.
 - Auth required.
 
 ### Quality control
 
-Create a cloud runtime asset → selectable in the control panel; share it → collaborator can select; delete → gone.
+Create a cloud-runtime asset and confirm it is selectable in the control panel; share it and confirm a collaborator can select it; delete it and confirm it is gone.
 
 ### Security
 
 Auth required; sharing via `WRITE_ASSET` (see [assets-sharing.md](./assets-sharing.md)).
 
 **Coverage:**
-- **Auth:** Required (`auth()` on the asset routes).
+- **Auth:** Required on all asset routes.
 - **Authorization:** `READ_ASSET` for get, `WRITE_ASSET` for update/delete/share (owner bypass); create is auth-only.
-- **Input validation:** Joi validation (`assetValidation.createAsset`/`updateAsset`); `data` is `Joi.any()` — no schema or size guard; `type` not constrained to `USER_ASSET_TYPES` at the validation layer.
+- **Input validation:** Validated on create/update; `data` has no schema or size guard; `type` is not constrained to `USER_ASSET_TYPES` at the validation layer.
 - **Rate limiting:** Not applied — `authLimiter` is defined but not wired to the asset routes.
-- **Secrets:** Asset `data` may hold kit endpoint URLs and connection config — stored at rest (no app-level encryption); no separate secret store.
+- **Secrets:** Asset `data` may hold kit endpoint URLs and connection config — stored at rest with no app-level encryption; no separate secret store.
 
 **Risks:**
 - **Kit endpoint tampering:** any user with edit access can repoint an asset's endpoint to an attacker-controlled kit server, redirecting all runs (and tokens) to it.
@@ -145,7 +147,7 @@ Auth required; sharing via `WRITE_ASSET` (see [assets-sharing.md](./assets-shari
 Asset `data` (e.g. endpoint config) stored in `assets`.
 
 **Coverage:**
-- **Stored data:** `name`, `type`, `data` (Mixed), `created_by`, timestamps in the MongoDB `assets` collection.
+- **Stored data:** `name`, `type`, `data` (Mixed), `created_by`, timestamps — persisted in the `assets` collection.
 - **PII:** No direct PII; `created_by` is a userId reference.
 - **Retention:** Indefinite until hard-deleted (no soft delete, no TTL).
 - **Encryption:** No app-level at-rest encryption; in transit TLS deployment-dependent.
@@ -162,7 +164,7 @@ Asset `data` (e.g. endpoint config) stored in `assets`.
 
 ### Description
 
-Configure a hardware-kit asset's identity/connection.
+As a hardware-kit operator, I can configure my hardware kit's identity and connection so that the runtime connector can target it, and fetch or replace the kit's signal mapping and VSS files.
 
 ### Who uses it / value
 
@@ -170,12 +172,12 @@ Hardware-kit operators.
 
 ### Acceptance criteria
 
-- Launched from My Assets for `HARDWARE_KIT` assets; auth required; configures the kit identity used by the connector.
-- signals/VSS ops (`fetchSignalMapping`, `replaceSignalMapping`, `fetchVss`, `replaceVss`) work against the kit.
+- When I open a `HARDWARE_KIT` asset from My Assets, the system lets me configure the kit identity the runtime connector targets; auth required.
+- When I fetch or replace the kit's signal mapping or VSS files, the system applies the operation against the connected kit.
 
 ### Quality control
 
-Configure a kit → the connector can target it; signals/VSS ops (`fetchSignalMapping`, `replaceSignalMapping`, `fetchVss`, `replaceVss`) work against the kit.
+Configure a kit and confirm the runtime connector can target it; fetch and replace the kit's signal mapping and VSS files and confirm the operations take effect on the kit.
 
 ```mermaid
 flowchart LR
@@ -191,10 +193,10 @@ flowchart LR
 Auth required; kit operations open their own Socket.IO to the kit server.
 
 **Coverage:**
-- **Auth:** Required — kit operations go through the asset (`auth()` + `READ_ASSET`/`WRITE_ASSET`); the manager's own Socket.IO to the kit server uses the asset token.
+- **Auth:** Required — kit operations go through the asset (`READ_ASSET`/`WRITE_ASSET`); the manager authenticates to the kit server with the asset token.
 - **Authorization:** `READ_ASSET`/`WRITE_ASSET` on the `HARDWARE_KIT` asset (owner bypass); the kit server enforces per-asset token scope.
-- **Input validation:** Not backend-validated — kit ops (`fetchSignalMapping`/`replaceSignalMapping`/`fetchVss`/`replaceVss`) flow over the direct Socket.IO channel; no Joi validation on this path.
-- **Rate limiting:** Not applied — direct Socket.IO channel to the kit server; `authLimiter` not wired.
+- **Input validation:** Not backend-validated — kit operations flow over the direct kit channel; no validation on this path.
+- **Rate limiting:** Not applied — the direct kit channel has no limiter; `authLimiter` is not wired.
 - **Secrets:** Kit identity/connection config held in asset `data`; the asset token is used as a bearer secret.
 
 **Risks:**
@@ -206,9 +208,9 @@ Auth required; kit operations open their own Socket.IO to the kit server.
 Kit connection config in the asset `data`; signal/VSS files read/written on the kit.
 
 **Coverage:**
-- **Stored data:** Kit connection config in `assets.data` (Mongo); signal/VSS files live on the kit server, not the backend.
+- **Stored data:** Kit connection config in `assets.data`; signal/VSS files live on the kit server, not the backend.
 - **PII:** No direct PII; kit identity is configuration, not personal data.
-- **Retention:** Asset config indefinite until hard-deleted; on-kit files overwritten by replace ops (no backend-side recovery).
+- **Retention:** Asset config indefinite until hard-deleted; on-kit files overwritten by replace operations (no backend-side recovery).
 - **Encryption:** No app-level at-rest encryption for asset `data`; kit-server storage is governed by the kit.
 - **Logging:** Standard logger; no kit-config or signal-mapping logging observed.
 
@@ -224,7 +226,7 @@ Kit connection config in the asset `data`; signal/VSS files read/written on the 
 
 ### Description
 
-Issues a JWT bound to an Asset (no refresh token) so external/runtime clients authenticate as the asset for kit-server/runtime access.
+As a DevOps/integrator, I can mint an access token bound to my asset so that an external runtime or kit client can authenticate as that asset without my user credentials.
 
 ### Who uses it / value
 
@@ -232,12 +234,12 @@ DevOps/integrators (programmatic runtime access); the kit server (authenticating
 
 ### Acceptance criteria
 
-- `POST /v2/assets/:id/generate-token` (auth + `READ_ASSET`) → `200 { tokens: { access } }` (asset-scoped, no refresh).
-- The token is accepted by the kit server/runtime as the asset's identity.
+- When I call `POST /v2/assets/:id/generate-token` (auth + `READ_ASSET`), the system returns `200 { tokens: { access } }` — an asset-scoped token with no refresh.
+- When I present that token to the kit server/runtime, the system treats the caller as the asset's identity.
 
 ### Quality control
 
-Generate a token → use it against the kit server → authenticated as the asset; without it → unauthorized.
+Generate a token and use it against the kit server; confirm the call is authenticated as the asset; call without it and confirm the request is unauthorized.
 
 ```mermaid
 sequenceDiagram
@@ -256,11 +258,11 @@ sequenceDiagram
 Requires auth + `READ_ASSET` on the asset. Asset tokens are access-only (short-lived), no refresh — reduces exposure if leaked.
 
 **Coverage:**
-- **Auth:** Required (`auth()` on `POST /v2/assets/:id/generate-token`).
+- **Auth:** Required on `POST /v2/assets/:id/generate-token`.
 - **Authorization:** `READ_ASSET` on the asset (owner bypass); the issued token is asset-scoped.
-- **Input validation:** Joi `generateToken` validates `id` (objectId) only; no request body.
+- **Input validation:** Validates `id` (objectId) only; no request body.
 - **Rate limiting:** Not applied — `authLimiter` is defined but not wired to the route.
-- **Secrets:** The issued JWT is a bearer credential (access-only, no refresh), signed with `config.jwt.secret`.
+- **Secrets:** The issued JWT is a bearer credential (access-only, no refresh), signed with the JWT secret.
 
 **Risks:**
 - **Bearer credential theft:** the token is a bearer credential; any leak (logs, localStorage, referrer) lets the holder act as the asset against the kit server for the token's lifetime.
@@ -274,8 +276,8 @@ Token is a bearer credential — treat as a secret; no persistence client-side b
 - **Stored data:** None persisted by the endpoint — the token is returned in the response body only; no refresh token is stored.
 - **PII:** No — the token carries asset identity, not personal data.
 - **Retention:** Token valid until JWT expiry (short-lived access token); no refresh; no server-side persistence.
-- **Encryption:** JWT signed (HMAC with `config.jwt.secret`); in transit TLS deployment-dependent.
-- **Logging:** Standard logger; the token is not logged by the controller.
+- **Encryption:** JWT signed (HMAC with the JWT secret); in transit TLS deployment-dependent.
+- **Logging:** Standard logger; the token is not logged.
 
 **Risks:**
 - **Persistent token leakage:** a token persisted anywhere beyond memory (devtools, network logs, shared dashboards) survives until expiry and enables silent kit access as the asset.
@@ -288,7 +290,7 @@ Token is a bearer credential — treat as a secret; no persistence client-side b
 
 ### Description
 
-Reverse-proxies `/kit-server/*` to the configured `KIT_SERVER_URL` (websocket-aware, path-rewrite).
+As an API caller or frontend integrator, I can reach the kit server through the same-origin `/kit-server/*` path so that browser runtime connections work without exposing a cross-origin endpoint.
 
 ### Who uses it / value
 
@@ -296,12 +298,12 @@ The frontend runtime connector (a same-origin entry point to the kit server); De
 
 ### Acceptance criteria
 
-- `ALL /kit-server/*` proxied to `KIT_SERVER_URL`; websockets upgraded.
-- Conditional on `KIT_SERVER_URL` being configured.
+- When I send a request to `/kit-server/*`, the system proxies it to `KIT_SERVER_URL` and upgrades websockets.
+- The route is active only when `KIT_SERVER_URL` is configured.
 
 ### Quality control
 
-With `KIT_SERVER_URL` set, runtime connections via `/kit-server` succeed; without it, the route is inactive.
+With `KIT_SERVER_URL` set, confirm runtime connections via `/kit-server` succeed; without it, confirm the route is inactive.
 
 ### Security
 
@@ -310,7 +312,7 @@ Passthrough — the kit server enforces its own auth (often via asset tokens). C
 **Coverage:**
 - **Auth:** Passthrough — the backend does not authenticate; the kit server enforces auth (asset token).
 - **Authorization:** None at the proxy — delegated to the kit server.
-- **Input validation:** None — `createProxyMiddleware` passthrough; no Joi validation.
+- **Input validation:** None — passthrough; no validation.
 - **Rate limiting:** Not applied — the proxy has no limiter; `authLimiter` is not wired.
 - **Secrets:** No secrets handled by the proxy; tokens pass through in transit only.
 
@@ -326,8 +328,8 @@ Proxies runtime traffic; no storage on the backend.
 - **Stored data:** None — the proxy relays traffic; it is active only when `KIT_SERVER_URL` is configured.
 - **PII:** No — the proxy does not inspect or store payload.
 - **Retention:** N/A — no storage.
-- **Encryption:** In transit TLS deployment-dependent; websockets are upgraded (`ws: true`).
-- **Logging:** Proxy errors are surfaced by `http-proxy-middleware` defaults; no payload logging.
+- **Encryption:** In transit TLS deployment-dependent; websockets are upgraded.
+- **Logging:** Proxy errors are surfaced by the proxy defaults; no payload logging.
 
 **Risks:**
 - **Traffic interception:** the proxy relays runtime traffic (including tokens and prototype code) in transit; a misconfigured `KIT_SERVER_URL` to an attacker host silently exfiltrates both.
@@ -340,7 +342,7 @@ Proxies runtime traffic; no storage on the backend.
 
 ### Description
 
-Site-config `RUNTIME_SERVER_URL` + `RUNTIME_SERVER_CONFIG` (Socket.IO client options) drive frontend runtime connections; health-checked by the health endpoint.
+As an admin/DevOps, I can point my instance at a runtime/kit server via `RUNTIME_SERVER_URL` (the server address) and `RUNTIME_SERVER_CONFIG` (connection options) so that prototype runtime connections target the right server, and confirm reachability through the health endpoint.
 
 ### Who uses it / value
 
@@ -348,11 +350,12 @@ Admins/DevOps (point instances at a kit server).
 
 ### Acceptance criteria
 
-- Site-config public read; admin write. Health endpoint reports runtime-server reachability.
+- When I read the public site config, the system returns `RUNTIME_SERVER_URL` / `RUNTIME_SERVER_CONFIG`; when I write as admin, the system updates them.
+- When I call the health endpoint, the system reports whether the runtime server is reachable.
 
 ### Quality control
 
-Change `RUNTIME_SERVER_URL` → runtime connections use the new server; health check reflects status.
+Change `RUNTIME_SERVER_URL` and confirm runtime connections use the new server; call the health endpoint and confirm it reflects the runtime-server status.
 
 ### Security
 
@@ -361,7 +364,7 @@ Public read (URL only, no secrets); admin write.
 **Coverage:**
 - **Auth:** Public read (site-config public endpoint); admin write (`MANAGE_USERS`/admin).
 - **Authorization:** Admin-only write; public read returns URL/config only.
-- **Input validation:** Site-config schema validation on admin write (siteConfig validation); public read is unvalidated.
+- **Input validation:** Schema validation on admin write; public read is unvalidated.
 - **Rate limiting:** Not applied — `authLimiter` is not wired to site-config routes.
 - **Secrets:** `RUNTIME_SERVER_CONFIG` is not expected to hold secrets; the URL is non-secret.
 
@@ -374,8 +377,8 @@ Public read (URL only, no secrets); admin write.
 URL + Socket.IO options only; `RUNTIME_SERVER_CONFIG` should not hold secrets.
 
 **Coverage:**
-- **Stored data:** `RUNTIME_SERVER_URL` + `RUNTIME_SERVER_CONFIG` in site config (Mongo).
-- **PII:** No — URL and Socket.IO options are not personal data.
+- **Stored data:** `RUNTIME_SERVER_URL` + `RUNTIME_SERVER_CONFIG` in site config.
+- **PII:** No — URL and connection options are not personal data.
 - **Retention:** Indefinite until admin-updated (no TTL).
 - **Encryption:** No app-level at-rest encryption; the public-read endpoint exposes config to anonymous users.
 - **Logging:** Standard logger; config values are not specially logged.

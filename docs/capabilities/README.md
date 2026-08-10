@@ -8,16 +8,18 @@ A code-grounded catalog of what AutoWRX does, organized into **clusters** of rel
 
 Each capability is an `## CAP-<CLUSTER>-NN — <title>` heading with a **stable ID** (e.g. `CAP-MODEL-01`); each cluster file lists its IDs + titles in a **Capabilities in this cluster** table at the top. Use these IDs to reference capabilities in issues, PRs, and skills. The seven sections below are `### Section` headers, each followed by a paragraph (or a bullet list under Acceptance criteria). Every cluster file also opens with a mermaid diagram of the cluster's overall flow, and capabilities include a per-capability mermaid diagram where a request flow or state transition is worth illustrating.
 
-- **Description** — what it is and does.
+> **Perspective — write for the consumer, not the builder.** Every section is written from the perspective of the **user / admin / operator / API caller** who consumes the system — what they can do, what they observe, and the contract they rely on — not the developer who builds it. The endpoint path, HTTP status, and flag names are the caller's contract and are kept verbatim; internal mechanics (which file, function, or layer does what) do **not** belong in the prose — file references for code-grounding go in a trailing `**Implementation:**` note, not the lead.
+
+- **Description** — what the consumer can do and what they get out of it. Lead with "As a <role>, I can <do X> so that <value>." No internal function/file names, no layering.
 - **Who uses it / who gets value** — the roles that use or benefit (end user, model owner, admin, DevOps/integrator, plugin author, …).
-- **Acceptance criteria** — how it works fully, how to verify it, and the acceptable behavior (incl. error/edge cases).
-- **Quality control** — how to test it (manual steps / API checks).
+- **Acceptance criteria** — the contract the caller relies on: endpoint, method, status, body shape, flags, framed as "When I <action>, the system <responds>". Keep every endpoint path / status / flag verbatim. Drop internal mechanics; if a guarantee matters, state it as what the system guarantees to the caller.
+- **Quality control** — how the consumer (or operator) verifies the capability works, from the UI / API-caller view.
 - **Security** — auth, permissions, sandboxing, attack surface, followed by a **Risks:** bullet list. **Every Security section must address each of these topics explicitly** (state the real value, or `N/A`, or `not implemented` — never leave a topic absent):
   - **Auth** — authentication requirement (required / optional via `PUBLIC_VIEWING` / anonymous / `N/A`).
-  - **Authorization** — RBAC permission / owner bypass / none.
-  - **Input validation** — Joi validation / sanitization / not validated / `N/A`.
+  - **Authorization** — who is allowed (RBAC permission / owner bypass / none), phrased as the consumer-facing access rule.
+  - **Input validation** — what the caller must send / what is rejected (or `not validated`).
   - **Rate limiting** — applied / not applied (cite the `authLimiter` gap if relevant) / `N/A`.
-  - **Secrets** — any secrets/credentials handled, and how protected (or `none`).
+  - **Secrets** — any secrets/credentials the consumer handles or the system stores, and how protected (or `none`).
 - **Data protection** — what data is stored/sent, secrets, retention, privacy, followed by a **Risks:** bullet list. **Every Data protection section must address each of these topics explicitly** (real value, `N/A`, or `not implemented` — never absent):
   - **Stored data** — what is persisted and where (or `none`).
   - **PII** — personal data handled? (`no` / `yes — <kind>`).

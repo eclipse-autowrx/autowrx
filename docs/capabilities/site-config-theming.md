@@ -1,6 +1,8 @@
 # Cluster: Site Configuration & Theming
 
-The configuration layer driving most behavior, branding, and feature toggles. Backend: `routes/v2/system/site-management.route.js`, `services/siteConfig.service.js`, `models/siteConfig.model.js`, `config/predefinedSiteConfigs.js`. Frontend: `pages/SiteConfigManagement.tsx`.
+The configuration layer that drives the instance's branding, feature toggles, and behavior — what admins configure and what every visitor and API caller observes.
+
+**Implementation:** `backend/src/routes/v2/system/site-management.route.js`, `backend/src/services/siteConfig.service.js`, `backend/src/models/siteConfig.model.js`, `backend/src/config/predefinedSiteConfigs.js`, `frontend/src/pages/SiteConfigManagement.tsx`.
 
 ```mermaid
 flowchart TD
@@ -46,7 +48,7 @@ flowchart TD
 
 ### Description
 
-Generic key-value store, scoped (`site`/`user`/`model`/`prototype`/`api`), with value types (string/boolean/number/array/object/image_url/color/date), a `secret` flag, categories; unique on `(key, scope, target_id)`. Predefined configs seeded on startup (`$setOnInsert`, never overwriting admin values).
+As an admin, I can create, read, update, and delete scoped site-config keys (`site`/`user`/`model`/`prototype`/`api`) with typed values (string/boolean/number/array/object/image_url/color/date) and a `secret` flag so that every behavior, branding, and feature toggle of the instance is configurable in one place. Anyone can read non-secret config; only admins can change it; predefined configs are seeded on startup and never overwrite admin-set values.
 
 ### Who uses it / value
 
@@ -54,12 +56,14 @@ Admins (configure the platform); end users (consume public config); the app (fea
 
 ### Acceptance criteria
 
-- Admin: `GET/POST /v2/site-config`, `GET /v2/site-config/all`, `POST /v2/site-config/by-keys`, `POST /v2/site-config/bulk-upsert`, `GET/PATCH/DELETE /v2/site-config/:id`, `/key/:key`, `/:scope/:target_id[/all]` → `200`/`201`/`204` as appropriate.
-- Public: `GET /v2/site-config/public[/:key|/:scope/:target_id[/:key]]` returns non-secret configs; `GET /v2/site-config/sso/providers` returns enabled providers without secrets.
+- When I (admin) call `GET/POST /v2/site-config`, `GET /v2/site-config/all`, `POST /v2/site-config/by-keys`, `POST /v2/site-config/bulk-upsert`, `GET/PATCH/DELETE /v2/site-config/:id`, `/key/:key`, or `/:scope/:target_id[/all]`, the system returns `200`/`201`/`204` as appropriate.
+- When I (anyone) call `GET /v2/site-config/public[/:key|/:scope/:target_id[/:key]]`, the system returns only non-secret configs; when I call `GET /v2/site-config/sso/providers`, the system returns enabled providers without secrets.
+- When I mark a config with the `secret` flag, the system encrypts it at rest and never exposes it via public reads.
+- When the instance starts, the system seeds predefined configs but never overwrites values I have already set.
 
 ### Quality control
 
-Admin sets a key → public read reflects it (unless `secret`); upsert by key; bulk-upsert; seeding never overwrites an admin-set value.
+As an admin, set a key then re-read it (and the public read) to confirm the value persists and that `secret`-flagged values stay hidden from public reads; upsert by key and bulk-upsert to verify multi-key writes; restart the instance and confirm seeding does not overwrite admin-set values.
 
 ```mermaid
 flowchart LR
@@ -74,11 +78,11 @@ flowchart LR
 Public routes public; everything else requires `MANAGE_USERS`. `secret` configs are never exposed publicly.
 
 **Coverage:**
-- **Auth:** required for admin routes (`auth()` + `checkPermission(PERMISSIONS.ADMIN)` applied via `router.use` after the public block); public read routes (`/public*`, `/sso/providers`) anonymous.
-- **Authorization:** `MANAGE_USERS` (`PERMISSIONS.ADMIN = 'manageUsers'`) on every admin CRUD/scope/by-keys/bulk-upsert/restore-snapshot/global-css/email-test route; public reads have no permission check.
-- **Input validation:** Joi (`validations/siteConfig.validation.js`) on create/get/get-by-key/update/delete/by-keys/bulk-upsert/restore-snapshot — scope enum (`site`/`user`/`model`/`prototype`/`api`), conditional `target_id`, `valueType` enum, `secret` boolean; `value` itself is `Joi.any()` (no shape check).
-- **Rate limiting:** not applied — `authLimiter` is defined in `middlewares/rateLimiter.js` but is not wired onto any site-config route.
-- **Secrets:** `secret` flag excludes values from public reads (`getPublicSiteConfigs` filters `secret: false`); `SSO_PROVIDERS` `clientSecret` and `EMAIL_CONFIG` `apiKey`/`smtpConfig.pass` are encrypted at rest via `utils/encryption.js` (AES-256-CBC, key derived from `config.jwt.secret`), decrypted only for admin display.
+- **Auth:** Anyone can read public config anonymously (`GET /v2/site-config/public*`, `GET /v2/site-config/sso/providers`); all other site-config routes require authentication and `MANAGE_USERS`.
+- **Authorization:** `MANAGE_USERS` required for every admin CRUD, scope, by-keys, bulk-upsert, restore-snapshot, global-css, and email-test route; public reads have no permission check.
+- **Input validation:** Caller must send a valid scope enum (`site`/`user`/`model`/`prototype`/`api`), conditional `target_id`, a `valueType` enum, and a `secret` boolean; the `value` field itself accepts any shape (no server-side schema check).
+- **Rate limiting:** not applied.
+- **Secrets:** The `secret` flag excludes values from public reads; `SSO_PROVIDERS.clientSecret` and `EMAIL_CONFIG.apiKey`/`smtpConfig.pass` are encrypted at rest (AES-256-CBC) and decrypted only for admin display.
 
 **Risks:**
 - **Config takeover:** a missing `MANAGE_USERS` check on admin endpoints would let any user flip security-critical flags (e.g. disable `PUBLIC_VIEWING` gating or enable `SELF_REGISTRATION`) and take over the instance's auth posture.
@@ -87,14 +91,14 @@ Public routes public; everything else requires `MANAGE_USERS`. `secret` configs 
 
 ### Data protection
 
-`secret` flag hides values from public reads; SSO provider secrets + email API keys **encrypted at rest** (`utils/encryption.js`), decrypted only for admin display.
+`secret` flag hides values from public reads; SSO provider secrets + email API keys **encrypted at rest**, decrypted only for admin display.
 
 **Coverage:**
 - **Stored data:** `site_configs` collection (fields: `key`, `scope`, `target_id`, `value` (Mixed), `valueType`, `secret`, `description`, `category`, `created_by`, `updated_by`); `SiteConfigSnapshot` mirrors site-scope configs for restore; unique index on `(key, scope, target_id)`.
 - **PII:** no — config values only; `created_by`/`updated_by` hold admin user ObjectIds (refs, not PII).
-- **Retention:** indefinite — no TTL; `deleteSiteConfig*` performs hard `deleteOne()`.
-- **Encryption:** AES-256-CBC at rest for secret-flagged `SSO_PROVIDERS.clientSecret` and `EMAIL_CONFIG.apiKey`/`smtpConfig.pass` (IV-prefixed ciphertext, key = sha256 of `jwt.secret`); non-secret values stored plaintext.
-- **Logging:** none / N/A — no explicit logging of config values; encryption/decryption errors go to `console.error` (no values logged on the success path).
+- **Retention:** indefinite — no TTL; deletes are hard deletes.
+- **Encryption:** AES-256-CBC at rest for secret-flagged `SSO_PROVIDERS.clientSecret` and `EMAIL_CONFIG.apiKey`/`smtpConfig.pass`; non-secret values stored plaintext.
+- **Logging:** none / N/A — no config values logged on the success path.
 
 **Risks:**
 - **Plaintext-at-rest fallback:** if encryption were bypassed or a new secret type were added without wiring it through `utils/encryption.js`, secrets would sit in plaintext and a DB dump would expose live credentials.
@@ -108,7 +112,7 @@ Public routes public; everything else requires `MANAGE_USERS`. `secret` configs 
 
 ### Description
 
-Admin page with 11 sections (Public, Home, Site Style, Auth, Model & Prototype, GenAI/ProtoPilot, SSO, Email, Secret, Standard Staging, Privacy), each with edit + edit history (restore/snapshot).
+As an admin, I can manage the instance's configuration from a single admin page organized into 11 sections (Public, Home, Site Style, Auth, Model & Prototype, GenAI/ProtoPilot, SSO, Email, Secret, Standard Staging, Privacy), each with edit history I can restore, so all site configuration is centralized in one place.
 
 ### Who uses it / value
 
@@ -116,11 +120,11 @@ Admins (central configuration).
 
 ### Acceptance criteria
 
-- Route `/admin/site-config` (`MANAGE_USERS`); each section edits its keys; edit history supports restore.
+- When I open `/admin/site-config` (requires `MANAGE_USERS`), the system shows the 11 sections; when I edit keys in a section, the system persists them; when I restore from edit history, the system reverts that section to the snapshot.
 
 ### Quality control
 
-Edit a config in a section → value persists + applies site-wide; restore from history → reverts.
+As an admin, edit a config in a section, then verify the value persists and applies site-wide; restore from history and verify the section reverts.
 
 ```mermaid
 flowchart TD
@@ -136,11 +140,11 @@ flowchart TD
 `MANAGE_USERS` for all sections.
 
 **Coverage:**
-- **Auth:** required — `router.use(auth(), checkPermission(PERMISSIONS.ADMIN))` gates every admin site-config route used by the 11 sections.
-- **Authorization:** `MANAGE_USERS` (`PERMISSIONS.ADMIN = 'manageUsers'`) — single shared gate for all sections (Public, Home, Site Style, Auth, Model & Prototype, GenAI/ProtoPilot, SSO, Email, Secret, Standard Staging, Privacy).
-- **Input validation:** Joi on write endpoints (create/update/bulk-upsert/restore-snapshot); `value` is `Joi.any()` (section-specific shapes like home blocks/SSO providers/email config are not schema-validated server-side); global-css PUT and email/test use controller-level checks only (`typeof content !== 'string'`, `to` required).
-- **Rate limiting:** not applied — `authLimiter` defined but not wired onto site-config routes.
-- **Secrets:** secret sections mask values in UI; SSO `clientSecret` / EMAIL `apiKey`/`smtpConfig.pass` encrypted at rest, decrypted only for admin display within the Secret/SSO/Email sections.
+- **Auth:** required for all admin site-config routes used by the 11 sections.
+- **Authorization:** `MANAGE_USERS` — single shared gate for all sections (Public, Home, Site Style, Auth, Model & Prototype, GenAI/ProtoPilot, SSO, Email, Secret, Standard Staging, Privacy).
+- **Input validation:** write endpoints are schema-validated, but `value` accepts any shape (section-specific shapes like home blocks / SSO providers / email config are not validated server-side); global-css `PUT` requires `content` to be a string and `/email/test` requires `to` to be present (controller-level checks only).
+- **Rate limiting:** not applied.
+- **Secrets:** secret sections mask values in the UI; SSO `clientSecret` and EMAIL `apiKey`/`smtpConfig.pass` are encrypted at rest and decrypted only for admin display within the Secret/SSO/Email sections.
 
 **Risks:**
 - **Single-gate blast radius:** every section sits behind the same `MANAGE_USERS` permission, so one compromised admin (or one overly-broad grant) can rewrite auth, SSO, email, and feature flags simultaneously.
@@ -153,9 +157,9 @@ Edit history (snapshots) retained; secret sections mask values.
 **Coverage:**
 - **Stored data:** `site_configs` (live config) + `SiteConfigSnapshot` (edit history / deploy snapshot) — site-scope configs including encrypted secret values in SSO/Email/Secret sections; admin user ids in `created_by`/`updated_by`.
 - **PII:** no — administrative configuration only; `created_by`/`updated_by` are admin user refs.
-- **Retention:** indefinite — snapshots retained until overwritten by a new deploy-seed sync (`SiteConfigSnapshot.deleteMany({})` + reinsert) or manual restore; no TTL on live configs.
-- **Encryption:** secrets stored encrypted (AES-256-CBC, `utils/encryption.js`) in both live config and snapshots; non-secret config plaintext.
-- **Logging:** none / N/A — no explicit logging of section edits or secret values.
+- **Retention:** indefinite — snapshots retained until overwritten by a new deploy-seed sync or manual restore; no TTL on live configs.
+- **Encryption:** secrets stored encrypted (AES-256-CBC) in both live config and snapshots; non-secret config plaintext.
+- **Logging:** none / N/A — no section edits or secret values logged.
 
 **Risks:**
 - **Snapshot retention of secrets:** edit history snapshots may retain prior secret values; if those snapshots aren't masked/encrypted like the live config, old credentials remain recoverable.
@@ -169,7 +173,7 @@ Edit history (snapshots) retained; secret sections mask values.
 
 ### Description
 
-Admin-managed stylesheet served at `/static/global.css`; get/update/restore-default.
+As an admin, I can set and restore the platform's global stylesheet so the entire instance is themed consistently; as an end user or plugin author, I get a stable themed UI and CSS variables to consume.
 
 ### Who uses it / value
 
@@ -177,11 +181,12 @@ Admins (brand the site); end users (themed UI); plugins (consume CSS variables).
 
 ### Acceptance criteria
 
-- The stylesheet is served publicly at `/static/global.css` (loaded in `index.html`); the admin endpoints `GET /v2/site-config/global-css` (auth + `MANAGE_USERS`) → `200`, `PUT /v2/site-config/global-css` (auth + `MANAGE_USERS`) → `200`, and `POST /v2/site-config/global-css/restore-default` (auth + `MANAGE_USERS`) → restores the shipped default.
+- When I (anyone) load `/static/global.css`, the system serves the stylesheet publicly with no auth.
+- When I (admin) call `GET /v2/site-config/global-css` (auth + `MANAGE_USERS`), the system returns `200` with the current stylesheet; when I call `PUT /v2/site-config/global-css` (auth + `MANAGE_USERS`), the system returns `200` and applies the new CSS; when I call `POST /v2/site-config/global-css/restore-default` (auth + `MANAGE_USERS`), the system restores the shipped default.
 
 ### Quality control
 
-Edit `:root` tokens (e.g. `--primary`) → UI re-themes live; restore-default → reverts.
+As an admin, edit `:root` tokens (e.g. `--primary`) and observe the UI re-theme live; call `POST /v2/site-config/global-css/restore-default` and confirm the shipped styling returns.
 
 ```mermaid
 sequenceDiagram
@@ -202,10 +207,10 @@ sequenceDiagram
 All three `/v2/site-config/global-css` endpoints require auth + `MANAGE_USERS`; the stylesheet itself is public at `/static/global.css`. CSS can contain selectors only (no script); instance overrides use `!important` guidance.
 
 **Coverage:**
-- **Auth:** required for `GET /global-css`, `PUT /global-css`, `POST /global-css/restore-default` (gated by `router.use(auth(), checkPermission(PERMISSIONS.ADMIN))`); the stylesheet itself is served publicly via `app.use('/static', express.static(...))` with no auth.
+- **Auth:** required for `GET /global-css`, `PUT /global-css`, and `POST /global-css/restore-default`; the stylesheet at `/static/global.css` is served publicly (anonymous).
 - **Authorization:** `MANAGE_USERS` on all three admin endpoints.
-- **Input validation:** controller-level only — `updateGlobalCss` checks `typeof content !== 'string'` and 400s otherwise; no Joi schema on global-css routes; no sanitization/allowlist of CSS rules (`@import`, `url()`, `attr()` permitted).
-- **Rate limiting:** not applied — `authLimiter` defined but not wired onto global-css routes.
+- **Input validation:** `content` must be a string (the system returns `400` otherwise); no sanitization or allowlist of CSS rules (`@import`, `url()`, `attr()` permitted).
+- **Rate limiting:** not applied.
 - **Secrets:** none — stylesheet text only; no credentials involved.
 
 **Risks:**
@@ -235,7 +240,7 @@ Stylesheet text only; no PII.
 
 ### Description
 
-Drag-and-drop editor for `CFG_HOME_CONTENT` blocks (hero, feature-list, button-list, news, recent, popular, partner-list, home-footer) + raw JSON/preview/history.
+As an admin, I can compose the landing page from drag-and-drop blocks (hero, feature-list, button-list, news, recent, popular, partner-list, home-footer) with raw JSON, preview, and history, so the home page presents the content my organization wants visitors to see first.
 
 ### Who uses it / value
 
@@ -243,11 +248,11 @@ Admins (compose the landing page).
 
 ### Acceptance criteria
 
-- Edits `CFG_HOME_CONTENT`; `PageHome` renders blocks via `homeComponentMap`; unknown block types skipped.
+- When I (admin) edit `CFG_HOME_CONTENT`, the system persists the block list; when a visitor opens the home page, the system renders the blocks and skips any unknown block types.
 
 ### Quality control
 
-Add/reorder blocks → home page reflects changes; preview shows layout; raw JSON editable.
+As an admin, add and reorder blocks, then open the home page to confirm the layout reflects the changes; use preview to check the layout and raw JSON to edit directly.
 
 ```mermaid
 flowchart LR
@@ -261,10 +266,10 @@ flowchart LR
 Admin only.
 
 **Coverage:**
-- **Auth:** required — edits to `CFG_HOME_CONTENT` go through the admin site-config write routes (`auth()` + `checkPermission(PERMISSIONS.ADMIN)`); public reads of the non-secret config are anonymous.
+- **Auth:** required to edit `CFG_HOME_CONTENT`; public reads of the non-secret config are anonymous.
 - **Authorization:** `MANAGE_USERS` for edits; public read has no permission check.
-- **Input validation:** Joi on the site-config write (`value` is `Joi.any()` — block array shape not schema-validated server-side); frontend raw JSON editor + preview; `image_url` fields not URL-validated.
-- **Rate limiting:** not applied — `authLimiter` defined but not wired.
+- **Input validation:** the block array shape is not validated server-side (`value` accepts any shape); `image_url` fields are not URL-validated.
+- **Rate limiting:** not applied.
 - **Secrets:** none — `CFG_HOME_CONTENT` is non-secret public content.
 
 **Risks:**
@@ -293,7 +298,7 @@ Block content (titles/descriptions/image URLs); `requiredLogin` flags on action 
 
 ### Description
 
-`SITE_TITLE`, `SITE_LOGO_WIDE`, `SITE_FAVICON`, `SITE_THEME_COLOR`, `SITE_DESCRIPTION`.
+As an admin, I can set the platform's `SITE_TITLE`, `SITE_LOGO_WIDE`, `SITE_FAVICON`, `SITE_THEME_COLOR`, and `SITE_DESCRIPTION` so the instance carries my organization's brand identity consistently across the UI and browser tab.
 
 ### Who uses it / value
 
@@ -301,21 +306,21 @@ Admins (brand identity); end users (consistent branding).
 
 ### Acceptance criteria
 
-- Consumed in `NavigationBar`/`RootLayout`/fullscreen dashboard logo.
+- When I (admin) set `SITE_TITLE`, `SITE_LOGO_WIDE`, `SITE_FAVICON`, `SITE_THEME_COLOR`, or `SITE_DESCRIPTION`, the system reflects them in the nav bar, root layout, browser tab, and dashboard logo; when anyone reads public config, the system returns these non-secret branding keys.
 
 ### Quality control
 
-Set `SITE_TITLE` → nav title + browser title update; set logo → renders.
+As an admin, set `SITE_TITLE` and confirm the nav title and browser title update; set `SITE_LOGO_WIDE` and confirm it renders.
 
 ### Security
 
 Public read; admin write.
 
 **Coverage:**
-- **Auth:** public read anonymous (`/v2/site-config/public*` returns non-secret branding keys); admin write requires `auth()` + `checkPermission(PERMISSIONS.ADMIN)`.
-- **Authorization:** `MANAGE_USERS` for writes; public reads no permission check.
-- **Input validation:** Joi on site-config write (`value` `Joi.any()`); service infers `image_url` valueType via regex (`^https?://...\\.(jpg|jpeg|png|gif|webp|svg)(\\?.*)?$`) but does not enforce it on `SITE_LOGO_WIDE`/`SITE_FAVICON` writes — URLs are stored as-is.
-- **Rate limiting:** not applied — `authLimiter` defined but not wired.
+- **Auth:** public read is anonymous (`GET /v2/site-config/public*` returns non-secret branding keys); admin write requires authentication and `MANAGE_USERS`.
+- **Authorization:** `MANAGE_USERS` for writes; public reads have no permission check.
+- **Input validation:** branding values accept any shape; `SITE_LOGO_WIDE`/`SITE_FAVICON` URLs are stored as-is and not enforced as image URLs server-side.
+- **Rate limiting:** not applied.
 - **Secrets:** none — branding values are public.
 
 **Risks:**
@@ -344,7 +349,7 @@ Branding asset URLs only.
 
 ### Description
 
-`PUBLIC_VIEWING`, `SELF_REGISTRATION`, `SSO_AUTO_REGISTRATION`, `PASSWORD_MANAGEMENT` (all default `true`); loaded into `req.authConfig` per request; secure-fail to false on error.
+As an admin, I can toggle the platform's access flags `PUBLIC_VIEWING`, `SELF_REGISTRATION`, `SSO_AUTO_REGISTRATION`, and `PASSWORD_MANAGEMENT` (all default `true`) so I control who can browse, sign up, auto-register via SSO, and manage passwords; if config loading fails on a request, the system secure-fails to all-false.
 
 ### Who uses it / value
 
@@ -352,11 +357,11 @@ Admins (control access/registration); the app (gating).
 
 ### Acceptance criteria
 
-- Flags drive auth behavior across the app (see [identity-access.md](./identity-access.md)); restore defaults from `predefinedAuthConfigs.js`.
+- When I (admin) toggle `PUBLIC_VIEWING`, `SELF_REGISTRATION`, `SSO_AUTO_REGISTRATION`, or `PASSWORD_MANAGEMENT`, the system applies the change to auth behavior across the app (see [identity-access.md](./identity-access.md)); when I restore defaults, the system restores the shipped `true` defaults; when config loading fails on a request, the system secure-fails to all-false.
 
 ### Quality control
 
-Toggle `PUBLIC_VIEWING` off → signed-out users can't browse; `SELF_REGISTRATION` off → register `403`.
+As an admin, toggle `PUBLIC_VIEWING` off and confirm signed-out users cannot browse; toggle `SELF_REGISTRATION` off and confirm registration returns `403`.
 
 ```mermaid
 flowchart TD
@@ -373,10 +378,10 @@ flowchart TD
 Public (effective flags observable); admin to change; safe-default all-false on error.
 
 **Coverage:**
-- **Auth:** effective flags publicly observable via `/v2/site-config/public*`; admin change requires `auth()` + `checkPermission(PERMISSIONS.ADMIN)`; `loadAuthConfigs` middleware runs on every request.
-- **Authorization:** `MANAGE_USERS` to change flag values; public reads no permission check.
-- **Input validation:** Joi on site-config write (`valueType: 'boolean'`, `secret: false`); `loadAuthConfigs` reads booleans via `getAuthConfig` and coerces to boolean.
-- **Rate limiting:** not applied — `authLimiter` defined but not wired.
+- **Auth:** effective flags are publicly observable via `GET /v2/site-config/public*`; changing them requires authentication and `MANAGE_USERS`; the flags are loaded on every request.
+- **Authorization:** `MANAGE_USERS` to change flag values; public reads have no permission check.
+- **Input validation:** flags are `valueType: 'boolean'`, `secret: false`; the system coerces values to boolean.
+- **Rate limiting:** not applied.
 - **Secrets:** none — boolean flags only.
 
 **Risks:**
@@ -389,11 +394,11 @@ Public (effective flags observable); admin to change; safe-default all-false on 
 Boolean flags only.
 
 **Coverage:**
-- **Stored data:** `PUBLIC_VIEWING`, `SELF_REGISTRATION`, `SSO_AUTO_REGISTRATION`, `PASSWORD_MANAGEMENT` boolean values in `site_configs` (scope `site`, `secret: false`, `category: 'auth'`); in-memory `authConfigCache` (5-min TTL) + per-request `req.authConfig`.
+- **Stored data:** `PUBLIC_VIEWING`, `SELF_REGISTRATION`, `SSO_AUTO_REGISTRATION`, `PASSWORD_MANAGEMENT` boolean values in `site_configs` (scope `site`, `secret: false`, `category: 'auth'`); cached in memory for up to 5 min and loaded per request.
 - **PII:** no — boolean flags only.
 - **Retention:** indefinite — config flags persist until changed/restored; cache evicted after 5 min.
 - **Encryption:** none — plaintext booleans (non-secret by design).
-- **Logging:** none / N/A — `loadAuthConfigs` logs `console.error('Failed to load auth configs:', error)` on failure (no flag values logged on success).
+- **Logging:** none / N/A — no flag values logged on the success path.
 
 **Risks:**
 - **Inference of attack surface:** while flags are booleans only, exposing which gates are enabled tells an attacker exactly which registration/SSO avenues to target.
@@ -406,7 +411,7 @@ Boolean flags only.
 
 ### Description
 
-`SSO_PROVIDERS` (encrypted `clientSecret`) with public enabled-providers list; `EMAIL_CONFIG` (provider resend/smtp/none, from, apiKey, smtpConfig, encrypted secrets) + test send.
+As an admin/DevOps, I can configure SSO providers (with encrypted `clientSecret`) and email delivery (Resend/SMTP/none) and send a test email, so users can sign in via SSO and the platform can send mail; as an end user, I see only the enabled SSO providers (no secrets).
 
 ### Who uses it / value
 
@@ -414,11 +419,11 @@ Admins/DevOps (configure SSO + email); end users (SSO buttons).
 
 ### Acceptance criteria
 
-- `GET /v2/site-config/sso/providers` → enabled providers (no secrets); admin CRUD decrypts for display. `POST /v2/site-config/email/test` → sends a test email.
+- When I (anyone) call `GET /v2/site-config/sso/providers`, the system returns enabled providers without `clientSecret`; when I (admin) CRUD providers, the system decrypts `clientSecret` for display; when I (admin) call `POST /v2/site-config/email/test`, the system sends a test email.
 
 ### Quality control
 
-Add an SSO provider → sign-in button appears; configure email (Resend/SMTP) → test send succeeds; remove provider → button hidden.
+As an admin, add an SSO provider and confirm the sign-in button appears; configure email (Resend/SMTP) and confirm a test send succeeds; remove the provider and confirm the button is hidden.
 
 ```mermaid
 sequenceDiagram
@@ -440,11 +445,11 @@ sequenceDiagram
 Secrets encrypted at rest; never in public reads; admin-only writes.
 
 **Coverage:**
-- **Auth:** required (admin) for SSO/Email CRUD + `POST /v2/site-config/email/test` (gated by `router.use(auth(), checkPermission(PERMISSIONS.ADMIN))`); `GET /v2/site-config/sso/providers` is public (anonymous) and strips `clientSecret`.
-- **Authorization:** `MANAGE_USERS` for admin writes/test-send; public providers endpoint returns enabled providers only (no `clientSecret`).
-- **Input validation:** Joi on site-config write (`value` is `Joi.any()` — provider objects and `EMAIL_CONFIG` shape not schema-validated server-side); `sendTestEmail` checks `to` present (controller-level, no Joi schema on `/email/test`).
-- **Rate limiting:** not applied — `authLimiter` defined but not wired onto SSO/email routes (test-send is unthrottled).
-- **Secrets:** `SSO_PROVIDERS[].clientSecret` and `EMAIL_CONFIG.apiKey`/`smtpConfig.pass` encrypted at rest (AES-256-CBC, `utils/encryption.js`); `getEnabledSSOProviders` destructures out `clientSecret` before returning; decrypted only for admin display in SSO/Email sections.
+- **Auth:** required (admin) for SSO/Email CRUD and `POST /v2/site-config/email/test`; `GET /v2/site-config/sso/providers` is public (anonymous) and strips `clientSecret`.
+- **Authorization:** `MANAGE_USERS` for admin writes/test-send; the public providers endpoint returns enabled providers only (no `clientSecret`).
+- **Input validation:** provider objects and the `EMAIL_CONFIG` shape are not schema-validated server-side (`value` accepts any shape); `POST /email/test` requires `to` to be present.
+- **Rate limiting:** not applied (test-send is unthrottled).
+- **Secrets:** `SSO_PROVIDERS[].clientSecret` and `EMAIL_CONFIG.apiKey`/`smtpConfig.pass` are encrypted at rest (AES-256-CBC) and decrypted only for admin display in the SSO/Email sections; `clientSecret` is removed before any public response.
 
 **Risks:**
 - **SSO secret theft:** a compromised admin session decrypts `clientSecret` for display; a stolen secret lets an attacker impersonate the SP and intercept SSO logins.
@@ -453,14 +458,14 @@ Secrets encrypted at rest; never in public reads; admin-only writes.
 
 ### Data protection
 
-Secrets (clientSecret/apiKey/smtp pass) encrypted; email logs may include recipient addresses.
+Secrets (`clientSecret`/`apiKey`/`smtpConfig.pass`) encrypted; email logs may include recipient addresses.
 
 **Coverage:**
 - **Stored data:** `SSO_PROVIDERS` (array of provider objects incl. encrypted `clientSecret`) and `EMAIL_CONFIG` (object incl. encrypted `apiKey`/`smtpConfig.pass`) in `site_configs` (scope `site`, `secret: true`).
 - **PII:** no provider PII — but `POST /email/test` takes a `to` recipient email address (admin-supplied) returned in the response message `Test email sent to <to>`.
 - **Retention:** indefinite — encrypted secrets persist until an admin rotates them; no TTL/expiry.
-- **Encryption:** AES-256-CBC at rest for `clientSecret`, `apiKey`, `smtpConfig.pass` (IV-prefixed ciphertext, key = sha256 of `jwt.secret`); already-encrypted values (containing `:`) are not re-encrypted.
-- **Logging:** test-send response includes the recipient address; no explicit secret logging (decryption errors `console.error` without values on success path).
+- **Encryption:** AES-256-CBC at rest for `clientSecret`, `apiKey`, `smtpConfig.pass`; already-encrypted values are not re-encrypted.
+- **Logging:** the test-send response includes the recipient address; no secrets logged on the success path.
 
 **Risks:**
 - **Recipient disclosure in logs:** test-send logs may include recipient addresses, surfacing the admin's email (and any test recipients) in audit/log stores.
@@ -474,7 +479,7 @@ Secrets (clientSecret/apiKey/smtp pass) encrypted; email logs may include recipi
 
 ### Description
 
-Maintains a `SiteConfigSnapshot`; admin restore merges the deploy snapshot with predefined defaults (snapshot wins per key), filtered by keys/categories/secret, reporting source (`snapshot`/`predefined`/`mixed`/`none`).
+As an admin/DevOps, I can restore the site config from a deploy snapshot merged with predefined defaults (snapshot wins per key), filtered by keys/categories/secret, and see per-key source (`snapshot`/`predefined`/`mixed`/`none`), so I can recover the instance's configuration after a bad change or migration.
 
 ### Who uses it / value
 
@@ -482,11 +487,11 @@ Admins/DevOps (recover config after a bad change or migration).
 
 ### Acceptance criteria
 
-- `POST /v2/site-config/restore-snapshot` (admin) → `200` restored config with per-key source; auto-synced when the deploy seeder runs.
+- When I (admin) call `POST /v2/site-config/restore-snapshot`, the system returns `200` with the restored config and per-key source; the snapshot is auto-synced when the deploy seeder runs.
 
 ### Quality control
 
-Change a config → restore-snapshot → reverts to snapshot (where present) / predefined default.
+As an admin, change a config, then call `POST /v2/site-config/restore-snapshot` and confirm it reverts to the snapshot where present, otherwise to the predefined default.
 
 ```mermaid
 flowchart LR
@@ -502,11 +507,11 @@ flowchart LR
 Admin only.
 
 **Coverage:**
-- **Auth:** required — `POST /v2/site-config/restore-snapshot` is gated by `router.use(auth(), checkPermission(PERMISSIONS.ADMIN))`.
+- **Auth:** required — `POST /v2/site-config/restore-snapshot` is admin-only.
 - **Authorization:** `MANAGE_USERS` — only admins may trigger restore; no re-authorization of prior-snapshot provenance.
-- **Input validation:** Joi on `restoreSiteConfigSnapshot` (body: `keys?: string[]`, `categories?: string[]`, `secret?: boolean`); service requires at least one filter (`buildSnapshotRestoreFilter` 400s on empty filter).
-- **Rate limiting:** not applied — `authLimiter` defined but not wired onto restore-snapshot.
-- **Secrets:** snapshot preserves `secret`-flagged configs in their encrypted form; restore re-upserts encrypted values (no decryption during restore); decrypted only on subsequent admin read.
+- **Input validation:** caller may send `keys?: string[]`, `categories?: string[]`, `secret?: boolean`; at least one filter is required (the system returns `400` on an empty filter).
+- **Rate limiting:** not applied.
+- **Secrets:** the snapshot preserves `secret`-flagged configs in their encrypted form; restore re-upserts encrypted values (no decryption during restore); decrypted only on a subsequent admin read.
 
 **Risks:**
 - **Snapshot replay of weak config:** an attacker who reaches `restore-snapshot` could replay an older, less-secure snapshot (e.g. before SSO was hardened), reverting the instance to a vulnerable posture.
@@ -517,11 +522,11 @@ Admin only.
 Snapshots hold site-scope configs incl. encrypted secrets.
 
 **Coverage:**
-- **Stored data:** `SiteConfigSnapshot` collection — mirrors site-scope `site_configs` (key, scope, value, valueType, secret, description, category); auto-synced when deploy seeder runs (`syncSiteConfigSnapshotsIfNeeded`); `SiteConfigSnapshotMeta` tracks last-synced seed run.
+- **Stored data:** `SiteConfigSnapshot` collection — mirrors site-scope `site_configs` (`key`, `scope`, `value`, `valueType`, `secret`, `description`, `category`); auto-synced when the deploy seeder runs; a `SiteConfigSnapshotMeta` record tracks the last-synced seed run.
 - **PII:** no — config values + admin user refs only.
-- **Retention:** indefinite per snapshot generation — sync does `SiteConfigSnapshot.deleteMany({})` + reinsert, so only the latest snapshot is retained (no history of prior snapshots); no TTL.
+- **Retention:** only the latest snapshot is retained — sync replaces prior snapshots before reinserting; no TTL.
 - **Encryption:** secrets stored encrypted in snapshots (same AES-256-CBC as live config; not re-encrypted during sync/restore).
-- **Logging:** `console.log('[SiteConfig] Snapshot synced N config(s) from seed run at ...')` — count + timestamp only, no config values.
+- **Logging:** sync logs a count and timestamp only — no config values.
 
 **Risks:**
 - **Snapshot of secrets at rest:** snapshots include encrypted secrets; if encryption keys are rotated but old snapshots aren't re-encrypted, they become unreadable or, worse, decryptable with a leaked old key.
@@ -535,7 +540,7 @@ Snapshots hold site-scope configs incl. encrypted secrets.
 
 ### Description
 
-Public Privacy Policy page from `PRIVACY_POLICY_CONTENT` markdown; admin editor with edit/preview + history.
+As an admin, I can author the public Privacy Policy as markdown (or point to an external `PRIVACY_POLICY_URL`) with edit/preview and history, so end users see the legal terms that apply to the instance.
 
 ### Who uses it / value
 
@@ -543,11 +548,11 @@ End users (legal info); admins (maintain policy).
 
 ### Acceptance criteria
 
-- Route `/privacy-policy` (public) renders the markdown; `PrivacyPolicySection` (admin) edits + previews.
+- When anyone opens `/privacy-policy`, the system renders the `PRIVACY_POLICY_CONTENT` markdown publicly; when I (admin) edit and preview the policy, the system saves and previews it; when I set `PRIVACY_POLICY_URL`, the system can redirect there instead.
 
 ### Quality control
 
-Edit the policy → public page updates; `PRIVACY_POLICY_URL` can redirect instead.
+As an admin, edit the policy and confirm the public page updates; set `PRIVACY_POLICY_URL` and confirm it redirects.
 
 ```mermaid
 flowchart LR
@@ -561,10 +566,10 @@ flowchart LR
 Page public; editor admin.
 
 **Coverage:**
-- **Auth:** public page `/privacy-policy` renders anonymously; admin editor (`PrivacyPolicySection`) edits `PRIVACY_POLICY_CONTENT`/`PRIVACY_POLICY_URL` via admin site-config write routes (`auth()` + `checkPermission(PERMISSIONS.ADMIN)`).
+- **Auth:** the `/privacy-policy` page renders anonymously; editing `PRIVACY_POLICY_CONTENT`/`PRIVACY_POLICY_URL` requires authentication and `MANAGE_USERS`.
 - **Authorization:** `MANAGE_USERS` for editing; public page read has no permission check.
-- **Input validation:** Joi on site-config write (`value` is `Joi.any()` — markdown not sanitized server-side); `PRIVACY_POLICY_URL` not URL-validated server-side (sanitization relies on the frontend markdown renderer).
-- **Rate limiting:** not applied — `authLimiter` defined but not wired.
+- **Input validation:** the markdown is not sanitized server-side (`value` accepts any shape); `PRIVACY_POLICY_URL` is not URL-validated server-side.
+- **Rate limiting:** not applied.
 - **Secrets:** none — policy markdown/URL are non-secret public content.
 
 **Risks:**

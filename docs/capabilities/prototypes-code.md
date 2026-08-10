@@ -1,6 +1,8 @@
 # Cluster: Prototypes & Code
 
-Authoring and structuring a model's prototypes. Backend: `routes/v2/vehicle-data/prototype.route.js`, `models/prototype.model.js`. Frontend: `pages/{PagePrototypeLibrary,PagePrototypeDetail}.tsx`, `layouts/NewPrototypeLayout.tsx`.
+As a model author or contributor, I can create, organize, and iterate on a model's prototypes — browsing the library, scaffolding new prototypes from templates, editing code in the browser, gathering reviewer feedback, and publishing starter projects — so I can build and share SDV features end to end.
+
+**Implementation:** `routes/v2/vehicle-data/prototype.route.js`, `models/prototype.model.js`; frontend `pages/{PagePrototypeLibrary,PagePrototypeDetail}.tsx`, `layouts/NewPrototypeLayout.tsx`.
 
 ```mermaid
 flowchart TD
@@ -43,7 +45,7 @@ flowchart TD
 
 ### Description
 
-List/portfolio views of a model's prototypes; search, sort (Newest/Oldest/Name/Rating/Last/First viewed), filter; create a prototype (inline dialog, or the `/new-prototype` page when `ENABLE_NEW_PROTOTYPE_PAGE`); import from ZIP.
+As a model owner or contributor, I can browse, search, and sort a model's prototypes across list and portfolio views, and create new prototypes or import them from a ZIP archive, so I can manage and showcase my model's SDV work.
 
 ### Who uses it / value
 
@@ -51,13 +53,13 @@ Model owners/contributors (manage prototypes); end users (browse/portfolio).
 
 ### Acceptance criteria
 
-- Routes `/model/:id/library[/:tab(list|portfolio)[/:prototype_id]]` render the library.
-- Create/import require `WRITE_MODEL`; viewing subject to `PUBLIC_VIEWING`.
-- Duplicate-name detection offers suggestions.
+- When I open `/model/:id/library[/:tab(list|portfolio)[/:prototype_id]]`, the system renders the library.
+- When I create or import a prototype, the system requires `WRITE_MODEL`; when I browse, the system allows public viewing only while `PUBLIC_VIEWING` is on.
+- When I submit a duplicate name, the system offers alternative name suggestions.
 
 ### Quality control
 
-Create a prototype → appears in the list; switch list/portfolio; import a prototype ZIP → created; sort by name → ordered.
+As a creator, I create a prototype and it appears in the list; I switch between list and portfolio views; I import a prototype ZIP and a prototype is created; I sort by name and the list is ordered.
 
 ```mermaid
 flowchart LR
@@ -70,13 +72,13 @@ flowchart LR
 
 ### Security
 
-Create/import `WRITE_MODEL`; reads respect `PUBLIC_VIEWING` + `READ_MODEL` for private models.
+Creating or importing requires `WRITE_MODEL`; browsing is public only under `PUBLIC_VIEWING`, with private models requiring `READ_MODEL`.
 
 **Coverage:**
-- **Auth:** Optional via `PUBLIC_VIEWING` for reads; required for create/import (`auth()`).
-- **Authorization:** `WRITE_MODEL` for create/import (controller `hasPermission`); reads scoped via `listReadableModelIds`; private models gated by `READ_MODEL`.
-- **Input validation:** Joi `prototypeValidation.listPrototypes`/`createPrototype` (`model_id` objectId, `name` max 255); ZIP import parsed via `zipUtils.tsx` — path traversal not explicitly sanitized.
-- **Rate limiting:** not applied (`authLimiter` defined but unused).
+- **Auth:** Optional via `PUBLIC_VIEWING` for reads; required for create/import.
+- **Authorization:** `WRITE_MODEL` required to create/import; private-model reads gated by `READ_MODEL`; reads scoped to models I can access.
+- **Input validation:** I must send `model_id` as an objectId and `name` up to 255 chars; ZIP import entries are not path-traversal sanitized.
+- **Rate limiting:** not applied (the global auth rate limiter is unused).
 - **Secrets:** none.
 
 **Risks:**
@@ -85,14 +87,14 @@ Create/import `WRITE_MODEL`; reads respect `PUBLIC_VIEWING` + `READ_MODEL` for p
 
 ### Data protection
 
-Prototype metadata + code stored in `prototypes`; import reads archive contents.
+Prototype metadata and code are stored; import reads archive contents.
 
 **Coverage:**
-- **Stored data:** `prototypes` collection (name, code, model_id, description, image_file, created_by, etc.); ZIP archive contents read during import.
-- **PII:** no — only prototype metadata + author reference.
+- **Stored data:** `prototypes` collection (name, code, model_id, description, image_file, created_by); ZIP archive contents read during import.
+- **PII:** no — only prototype metadata and author reference.
 - **Retention:** indefinite (hard delete on `DELETE`, no soft-delete/TTL).
 - **Encryption:** none at rest; TLS in transit via platform.
-- **Logging:** `logger.warn` on `extend`/`requirements_data` JSON parse failures; `captureChange` records create/update/remove.
+- **Logging:** change log records create/update/remove; malformed `extend`/`requirements_data` JSON triggers a warning.
 
 **Risks:**
 - **Source data loss on bad import:** a malformed or hostile ZIP could overwrite or shadow existing prototype code during import without a rollback path.
@@ -106,7 +108,7 @@ Prototype metadata + code stored in `prototypes`; import reads archive contents.
 
 ### Description
 
-Full-page create flow that previews the selected model's (or default template's) prototype shell — sidebar, tab bar, plugin preview — behind the create dialog, then navigates to the new prototype.
+As a model owner, I can use a guided full-page create flow that previews the selected model's (or default template's) prototype shell — sidebar, tab bar, plugin preview — behind the create dialog, then takes me to my new prototype, so I can start a prototype with a clear picture of the result.
 
 ### Who uses it / value
 
@@ -114,12 +116,13 @@ Model owners (a guided create experience).
 
 ### Acceptance criteria
 
-- Route `/new-prototype` (auth; redirects to `/` if signed out); feature-flagged on by `ENABLE_NEW_PROTOTYPE_PAGE` (default `false`).
-- Supports `?create-model` mode.
+- When I open `/new-prototype` without signing in, the system redirects me to `/`.
+- When `ENABLE_NEW_PROTOTYPE_PAGE` is on (default `false`), the system enables the `/new-prototype` flow.
+- When I pass `?create-model`, the system supports model-creation mode.
 
 ### Quality control
 
-With the flag on, open `/new-prototype` → shell preview + create dialog → navigates to the new prototype detail; signed-out → redirected to `/`.
+With the flag on, I open `/new-prototype`, see the shell preview and create dialog, submit, and the system navigates me to the new prototype detail; signed out, I'm redirected to `/`.
 
 ```mermaid
 sequenceDiagram
@@ -138,12 +141,12 @@ sequenceDiagram
 
 ### Security
 
-Auth required.
+Access requires sign-in; the flow is gated by `ENABLE_NEW_PROTOTYPE_PAGE`.
 
 **Coverage:**
-- **Auth:** required (redirects to `/` if signed out); feature-flagged on `ENABLE_NEW_PROTOTYPE_PAGE`.
-- **Authorization:** `WRITE_MODEL` re-checked on the underlying create endpoint (CAP-PROTO-03).
-- **Input validation:** submit runs Joi `createPrototype`; preview reads model/template shell; flag-gated.
+- **Auth:** required (redirects to `/` if signed out); gated by `ENABLE_NEW_PROTOTYPE_PAGE`.
+- **Authorization:** the underlying create re-checks `WRITE_MODEL` (CAP-PROTO-03).
+- **Input validation:** my create submission is validated (`model_id` objectId, `name` max 255); preview reads the model/template shell.
 - **Rate limiting:** not applied.
 - **Secrets:** none.
 
@@ -153,7 +156,7 @@ Auth required.
 
 ### Data protection
 
-No extra data; reads model/template to preview.
+No extra data is stored; the system reads the model/template to preview.
 
 **Coverage:**
 - **Stored data:** none directly (preview only); the subsequent create stores a prototype via CAP-PROTO-03.
@@ -173,7 +176,7 @@ No extra data; reads model/template to preview.
 
 ### Description
 
-Create/update/delete prototypes; bulk create; recent (cached per-user activity) and popular (top-executed, released, public) lists; execute-code counter.
+As a prototype owner, I can create, update, and delete prototypes — including bulk create — so I can manage their lifecycle; as an end user, I can browse my recent prototypes and a popular (top-executed, released, public) list, and the system counts each code execution so popularity reflects real use.
 
 ### Who uses it / value
 
@@ -181,12 +184,16 @@ Owners (lifecycle); end users (discover recent/popular); analytics (execution co
 
 ### Acceptance criteria
 
-- `GET/POST /v2/prototypes` (read optional, write `WRITE_MODEL`); `POST /v2/prototypes/bulk` → `201`; `GET /v2/prototypes/recent` (auth) → `200`; `GET /v2/prototypes/popular` (optional) → `200`; `GET/PATCH/DELETE /v2/prototypes/:id` → `200`/`200`/`204`; `POST /v2/prototypes/:id/execute-code` → `200` increments counter.
-- Private models require `READ_MODEL` for reads.
+- When I call `GET /v2/prototypes`, the system returns the list (public browsing when `PUBLIC_VIEWING` is on); when I call `POST /v2/prototypes`, the system requires `WRITE_MODEL` and creates a prototype.
+- When I call `POST /v2/prototypes/bulk`, the system bulk-creates and returns `201`.
+- When I call `GET /v2/prototypes/recent` (signed in), the system returns `200` with my recent prototypes.
+- When I call `GET /v2/prototypes/popular`, the system returns `200` with top-executed/released/public prototypes.
+- When I call `GET /v2/prototypes/:id`, the system returns `200` (private models require `READ_MODEL`); when I call `PATCH /v2/prototypes/:id`, it returns `200`; when I call `DELETE /v2/prototypes/:id`, it returns `204`.
+- When I call `POST /v2/prototypes/:id/execute-code`, the system returns `200` and increments the execution counter.
 
 ### Quality control
 
-Create → `201`; run code → execute counter increments; recent reflects your activity; popular shows released/public.
+I create a prototype and get `201`; I run code and the execute counter increments; my recent list reflects my activity; the popular list shows released/public prototypes.
 
 ```mermaid
 flowchart TD
@@ -201,13 +208,13 @@ flowchart TD
 
 ### Security
 
-Write `WRITE_MODEL`; recent requires auth; reads respect `PUBLIC_VIEWING` + model access.
+Writes require `WRITE_MODEL`; the recent list requires sign-in; reads are public only under `PUBLIC_VIEWING`, with private models gated by `READ_MODEL`.
 
 **Coverage:**
-- **Auth:** reads optional via `PUBLIC_VIEWING`; writes/`recent`/`execute-code` require auth (`auth()`).
-- **Authorization:** `WRITE_MODEL` on `POST`/`PATCH`/`DELETE`/`bulk` (route `checkPermission` + controller `hasPermission`); private reads gated by `READ_MODEL` (`getPrototypeById`).
-- **Input validation:** Joi `createPrototype`/`updatePrototype`/`bulkCreatePrototypes`/`executeCode`/`listPrototypes`; `model_id` objectId, `name` max 255, `state` enum.
-- **Rate limiting:** not applied (`authLimiter` unused) — bulk-create and execute-code unguarded.
+- **Auth:** reads optional via `PUBLIC_VIEWING`; writes, `recent`, and `execute-code` require sign-in.
+- **Authorization:** `WRITE_MODEL` required for `POST`/`PATCH`/`DELETE`/`bulk`; private-model reads gated by `READ_MODEL`.
+- **Input validation:** I must send `model_id` as an objectId, `name` up to 255 chars, and a valid `state` value.
+- **Rate limiting:** not applied — bulk-create and execute-code are unguarded.
 - **Secrets:** none.
 
 **Risks:**
@@ -217,14 +224,14 @@ Write `WRITE_MODEL`; recent requires auth; reads respect `PUBLIC_VIEWING` + mode
 
 ### Data protection
 
-`last_viewed`, `executed_turns`, `rated_by` (Map), `state` stored per prototype.
+The system stores `last_viewed`, `executed_turns`, `rated_by`, and `state` per prototype; the recent list is sourced from the cache service.
 
 **Coverage:**
-- **Stored data:** `prototypes` (last_viewed, executed_turns, rated_by Map, state, code); recent list sourced from external `CACHE_URL` (`/get-recent-activities/:userId`).
-- **PII:** no direct PII; recent list is a per-user activity trail (prototype ids + times) tied to userId.
-- **Retention:** indefinite (hard delete via `deleteOne`, no soft-delete; recent cache retention governed by external cache service).
+- **Stored data:** `prototypes` (last_viewed, executed_turns, rated_by Map, state, code); recent list sourced from the external cache (`CACHE_URL`, `/get-recent-activities/:userId`).
+- **PII:** no direct PII; the recent list is a per-user activity trail (prototype ids + times) tied to my userId.
+- **Retention:** indefinite (hard delete, no soft-delete; recent-cache retention governed by the external cache service).
 - **Encryption:** none at rest; TLS in transit.
-- **Logging:** `logger.error` on cache fetch failures; `captureChange` records create/update/remove.
+- **Logging:** change log records create/update/remove; cache fetch failures are logged.
 
 **Risks:**
 - **Activity profiling:** `last_viewed` and recent lists are per-user activity trails; a compromised account exposes which prototypes a user touched and when.
@@ -238,7 +245,7 @@ Write `WRITE_MODEL`; recent requires auth; reads respect `PUBLIC_VIEWING` + mode
 
 ### Description
 
-The prototype detail page with built-in tabs plus custom plugin (addon) tabs and configurable right-nav action buttons; records `last_viewed` and recent-prototype.
+As a prototype author or reviewer, I can open a prototype's workspace and switch between built-in tabs (view, journey, code, dashboard, feedback, staging, plug) plus custom plugin tabs, and configure right-nav actions, so I can build, review, stage, and present a prototype in one place.
 
 ### Who uses it / value
 
@@ -246,13 +253,13 @@ Authors (build); reviewers (feedback); operators (staging); end users (view).
 
 ### Acceptance criteria
 
-- Routes `/model/:id/library/prototype/:pid[/:tab]` with tabs `view|journey|code|dashboard|feedback|staging|plug`.
-- Addon/tab management requires `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG`; "Save as Template" requires admin; Staging requires auth + prototype code.
-- Plugin sidebar collapsible; addon add/manage + "Customize Layout" editor available.
+- When I open `/model/:id/library/prototype/:pid[/:tab]`, the system renders the workspace with tabs `view|journey|code|dashboard|feedback|staging|plug`.
+- When I manage addon tabs, the system requires `WRITE_MODEL` and `ALLOW_NON_ADMIN_ADDON_CONFIG`; when I choose "Save as Template", the system requires admin; Staging requires sign-in and prototype code.
+- I can collapse the plugin sidebar, add/manage addon tabs, and use the "Customize Layout" editor.
 
 ### Quality control
 
-Switch each tab → correct content renders; add an addon tab → it loads via `PluginPageRender`; reorder tabs → persists; Staging hidden for a code-less prototype.
+I switch each tab and the correct content renders; I add an addon tab and it loads; I reorder tabs and the order persists; for a code-less prototype, Staging is hidden.
 
 ```mermaid
 flowchart TD
@@ -266,12 +273,12 @@ flowchart TD
 
 ### Security
 
-Tab management `WRITE_MODEL` + addon flag; Staging auth-gated. Plugins unsandboxed.
+Tab management requires `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG`; Staging requires sign-in; a plugin tab can access the page like any other script (unsandboxed).
 
 **Coverage:**
-- **Auth:** read optional via `PUBLIC_VIEWING`; addon/tab management requires auth + `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG`; Staging requires auth.
+- **Auth:** reads optional via `PUBLIC_VIEWING`; addon/tab management requires sign-in + `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG`; Staging requires sign-in.
 - **Authorization:** `WRITE_MODEL` for addon add/manage; "Save as Template" requires admin (`MANAGE_USERS`).
-- **Input validation:** tab/addon config persisted via `updatePrototype` — `extend` is `Joi.any()`, `widget_config` is `jsonString` (loosely validated); plugin tabs run unsandboxed via `PluginPageRender`.
+- **Input validation:** tab/addon config is loosely validated (`extend` accepts any JSON, `widget_config` a JSON string); a plugin tab can access the page like any other script.
 - **Rate limiting:** not applied.
 - **Secrets:** none.
 
@@ -281,14 +288,14 @@ Tab management `WRITE_MODEL` + addon flag; Staging auth-gated. Plugins unsandbox
 
 ### Data protection
 
-Tab config + `extend` (plugin data sink) stored on the prototype; `last_viewed` updated on visit.
+Tab config and `extend` (the plugin data sink) are stored on the prototype; `last_viewed` is updated on each visit.
 
 **Coverage:**
 - **Stored data:** `prototype.extend` (Mixed, plugin data sink), tab/right-nav config, `last_viewed` updated per visit.
-- **PII:** no direct PII; `last_viewed` is a viewing log tied to the visitor session.
-- **Retention:** indefinite (lives with the prototype; hard delete on prototype delete).
+- **PII:** no direct PII; `last_viewed` is a viewing log tied to my session.
+- **Retention:** indefinite (lives with the prototype; hard-deleted with it).
 - **Encryption:** none at rest; TLS in transit.
-- **Logging:** `captureChange` records updates; view tracking persisted to `last_viewed`.
+- **Logging:** change log records updates; view tracking persisted to `last_viewed`.
 
 **Risks:**
 - **Plugin data sink persistence:** `extend` stores arbitrary plugin-supplied data on the prototype; a malicious plugin could persist hostile payloads that re-activate on every visit.
@@ -302,7 +309,7 @@ Tab config + `extend` (plugin data sink) stored on the prototype; `last_viewed` 
 
 ### Description
 
-Monaco editor with auto-save; resizable Vehicle API panel; SDV ProtoPilot GenAI launcher; code diff view; language label; multi-file Project Editor when code is a JSON project.
+As a prototype author, I can write and edit SDV code in the Monaco editor with auto-save, browse the Vehicle API panel, launch the SDV ProtoPilot GenAI tool to generate code, and view a diff of changes, so I can iterate on my prototype's code efficiently.
 
 ### Who uses it / value
 
@@ -310,12 +317,14 @@ Prototype authors (write/edit SDV code); GenAI users (generate code).
 
 ### Acceptance criteria
 
-- Edit requires `WRITE_MODEL`; API panel shown when `SHOW_CODE_API_PANEL=true`; SDV ProtoPilot button shown when `SHOW_SDV_PROTOPILOT_BUTTON=true` + `USE_GEN_AI`; diff when `SHOW_CODE_DIFF=true`.
-- Auto-save persists code; language label reflects Python/Rust.
+- When I edit code, the system requires `WRITE_MODEL` and auto-saves my changes; the language label reflects Python or Rust.
+- When `SHOW_CODE_API_PANEL=true`, the system shows the Vehicle API panel.
+- When `SHOW_SDV_PROTOPILOT_BUTTON=true` and I have `USE_GEN_AI`, the system shows the SDV ProtoPilot button.
+- When `SHOW_CODE_DIFF=true`, the system shows a code diff after generation.
 
 ### Quality control
 
-Edit code → auto-saves; open API panel → signals list; run ProtoPilot → generated code preview → apply; toggle diff → shows changes.
+I edit code and it auto-saves; I open the API panel and see the signals list; I run ProtoPilot and see a generated-code preview, then apply it; I toggle diff and see the changes.
 
 ```mermaid
 sequenceDiagram
@@ -336,14 +345,14 @@ sequenceDiagram
 
 ### Security
 
-Edit `WRITE_MODEL`; GenAI gated by `USE_GEN_AI` + flag.
+Editing requires `WRITE_MODEL`; GenAI is gated by `USE_GEN_AI` and the `SHOW_SDV_PROTOPILOT_BUTTON` flag.
 
 **Coverage:**
-- **Auth:** required for edit (`auth()`).
-- **Authorization:** `WRITE_MODEL` (route `checkPermission`).
-- **Input validation:** `code` is `Joi.string().allow('')` — no language/safety validation; GenAI output applied directly to `prototype.code`.
-- **Rate limiting:** not applied; GenAI calls routed to external `GENAI_SDV_APP_ENDPOINT`.
-- **Secrets:** GenAI endpoint config (`GENAI_SDV_APP_ENDPOINT`, `USE_GEN_AI`) held in site-config, not in the prototype.
+- **Auth:** required for edit.
+- **Authorization:** `WRITE_MODEL`.
+- **Input validation:** `code` accepts any string (including empty) — no language or safety validation; GenAI output is applied directly to my prototype code.
+- **Rate limiting:** not applied; GenAI calls go to the external `GENAI_SDV_APP_ENDPOINT`.
+- **Secrets:** the GenAI endpoint config (`GENAI_SDV_APP_ENDPOINT`, `USE_GEN_AI`) lives in site config, not in my prototype.
 
 **Risks:**
 - **GenAI prompt-injection:** generated code from ProtoPilot is applied to `prototype.code`; a malicious prompt could inject code that runs in staging or exfiltrates prototype data when later executed.
@@ -351,14 +360,14 @@ Edit `WRITE_MODEL`; GenAI gated by `USE_GEN_AI` + flag.
 
 ### Data protection
 
-Code (potentially large text) stored in `prototype.code`; auto-save writes frequently (throttled by `captureChange`).
+My code (potentially large) is stored in `prototype.code`; auto-save writes frequently.
 
 **Coverage:**
-- **Stored data:** `prototype.code` (string or JSON project descriptor); auto-save writes via `captureChange` throttling.
+- **Stored data:** `prototype.code` (string or JSON project descriptor); auto-save writes frequently (throttled).
 - **PII:** no (source code only).
-- **Retention:** indefinite (no version history; hard delete on prototype delete).
+- **Retention:** indefinite (no version history; hard-deleted with the prototype).
 - **Encryption:** none at rest; TLS in transit.
-- **Logging:** `captureChange` records updates (change log); code content not logged by this path.
+- **Logging:** change log records updates; code content is not logged by this path.
 
 **Risks:**
 - **Source data loss on autosave:** frequent auto-save with no history means a bad paste or GenAI apply can irreversibly overwrite the author's prior code with no recovery trail.
@@ -372,7 +381,7 @@ Code (potentially large text) stored in `prototype.code`; auto-save writes frequ
 
 ### Description
 
-File-tree editor with create/rename/delete files & folders, open tabs, unsaved-change tracking, save-all, import/export ZIP, per-file Monaco. Activated when prototype code is a JSON project descriptor.
+As an author of a multi-file SDV project, I can use a file-tree editor to create, rename, and delete files and folders, open multiple file tabs, track unsaved changes, save-all, import/export a ZIP, and edit each file in its own Monaco editor — so I can build structured, multi-file prototypes.
 
 ### Who uses it / value
 
@@ -380,12 +389,12 @@ Authors of multi-file SDV projects.
 
 ### Acceptance criteria
 
-- Activated when `prototype.code` is a JSON project; edit requires `WRITE_MODEL`.
-- File ops (create/rename/delete), tabs, save-all, import/export ZIP all functional.
+- When my `prototype.code` is a JSON project, the system activates the project editor; editing requires `WRITE_MODEL`.
+- I can create/rename/delete files and folders, open tabs, save-all, and import/export a ZIP.
 
 ### Quality control
 
-Add a file → appears in tree; edit + save-all → persisted; export ZIP → valid archive containing files.
+I add a file and it appears in the tree; I edit and save-all and it persists; I export a ZIP and get a valid archive containing my files.
 
 ```mermaid
 flowchart TD
@@ -399,14 +408,14 @@ flowchart TD
 
 ### Security
 
-Edit `WRITE_MODEL`. GitHub auth wiring available for intended git sync (partial).
+Editing requires `WRITE_MODEL`. GitHub-based git sync is partially wired but not active.
 
 **Coverage:**
-- **Auth:** required (`auth()`).
+- **Auth:** required.
 - **Authorization:** `WRITE_MODEL`.
-- **Input validation:** file ops (create/rename/delete) operate on JSON project paths — `../` traversal not explicitly validated; ZIP import via `zipUtils.tsx` must sanitize entry names.
+- **Input validation:** file ops act on paths inside the JSON project — `../` traversal is not explicitly validated; ZIP import must sanitize entry names.
 - **Rate limiting:** not applied.
-- **Secrets:** partial GitHub auth wiring for intended git sync (not active).
+- **Secrets:** partial GitHub auth wiring exists for an intended git sync (not active).
 
 **Risks:**
 - **Path traversal in file ops:** create/rename/delete operate on paths inside the JSON project; without validation an attacker could craft `../` paths to escape the project root and overwrite unrelated files.
@@ -415,14 +424,14 @@ Edit `WRITE_MODEL`. GitHub auth wiring available for intended git sync (partial)
 
 ### Data protection
 
-Whole project stored as JSON in `prototype.code`; export contains all files.
+The whole project is stored as JSON in `prototype.code`; an export ZIP contains every file.
 
 **Coverage:**
 - **Stored data:** entire project as JSON in `prototype.code`; export ZIP bundles all files.
 - **PII:** no (project source files).
-- **Retention:** indefinite (no per-file history; whole project overwritten on save-all).
+- **Retention:** indefinite (no per-file history; the whole project is overwritten on save-all).
 - **Encryption:** none at rest; TLS in transit.
-- **Logging:** `captureChange` records updates.
+- **Logging:** change log records updates.
 
 **Risks:**
 - **Bulk source loss:** a single destructive file delete or a corrupt save-all overwrites the entire project JSON; with no per-file history, the whole project can be lost at once.
@@ -436,7 +445,7 @@ Whole project stored as JSON in `prototype.code`; export contains all files.
 
 ### Description
 
-Star-rated feedback (need addressed / relevance / ease of use, 1–5, averaged) with description and interview metadata; add/delete own; pagination.
+As a reviewer, I can leave star-rated feedback (need addressed, relevance, ease of use — 1 to 5, averaged) with a description and interview metadata, and manage my own feedback, so I can help owners improve their prototypes.
 
 ### Who uses it / value
 
@@ -444,12 +453,14 @@ Reviewers (give feedback); owners (improve prototypes).
 
 ### Acceptance criteria
 
-- `GET /v2/feedbacks` (optional auth) → `200` paginated; `POST` (auth) → `201`; `PATCH/DELETE /:id` → `200`/`204` (own feedback).
-- UI tab `feedback` lists feedback, add via form, delete own only.
+- When I call `GET /v2/feedbacks`, the system returns `200` paginated (public browsing when `PUBLIC_VIEWING` is on).
+- When I call `POST /v2/feedbacks` (signed in), the system creates feedback and returns `201`.
+- When I call `PATCH /v2/feedbacks/:id` or `DELETE /v2/feedbacks/:id`, the system returns `200` or `204` and only lets me act on my own feedback.
+- In the UI `feedback` tab, I can list feedback, add it via a form, and delete only my own.
 
 ### Quality control
 
-Add feedback → appears with averaged score; delete another user's feedback → not allowed; pagination works.
+I add feedback and it appears with the averaged score; I try to delete another user's feedback and it's not allowed; pagination works.
 
 ```mermaid
 sequenceDiagram
@@ -469,13 +480,13 @@ sequenceDiagram
 
 ### Security
 
-Add requires sign-in; delete limited to own.
+Adding feedback requires sign-in; deleting or editing is limited to my own feedback.
 
 **Coverage:**
-- **Auth:** `POST`/`PATCH`/`DELETE` require auth (`auth()`); `GET` optional via `PUBLIC_VIEWING`.
-- **Authorization:** `PATCH`/`DELETE` own-only (service checks `String(feedback.created_by) !== userId` → FORBIDDEN).
-- **Input validation:** Joi `feedbackValidation.createFeedback`/`updateFeedback` — scores 1–5, `interviewee.name` required, `description`/`question`/`recommendation` max 2000.
-- **Rate limiting:** not applied — burner-account spam possible.
+- **Auth:** `POST`/`PATCH`/`DELETE` require sign-in; `GET` optional via `PUBLIC_VIEWING`.
+- **Authorization:** `PATCH`/`DELETE` are own-only (the system rejects acting on another user's feedback with FORBIDDEN).
+- **Input validation:** I must send scores 1–5, a required `interviewee.name`, and `description`/`question`/`recommendation` up to 2000 chars.
+- **Rate limiting:** not applied — burner-account spam is possible.
 - **Secrets:** none.
 
 **Risks:**
@@ -484,11 +495,11 @@ Add requires sign-in; delete limited to own.
 
 ### Data protection
 
-Feedback stores `interviewee` (name/organization), scores, `ref`/`model_id`; no secrets.
+Feedback stores interviewee (name/organization), scores, and `ref`/`model_id`; no secrets.
 
 **Coverage:**
 - **Stored data:** `feedbacks` collection (interviewee name/organization, scores, description, ref/ref_type/model_id, created_by, avg_score).
-- **PII:** yes — `interviewee` name + organization; `created_by` user reference.
+- **PII:** yes — interviewee name + organization; `created_by` user reference.
 - **Retention:** indefinite (hard delete on `DELETE`; no soft-delete/TTL).
 - **Encryption:** none at rest; TLS in transit.
 - **Logging:** standard request logging; no sensitive data explicitly logged.
@@ -505,7 +516,7 @@ Feedback stores `interviewee` (name/organization), scores, `ref`/`model_id`; no 
 
 ### Description
 
-Admin-managed scaffolds for starter projects (code + widget_config + customer_journey); predefined templates seeded on startup; case-insensitive unique name.
+As an admin, I can manage scaffolds for starter projects (code + widget_config + customer_journey) so authors can quick-start new prototypes from a template; as an author, I can pick a template to pre-populate my project. Template names are case-insensitive unique, and predefined templates are seeded at startup.
 
 ### Who uses it / value
 
@@ -513,12 +524,14 @@ Admins (standardize starters); authors (quick-start).
 
 ### Acceptance criteria
 
-- `GET /v2/project-template[/:id]` (public) → list/get; `POST` → `201` (admin); `PUT/DELETE /:id` → `200`/`204` (admin). Also at `/v2/system/project-template`.
-- Seeded via `predefinedProjectTemplates.js` (never overwriting admin edits).
+- When I call `GET /v2/project-template[/:id]`, the system returns the public list or a single template (also available at `/v2/system/project-template`).
+- When I call `POST /v2/project-template` as admin, the system creates a template and returns `201`.
+- When I call `PUT /v2/project-template/:id` as admin, it returns `200`; when I call `DELETE /v2/project-template/:id` as admin, it returns `204`.
+- The system seeds predefined templates at startup and never overwrites my admin edits.
 
 ### Quality control
 
-Admin creates a template → selectable when creating a prototype; pick it → project pre-populated.
+As admin I create a template; as author I see it selectable when creating a prototype; I pick it and the project is pre-populated.
 
 ```mermaid
 flowchart LR
@@ -531,12 +544,12 @@ flowchart LR
 
 ### Security
 
-Read public; write `MANAGE_USERS`.
+Reads are public; writes require admin permission (`ADMIN`).
 
 **Coverage:**
-- **Auth:** reads `auth({ optional: true })` (public); writes require auth + `ADMIN` permission (`checkPermission(PERMISSIONS.ADMIN)`).
-- **Authorization:** `ADMIN` for `POST`/`PUT`/`DELETE`; non-admin reads filtered to `visibility: 'public'`.
-- **Input validation:** Joi `projectTemplateValidation.create`/`update` — `name` required max 255, `data` required `jsonString`, `visibility` enum public/private.
+- **Auth:** reads are public (signed-out can read); writes require sign-in + `ADMIN`.
+- **Authorization:** `ADMIN` for `POST`/`PUT`/`DELETE`; non-admin reads are filtered to `visibility: 'public'`.
+- **Input validation:** I must send `name` (required, max 255), `data` as a JSON string (required), and `visibility` as `public` or `private`.
 - **Rate limiting:** not applied.
 - **Secrets:** none.
 
@@ -546,14 +559,14 @@ Read public; write `MANAGE_USERS`.
 
 ### Data protection
 
-Template data (code/widget_config/journey) stored; no secrets.
+Template data (code/widget_config/journey) is stored; no secrets.
 
 **Coverage:**
-- **Stored data:** `projecttemplates` collection (name, description, data JSON, visibility, created_by, updated_by); seeded at startup via `seedProjectTemplates` (`$setOnInsert`, never overwrites admin edits).
+- **Stored data:** `projecttemplates` collection (name, description, data JSON, visibility, created_by, updated_by); seeded at startup (seed never overwrites admin edits).
 - **PII:** no.
 - **Retention:** indefinite (hard delete on `DELETE`; seeded defaults re-insert only if absent).
 - **Encryption:** none at rest; TLS in transit.
-- **Logging:** `logger.info`/`logger.error` on seed outcome; no sensitive data logged.
+- **Logging:** seed outcome logged; no sensitive data logged.
 
 **Risks:**
 - **Persistent distribution channel:** a malicious template propagates its code, widget config, and journey to all derived prototypes until an admin notices and removes it.

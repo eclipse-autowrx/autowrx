@@ -1,6 +1,8 @@
 # Cluster: Assets & Sharing
 
-User-owned resources (cloud runtimes, hardware kits, GenAI configs) and the sharing/collaboration layer. Backend: `routes/v2/user-management/asset.route.js`, `models/asset.model.js`. Frontend: `pages/PageMyAssets.tsx`, `components/organisms/RuntimeAssetManager.tsx`, `components/molecules/ShareAssetPanel.tsx`.
+Create and manage your own resources (cloud runtimes, hardware kits, GenAI configs), share them with collaborators, and invite others to contribute to models.
+
+**Implementation:** `backend/src/routes/v2/user-management/asset.route.js`, `backend/src/models/asset.model.js`, `frontend/src/pages/PageMyAssets.tsx`, `frontend/src/components/organisms/RuntimeAssetManager.tsx`, `frontend/src/components/molecules/ShareAssetPanel.tsx`.
 
 ```mermaid
 flowchart TD
@@ -36,7 +38,7 @@ flowchart TD
 
 ### Description
 
-Create/list/get/update/delete assets of types enabled by `USER_ASSET_TYPES` (default `CLOUD_RUNTIME`, `HARDWARE_KIT`, `GENAI-PYTHON`) with arbitrary `data`.
+As a user, I can create, list, view, update, and delete my own assets of the types enabled by `USER_ASSET_TYPES` (default `CLOUD_RUNTIME`, `HARDWARE_KIT`, `GENAI-PYTHON`) with arbitrary `data`, so that I keep my runtime, kit, and GenAI configurations in one place.
 
 ### Who uses it / value
 
@@ -44,12 +46,12 @@ End users (manage their runtimes/kits/GenAI configs); admins (oversight).
 
 ### Acceptance criteria
 
-- `GET /v2/assets` (auth) → `200` the user's assets (+ shared with them); `POST` (auth) → `200` create; `GET /v2/assets/:id` (auth + `READ_ASSET`) → `200`; `PATCH` (auth + `WRITE_ASSET`) → `200` (empty body); `DELETE` (auth + `WRITE_ASSET`) → `200`.
-- Asset types restricted to `USER_ASSET_TYPES`.
+- When I call `GET /v2/assets` (auth), the system returns `200` with my assets plus those shared with me; when I `POST` (auth), the system creates the asset and returns `200`; when I `GET /v2/assets/:id` (auth + `READ_ASSET`), the system returns `200`; when I `PATCH` (auth + `WRITE_ASSET`), the system updates and returns `200` (empty body); when I `DELETE` (auth + `WRITE_ASSET`), the system deletes and returns `200`.
+- Asset types I can create are restricted to `USER_ASSET_TYPES`.
 
 ### Quality control
 
-Create a `CLOUD_RUNTIME` asset → appears in My Assets; edit → persists; delete → gone; access another user's asset without sharing → `403`.
+Create a `CLOUD_RUNTIME` asset and confirm it appears in My Assets; edit it and confirm the change persists; delete it and confirm it is gone; access another user's asset without sharing and confirm `403`.
 
 ```mermaid
 flowchart LR
@@ -68,9 +70,9 @@ flowchart LR
 All routes auth; get/update/delete gated by `READ_ASSET`/`WRITE_ASSET` permission on the asset; types gated by `USER_ASSET_TYPES`.
 
 **Coverage:**
-- **Auth:** Required (`auth()` on all asset routes).
+- **Auth:** Required on all asset routes.
 - **Authorization:** `READ_ASSET` for get, `WRITE_ASSET` for update/delete (owner bypass); create is auth-only; list returns own + shared assets.
-- **Input validation:** Joi validation (`assetValidation.createAsset`/`getAssets`/`updateAsset`/`deleteAsset`); `data` is `Joi.any()` — no schema or size guard; `type` is not constrained to `USER_ASSET_TYPES` at the validation layer.
+- **Input validation:** Validated on create/get/update/delete; `data` has no schema or size guard; `type` is not constrained to `USER_ASSET_TYPES` at the validation layer.
 - **Rate limiting:** Not applied — `authLimiter` is defined but not wired to the asset routes.
 - **Secrets:** Asset `data` may hold GenAI tokens or runtime credentials — stored at rest with no app-level encryption.
 
@@ -84,7 +86,7 @@ All routes auth; get/update/delete gated by `READ_ASSET`/`WRITE_ASSET` permissio
 Asset `data` (arbitrary config — endpoint URLs, tokens, kit identity) stored in `assets` with `created_by`.
 
 **Coverage:**
-- **Stored data:** `name`, `type`, `data` (Mixed), `created_by`, timestamps in the MongoDB `assets` collection.
+- **Stored data:** `name`, `type`, `data` (Mixed), `created_by`, timestamps — persisted in the `assets` collection.
 - **PII:** No direct PII; `created_by` is a userId reference.
 - **Retention:** Indefinite until hard-deleted (no soft delete, no TTL).
 - **Encryption:** No app-level at-rest encryption; in transit TLS deployment-dependent.
@@ -102,7 +104,7 @@ Asset `data` (arbitrary config — endpoint URLs, tokens, kit identity) stored i
 
 ### Description
 
-Admin view of all assets across users.
+As an admin, I can view every user's assets across the instance so that I can provide oversight and support.
 
 ### Who uses it / value
 
@@ -110,20 +112,20 @@ Admins (oversight/support).
 
 ### Acceptance criteria
 
-- `GET /v2/assets/manage` (auth + `MANAGE_USERS`) → `200` all assets.
+- When I call `GET /v2/assets/manage` (auth + `MANAGE_USERS`), the system returns `200` with all assets across users.
 
 ### Quality control
 
-As admin → see all assets; as non-admin → `403`.
+As an admin, call `GET /v2/assets/manage` and confirm all assets are returned; as a non-admin, confirm `403`.
 
 ### Security
 
 `MANAGE_USERS` required.
 
 **Coverage:**
-- **Auth:** Required (`auth()` on `GET /v2/assets/manage`).
-- **Authorization:** `MANAGE_USERS` (admin) via `checkPermission(PERMISSIONS.ADMIN)` (owner bypass does not apply).
-- **Input validation:** Joi `getAssets` query validation (name/type/sortBy/limit/page).
+- **Auth:** Required on `GET /v2/assets/manage`.
+- **Authorization:** `MANAGE_USERS` (admin); owner bypass does not apply.
+- **Input validation:** Query validated (name/type/sortBy/limit/page).
 - **Rate limiting:** Not applied — `authLimiter` is not wired to the route.
 - **Secrets:** Returns all asset `data` (may include GenAI tokens / runtime credentials) to admins — no per-record secret redaction.
 
@@ -153,7 +155,7 @@ Exposes all asset records to admins (incl. `data` which may hold tokens — admi
 
 ### Description
 
-UI page to manage the current user's assets; the `GENAI-PYTHON` asset editor configures a GenAI endpoint (method/URL/token/request/response fields).
+As a user, I can manage my assets from the My Assets page, and configure a GenAI endpoint (method/URL/token/request/response fields) for a `GENAI-PYTHON` asset, so that GenAI flows use my endpoint.
 
 ### Who uses it / value
 
@@ -161,11 +163,11 @@ End users (manage assets); GenAI integrators (configure endpoints).
 
 ### Acceptance criteria
 
-- Route `/my-assets` (auth) lists the user's assets; create/edit/delete/share; `GENAI-PYTHON` editor captures endpoint config.
+- When I open `/my-assets` (auth), the system lists my assets and lets me create/edit/delete/share them; when I open a `GENAI-PYTHON` asset, the editor captures my endpoint config.
 
 ### Quality control
 
-Open `/my-assets` → your assets listed; configure a GenAI asset → its endpoint used by GenAI flows.
+Open `/my-assets` and confirm your assets are listed; configure a GenAI asset and confirm its endpoint is used by GenAI flows.
 
 ```mermaid
 flowchart TD
@@ -181,9 +183,9 @@ flowchart TD
 Auth required.
 
 **Coverage:**
-- **Auth:** Required (the `/my-assets` route is auth-gated).
-- **Authorization:** Backend list returns own + shared assets (`READ_ASSET`/`WRITE_ASSET`-scoped); the UI gates create/edit/delete/share on the asset permissions.
-- **Input validation:** The GenAI editor captures method/URL/token/fields and submits them as asset `data` (`Joi.any()`, no schema or size guard); no client-side secret redaction.
+- **Auth:** Required on the `/my-assets` route.
+- **Authorization:** The list returns own + shared assets (`READ_ASSET`/`WRITE_ASSET`-scoped); the UI gates create/edit/delete/share on the asset permissions.
+- **Input validation:** The GenAI editor captures method/URL/token/fields and submits them as asset `data` (no schema or size guard); no client-side secret redaction.
 - **Rate limiting:** Not applied — the underlying asset routes have no `authLimiter` wired.
 - **Secrets:** The GenAI auth token is captured and stored in asset `data` (cleartext at rest); it is held in browser memory by the editor.
 
@@ -212,7 +214,7 @@ Auth required.
 
 ### Description
 
-Share an asset with users (by email lookup) with read/write roles; remove access.
+As an asset owner, I can share my asset with other users (found by email) granting read or write access, and revoke that access, so that collaborators can use or modify my runtime/kit.
 
 ### Who uses it / value
 
@@ -220,12 +222,12 @@ Asset owners (delegate runtime/kit access); collaborators (gain access).
 
 ### Acceptance criteria
 
-- `POST /v2/assets/:id/permissions {userId, role}` (auth + `WRITE_ASSET`) → `201` (role enum `read_asset`/`write_asset`); `DELETE /v2/assets/:id/permissions?userId=&role=` (auth + `WRITE_ASSET`) → `204`.
-- Shared users see the asset in their list.
+- When I call `POST /v2/assets/:id/permissions {userId, role}` (auth + `WRITE_ASSET`), the system grants access and returns `201` (role enum `read_asset`/`write_asset`); when I call `DELETE /v2/assets/:id/permissions?userId=&role=` (auth + `WRITE_ASSET`), the system revokes access and returns `204`.
+- Shared users then see the asset in their list.
 
 ### Quality control
 
-Share with a user (by email) → they see the asset and can use it (read_asset) / modify (write_asset); remove → access revoked.
+Share with a user by email and confirm they see the asset and can use it (`read_asset`) or modify it (`write_asset`); remove access and confirm it is revoked.
 
 ```mermaid
 sequenceDiagram
@@ -247,9 +249,9 @@ sequenceDiagram
 Both ops require `WRITE_ASSET` on the asset. Roles are `read_asset`/`write_asset`.
 
 **Coverage:**
-- **Auth:** Required (`auth()` on `POST`/`DELETE /v2/assets/:id/permissions`).
+- **Auth:** Required on `POST`/`DELETE /v2/assets/:id/permissions`.
 - **Authorization:** `WRITE_ASSET` on the asset (owner bypass) for both add and remove.
-- **Input validation:** Joi `addAuthorizedUser`/`deleteAuthorizedUser` — `userId` (objectId/list), `role` enum (`read_asset`/`write_asset`).
+- **Input validation:** `userId` (objectId/list) and `role` enum (`read_asset`/`write_asset`) are validated.
 - **Rate limiting:** Not applied — `authLimiter` is not wired to the route.
 - **Secrets:** No secrets handled directly; the grant exposes asset `data` (which may hold secrets) via `read_asset`/`write_asset`.
 
@@ -265,7 +267,7 @@ Creates/removes authorized-user bindings on the asset; no secrets duplicated.
 - **Stored data:** UserRole binding (role ref scoped to the asset id) — no asset `data` is duplicated.
 - **PII:** No direct PII; the binding references userIds (relationship data).
 - **Retention:** Binding persists until manually revoked (no auto-expiry).
-- **Encryption:** No app-level at-rest encryption for bindings; standard Mongo storage.
+- **Encryption:** No app-level at-rest encryption for bindings; standard storage.
 - **Logging:** Standard logger; no binding-content logging observed.
 
 **Risks:**
@@ -279,7 +281,7 @@ Creates/removes authorized-user bindings on the asset; no secrets duplicated.
 
 ### Description
 
-Add/remove contributors on a model; contributors see the model under "My Contributions" and gain edit access (with `writeModel`).
+As a model owner, I can add or remove contributors on my model so that they see it under "My Contributions" and gain edit access (with `writeModel`).
 
 ### Who uses it / value
 
@@ -287,11 +289,11 @@ Model owners (delegate); contributors (gain access).
 
 ### Acceptance criteria
 
-- `POST /v2/models/:id/permissions` (requires `WRITE_MODEL`) → `201`; `DELETE /v2/models/:id/permissions?userId=&role=` (requires `WRITE_MODEL`) → `204`.
+- When I call `POST /v2/models/:id/permissions` (requires `WRITE_MODEL`), the system adds the contributor and returns `201`; when I call `DELETE /v2/models/:id/permissions?userId=&role=` (requires `WRITE_MODEL`), the system removes them and returns `204`.
 
 ### Quality control
 
-Add a contributor → model appears in their "My Contributions"; remove → gone.
+Add a contributor and confirm the model appears in their "My Contributions"; remove them and confirm it is gone.
 
 ```mermaid
 sequenceDiagram
@@ -312,9 +314,9 @@ sequenceDiagram
 Requires `WRITE_MODEL` on the model.
 
 **Coverage:**
-- **Auth:** Required (`auth()` on `POST`/`DELETE /v2/models/:id/permissions`).
+- **Auth:** Required on `POST`/`DELETE /v2/models/:id/permissions`.
 - **Authorization:** `WRITE_MODEL` on the model (owner bypass).
-- **Input validation:** Joi `modelValidation.addAuthorizedUser`/`deleteAuthorizedUser`.
+- **Input validation:** Contributor add/remove input is validated.
 - **Rate limiting:** Not applied — `authLimiter` is not wired to the route.
 - **Secrets:** No secrets handled; the grant confers `writeModel` access (model data, prototype code).
 
@@ -329,7 +331,7 @@ UserRole bindings scoped to the model.
 - **Stored data:** UserRole binding (role ref scoped to the model id) — no model data is duplicated.
 - **PII:** No direct PII; the binding references userIds (relationship data).
 - **Retention:** Binding persists until manually revoked (no auto-expiry, no audit trail).
-- **Encryption:** No app-level at-rest encryption for bindings; standard Mongo storage.
+- **Encryption:** No app-level at-rest encryption for bindings; standard storage.
 - **Logging:** Standard logger; no binding-content logging observed.
 
 **Risks:**
@@ -344,7 +346,7 @@ UserRole bindings scoped to the model.
 
 ### Description
 
-Reusable dialog to invite users to an object with selectable access levels; remove user access.
+As an object owner, I can invite users to my model or asset by email with a chosen access level, and remove a user's access, so that I can delegate collaboration without leaving the page.
 
 ### Who uses it / value
 
@@ -352,11 +354,11 @@ Object owners (invite collaborators).
 
 ### Acceptance criteria
 
-- `AccessInvitation` dialog used by model/asset sharing flows; pick access level; remove a user's access.
+- When I open the access-invitation dialog on a model or asset, I can pick an access level and invite a user, or remove a user's access; the dialog calls the underlying model/asset permission endpoints.
 
 ### Quality control
 
-Invite a user by email with an access level → they gain that access; remove → revoked.
+Invite a user by email with an access level and confirm they gain that access; remove them and confirm access is revoked.
 
 ```mermaid
 flowchart LR
@@ -372,9 +374,9 @@ flowchart LR
 Invoker must be the object owner / authorized.
 
 **Coverage:**
-- **Auth:** Inherited from the underlying permission endpoints (`auth()` required).
+- **Auth:** Inherited from the underlying permission endpoints (auth required).
 - **Authorization:** Inherited — `WRITE_ASSET`/`WRITE_MODEL` on the object (owner bypass); the dialog is UI-only.
-- **Input validation:** Inherited — Joi validation on the underlying permission endpoints; dialog input is UI-only.
+- **Input validation:** Inherited — validation on the underlying permission endpoints; dialog input is UI-only.
 - **Rate limiting:** Not applied — the underlying routes have no `authLimiter` wired.
 - **Secrets:** None — the dialog owns no state; secrets risk is inherited from the underlying endpoints.
 
@@ -403,7 +405,7 @@ Driven by the underlying permission endpoints (no separate data store).
 
 ### Description
 
-Find a user by exact email (id/name/image) for sharing/collaborator flows.
+As a user sharing an object, I can look up a recipient by exact email and get back their id/name/image so that I can address a sharing invitation.
 
 ### Who uses it / value
 
@@ -411,11 +413,11 @@ Anyone sharing (find recipients).
 
 ### Acceptance criteria
 
-- `GET /v2/search/email/:email` (optional auth via `PUBLIC_VIEWING`) → `200` user or `404` if not found.
+- When I call `GET /v2/search/email/:email` (optional auth via `PUBLIC_VIEWING`), the system returns `200` with the user or `404` if not found.
 
 ### Quality control
 
-Search an existing email → returns the user; a non-existent email → `404`.
+Search an existing email and confirm the user is returned; search a non-existent email and confirm `404`.
 
 ```mermaid
 flowchart LR
@@ -431,9 +433,9 @@ flowchart LR
 Optional auth via `PUBLIC_VIEWING`; returns minimal fields (id/name/image) — no email exposure beyond the queried one.
 
 **Coverage:**
-- **Auth:** Optional via `PUBLIC_VIEWING` (`auth({ optional: ... })`); unauthenticated callers are allowed when `PUBLIC_VIEWING=true`.
-- **Authorization:** None — any caller (authed, or anon under `PUBLIC_VIEWING`) can query by email; no permission check.
-- **Input validation:** Joi `searchUserByEmail` — `email` must be a valid email format.
+- **Auth:** Optional via `PUBLIC_VIEWING`; unauthenticated callers are allowed when `PUBLIC_VIEWING=true`.
+- **Authorization:** None — any caller (authed, or anonymous under `PUBLIC_VIEWING`) can query by email; no permission check.
+- **Input validation:** `email` must be a valid email format.
 - **Rate limiting:** Not applied — `authLimiter` is not wired; enumeration is unthrottled.
 - **Secrets:** None — returns `id`/`name`/`image_file` only.
 
