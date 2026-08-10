@@ -36,6 +36,10 @@ flowchart TD
 
 ## CAP-ASSET-01 — User assets CRUD
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | My Assets (`/me/assets`) | ❌ No | ✅ 1 case, ≈50% (est.) |
+
 ### Description
 
 As a user, I can create, view, edit, and delete my own assets of the types enabled on the instance (default: Cloud Runtime, Hardware Kit, GenAI Python), so that I keep my runtime, kit, and GenAI configurations in one place.
@@ -46,11 +50,11 @@ End users (manage their runtimes/kits/GenAI configs); admins (oversight).
 
 ### Acceptance criteria
 
-- When I create an asset (pick a type from the enabled types, enter a name, and save), it appears in My Assets; when I open it, I see its details; when I edit it, the change persists; when I delete it and confirm, it is gone from my list.
-- When I try to create an asset of a type not enabled on the instance, that type is not offered in the type picker.
-- When I try to view, edit, or delete another user's asset that hasn't been shared with me, I am prevented from accessing it.
-- When I am not signed in, I am prevented from opening My Assets or performing any asset action.
-- When a create, edit, or delete fails, I see an error and my list is unchanged.
+- When a **user** creates an asset (picks a type from the enabled types, enters a name, and saves) at **My Assets (`/me/assets`)**, it appears in their list; when they open it, they see its details; when they edit it, the change persists; when they delete it and confirm, it is gone from their list.
+- When a **user** tries to create an asset of a type not enabled on the instance at **My Assets (`/me/assets`)**, that type is not offered in the type picker.
+- When a **user** tries to view, edit, or delete another user's asset that hasn't been shared with them at **My Assets (`/me/assets`)**, they are prevented from accessing it.
+- When a **guest** (not signed in) tries to open My Assets or perform any asset action at **My Assets (`/me/assets`)**, they are prevented.
+- When a create, edit, or delete fails at **My Assets (`/me/assets`)**, a **user** sees an error and their list is unchanged.
 
 ### API contract
 
@@ -97,7 +101,7 @@ All routes auth; get/update/delete gated by `READ_ASSET`/`WRITE_ASSET` permissio
 
 ### Personal data processing
 
-No — this capability does not process personal data. `created_by` is a userId reference; asset `data` holds credentials/secrets (AutoWRX-operational), not personal data.
+❌ No — this capability does not process personal data. `created_by` is a userId reference; asset `data` holds credentials/secrets (AutoWRX-operational), not personal data.
 
 **Risks:**
 - none — no personal data processed.
@@ -123,6 +127,10 @@ Asset `data` (arbitrary config — endpoint URLs, tokens, kit identity) stored i
 
 ## CAP-ASSET-02 — Admin all-assets view
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin | Backend API (no page) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an admin, I can retrieve every user's assets across the instance (via the API — there is no in-app admin all-assets page) so that I can provide oversight and support.
@@ -133,9 +141,9 @@ Admins (oversight/support).
 
 ### Acceptance criteria
 
-- When I request the admin all-assets view, I see every user's assets across the instance, and can filter by name/type or sort the results.
-- When I am a non-admin, I am prevented from accessing the all-assets view.
-- There is no in-app admin page for this — it is reached via the API.
+- When an **admin** requests the admin all-assets view at **Backend API (no page)**, they see every user's assets across the instance, and can filter by name/type or sort the results.
+- When a **user** who is a non-admin tries to access the all-assets view at **Backend API (no page)**, they are prevented from accessing it.
+- There is no in-app admin page for this — an **admin** reaches it via the API at **Backend API (no page)**.
 
 ### API contract
 
@@ -164,7 +172,7 @@ As an admin, call `GET /v2/assets/manage` and confirm all assets are returned; a
 
 ### Personal data processing
 
-No — this capability does not process personal data. `created_by` references users but no personal fields are returned.
+❌ No — this capability does not process personal data. `created_by` references users but no personal fields are returned.
 
 **Risks:**
 - none — no personal data processed.
@@ -189,6 +197,10 @@ Exposes all asset records to admins (incl. `data` which may hold tokens — admi
 
 ## CAP-ASSET-03 — My Assets
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | My Assets (`/me/assets`) | ❌ No | ✅ 3 cases, ≈100% (est.) |
+
 ### Description
 
 As a user, I can manage my assets from the My Assets page — filtered by type, with create/edit/share/delete actions per asset — and configure a GenAI endpoint (method, URL, access token, request/response fields) for a GenAI Python asset, so that GenAI flows use my endpoint.
@@ -199,11 +211,11 @@ End users (manage assets); GenAI integrators (configure endpoints).
 
 ### Acceptance criteria
 
-- When I open the My Assets page, I see my assets grouped by type tabs (with counts) and can create, edit, share, or delete them from the row actions.
-- When I create or edit a GenAI Python asset, the editor captures my endpoint config (method, URL, access token, request field, response field); when I save, the config is stored on the asset and used by GenAI flows.
-- When I switch type tabs, the list filters to that type; when I have no assets, the page tells me I have none.
-- When I am not signed in, I am prevented from opening the My Assets page.
-- When a create, edit, or delete fails, I see an error and my list is unchanged.
+- When a **user** opens the My Assets page at **My Assets (`/me/assets`)**, they see their assets grouped by type tabs (with counts) and can create, edit, share, or delete them from the row actions.
+- When a **user** creates or edits a GenAI Python asset at **My Assets (`/me/assets`)**, the editor captures their endpoint config (method, URL, access token, request field, response field); when they save, the config is stored on the asset and used by GenAI flows.
+- When a **user** switches type tabs at **My Assets (`/me/assets`)**, the list filters to that type; when they have no assets, the page tells them they have none.
+- When a **guest** (not signed in) tries to open the My Assets page at **My Assets (`/me/assets`)**, they are prevented from opening it.
+- When a create, edit, or delete fails at **My Assets (`/me/assets`)**, a **user** sees an error and their list is unchanged.
 
 ### API contract
 
@@ -246,7 +258,7 @@ Auth required.
 
 ### Personal data processing
 
-No — this capability does not process personal data. The GenAI token is a third-party credential (secret/AutoWRX-operational), not personal data.
+❌ No — this capability does not process personal data. The GenAI token is a third-party credential (secret/AutoWRX-operational), not personal data.
 
 **Risks:**
 - none — no personal data processed.
@@ -271,6 +283,10 @@ No — this capability does not process personal data. The GenAI token is a thir
 
 ## CAP-ASSET-04 — Asset sharing
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner | Share asset dialog | ✅ Yes — invitee email | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an asset owner, I can share my asset with other users (found by email) granting read or write access, and revoke that access, so that collaborators can use or modify my runtime/kit.
@@ -281,10 +297,10 @@ Asset owners (delegate runtime/kit access); collaborators (gain access).
 
 ### Acceptance criteria
 
-- When I open the share dialog for an asset and add a user (by email) with an access level, that user gains the access I chose and the asset appears in their list.
-- When I remove a user's access from the shared-user list, the asset disappears from their list and they can no longer use or modify it.
-- When I am not the owner (or lack write access), I am prevented from sharing or revoking access.
-- When the share or revoke fails, I see an error and the shared-user list is unchanged.
+- When an **owner** opens the share dialog for an asset and adds a user (by email) with an access level at **Share asset dialog**, that user gains the access they chose and the asset appears in their list.
+- When an **owner** removes a user's access from the shared-user list at **Share asset dialog**, the asset disappears from that user's list and they can no longer use or modify it.
+- When a **user** who is not the owner (or lacks write access) tries to share or revoke access at **Share asset dialog**, they are prevented from sharing or revoking.
+- When a share or revoke fails at **Share asset dialog**, an **owner** sees an error and the shared-user list is unchanged.
 
 ### API contract
 
@@ -330,7 +346,7 @@ Both ops require `WRITE_ASSET` on the asset. Roles are `read_asset`/`write_asset
 
 ### Personal data processing
 
-Yes — sharing by email processes the invitee's email to resolve their userId; the email is not persisted by this capability (only the resolved userId binding).
+✅ Yes — sharing by email processes the invitee's email to resolve their userId; the email is not persisted by this capability (only the resolved userId binding).
 
 **Risks:**
 - **Email-based recipient resolution:** the owner enters an invitee email to share; the lookup (CAP-ASSET-07) processes that email. *Mitigation:* none currently — rate-limit the lookup or require admin.
@@ -355,6 +371,10 @@ Creates/removes authorized-user bindings on the asset; no secrets duplicated.
 
 ## CAP-ASSET-05 — Model contributors
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner | Model detail (`/model/:id`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a model owner, I can add or remove contributors on my model so that they see it under "My Contributions" and gain edit access.
@@ -365,9 +385,9 @@ Model owners (delegate); contributors (gain access).
 
 ### Acceptance criteria
 
-- When I add a contributor to my model (via the model's contributor/permission UI), they gain edit access and the model appears in their "My Contributions"; when I remove a contributor, the model disappears from their "My Contributions" and they lose edit access.
-- When I am not the owner (or lack write access on the model), I am prevented from adding or removing contributors.
-- When the add or remove fails, I see an error and the contributor list is unchanged.
+- When an **owner** adds a contributor to their model (via the model's contributor/permission UI) at **Model detail (`/model/:id`)**, the contributor gains edit access and the model appears in their "My Contributions"; when they remove a contributor, the model disappears from their "My Contributions" and they lose edit access.
+- When a **user** who is not the owner (or lacks write access on the model) tries to add or remove contributors at **Model detail (`/model/:id`)**, they are prevented from adding or removing.
+- When an add or remove fails at **Model detail (`/model/:id`)**, an **owner** sees an error and the contributor list is unchanged.
 
 ### API contract
 
@@ -409,7 +429,7 @@ Requires `WRITE_MODEL` on the model.
 
 ### Personal data processing
 
-No — this capability does not process personal data. The binding references userIds (relationship data); no email or profile fields are processed here.
+❌ No — this capability does not process personal data. The binding references userIds (relationship data); no email or profile fields are processed here.
 
 **Risks:**
 - none — no personal data processed.
@@ -435,6 +455,10 @@ UserRole bindings scoped to the model.
 
 ## CAP-ASSET-06 — Access invitation
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner | Access invitation dialog | ✅ Yes — invitee email | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an object owner, I can invite users to my model or asset by email with a chosen access level, and remove a user's access, from the access-invitation dialog, so that I can delegate collaboration without leaving the page.
@@ -445,10 +469,10 @@ Object owners (invite collaborators).
 
 ### Acceptance criteria
 
-- When I open the access-invitation dialog on a model or asset, I can pick an access level, search for and select one or more users, and click Invite to grant them that access.
-- When I remove a user's access from the dialog, that user loses access to the object.
-- When I am not the owner (or lack write access), I am prevented from opening the dialog or its actions fail.
-- When an invite or remove fails, I see an error toast and the access list is unchanged.
+- When an **owner** opens the access-invitation dialog on a model or asset at **Access invitation dialog**, they can pick an access level, search for and select one or more users, and click Invite to grant them that access.
+- When an **owner** removes a user's access from the dialog at **Access invitation dialog**, that user loses access to the object.
+- When a **user** who is not the owner (or lacks write access) tries to open the dialog or its actions at **Access invitation dialog**, they are prevented or the actions fail.
+- When an invite or remove fails at **Access invitation dialog**, an **owner** sees an error toast and the access list is unchanged.
 
 ### API contract
 
@@ -488,7 +512,7 @@ Invoker must be the object owner / authorized.
 
 ### Personal data processing
 
-Yes — the dialog invites users by email, processing the invitee's email to address a sharing invitation (resolved via CAP-ASSET-07); nothing is stored by the dialog itself.
+✅ Yes — the dialog invites users by email, processing the invitee's email to address a sharing invitation (resolved via CAP-ASSET-07); nothing is stored by the dialog itself.
 
 **Risks:**
 - **Invitee email processing:** the owner enters an invitee email in the dialog; the email is passed to the lookup/permission endpoints. *Mitigation:* none currently — rate-limit the email lookup or require admin.
@@ -513,6 +537,10 @@ Driven by the underlying permission endpoints (no separate data store).
 
 ## CAP-ASSET-07 — User lookup by email
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Access invitation dialog (search field) | ✅ Yes — email + name/avatar | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a user sharing an object, I can look up a recipient by exact email from the invite/search field and get back their name and avatar so that I can address a sharing invitation.
@@ -523,10 +551,10 @@ Anyone sharing (find recipients).
 
 ### Acceptance criteria
 
-- When I type an email into the collaborator search field and the email matches a user, I see that user (name/avatar) and can select them as a recipient.
-- When the email does not match any user, I am told no user was found.
-- When I am not signed in and the instance does not allow anonymous browsing, I am prevented from looking up users by email.
-- When I submit an invalid email format, the lookup is rejected.
+- When a **user** types an email into the collaborator search field at **Access invitation dialog (search field)** and the email matches a user, they see that user (name/avatar) and can select them as a recipient.
+- When a **user** types an email that does not match any user at **Access invitation dialog (search field)**, they are told no user was found.
+- When a **guest** (not signed in) and the instance does not allow anonymous browsing tries to look up users by email at **Access invitation dialog (search field)**, they are prevented from looking up.
+- When a **user** submits an invalid email format at **Access invitation dialog (search field)**, the lookup is rejected.
 
 ### API contract
 
@@ -565,7 +593,7 @@ Optional auth via `PUBLIC_VIEWING`; returns minimal fields (id/name/image) — n
 
 ### Personal data processing
 
-Yes — the email query key is personal data, and the response returns the matched user's `name`/`image_file` (profile data).
+✅ Yes — the email query key is personal data, and the response returns the matched user's `name`/`image_file` (profile data).
 
 **Risks:**
 - **Email-based enumeration:** the email is the lookup key and the response returns profile fields; processing personal data for matching. *Mitigation:* none currently — rate-limit the lookup or require admin.

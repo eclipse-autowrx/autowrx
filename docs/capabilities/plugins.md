@@ -35,6 +35,10 @@ flowchart TD
 
 ## CAP-PLUGIN-01 — Plugin registry & CRUD
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner (plugin author) | My Plugins (`/me/plugins`) · Plugin list (public) | ❌ No | ✅ 3 cases, ≈60% (est.) |
+
 ### Description
 
 As a plugin author, I can publish a plugin (for prototype tabs or for deploy/staging stages) from the plugin form by entering a name, description, image, entry-point URL, and configuration, so that model owners and admins can attach it as a workspace tab or a deploy/staging stage. The slug is generated from the name and edits are ownership-gated.
@@ -45,11 +49,11 @@ Plugin authors (publish plugins); model owners/admins (attach plugins as addon t
 
 ### Acceptance criteria
 
-- When I open the plugin create form, fill in the name, description, image, URL, and config, and save, my plugin is created and appears in the plugin list with a slug auto-generated from the name.
-- When I open and edit my own plugin, my changes are saved; when I try to edit or delete another author's plugin, I am prevented (the action is denied).
-- When I edit a plugin, the slug cannot be changed.
-- When I browse the public plugin list, I see all published plugins; when I open my own plugins view, I see only the plugins I own.
-- When the required fields (name, URL) are missing, the Save button is disabled and I cannot publish.
+- When an **owner** opens the plugin create form at **My Plugins (`/me/plugins`)**, fills in the name, description, image, URL, and config, and saves, they see their plugin created in the plugin list with a slug auto-generated from the name.
+- When an **owner** edits their own plugin at **My Plugins (`/me/plugins`)**, their changes are saved; when an **owner** tries to edit or delete another author's plugin at **My Plugins (`/me/plugins`)**, they are prevented (the action is denied).
+- When an **owner** edits a plugin at **My Plugins (`/me/plugins`)**, the slug cannot be changed.
+- When an **owner** browses the public plugin list at **Plugin list (public)**, they see all published plugins; when an **owner** opens their own plugins view at **My Plugins (`/me/plugins`)**, they see only the plugins they own.
+- When an **owner** leaves the required fields (name, URL) missing at **My Plugins (`/me/plugins`)**, the Save button is disabled and they cannot publish.
 
 ### API contract
 
@@ -87,7 +91,7 @@ Reads public; writes require auth + ownership (or admin). The upload admin gate 
 - **Commented-out admin gate:** with the `ADMIN` check disabled on upload, any authenticated user can publish plugins, lowering the bar for injecting malicious code into the registry. *Mitigation:* none currently — re-enable the admin gate on the upload route.
 
 ### Personal data processing
-No — this capability does not process personal data directly; `created_by`/`updated_by` are user ObjectIds (no email/name PII collected).
+❌ No — this capability does not process personal data directly; `created_by`/`updated_by` are user ObjectIds (no email/name PII collected).
 N/A.
 **Risks:**
 - none — no personal data processed. (Author-identity linkage via `created_by`/`updated_by` ObjectIds is tracked under AutoWRX data.)
@@ -112,6 +116,10 @@ Plugin metadata + `config` (Mixed) stored in `plugins` with `created_by`/`update
 
 ## CAP-PLUGIN-02 — Internal plugin upload & static hosting
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner (plugin author) | My Plugins (`/me/plugins`) (upload form) | ❌ No | ✅ 1 case, ≈40% (est.) |
+
 ### Description
 
 As a plugin author, I can upload a plugin as a zip bundle and have AutoWRX host it for me, so that I do not need an external CDN. AutoWRX extracts the bundle and detects the entry point automatically.
@@ -122,9 +130,9 @@ Plugin authors (host plugins without an external CDN); admins (bundle system plu
 
 ### Acceptance criteria
 
-- When I open the plugin form, enter a name, choose "Upload ZIP", and select a zip file, the bundle is uploaded and extracted, and the entry-point URL is filled in for me.
-- When I re-upload to a slug I own, my bundle is updated; when I upload to a slug owned by another non-admin user, I am prevented (the action is denied).
-- When the upload or extraction fails, I see an error message and the URL is not set.
+- When an **owner** opens the plugin form at **My Plugins (`/me/plugins`)**, enters a name, chooses "Upload ZIP", and selects a zip file, the bundle is uploaded and extracted, and the entry-point URL is filled in for them.
+- When an **owner** re-uploads to a slug they own at **My Plugins (`/me/plugins`)**, their bundle is updated; when an **owner** uploads to a slug owned by another non-admin user at **My Plugins (`/me/plugins`)**, they are prevented (the action is denied).
+- When an upload or extraction fails at **My Plugins (`/me/plugins`)**, the **owner** sees an error message and the URL is not set.
 
 ### API contract
 
@@ -166,7 +174,7 @@ Auth required; ownership enforced on existing slug. Upload accepts any file type
 - **Unrestricted file type:** accepting any file type with only a 50 MB cap allows non-JS payloads (e.g. large binary blobs, polyglot files) to be hosted and abused for storage abuse or content-type confusion attacks. *Mitigation:* none currently — restrict accepted MIME types and validate bundle entrypoints.
 
 ### Personal data processing
-No — this capability does not process personal data; the bundle is code, not designed to hold PII (embedded data is an author responsibility).
+❌ No — this capability does not process personal data; the bundle is code, not designed to hold PII (embedded data is an author responsibility).
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -191,6 +199,10 @@ Plugin bundle served publicly from `/plugin/<slug>/`; the bundle can contain arb
 
 ## CAP-PLUGIN-03 — Plugin loader
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Plugin tab (runtime) | ❌ No | ✅ 2 cases, ≈50% (est.) |
+
 ### Description
 
 As an end user, when I open a plugin tab, the plugin loads and runs inside the tab so I can use it; switching tabs and coming back keeps the plugin ready without reloading, so the experience is fast and stable.
@@ -201,10 +213,10 @@ End users (plugin renders in tabs); plugin authors (the load contract).
 
 ### Acceptance criteria
 
-- When I open a tab that shows a plugin, the plugin loads and renders inside the tab.
-- When I switch to another tab and come back, the plugin is still there without reloading.
-- When a plugin fails to load or register in time, I see a loading indicator followed by a timeout/error message instead of the plugin UI.
-- When the plugin has no entry-point URL configured, I see an error message that the plugin has no URL.
+- When a **user** opens a tab that shows a plugin at **Plugin tab (runtime)**, the plugin loads and renders inside the tab.
+- When a **user** switches to another tab and comes back at **Plugin tab (runtime)**, the plugin is still there without reloading.
+- When a plugin fails to load or register in time at **Plugin tab (runtime)**, the **user** sees a loading indicator followed by a timeout/error message instead of the plugin UI.
+- When the plugin has no entry-point URL configured at **Plugin tab (runtime)**, the **user** sees an error message that the plugin has no URL.
 
 ### API contract
 
@@ -243,7 +255,7 @@ Same-origin, unsandboxed — full DOM/window access. Only public site configs su
 - **Advisory-only `editable`:** the `editable` flag is advisory; a plugin can ignore it and mutate model data despite the user lacking `WRITE_MODEL`, causing unauthorized data modification. *Mitigation:* none currently — enforce write checks server-side on every `PluginAPI` mutation, do not trust the client-side `editable` flag.
 
 ### Personal data processing
-No — this capability does not process personal data; `data` (model/prototype contents) may carry proprietary vehicle data but no email/name PII.
+❌ No — this capability does not process personal data; `data` (model/prototype contents) may carry proprietary vehicle data but no email/name PII.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -268,6 +280,10 @@ Plugin receives `data` (model/prototype), public site `config`, and the `PluginA
 
 ## CAP-PLUGIN-04 — Plugin preloading
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Plugin tab (runtime) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an end user, when I open a model with plugin tabs, the system prefetches plugin scripts in the background so that opening a tab is instant.
@@ -278,8 +294,8 @@ End users (faster tab loads).
 
 ### Acceptance criteria
 
-- When I open a model that has plugin tabs or staging plugins, the plugin scripts are fetched in the background while the page is idle, so that when I open a plugin tab it appears instantly.
-- I am not blocked or slowed down by the prefetching happening in the background.
+- When a **user** opens a model that has plugin tabs or staging plugins at **Plugin tab (runtime)**, the plugin scripts are fetched in the background while the page is idle, so that when they open a plugin tab it appears instantly.
+- When a **user** browses the model at **Plugin tab (runtime)**, they are not blocked or slowed down by the prefetching happening in the background.
 
 ### API contract
 
@@ -314,7 +330,7 @@ Prefetches external URLs with `credentials:'omit'`.
 - **Untrusted bundle warmed:** prefetching warms the cache for a bundle that will execute unsandboxed; a compromised external host can swap the bundle between prefetch and load, defeating integrity assumptions. *Mitigation:* none currently — plugins run unsandboxed by design; only install trusted plugins, and don't pass tokens/PII into PluginAPI/config/data.
 
 ### Personal data processing
-No — this capability does not process personal data; prefetch sends no cookies (`credentials:'omit'`) and no PII.
+❌ No — this capability does not process personal data; prefetch sends no cookies (`credentials:'omit'`) and no PII.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -338,6 +354,10 @@ Only fetches public bundle URLs.
 
 ## CAP-PLUGIN-05 — Sample plugins
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user (plugin author) | Static hosting (no page) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a plugin author, I can reference two sample plugins (`sample-tsx` and `sample-esm`) to learn the registration contract, so that I can build my own plugin correctly.
@@ -348,8 +368,8 @@ Plugin authors (reference implementations).
 
 ### Acceptance criteria
 
-- When I open a sample plugin, it renders and demonstrates how a plugin registers and runs in a tab.
-- When I build the TSX sample, I get a runnable bundle I can upload and load via the test page.
+- When a **user** opens a sample plugin at **Static hosting (no page)**, it renders and demonstrates how a plugin registers and runs in a tab.
+- When a **user** builds the TSX sample at **Static hosting (no page)**, they get a runnable bundle they can upload and load via the test page.
 
 ### API contract
 
@@ -375,7 +395,7 @@ Same as any plugin (unsandboxed).
 - **Static asset tampering:** samples live under `backend/static/plugin/`; if write access is not restricted, an attacker who can modify them can poison the reference implementation every author trusts. *Mitigation:* none currently — restrict write access to the static plugin directory; serve samples as read-only.
 
 ### Personal data processing
-No — this capability does not process personal data; samples are static reference bundles with no user data.
+❌ No — this capability does not process personal data; samples are static reference bundles with no user data.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -399,6 +419,10 @@ Static sample assets.
 
 ## CAP-PLUGIN-06 — Addon select / custom tab editor
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner (model owner) / admin | Addon select dialog (`/model/:id`) | ❌ No | ✅ 2 cases, ≈50% (est.) |
+
 ### Description
 
 As a model owner (or admin), I can add a plugin as a custom tab, reorder/edit/hide tabs, set a variant, configure a sidebar plugin and right-nav action buttons (including the built-in Staging), and choose the open mode (dialog/page), so that I can customize the workspace for my model.
@@ -409,10 +433,10 @@ Model owners (customize workspace); admins.
 
 ### Acceptance criteria
 
-- When I open the tab editor for my model, I can add a plugin as a custom tab, reorder tabs, hide tabs, set a variant, configure a sidebar plugin and right-nav action buttons (including the built-in Staging), and choose the open mode (dialog or page).
-- When I am a non-admin without permission to manage addons, the tab editor is unavailable to me; admins can always manage tabs.
-- When I save my tab layout, the configuration persists on the model and the workspace reflects my changes on the next open.
-- When I add an addon tab, it renders the referenced plugin in the workspace.
+- When an **owner** opens the tab editor for their model at **Addon select dialog (`/model/:id`)**, they can add a plugin as a custom tab, reorder tabs, hide tabs, set a variant, configure a sidebar plugin and right-nav action buttons (including the built-in Staging), and choose the open mode (dialog or page).
+- When a **user** without permission to manage addons opens the tab editor at **Addon select dialog (`/model/:id`)**, the tab editor is unavailable to them; **admins** can always manage tabs.
+- When an **owner** saves their tab layout at **Addon select dialog (`/model/:id`)**, the configuration persists on the model and the workspace reflects their changes on the next open.
+- When an **owner** adds an addon tab at **Addon select dialog (`/model/:id`)**, it renders the referenced plugin in the workspace.
 
 ### API contract
 
@@ -452,7 +476,7 @@ sequenceDiagram
 - **Supply-chain via referenced plugin IDs:** tab config references plugin IDs/slugs; if a referenced plugin is later compromised, the layout becomes a dormant delivery channel for malicious code. *Mitigation:* none currently — pin plugin versions or re-validate referenced plugins on load.
 
 ### Personal data processing
-No — this capability does not process personal data; tab/layout config references plugin IDs/slugs and layout only.
+❌ No — this capability does not process personal data; tab/layout config references plugin IDs/slugs and layout only.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -477,6 +501,10 @@ Tab/layout config on the model document.
 
 ## CAP-PLUGIN-07 — My Plugins & admin Plugin management
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner (plugin author) / admin | My Plugins (`/me/plugins`) · Admin → Plugins (`/admin/plugins`) | ❌ No | ✅ 3 cases, ≈60% (est.) |
+
 ### Description
 
 As a plugin author, I can manage my own plugins from the My Plugins page (create, edit, delete), so that I can publish and maintain my work. As an admin, I can manage all plugins from the admin Plugin Management page across four sections (Prototype Plugin, Deployment Plugin, Vehicle API Schema, Vehicle API/custom sets) and configure deploy plugins per staging stage.
@@ -487,11 +515,11 @@ Plugin authors (manage own plugins); admins (manage all + custom APIs).
 
 ### Acceptance criteria
 
-- When I open the My Plugins page, I can create, edit, and delete my own plugins.
-- When I am a non-admin and addon configuration is restricted to admins, the My Plugins page is hidden from me.
-- When I open the admin Plugin Management page, I see four sections; when custom API sets are disabled for the tenant, the Vehicle API Schema and Vehicle API/custom sets sections are hidden.
-- When I am not an admin and open the admin Plugin Management page, I see an "Access denied" message.
-- When I configure a deploy plugin per staging stage as an admin, that plugin launches from Staging.
+- When an **owner** opens the My Plugins page at **My Plugins (`/me/plugins`)**, they can create, edit, and delete their own plugins.
+- When a **user** who is a non-admin and whose addon configuration is restricted to admins views the navigation at **My Plugins (`/me/plugins`)**, the My Plugins page is hidden from them.
+- When an **admin** opens the admin Plugin Management page at **Admin → Plugins (`/admin/plugins`)**, they see four sections; when custom API sets are disabled for the tenant, the Vehicle API Schema and Vehicle API/custom sets sections are hidden.
+- When a **user** who is not an admin opens the admin Plugin Management page at **Admin → Plugins (`/admin/plugins`)**, they see an "Access denied" message.
+- When an **admin** configures a deploy plugin per staging stage at **Admin → Plugins (`/admin/plugins`)**, that plugin launches from Staging.
 
 ### API contract
 
@@ -532,7 +560,7 @@ My Plugins auth; admin `MANAGE_USERS`; non-admin visibility gated by addon flag.
 - **Deploy-plugin execution context:** deploy plugins configured per staging stage run in the staging/deploy pipeline; a malicious deploy plugin can interfere with deployments or exfiltrate build artifacts. *Mitigation:* none currently — plugins run unsandboxed by design; only install trusted plugins, and don't pass tokens/PII into PluginAPI/config/data.
 
 ### Personal data processing
-No — this capability does not process personal data directly; `created_by`/`updated_by` are user ObjectIds (no email/name PII collected).
+❌ No — this capability does not process personal data directly; `created_by`/`updated_by` are user ObjectIds (no email/name PII collected).
 N/A.
 **Risks:**
 - none — no personal data processed. (Author-identity linkage via `created_by`/`updated_by` ObjectIds is tracked under AutoWRX data.)

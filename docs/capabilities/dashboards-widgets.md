@@ -41,6 +41,10 @@ flowchart TD
 
 ## CAP-DASHBOARD-01 — Dashboard renderer
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Dashboard (runtime) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an end user, I can view a prototype's dashboard and watch widgets update live with runtime signal values, so that I can visualize the prototype's behavior. The dashboard supports a fullscreen mode and notifies widgets of run/stop events.
@@ -51,10 +55,10 @@ End users (visualize prototype behavior); demo audiences.
 
 ### Acceptance criteria
 
-- When I open a prototype's dashboard, the widgets render and update live as runtime signal values change.
-- When the prototype starts or stops, every widget reflects the run/stop state.
-- When I toggle fullscreen, I get an immersive view with a toolbar showing the site logo and branding.
-- When I don't have permission to view the prototype, I cannot open the dashboard.
+- When a **user** opens a prototype's dashboard at **Dashboard (runtime)**, the widgets render and update live as runtime signal values change.
+- When the prototype starts or stops at **Dashboard (runtime)**, every widget reflects the run/stop state.
+- When a **user** toggles fullscreen at **Dashboard (runtime)**, they get an immersive view with a toolbar showing the site logo and branding.
+- When a **user** without permission to view the prototype opens the dashboard at **Dashboard (runtime)**, they are prevented from opening it.
 
 ### API contract
 
@@ -91,7 +95,7 @@ Read `READ_MODEL`. Widgets are third-party iframes — same-origin policy depend
 - **postMessage leakage:** runtime signal values are broadcast to all widget iframes on the dashboard; a hostile widget receives every signal the prototype emits, even values it was not meant to see. *Mitigation:* none currently — scope `postMessage` targets per-widget and validate widget origins.
 
 ### Personal data processing
-No — this capability does not process personal data; `widget_config` holds widget definitions/options and runtime signal values are transient.
+❌ No — this capability does not process personal data; `widget_config` holds widget definitions/options and runtime signal values are transient.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -116,6 +120,10 @@ N/A.
 
 ## CAP-DASHBOARD-02 — Dashboard editor
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner (prototype author) / admin | Dashboard editor (`/model/:id/prototype/:id?tab=dashboard`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a prototype author, I can compose a dashboard on a 5×2 grid — place, move, edit, and delete widgets from Built-in / Marketplace / by URL, edit options and boxes, use a "used signals" helper, and open in Web Studio — so that my prototype has a tailored live view. The default dashboard template auto-applies on first open.
@@ -126,11 +134,11 @@ Prototype authors (compose dashboards).
 
 ### Acceptance criteria
 
-- When I open the dashboard editor, I can place, move, edit, and delete widgets on the 5×2 grid, add widgets from Built-in, Marketplace, or by URL, edit options and boxes, and use a "used signals" helper.
-- When I open a dashboard for the first time, the default template auto-applies.
-- When I save my layout, it persists to the prototype and shows on the next open.
-- When I try to save the layout as a template, only the admin action succeeds; non-admins do not see the "Save as Template" option.
-- When my widget placement is invalid (discrete cells or overlaps), I see a warning and cannot save that layout.
+- When an **owner** opens the dashboard editor at **Dashboard editor (`/model/:id/prototype/:id?tab=dashboard`)**, they can place, move, edit, and delete widgets on the 5×2 grid, add widgets from Built-in, Marketplace, or by URL, edit options and boxes, and use a "used signals" helper.
+- When an **owner** opens a dashboard for the first time at **Dashboard editor (`/model/:id/prototype/:id?tab=dashboard`)**, the default template auto-applies.
+- When an **owner** saves their layout at **Dashboard editor (`/model/:id/prototype/:id?tab=dashboard`)**, it persists to the prototype and shows on the next open.
+- When an **owner** tries to save the layout as a template at **Dashboard editor (`/model/:id/prototype/:id?tab=dashboard`)**, only the **admin** action succeeds; non-admins do not see the "Save as Template" option.
+- When an **owner**'s widget placement is invalid (discrete cells or overlaps) at **Dashboard editor (`/model/:id/prototype/:id?tab=dashboard`)**, they see a warning and cannot save that layout.
 
 ### API contract
 
@@ -167,7 +175,7 @@ Edit `READ_MODEL`; save-as-template admin. Marketplace widgets from `DEFAULT_MAR
 - **Save-as-template escalation:** if the admin-only gate on "Save as Template" were bypassed, a non-admin could publish a malicious dashboard as a default applied to all new dashboards. *Mitigation:* admin gate enforced on "Save as Template"; audit for gate regressions.
 
 ### Personal data processing
-No — this capability does not process personal data; widget config holds URLs/options and may reference runtime signals.
+❌ No — this capability does not process personal data; widget config holds URLs/options and may reference runtime signals.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -192,6 +200,10 @@ Widget config (URLs/options) stored in `prototype.widget_config`; options may re
 
 ## CAP-DASHBOARD-03 — Widget sources (Built-in / Marketplace / URL)
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner (author) | Dashboard editor (`/model/:id/prototype/:id?tab=dashboard`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an author, I can add widgets from three sources — the Built-in library, the Marketplace, or a direct URL — so that I can pick the right visualization for my dashboard.
@@ -202,9 +214,9 @@ Authors (pick widgets); marketplace providers (distribute widgets).
 
 ### Acceptance criteria
 
-- When I open the widget library, I see tabs for Built-in and Marketplace widgets, plus a "by URL" option.
-- When I pick a Built-in widget, it renders from the built-in library; when I pick a Marketplace widget, it is fetched from the configured marketplace; when I provide a direct URL, the widget loads from that URL.
-- When the marketplace is not configured or unreachable, the Marketplace tab is hidden or empty.
+- When an **owner** opens the widget library at **Dashboard editor (`/model/:id/prototype/:id?tab=dashboard`)**, they see tabs for Built-in and Marketplace widgets, plus a "by URL" option.
+- When an **owner** picks a Built-in widget at **Dashboard editor (`/model/:id/prototype/:id?tab=dashboard`)**, it renders from the built-in library; when they pick a Marketplace widget, it is fetched from the configured marketplace; when they provide a direct URL, the widget loads from that URL.
+- When the marketplace is not configured or unreachable at **Dashboard editor (`/model/:id/prototype/:id?tab=dashboard`)**, the Marketplace tab is hidden or empty.
 
 ### API contract
 
@@ -242,7 +254,7 @@ Marketplace/URL widgets are remote third-party content — render in iframes; ve
 - **Mixed-content / origin bypass:** URL widgets loaded over plain HTTP or from untrusted origins bypass the same-origin protections assumed for builtin widgets. *Mitigation:* none currently — reject non-HTTPS widget URLs and sandbox iframes by origin.
 
 ### Personal data processing
-No — this capability does not process personal data; widget URLs/options are stored in widget config.
+❌ No — this capability does not process personal data; widget URLs/options are stored in widget config.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -266,6 +278,10 @@ Widget URLs/options stored in widget config.
 
 ## CAP-DASHBOARD-04 — Builtin widgets hosting
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Static hosting (no page) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an author, I can add ready-made widget bundles (3d-car, chart-signals, image-by-api-value, signal-list-settable, simple-fan, simple-wiper, single-api, terminal) to my dashboard from the Built-in library, so that I get instant visualizations without building my own. They are hosted and served for me automatically.
@@ -276,8 +292,8 @@ Authors (ready-made widgets); end users (visualizations).
 
 ### Acceptance criteria
 
-- When I browse the Built-in tab in the widget library, I see the ready-made widgets listed.
-- When I add a builtin widget to my dashboard, it renders and works without any extra setup.
+- When a **user** browses the Built-in tab in the widget library at **Dashboard editor (`/model/:id/prototype/:id?tab=dashboard`)**, they see the ready-made widgets listed.
+- When a **user** adds a builtin widget to their dashboard at **Dashboard editor (`/model/:id/prototype/:id?tab=dashboard`)**, it renders and works without any extra setup.
 
 ### API contract
 
@@ -303,7 +319,7 @@ Public static; no auth.
 - **Unauthed asset enumeration:** public unauthenticated serving lets anyone enumerate and fingerprint the platform's widget versions and shared libraries for targeted exploits. *Mitigation:* none currently — public static serving is by design; keep bundles free of secrets and version-stamp assets to aid rotation.
 
 ### Personal data processing
-No — this capability does not process personal data; static widget bundles and shared libs contain no user data.
+❌ No — this capability does not process personal data; static widget bundles and shared libs contain no user data.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -327,6 +343,10 @@ Static assets only.
 
 ## CAP-DASHBOARD-05 — Dashboard templates
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin (authors observe) | Admin → Dashboard Templates (`/admin/dashboard-templates`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an admin, I can create named dashboard layout presets (with one default template and public/private visibility) so that authors get a standard dashboard layout to start from.
@@ -337,11 +357,11 @@ Admins (standardize dashboards); authors (quick-start).
 
 ### Acceptance criteria
 
-- When I open the dashboard template manager, I see the list of templates; when I create a new template (name, description, layout), it appears in the manager.
-- When I set a template as default, it auto-applies to new dashboards on first open.
-- When I edit or delete a template, my changes take effect in the manager.
-- When I am a non-admin, I cannot create, edit, or delete templates (the admin actions are unavailable).
-- When I open a dashboard and a default template exists, the default layout auto-applies.
+- When an **admin** opens the dashboard template manager at **Admin → Dashboard Templates (`/admin/dashboard-templates`)**, they see the list of templates; when they create a new template (name, description, layout), it appears in the manager.
+- When an **admin** sets a template as default at **Admin → Dashboard Templates (`/admin/dashboard-templates`)**, it auto-applies to new dashboards on first open.
+- When an **admin** edits or deletes a template at **Admin → Dashboard Templates (`/admin/dashboard-templates`)**, their changes take effect in the manager.
+- When a **user** who is a non-admin opens the dashboard template manager at **Admin → Dashboard Templates (`/admin/dashboard-templates`)**, they cannot create, edit, or delete templates (the admin actions are unavailable).
+- When an **owner** opens a dashboard at **Dashboard editor (`/model/:id/prototype/:id?tab=dashboard`)** and a default template exists, the default layout auto-applies.
 
 ### API contract
 
@@ -375,7 +395,7 @@ Read public; write `MANAGE_USERS`.
 - **Visibility misconfiguration:** a template's public/private visibility controls who can use it; a wrong default could expose a private template's widget layout to all authors. *Mitigation:* `visibility` is enum-validated; audit default visibility values on creation.
 
 ### Personal data processing
-No — this capability does not process personal data; templates hold `widget_config` (Mixed) and `created_by`/`updated_by` ObjectIds only.
+❌ No — this capability does not process personal data; templates hold `widget_config` (Mixed) and `created_by`/`updated_by` ObjectIds only.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -399,6 +419,10 @@ Template `widget_config` stored; no secrets.
 
 ## CAP-DASHBOARD-06 — Widget ProtoPilot (GenAI widgets) — roadmap
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner (author) | Widget library (roadmap) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an author, I will be able to generate a widget from a prompt (roadmap), so that I can add custom visualizations without writing widget code.
@@ -409,7 +433,7 @@ Authors (generate widgets without coding).
 
 ### Acceptance criteria
 
-- When I open the widget library, I see a "coming soon" placeholder — not implemented yet.
+- When an **owner** opens the widget library at **Dashboard editor (`/model/:id/prototype/:id?tab=dashboard`)**, they see a "coming soon" placeholder — not implemented yet.
 
 ### API contract
 
@@ -434,7 +458,7 @@ N/A.
 - **Future generated-code execution:** once implemented, GenAI-generated widgets would run as third-party iframes; without sandboxing/output validation, prompt-injection could yield widgets that exfiltrate runtime signals. *Mitigation:* none currently — not implemented; when built, sandbox generated widget iframes and validate GenAI output before persisting.
 
 ### Personal data processing
-No — this capability does not process personal data (not implemented; placeholder "coming soon").
+❌ No — this capability does not process personal data (not implemented; placeholder "coming soon").
 N/A.
 **Risks:**
 - none — no personal data processed.

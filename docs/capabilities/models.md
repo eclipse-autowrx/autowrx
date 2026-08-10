@@ -39,6 +39,10 @@ flowchart TD
 
 ## CAP-MODEL-01 — Model list / create / import
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Models page (`/model`) | ❌ No | ✅ 4 cases, ≈55% (est.) |
+
 ### Description
 
 As a user, I can browse vehicle models in three sections — My Models, My Contributions, and Public — to discover models to build on. As a model owner, I can create a new model or import one from a ZIP file to start prototyping.
@@ -49,12 +53,12 @@ End users (discover models); model owners (create/import); the wider community (
 
 ### Acceptance criteria
 
-- When I open the Models page, I see models grouped into My Models, My Contributions, and Public (signed-out users see only Public, when public viewing is allowed).
-- When I search by name, the list filters live; when I switch tabs, the corresponding section scrolls into view.
-- When I click "Create New Model" and fill in the form, my new model is created and I'm taken to its detail page; it appears under "My Models".
-- When I import a model from a ZIP file, the model is created from the archive; if a model with the same name already exists, I'm prompted to choose a different name (with a suggested alternative) before importing.
-- When the archive is invalid or unreadable, I see an "Import failed" message.
-- When I'm signed out and public viewing is off, I'm prompted to sign in instead of seeing the list.
+- When a **user** opens the Models page (`/model`), they see models grouped into My Models, My Contributions, and Public (a **guest** sees only Public, when public viewing is allowed).
+- When a **user** searches by name at the Models page (`/model`), the list filters live; when they switch tabs, the corresponding section scrolls into view.
+- When a **user** clicks "Create New Model" and fills in the form at the Models page (`/model`), their new model is created and they're taken to its detail page; it appears under "My Models".
+- When a **user** imports a model from a ZIP file at the Models page (`/model`), the model is created from the archive; if a model with the same name already exists, they're prompted to choose a different name (with a suggested alternative) before importing.
+- When a **user** imports an invalid or unreadable archive at the Models page (`/model`), they see an "Import failed" message.
+- When a **guest** visits the Models page (`/model`) with public viewing off, they're prompted to sign in instead of seeing the list.
 
 ### API contract
 
@@ -94,7 +98,7 @@ Reading is optional via `PUBLIC_VIEWING`; creating a model requires me to be sig
 - **Anonymous model creation:** a missing auth check on `POST` would let anonymous users spawn models inside any tenant, polluting namespaces and consuming storage. *Mitigation:* `POST /v2/models` requires auth and attaches the signed-in user as `created_by`; keep the auth middleware on the route and enforce the per-user 3-model cap server-side.
 
 ### Personal data processing
-No — this capability does not process personal data. (`created_by` is a user reference, not personal data; no email/name is stored on the model.)
+❌ No — this capability does not process personal data. (`created_by` is a user reference, not personal data; no email/name is stored on the model.)
 N/A
 **Risks:**
 - none — no personal data processed.
@@ -117,6 +121,10 @@ Model metadata (name, description, visibility, state, images, tags) stored in th
 
 ## CAP-MODEL-02 — Model detail / edit
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner | Model detail (`/model/:id`) | ✅ Yes — contributor/member user identities (masked emails) | ⚠️ 4 cases, ≈50% (est.) |
+
 ### Description
 
 As a model owner or contributor, I can view and edit a model's name, home image, vehicle properties, visibility (public/private), state (draft/released/blocked), and contributors so that the model stays accurate and discoverable. As a consumer, I can export the model as a ZIP archive or download its computed VSS JSON to use the model elsewhere, and (as owner) delete a model I no longer need.
@@ -127,14 +135,14 @@ Model owners (maintain models); contributors (collaborate); consumers (export/do
 
 ### Acceptance criteria
 
-- When I open a model's detail page, I see its name, home image, vehicle properties, visibility, state, and contributors.
-- When I have edit rights, I see Edit, Export, Download, and Delete actions; when I don't, those actions are hidden.
-- When I edit the name and save, the model name updates; if a model with that name already exists, I'm shown a duplicate-name hint with a suggested alternative.
-- When I update the home image, the new image uploads and appears.
-- When I change visibility to private, signed-out users can no longer see the model; when I change state to released, it appears publicly; when I set state to blocked, it's marked blocked.
-- When I click Export, a ZIP archive of the model downloads; when I click Download, the computed VSS JSON downloads.
-- When I click Delete and confirm (typing the model name), the model is permanently removed and I'm sent back to the Models list.
-- When I lack edit rights, I'm prevented from editing or deleting the model.
+- When a **user** opens a model's detail page (`/model/:id`), they see its name, home image, vehicle properties, visibility, state, and contributors.
+- When an **owner** with edit rights views the Model detail (`/model/:id`), they see Edit, Export, Download, and Delete actions; when a **user** without edit rights views it, those actions are hidden.
+- When an **owner** edits the name and saves at the Model detail (`/model/:id`), the model name updates; if a model with that name already exists, they're shown a duplicate-name hint with a suggested alternative.
+- When an **owner** updates the home image at the Model detail (`/model/:id`), the new image uploads and appears.
+- When an **owner** changes visibility to private at the Model detail (`/model/:id`), signed-out users can no longer see the model; when they change state to released, it appears publicly; when they set state to blocked, it's marked blocked.
+- When an **owner** clicks Export at the Model detail (`/model/:id`), a ZIP archive of the model downloads; when they click Download, the computed VSS JSON downloads.
+- When an **owner** clicks Delete and confirms (typing the model name) at the Model detail (`/model/:id`), the model is permanently removed and they're sent back to the Models list.
+- When a **user** lacks edit rights at the Model detail (`/model/:id`), they're prevented from editing or deleting the model.
 
 ### API contract
 
@@ -178,7 +186,7 @@ I can read a model with `READ_MODEL` (owner/admin/contributor bypass), and edit 
 - **Export exfiltration:** export bundles the model's prototype code/data, so a leaked edit token widens what an attacker can steal. *Mitigation:* export is gated behind the same `READ_MODEL`/owner access as the model detail; rotate/revoke tokens on suspected compromise and audit export downloads.
 
 ### Personal data processing
-Yes — contributor/member user identities (user ↔ model relationship) and masked emails surfaced in the model response when I have `WRITE_MODEL`.
+✅ Yes — contributor/member user identities (user ↔ model relationship) and masked emails surfaced in the model response when the caller has `WRITE_MODEL`.
 Contributor/member emails are collected from the user store, surfaced only in the model detail response to callers with `WRITE_MODEL` (masked otherwise), retained as long as the binding exists, protected by TLS in transit, and accessible only to the model owner/admin and granted contributors.
 **Risks:**
 - **Email exposure to non-writers:** if the masking gate were bypassed, contributor/member emails could leak to readers without `WRITE_MODEL`.
@@ -201,6 +209,10 @@ The model's visibility controls who can see it; deleting a model removes it from
 
 ## CAP-MODEL-03 — Model tabs & addons
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner | Model detail (`/model/:id`) | ❌ No | ✅ 2 cases, ≈45% (est.) |
+
 ### Description
 
 As a model owner, I can customize the model's tabbed workspace — Overview, Prototype Library, Vehicle API, plus custom plugin tabs — by adding, reordering, or hiding tabs, setting a variant, and configuring a sidebar plugin and right-nav buttons so that collaborators see the layout that fits the model. As an admin, I can save a layout as a Model Template for other creators to reuse.
@@ -211,11 +223,11 @@ Model owners (customize the workspace); end users (tailored model views); admins
 
 ### Acceptance criteria
 
-- When I configure tabs (add/reorder/hide) and save, the layout persists on the model and renders for everyone viewing it.
-- When I add a plugin addon tab, it renders in the workspace; when I reorder or hide tabs, the new order/visibility persists.
-- When I set a sidebar plugin or right-nav buttons, they render accordingly.
-- When I'm a non-admin and addon configuration by non-admins is disabled, I'm prevented from configuring addon tabs/plugins.
-- When I'm an admin, I can choose "Save as Template" to store the layout as a Model Template for reuse.
+- When an **owner** configures tabs (add/reorder/hide) and saves at the Model detail (`/model/:id`), the layout persists on the model and renders for everyone viewing it.
+- When an **owner** adds a plugin addon tab at the Model detail (`/model/:id`), it renders in the workspace; when they reorder or hide tabs, the new order/visibility persists.
+- When an **owner** sets a sidebar plugin or right-nav buttons at the Model detail (`/model/:id`), they render accordingly.
+- When a **user** who is a non-admin tries to configure addon tabs/plugins at the Model detail (`/model/:id`) with addon configuration by non-admins disabled, they're prevented from configuring addon tabs/plugins.
+- When an **admin** chooses "Save as Template" at the Model detail (`/model/:id`), the layout is stored as a Model Template for reuse.
 
 ### API contract
 
@@ -253,7 +265,7 @@ Tab management gated by `WRITE_MODEL` + the addon-config flag. Plugins run unsan
 - **Plugin supply chain:** a tab config references plugin IDs; a compromised or rogue plugin becomes an attack surface for all models using that layout. *Mitigation:* only reference plugins from trusted sources; admins should review referenced plugin IDs before saving a layout and remove rogue plugins from the registry.
 
 ### Personal data processing
-No — this capability does not process personal data. (Tab/layout config references plugin IDs and model structure only; no email/name is stored on the layout.)
+❌ No — this capability does not process personal data. (Tab/layout config references plugin IDs and model structure only; no email/name is stored on the layout.)
 N/A
 **Risks:**
 - none — no personal data processed.
@@ -275,6 +287,10 @@ Layout config stored on the model document; no secrets.
 
 ## CAP-MODEL-04 — Model contributors & permissions
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner | Model detail (`/model/:id`) | ✅ Yes — contributor/member user identities (user ↔ model relationship) | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a model owner, I can add or remove authorized users (contributors/members) on my model so that they can collaborate, and the model shows up in their My Contributions section.
@@ -285,10 +301,10 @@ Model owners (delegate editing); contributors (gain access).
 
 ### Acceptance criteria
 
-- When I open the contributor list on my model, I see the current contributors/members.
-- When I add a user as a contributor or member, they gain access and the model appears in their My Contributions section.
-- When I remove a contributor, their access is revoked and the model no longer appears in their My Contributions.
-- When I'm not the model owner (and don't have manage rights), I'm prevented from adding or removing contributors.
+- When an **owner** opens the contributor list on their model at the Model detail (`/model/:id`), they see the current contributors/members.
+- When an **owner** adds a user as a contributor or member at the Model detail (`/model/:id`), that **user** gains access and the model appears in their My Contributions section.
+- When an **owner** removes a contributor at the Model detail (`/model/:id`), that **user**'s access is revoked and the model no longer appears in their My Contributions.
+- When a **user** who is not the model owner (and doesn't have manage rights) tries to add or remove contributors at the Model detail (`/model/:id`), they're prevented from adding or removing contributors.
 
 ### API contract
 
@@ -329,7 +345,7 @@ Both add and remove require `WRITE_MODEL` on the model (owner bypass).
 - **Privilege escalation:** a missing `WRITE_MODEL` check would let any user grant themselves or others write access to private models — escalation to data theft or tampering. *Mitigation:* both `POST` and `DELETE /v2/models/:id/permissions` enforce `WRITE_MODEL` (owner bypass) server-side; keep the check on the route and reject role values outside `{model_contributor,model_member}`.
 
 ### Personal data processing
-Yes — contributor/member user identities (user ↔ model relationship). Bindings map a user id to a model id and role; collected from the user store on add, stored in the `userroles` collection, retained until explicitly revoked, protected by TLS in transit, and readable only by the model owner/admin and granted contributors (emails masked in the model response unless the caller has `WRITE_MODEL`).
+✅ Yes — contributor/member user identities (user ↔ model relationship). Bindings map a user id to a model id and role; collected from the user store on add, stored in the `userroles` collection, retained until explicitly revoked, protected by TLS in transit, and readable only by the model owner/admin and granted contributors (emails masked in the model response unless the caller has `WRITE_MODEL`).
 **Risks:**
 - **Relationship leak:** contributor bindings reveal who collaborates on which model (users ↔ business assets).
 
@@ -350,6 +366,10 @@ Adding/removing a contributor creates/removes a binding scoped to the model.
 
 ## CAP-MODEL-05 — Model stats
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Models page (`/model`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a user, I can see aggregated stats (e.g. prototype counts) for a set of models so that model badges/counts show in the UI.
@@ -360,9 +380,9 @@ End users (model badges/counts); owners (overview).
 
 ### Acceptance criteria
 
-- When I view model cards that show counts, the stats (e.g. prototype count) are displayed per model.
-- When the models have no stats, I see empty/zero counts.
-- When I'm signed out, I only see stats for public models; when signed in, I see stats for models I can read.
+- When a **user** views model cards that show counts at the Models page (`/model`), the stats (e.g. prototype count) are displayed per model.
+- When a **user** views models with no stats at the Models page (`/model`), they see empty/zero counts.
+- When a **guest** views the Models page (`/model`), they only see stats for public models; when a **user** is signed in, they see stats for models they can read.
 
 ### API contract
 
@@ -387,7 +407,7 @@ Optional auth; I only get stats for models I can read.
 - **Metadata enumeration:** if the aggregation didn't respect access scoping, an attacker could probe arbitrary model IDs to confirm the existence and size of private models even when the list endpoint is locked down. *Mitigation:* the stats aggregation is scoped to public + owned + role-permissioned models (anonymous → public only); verify the access scope on the aggregation pipeline and reject invalid `ids` early.
 
 ### Personal data processing
-No — this capability does not process personal data. (Only aggregated counts keyed by model id; no user email/name is stored or returned.)
+❌ No — this capability does not process personal data. (Only aggregated counts keyed by model id; no user email/name is stored or returned.)
 N/A
 **Risks:**
 - none — no personal data processed.
@@ -409,6 +429,10 @@ Aggregated only; no operational data persisted.
 
 ## CAP-MODEL-06 — Model templates
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin | Model Template manager (`/admin/templates`) | ❌ No | ✅ 1 case, ≈40% (est.) |
+
 ### Description
 
 As an admin, I can manage scaffolds for model layouts — including the single default template — so that creators can quick-start a new model from a standard layout.
@@ -419,11 +443,11 @@ Admins (standardize layouts); model creators (quick-start from a template).
 
 ### Acceptance criteria
 
-- When I open the Model Template manager, I see the list of available templates.
-- When I (as admin) create a new template, it appears in the manager.
-- When I (as admin) edit or delete a template, the change persists / the template is removed.
-- When I'm a non-admin, I'm prevented from creating, editing, or deleting templates.
-- When I create a new model and select a template, its layout is applied to the new model.
+- When an **admin** opens the Model Template manager (`/admin/templates`), they see the list of available templates.
+- When an **admin** creates a new template at the Model Template manager (`/admin/templates`), it appears in the manager.
+- When an **admin** edits or deletes a template at the Model Template manager (`/admin/templates`), the change persists / the template is removed.
+- When a **user** who is a non-admin tries to create, edit, or delete templates at the Model Template manager (`/admin/templates`), they're prevented from doing so.
+- When a **user** creates a new model and selects a template at the Models page (`/model`), the template's layout is applied to the new model.
 
 ### API contract
 
@@ -456,7 +480,7 @@ Anyone can read templates; writing requires `MANAGE_USERS` (admin).
 - **Platform-wide payload:** templates apply to every model created from them. A compromised admin could seed a default template embedding a malicious plugin tab, pushing untrusted code to all future models. *Mitigation:* writes require `manageUsers` (admin only); review referenced plugin IDs before saving a default template and remove rogue plugins from the registry to break the distribution chain.
 
 ### Personal data processing
-No — this capability does not process personal data. (`created_by`/`updated_by` are admin user references; no email/name is stored on the template.)
+❌ No — this capability does not process personal data. (`created_by`/`updated_by` are admin user references; no email/name is stored on the template.)
 N/A
 **Risks:**
 - none — no personal data processed.

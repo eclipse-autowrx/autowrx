@@ -46,6 +46,10 @@ flowchart TD
 
 ## CAP-CONFIG-01 — Site config CRUD
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin | Admin → Site Config (`/admin/site-config`) | ❌ No | ⚠️ 2 cases, ≈15% (est.) |
+
 ### Description
 
 As an admin, I can manage scoped site-config keys from the admin Site Config page so that every behavior, branding, and feature toggle of the instance is configurable in one place. As a user, I see only the non-secret configuration the admin has published. As an admin, my manually-set values are preserved when the instance restarts.
@@ -56,11 +60,11 @@ Admins (configure the platform); end users (consume public config); the app (fea
 
 ### Acceptance criteria
 
-- When I (admin) create, edit, or delete a config key in the admin Site Config page, the value persists and reappears on reload.
-- When I (admin) upsert by key or bulk-edit multiple keys, the system saves all of them.
-- When I (admin) mark a key as secret, its value is hidden from public/anonymous views and shown only to admins.
-- When I (anyone) browse public config, I see only non-secret values; SSO provider lists show enabled providers without their secrets.
-- When the instance restarts, the predefined defaults are seeded but my admin-set values are not overwritten.
+- When an **admin** creates, edits, or deletes a config key at **Admin → Site Config (`/admin/site-config`)**, the value persists and reappears on reload.
+- When an **admin** upserts by key or bulk-edits multiple keys at **Admin → Site Config (`/admin/site-config`)**, the system saves all of them.
+- When an **admin** marks a key as secret at **Admin → Site Config (`/admin/site-config`)**, its value is hidden from public/anonymous views and shown only to admins.
+- When a **user** reads public config (no page), they see only non-secret values; SSO provider lists show enabled providers without their secrets.
+- When an **admin** restarts the instance (operator action), the predefined defaults are seeded but their admin-set values are not overwritten.
 
 ### API contract
 
@@ -99,7 +103,7 @@ Public routes public; everything else requires `MANAGE_USERS`. `secret` configs 
 - **Scope/target_id spoofing:** write endpoints keyed on `(key, scope, target_id)` could let an attacker write into another tenant's/model's scope if scope authorization is not enforced server-side. *Mitigation:* writes require `MANAGE_USERS`; enforce scope authorization server-side on `(key, scope, target_id)` and reject cross-scope writes.
 
 ### Personal data processing
-No — this capability does not process personal data. (config values only; `created_by`/`updated_by` hold admin user ObjectIds, refs not PII.)
+❌ No — this capability does not process personal data. (config values only; `created_by`/`updated_by` hold admin user ObjectIds, refs not PII.)
 N/A
 **Risks:**
 - none — no personal data processed.
@@ -122,6 +126,10 @@ N/A
 
 ## CAP-CONFIG-02 — Site Config management (admin)
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin | Admin → Site Config (`/admin/site-config`) | ❌ No | ⚠️ 8 cases, ≈25% (est.) |
+
 ### Description
 
 As an admin, I can manage the instance's configuration from a single admin page organized into 11 sections (Public, Home, Site Style, Auth, Model & Prototype, GenAI/ProtoPilot, SSO, Email, Secret, Standard Staging, Privacy), each with edit history I can restore, so all site configuration is centralized in one place. As a user, I see the branding, home layout, styling, and privacy policy the admin has published.
@@ -132,10 +140,10 @@ Admins (central configuration); end users (see published branding/home/style/pri
 
 ### Acceptance criteria
 
-- When I (admin) open the Site Config admin page, I see the 11 section tabs in the sidebar; when I select a tab, the corresponding section loads.
-- When I (admin) edit keys in a section and save, the system persists them and they apply site-wide.
-- When I (admin) open a section's edit history and restore a prior entry, the section reverts to that snapshot.
-- When I (admin) open a secret-bearing section, secret values are masked and only revealed for admin display.
+- When an **admin** opens the Site Config admin page at **Admin → Site Config (`/admin/site-config`)**, they see the 11 section tabs in the sidebar; when they select a tab, the corresponding section loads.
+- When an **admin** edits keys in a section and saves at **Admin → Site Config (`/admin/site-config`)**, the system persists them and they apply site-wide.
+- When an **admin** opens a section's edit history and restores a prior entry at **Admin → Site Config (`/admin/site-config`)**, the section reverts to that snapshot.
+- When an **admin** opens a secret-bearing section at **Admin → Site Config (`/admin/site-config`)**, secret values are masked and only revealed for admin display.
 
 ### API contract
 
@@ -173,7 +181,7 @@ flowchart TD
 - **History restore abuse:** if restore-from-history lacked re-authorization, an attacker who once held `MANAGE_USERS` could replay an old config (e.g. re-enabling disabled SSO) after their access was revoked. *Mitigation:* writes require `MANAGE_USERS`; re-check the permission at restore time (not at snapshot creation) and audit who restored which snapshot.
 
 ### Personal data processing
-No — this capability does not process personal data. (administrative configuration only; `created_by`/`updated_by` are admin user refs, not PII.)
+❌ No — this capability does not process personal data. (administrative configuration only; `created_by`/`updated_by` are admin user refs, not PII.)
 N/A
 **Risks:**
 - none — no personal data processed.
@@ -196,6 +204,10 @@ Edit history (snapshots) retained; secret sections mask values.
 
 ## CAP-CONFIG-03 — Global CSS theming
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin | Admin → CSS (`/admin/site-config`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an admin, I can edit and restore the platform's global stylesheet from the Site Style (CSS) section so the entire instance is themed consistently. As a user or plugin author, I get a stable themed UI and CSS variables to consume.
@@ -206,9 +218,9 @@ Admins (brand the site); end users (themed UI); plugins (consume CSS variables).
 
 ### Acceptance criteria
 
-- When I (admin) open the Site Style (CSS) section, I see the current stylesheet in an editor with a live color preview of the `:root` tokens.
-- When I (admin) edit the CSS and save, the new stylesheet applies across the UI; when I (anyone) load a page, the themed stylesheet is served publicly with no sign-in.
-- When I (admin) choose to restore the default, the shipped styling returns.
+- When an **admin** opens the Site Style (CSS) section at **Admin → CSS (`/admin/site-config`)**, they see the current stylesheet in an editor with a live color preview of the `:root` tokens.
+- When an **admin** edits the CSS and saves at **Admin → CSS (`/admin/site-config`)**, the new stylesheet applies across the UI; when a **user** loads any public page (any URL), the themed stylesheet is served publicly with no sign-in.
+- When an **admin** chooses to restore the default at **Admin → CSS (`/admin/site-config`)**, the shipped styling returns.
 
 ### API contract
 
@@ -252,7 +264,7 @@ All three `/v2/site-config/global-css` endpoints require auth + `MANAGE_USERS`; 
 - **DOM-based attacks via selectors:** hostile selectors combined with `attr()`/content tricks can extract attributes from rendered DOM and leak them via image requests. *Mitigation:* none currently — sanitize admin-supplied CSS/markdown (disallow `attr()`/content tricks that read DOM attributes).
 
 ### Personal data processing
-No — this capability does not process personal data. (stylesheet text only; no user PII stored.)
+❌ No — this capability does not process personal data. (stylesheet text only; no user PII stored.)
 N/A
 **Risks:**
 - none — no personal data processed.
@@ -274,6 +286,10 @@ Stylesheet text only; no PII.
 
 ## CAP-CONFIG-04 — Home config editor
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin | Admin → Home config (`/admin/site-config`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an admin, I can compose the landing page from drag-and-drop blocks (hero, feature-list, button-list, news, recent, popular, partner-list, home-footer) with raw JSON, preview, and history, so the home page presents the content my organization wants visitors to see first. As a visitor, I see the composed landing page render the blocks the admin published.
@@ -284,10 +300,10 @@ Admins (compose the landing page); visitors (see the curated landing page).
 
 ### Acceptance criteria
 
-- When I (admin) open the Home Config section, I can switch between Edit, Raw JSON, Preview, and History sub-tabs.
-- When I (admin) add, reorder (drag-and-drop), or edit blocks and save, the system persists the block list.
-- When I (admin) use Preview, I see the rendered landing layout without leaving the admin page; when I use Raw JSON, I can edit the block list directly.
-- When a visitor opens the home page, the system renders the published blocks and skips any unknown block types.
+- When an **admin** opens the Home Config section at **Admin → Home config (`/admin/site-config`)**, they can switch between Edit, Raw JSON, Preview, and History sub-tabs.
+- When an **admin** adds, reorders (drag-and-drop), or edits blocks and saves at **Admin → Home config (`/admin/site-config`)**, the system persists the block list.
+- When an **admin** uses Preview at **Admin → Home config (`/admin/site-config`)**, they see the rendered landing layout without leaving the admin page; when they use Raw JSON, they can edit the block list directly.
+- When a **user** opens the Home page (`/`), the system renders the published blocks and skips any unknown block types.
 
 ### API contract
 
@@ -322,7 +338,7 @@ Admin only.
 - **Malicious image URL redirect:** `image_url` fields, if not validated, could point to attacker-controlled hosts used for tracking or to serve malicious payloads. *Mitigation:* none currently — validate `image_url` fields against a protocol/hostname allowlist server-side.
 
 ### Personal data processing
-No — this capability does not process personal data. (marketing/landing content; admin-entered free text could in principle include names but no user PII is system-stored here.)
+❌ No — this capability does not process personal data. (marketing/landing content; admin-entered free text could in principle include names but no user PII is system-stored here.)
 N/A
 **Risks:**
 - none — no personal data processed.
@@ -344,6 +360,10 @@ Block content (titles/descriptions/image URLs); `requiredLogin` flags on action 
 
 ## CAP-CONFIG-05 — Branding
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin | Admin → Branding (`/admin/site-config`) | ❌ No | ⚠️ 7 cases, ≈30% (est.) |
+
 ### Description
 
 As an admin, I can set the platform's title, logo, favicon, theme color, and description from the Public Config section so the instance carries my organization's brand identity consistently across the UI and browser tab. As a user, I see the configured branding in the nav bar, browser tab, and dashboard.
@@ -354,8 +374,8 @@ Admins (brand identity); end users (consistent branding).
 
 ### Acceptance criteria
 
-- When I (admin) set the site title, logo, favicon, theme color, or description in the Public Config section and save, the system reflects them in the nav bar, root layout, browser tab, and dashboard logo.
-- When I (anyone) read public config, the system returns these non-secret branding keys.
+- When an **admin** sets the site title, logo, favicon, theme color, or description and saves at **Admin → Branding (`/admin/site-config`)**, the system reflects them in the nav bar, root layout, browser tab, and dashboard logo.
+- When a **user** reads public config (no page), the system returns these non-secret branding keys.
 
 ### API contract
 
@@ -383,7 +403,7 @@ Public read; admin write.
 - **Phishing via title/description:** a malicious `SITE_TITLE`/`SITE_DESCRIPTION` could impersonate another brand on the public site and browser tab, aiding credential phishing. *Mitigation:* writes require `MANAGE_USERS`; none currently — add an admin review workflow for `SITE_TITLE`/`SITE_DESCRIPTION` before publish.
 
 ### Personal data processing
-No — this capability does not process personal data. (branding text/asset URLs only.)
+❌ No — this capability does not process personal data. (branding text/asset URLs only.)
 N/A
 **Risks:**
 - none — no personal data processed.
@@ -405,6 +425,10 @@ Branding asset URLs only.
 
 ## CAP-CONFIG-06 — Auth config flags
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin | Admin → Auth (`/admin/site-config`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an admin, I can toggle the platform's access flags from the Auth Config section so I control who can browse, sign up, auto-register via SSO, and manage passwords. As a user, the sign-in and registration options I see reflect these toggles; if config loading fails on a request, the system secure-fails to denying access.
@@ -415,10 +439,10 @@ Admins (control access/registration); end users (see gated sign-in/registration)
 
 ### Acceptance criteria
 
-- When I (admin) open the Auth Config section, I see the four access toggles (browse, self-registration, SSO auto-registration, password management), all on by default.
-- When I (admin) turn a toggle off, the system applies the change to auth behavior across the app (see [identity-access.md](./identity-access.md)) — e.g. signed-out users cannot browse when browsing is off, and registration is refused when self-registration is off.
-- When I (admin) restore defaults, the toggles return to their shipped on defaults.
-- When config loading fails on a request, the system secure-fails to all toggles off (denying access).
+- When an **admin** opens the Auth Config section at **Admin → Auth (`/admin/site-config`)**, they see the four access toggles (browse, self-registration, SSO auto-registration, password management), all on by default.
+- When an **admin** turns a toggle off at **Admin → Auth (`/admin/site-config`)**, the system applies the change to auth behavior across the app (see [identity-access.md](./identity-access.md)) — e.g. signed-out users cannot browse when browsing is off, and registration is refused when self-registration is off.
+- When an **admin** restores defaults at **Admin → Auth (`/admin/site-config`)**, the toggles return to their shipped on defaults.
+- When config loading fails on a request (global middleware, no page), the system secure-fails to all toggles off (denying access).
 
 ### API contract
 
@@ -457,7 +481,7 @@ Public (effective flags observable); admin to change; safe-default all-false on 
 - **Observability leak:** effective flags are publicly observable, which can help attackers probe which auth paths are enabled (e.g. whether self-registration is open). *Mitigation:* none currently — flags are public by design for client gating; document as an accepted trade-off.
 
 ### Personal data processing
-No — this capability does not process personal data. (boolean flags only.)
+❌ No — this capability does not process personal data. (boolean flags only.)
 N/A
 **Risks:**
 - none — no personal data processed.
@@ -479,6 +503,10 @@ Boolean flags only.
 
 ## CAP-CONFIG-07 — SSO & Email configuration
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin | Admin → SSO/Email (`/admin/site-config`) | ✅ Yes — test-email recipient address | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an admin/DevOps, I can configure SSO providers and email delivery (Resend/SMTP/none) and send a test email from the SSO and Email sections, so users can sign in via SSO and the platform can send mail. As an end user, I see only the enabled SSO sign-in buttons (no secrets).
@@ -489,10 +517,10 @@ Admins/DevOps (configure SSO + email); end users (SSO buttons).
 
 ### Acceptance criteria
 
-- When I (admin) add or edit an SSO provider in the SSO Config section, the system saves it (with the secret encrypted) and the sign-in button appears for users; when I remove it, the button disappears.
-- When I (admin) open the SSO section, the saved provider secret is decrypted only for admin display.
-- When I (anyone) view the sign-in page, I see only the enabled providers, never their secrets.
-- When I (admin) configure email delivery (Resend/SMTP/none) and send a test email from the Email Config section, the system sends it and shows the result.
+- When an **admin** adds or edits an SSO provider at **Admin → SSO (`/admin/site-config`)**, the system saves it (with the secret encrypted) and the sign-in button appears for users; when they remove it, the button disappears.
+- When an **admin** opens the SSO section at **Admin → SSO (`/admin/site-config`)**, the saved provider secret is decrypted only for admin display.
+- When a **user** opens the Sign-in page (`/login`), they see only the enabled providers, never their secrets.
+- When an **admin** configures email delivery (Resend/SMTP/none) and sends a test email at **Admin → Email (`/admin/site-config`)**, the system sends it and shows the result.
 
 ### API contract
 
@@ -538,7 +566,7 @@ Secrets encrypted at rest; never in public reads; admin-only writes.
 - **Provider-list spoofing:** if the public providers endpoint returned config beyond the enabled flag, it could leak redirect URLs / client IDs useful for phishing. *Mitigation:* the public `/sso/providers` endpoint returns only the enabled flag + provider name (no `clientSecret`/redirect); keep the response shape minimal.
 
 ### Personal data processing
-Yes — `POST /v2/site-config/email/test` takes an admin-supplied `to` recipient email address, returned in the response message `Test email sent to <to>`. (SSO `clientSecret` and `EMAIL_CONFIG` `apiKey`/`smtpConfig.pass` are secrets/AutoWRX-operational, not personal data.)
+✅ Yes — `POST /v2/site-config/email/test` takes an admin-supplied `to` recipient email address, returned in the response message `Test email sent to <to>`. (SSO `clientSecret` and `EMAIL_CONFIG` `apiKey`/`smtpConfig.pass` are secrets/AutoWRX-operational, not personal data.)
 The recipient address is collected from the admin caller, used only to address the test email, surfaced in the test-send response (and any mail logs), retained only in request logs (no persisted personal-data record), protected by TLS in transit, and accessible only to the admin who triggers the send.
 **Risks:**
 - **Recipient disclosure in logs:** test-send response/logs may include the recipient address, surfacing the admin's email (and any test recipients) in audit/log stores.
@@ -560,6 +588,10 @@ Secrets (`clientSecret`/`apiKey`/`smtpConfig.pass`) encrypted; email logs may in
 
 ## CAP-CONFIG-08 — Site config snapshots & restore
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin | Admin → Snapshots (`/admin/site-config`) | ❌ No | ✅ 2 cases, ≈80% (est.) |
+
 ### Description
 
 As an admin/DevOps, I can restore the site config from a deployment snapshot merged with predefined defaults (snapshot wins per key) from the Public Config section's "Restore default" action, so I can recover the instance's configuration after a bad change or migration. As an admin, I can see per-key source (snapshot/predefined/mixed/none) in the restore result.
@@ -570,9 +602,9 @@ Admins/DevOps (recover config after a bad change or migration).
 
 ### Acceptance criteria
 
-- When I (admin) click "Restore default" in the Public Config section and confirm, the system reverts the public configs to the deployment snapshot where present, otherwise to the predefined default, then reloads the page.
-- When I (admin) cancel the restore confirmation, no changes are made.
-- When I (admin) restore, I can see which keys came from the snapshot vs. predefined defaults (per-key source: snapshot/predefined/mixed/none).
+- When an **admin** clicks "Restore default" in the Public Config section at **Admin → Snapshots (`/admin/site-config`)** and confirms, the system reverts the public configs to the deployment snapshot where present, otherwise to the predefined default, then reloads the page.
+- When an **admin** cancels the restore confirmation at **Admin → Snapshots (`/admin/site-config`)**, no changes are made.
+- When an **admin** restores at **Admin → Snapshots (`/admin/site-config`)**, they can see which keys came from the snapshot vs. predefined defaults (per-key source: snapshot/predefined/mixed/none).
 
 ### API contract
 
@@ -610,7 +642,7 @@ Admin only.
 - **Predefined-default downgrade:** if a key is missing from the snapshot, predefined defaults are applied; if predefined defaults ever contained a weak value historically, restore could re-introduce it. *Mitigation:* keep predefined defaults reviewed before each release; restore requires `MANAGE_USERS` and fails secure if config missing.
 
 ### Personal data processing
-No — this capability does not process personal data. (config values + admin user refs only.)
+❌ No — this capability does not process personal data. (config values + admin user refs only.)
 N/A
 **Risks:**
 - none — no personal data processed.
@@ -633,6 +665,10 @@ Snapshots hold site-scope configs incl. encrypted secrets.
 
 ## CAP-CONFIG-09 — Privacy policy
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin | Admin → Privacy (`/admin/site-config`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an admin, I can author the public Privacy Policy as markdown (or point to an external URL) with edit and preview from the Privacy Policy section, so end users see the legal terms that apply to the instance. As a user, I see the published privacy policy page.
@@ -643,10 +679,10 @@ End users (legal info); admins (maintain policy).
 
 ### Acceptance criteria
 
-- When I (admin) open the Privacy Policy section, I can edit the policy markdown and switch to a Preview tab to see how it renders.
-- When I (admin) save the policy, the public Privacy Policy page updates.
-- When I (admin) set an external privacy policy URL, the public page can redirect there instead.
-- When anyone opens the public Privacy Policy page, the system renders the policy markdown without requiring sign-in.
+- When an **admin** opens the Privacy Policy section at **Admin → Privacy (`/admin/site-config`)**, they can edit the policy markdown and switch to a Preview tab to see how it renders.
+- When an **admin** saves the policy at **Admin → Privacy (`/admin/site-config`)**, the public Privacy Policy page updates.
+- When an **admin** sets an external privacy policy URL at **Admin → Privacy (`/admin/site-config`)**, the public page can redirect there instead.
+- When a **user** opens the Privacy policy page (`/privacy-policy`), the system renders the policy markdown without requiring sign-in.
 
 ### API contract
 
@@ -681,7 +717,7 @@ Page public; editor admin.
 - **Redirect abuse via `PRIVACY_POLICY_URL`:** if `PRIVACY_POLICY_URL` can be set to an external URL, an attacker with admin access could redirect the privacy policy to a phishing page, undermining legal trust. *Mitigation:* none currently — validate `PRIVACY_POLICY_URL` against a protocol/hostname allowlist server-side (https only).
 
 ### Personal data processing
-No — this capability does not process personal data. (legal text only; privacy policy content is not personal data; no user data stored.)
+❌ No — this capability does not process personal data. (legal text only; privacy policy content is not personal data; no user data stored.)
 N/A
 **Risks:**
 - none — no personal data processed.

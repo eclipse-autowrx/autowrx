@@ -60,6 +60,10 @@ flowchart TD
 
 ## CAP-INTEG-01 — SDV ProtoPilot (GenAI code generation)
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Code tab (`/model/:id/prototype/:id?tab=code`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a prototype author, I can open the SDV ProtoPilot from the Code tab, describe what I want in a prompt, preview the generated Python code, and apply it to my prototype so I can bootstrap code quickly.
@@ -70,9 +74,9 @@ Prototype authors (bootstrap code); GenAI-capable users.
 
 ### Acceptance criteria
 
-- When I open the Code tab and I have GenAI permission, I see the SDV ProtoPilot button; when I lack permission or the button is hidden by config, I do not see it.
-- When I submit a prompt in the ProtoPilot dialog, I see the generated code in a preview; when I apply it, my prototype's code is updated and the dialog closes.
-- When code-diff display is enabled, the preview shows me what changed between my previous code and the generated code; when it is disabled, I see only the generated code.
+- When a **user** opens the Code tab at **Code tab (`/model/:id/prototype/:id?tab=code`)** with GenAI permission, they see the SDV ProtoPilot button; when they lack permission or the button is hidden by config, they do not see it.
+- When a **user** submits a prompt in the ProtoPilot dialog at **Code tab (`/model/:id/prototype/:id?tab=code`)**, they see the generated code in a preview; when they apply it, their prototype's code is updated and the dialog closes.
+- When a **user** views the preview at **Code tab (`/model/:id/prototype/:id?tab=code`)** with code-diff display enabled, they see what changed between their previous code and the generated code; when it is disabled, they see only the generated code.
 
 ### API contract
 
@@ -113,7 +117,7 @@ Gated by `USE_GEN_AI` permission + `SHOW_SDV_PROTOPILOT_BUTTON`. Backend proxy r
 - **Untrusted generated code:** generated code is applied directly to `prototype.code`; a malicious or compromised generator could plant backdoors/exploits that later run in the prototype runtime. *Mitigation:* sandbox the prototype runtime and review generated code before apply.
 
 ### Personal data processing
-No — this capability does not process personal data.
+❌ No — this capability does not process personal data.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -136,6 +140,10 @@ Prompt + generated code transit the GenAI service; generated code stored in the 
 
 ## CAP-INTEG-02 — GenAI service proxy
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user (observes) | Code tab (runtime) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a user, when I use GenAI features (such as SDV ProtoPilot), the platform streams generated content back to me so I see the result streamed live rather than waiting for the whole response.
@@ -146,8 +154,8 @@ The frontend (GenAI calls); integrators (GenAI backend).
 
 ### Acceptance criteria
 
-- When I use a GenAI feature, I see generated content stream back to me progressively; when the GenAI backend is not configured, the feature is unavailable and I get no streamed response.
-- When my session is not authenticated, I am prevented from using GenAI features.
+- When a **user** uses a GenAI feature at **Code tab (runtime)**, they see generated content stream back progressively; when the GenAI backend is not configured, the feature is unavailable and they get no streamed response.
+- When a **user** without an authenticated session attempts to use a GenAI feature at **Code tab (runtime)**, they are prevented from using it.
 
 ### API contract
 
@@ -187,7 +195,7 @@ Auth required; SSE streaming passthrough.
 - **Auth bypass on proxy:** a missing auth check would expose the GenAI backend (and its compute cost) to anonymous callers. *Mitigation:* keep the JWT auth check enforced on `/v2/genai/*`.
 
 ### Personal data processing
-No — this capability does not process personal data.
+❌ No — this capability does not process personal data.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -209,6 +217,10 @@ Proxies prompts/responses; no backend storage.
 
 ## CAP-INTEG-03 — GitHub OAuth (linking + SSO)
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Sign-in dialog / GitHub link | ✅ Yes — GitHub profile/email | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a user, I can sign in with GitHub (when my admin has configured GitHub SSO) so I can reuse my GitHub identity without a separate password; as an author, I can link my GitHub account to AutoWRX so the platform can sync with my repositories.
@@ -219,9 +231,9 @@ Authors (git sync intent); end users (GitHub login).
 
 ### Acceptance criteria
 
-- When my admin has configured a GitHub SSO provider, I see a "Sign in with GitHub" button on the sign-in page; when I click it, I am redirected to GitHub to authorize, then returned to the platform logged in.
-- When I link my GitHub account from the project editor, I am redirected to GitHub to authorize; when authorization completes, my GitHub account is linked and I see my GitHub identity in the platform.
-- When GitHub authorization fails or is cancelled, I see an error message and am not logged in / my account is not linked.
+- When a **user** visits the sign-in page at **Sign-in dialog** with a GitHub SSO provider configured by their admin, they see a "Sign in with GitHub" button; when they click it, they are redirected to GitHub to authorize, then returned to the platform logged in.
+- When a **user** links their GitHub account from the project editor at **GitHub link**, they are redirected to GitHub to authorize; when authorization completes, their GitHub account is linked and they see their GitHub identity in the platform.
+- When a **user**'s GitHub authorization fails or is cancelled at **Sign-in dialog / GitHub link**, they see an error message and are not logged in / their account is not linked.
 
 ### API contract
 
@@ -267,7 +279,7 @@ OAuth code exchange server-side; token delivered via authenticated socket.
 - **Client secret exposure:** a leaked `GITHUB_CLIENT_SECRET` would let an attacker impersonate the app and intercept OAuth codes via a rogue redirect. *Mitigation:* keep `GITHUB_CLIENT_SECRET` env-only; rotate on suspected leak.
 
 ### Personal data processing
-Yes — GitHub account identity (login/email scope) via OAuth; `userId` binds the session.
+✅ Yes — GitHub account identity (login/email scope) via OAuth; `userId` binds the session.
 GitHub profile/email is retrieved server-side during OAuth code exchange and bound to the logged-in `userId`; the access token is delivered over the authenticated socket and held client-side.
 **Risks:**
 - **Credential-at-rest exposure:** GitHub tokens persisted in `githubAuthStore` are long-lived credentials; a store leak grants repository access under the user's identity. *Mitigation:* none currently — store tokens server-side, not in localStorage.
@@ -290,6 +302,10 @@ GitHub tokens stored in `githubAuthStore` (persisted); treat as credentials.
 
 ## CAP-INTEG-04 — Email service
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user (receives) | Email (no in-app page) | ✅ Yes — recipient email | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a user, I receive transactional emails (welcome, password-reset code, verification) so I can complete account flows; as an admin, I can send a test email to verify the configured email provider.
@@ -300,9 +316,9 @@ End users (account flows); admins (test config).
 
 ### Acceptance criteria
 
-- When I register, request a password reset, or verify my account, I receive the corresponding email with the welcome message / reset code / verification code.
-- When I am an admin and I trigger a test email, the platform sends a test email via the configured provider and I can confirm the provider is working.
-- When the welcome email fails to send, my registration still completes; I am not blocked by the email failure.
+- When a **user** registers, requests a password reset, or verifies their account at **Email (no in-app page)**, they receive the corresponding email with the welcome message / reset code / verification code.
+- When an **admin** triggers a test email at **Email (no in-app page)**, the platform sends a test email via the configured provider and they can confirm the provider is working.
+- When a **user**'s welcome email fails to send at **Email (no in-app page)**, their registration still completes; they are not blocked by the email failure.
 
 ### API contract
 
@@ -340,7 +356,7 @@ Secrets encrypted at rest; admin-only config.
 - **Admin config abuse:** a compromised admin could repoint SMTP/Resend to an attacker-controlled server and capture every reset code/verification email. *Mitigation:* restrict the test-email endpoint to `ADMIN` and audit provider config changes.
 
 ### Personal data processing
-Yes — recipient email address; the reset code is a sensitive one-time credential.
+✅ Yes — recipient email address; the reset code is a sensitive one-time credential.
 Recipient emails and reset/verify codes are generated server-side for account flows; codes are one-time entries in the `Token` collection with TTL; emails are sent via the configured Resend/SMTP provider.
 **Risks:**
 - **Reset code interception:** reset codes sent in cleartext email; a misconfigured provider or compromised mailbox lets an attacker complete password resets. *Mitigation:* short TTL on reset codes and rate-limit forgot-password.
@@ -363,6 +379,10 @@ Recipient email + content sent to the provider; reset codes are one-time.
 
 ## CAP-INTEG-05 — Web Studio widget creation
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Dashboard editor (Web Studio entry) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a widget author, I can create and embed a widget through the external bewebstudio service so I can add custom widgets to my dashboards.
@@ -373,8 +393,8 @@ Widget authors.
 
 ### Acceptance criteria
 
-- When I open the dashboard editor and choose to create a widget from scratch, the platform creates a widget via the external Web Studio service and opens it in a new tab so I can build it.
-- When the "create from scratch" entry is disabled in the UI, I cannot create a widget this way (the underlying service remains available to integrators).
+- When a **user** opens the dashboard editor and chooses to create a widget from scratch at **Dashboard editor (Web Studio entry)**, the platform creates a widget via the external Web Studio service and opens it in a new tab so they can build it.
+- When a **user** finds the "create from scratch" entry disabled at **Dashboard editor (Web Studio entry)**, they cannot create a widget this way (the underlying service remains available to integrators).
 
 ### API contract
 
@@ -403,7 +423,7 @@ External service; same caveats as remote widgets.
 - **Unvetted remote widget:** widgets created via the external bewebstudio service execute remotely and load into the platform; a compromised service could inject hostile scripts into authorized sessions. *Mitigation:* sandbox loaded widgets and vet the external service before enabling.
 
 ### Personal data processing
-No — this capability does not process personal data.
+❌ No — this capability does not process personal data.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -425,6 +445,10 @@ Widget URL only.
 
 ## CAP-INTEG-06 — Search
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Global search dialog (nav bar) | ✅ Yes — email lookup | ✅ 2 cases, ≈50% (est.) |
+
 ### Description
 
 As a user, I can open a global search dialog from the navigation bar, type a query, and see accessible models and prototypes so I can discover content; I can also find a user by email or find prototypes containing a given signal.
@@ -435,10 +459,10 @@ End users (discover); sharing flows (find users).
 
 ### Acceptance criteria
 
-- When I open the global search dialog from the nav bar and type a term, I see matching models and prototypes that are accessible to me; results I'm not allowed to see do not appear.
-- When I search as a signed-out visitor and public viewing is enabled, I see only public results; when public viewing is disabled, I see no results until I sign in.
-- When I search for a user by email, I see whether a user account exists for that email; when no user exists, I see that no user was found.
-- When I search prototypes by signal, I see prototypes whose code contains that signal.
+- When a **user** opens the global search dialog from the nav bar at **Global search dialog (nav bar)** and types a term, they see matching models and prototypes that are accessible to them; results they're not allowed to see do not appear.
+- When a **guest** searches as a signed-out visitor at **Global search dialog (nav bar)** and public viewing is enabled, they see only public results; when public viewing is disabled, they see no results until they sign in.
+- When a **user** searches for a user by email at **Global search dialog (nav bar)**, they see whether a user account exists for that email; when no user exists, they see that no user was found.
+- When a **user** searches prototypes by signal at **Global search dialog (nav bar)**, they see prototypes whose code contains that signal.
 
 ### API contract
 
@@ -476,7 +500,7 @@ Optional auth via `PUBLIC_VIEWING`; scoped to accessible resources (no leakage).
 - **User enumeration by email:** `/v2/search/email/:email` returns `200`/`404`, enabling account-existence enumeration for phishing targeting known users. *Mitigation:* return a generic response and rate-limit the endpoint.
 
 ### Personal data processing
-Yes — `/search/email/:email` returns user existence (email PII, enumeration).
+✅ Yes — `/search/email/:email` returns user existence (email PII, enumeration).
 The email-lookup endpoint exposes whether a user account exists for a given email; `by-signal` scans prototype `code` in memory; no personal data is stored by this capability.
 **Risks:**
 - **User enumeration by email:** `/v2/search/email/:email` returns `200`/`404`, enabling account-existence enumeration for phishing targeting known users. *Mitigation:* return a generic response and rate-limit the endpoint.
@@ -498,6 +522,10 @@ The email-lookup endpoint exposes whether a user account exists for a given emai
 
 ## CAP-INTEG-07 — Discussions
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Discussions (`/discussions`) | ✅ Yes — author identity | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a collaborator, I can post threaded comments on any resource and reply to existing comments so I can discuss resources with my team; the list shows top-level threads only.
@@ -508,10 +536,10 @@ Collaborators/reviewers (comment on resources).
 
 ### Acceptance criteria
 
-- When I open the discussions view for a resource, I see the top-level threads for that resource; replies are nested under their parent.
-- When I add a comment, it appears in the list; when I reply to a comment, my reply is nested under it.
-- When I edit or delete my own comment, the change is applied; when I try to edit or delete someone else's comment, I am prevented from doing so.
-- When I am signed out and public viewing is enabled, I can read discussions; when public viewing is disabled, I must sign in to read them.
+- When a **user** opens the discussions view for a resource at **Discussions (`/discussions`)**, they see the top-level threads for that resource; replies are nested under their parent.
+- When a **user** adds a comment at **Discussions (`/discussions`)**, it appears in the list; when they reply to a comment, their reply is nested under it.
+- When a **user** edits or deletes their own comment at **Discussions (`/discussions`)**, the change is applied; when they try to edit or delete someone else's comment, they are prevented from doing so.
+- When a **guest** is signed out at **Discussions (`/discussions`)** and public viewing is enabled, they can read discussions; when public viewing is disabled, they must sign in to read them.
 
 ### API contract
 
@@ -540,7 +568,7 @@ List optional; write auth. **Partial** — no dedicated routed page; wired conte
 - **Unauthorized edit/delete:** if ownership weren't enforced on `PATCH/DELETE`, any authenticated user could alter or remove others' comments. *Mitigation:* keep the own-only ownership check enforced on patch/delete.
 
 ### Personal data processing
-Yes — `created_by` records the author identity; `content` is free text that may include PII.
+✅ Yes — `created_by` records the author identity; `content` is free text that may include PII.
 `created_by` binds each comment to its author; `content` is user-entered free text that may inadvertently carry PII or secrets.
 **Risks:**
 - **Comment content retention:** `content` is free text and persists until deleted; users may inadvertently embed secrets or PII in comments that are hard to purge. *Mitigation:* provide a purge/edit path and scan for secrets before persist.
@@ -562,6 +590,10 @@ Yes — `created_by` records the author identity; `content` is free text that ma
 
 ## CAP-INTEG-08 — Feedback service
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Feedback dialog | ✅ Yes — interviewee metadata | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a reviewer, I can submit structured feedback with scores (1–5) and interview metadata on a prototype so the owner can act on review insights (UI covered in [prototypes-code.md](./prototypes-code.md)).
@@ -572,9 +604,9 @@ Reviewers; prototype owners.
 
 ### Acceptance criteria
 
-- When I open the feedback form for a prototype and submit my scores and interviewee details, my feedback is saved and visible in the prototype's feedback list.
-- When I edit or delete my own feedback, the change is applied; when I try to edit or delete someone else's feedback, I am prevented from doing so.
-- When I am signed out and public viewing is enabled, I can read feedback; when public viewing is disabled, I must sign in to read it.
+- When a **user** opens the feedback form for a prototype at **Feedback dialog** and submits their scores and interviewee details, their feedback is saved and visible in the prototype's feedback list.
+- When a **user** edits or deletes their own feedback at **Feedback dialog**, the change is applied; when they try to edit or delete someone else's feedback, they are prevented from doing so.
+- When a **guest** is signed out at **Feedback dialog** and public viewing is enabled, they can read feedback; when public viewing is disabled, they must sign in to read it.
 
 ### API contract
 
@@ -603,7 +635,7 @@ Add auth; delete own only.
 - **Feedback spam:** write auth alone (no rate limit) could let a user flood a prototype with feedback entries. *Mitigation:* apply a per-user write rate limit on feedback creation.
 
 ### Personal data processing
-Yes — interviewee metadata may contain personal identifiers of interviewees.
+✅ Yes — interviewee metadata may contain personal identifiers of interviewees.
 Interviewee metadata is submitted by reviewers and persisted in the `Feedback` collection bound to `created_by` (the author identity); no defined retention/pruning policy.
 **Risks:**
 - **Interviewee PII retention:** interview metadata may contain personal identifiers of interviewees; stored without a defined retention/pruning policy. *Mitigation:* define a retention policy and prune aged feedback entries.
@@ -625,6 +657,10 @@ Scores + interviewee metadata stored.
 
 ## CAP-INTEG-09 — Health check
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| operator | Health endpoint / status page (no UI) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an operator, I can open the platform health page to see the consolidated status of MongoDB, JWT, auth login, upload dir, runtime server, and SSO reachability so I can monitor platform health.
@@ -635,9 +671,9 @@ DevOps/monitoring.
 
 ### Acceptance criteria
 
-- When I open the health page, I see status badges for each platform service (MongoDB, JWT, auth, upload, runtime server, SSO) with an ok / degraded / error indicator and a hint for what to check when a service is unhealthy.
-- When I refresh the health view, the statuses are rechecked and updated.
-- When a service is down (e.g. MongoDB unreachable), its badge shows an error/degraded state with a message.
+- When an **operator** opens the health page at **Health endpoint / status page (no UI)**, they see status badges for each platform service (MongoDB, JWT, auth, upload, runtime server, SSO) with an ok / degraded / error indicator and a hint for what to check when a service is unhealthy.
+- When an **operator** refreshes the health view at **Health endpoint / status page (no UI)**, the statuses are rechecked and updated.
+- When a service is down (e.g. MongoDB unreachable), an **operator** sees its badge show an error/degraded state with a message at **Health endpoint / status page (no UI)**.
 
 ### API contract
 
@@ -678,7 +714,7 @@ Public.
 - **Unauthenticated probing:** SSO reachability checks from a public endpoint can be abused to enumerate/confirm external identity-provider endpoints. *Mitigation:* gate SSO reachability checks behind auth or remove from the public endpoint.
 
 ### Personal data processing
-No — this capability does not process personal data.
+❌ No — this capability does not process personal data.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -700,6 +736,10 @@ Status info only (no secrets).
 
 ## CAP-INTEG-10 — File upload
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Image/file upload controls | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a user, I can upload a single file (up to 50 MB) and get a URL where it is served so I can attach images/files to models and prototypes; images are auto-scaled and served with a long cache.
@@ -710,9 +750,9 @@ End users (avatars, model/prototype images); the app (asset hosting).
 
 ### Acceptance criteria
 
-- When I pick a file to upload (e.g. an avatar or model/prototype image), the platform uploads it and gives me a URL where the file is served.
-- When the file is an image, the platform auto-scales it (max 1024 px) and serves it at the returned URL with a long cache lifetime.
-- When I upload a file larger than 50 MB, the upload is rejected and I see an error.
+- When a **user** picks a file to upload at **Image/file upload controls** (e.g. an avatar or model/prototype image), the platform uploads it and gives them a URL where the file is served.
+- When a **user** uploads an image at **Image/file upload controls**, the platform auto-scales it (max 1024 px) and serves it at the returned URL with a long cache lifetime.
+- When a **user** uploads a file larger than 50 MB at **Image/file upload controls**, the upload is rejected and they see an error.
 
 ### API contract
 
@@ -758,7 +798,7 @@ Auth required; any file type allowed (50 MB cap) — validate on use.
 - **Storage exhaustion:** with auth but no per-user quota, a user could fill disk with 50 MB uploads, degrading the platform. *Mitigation:* enforce a per-user upload quota and prune orphaned files.
 
 ### Personal data processing
-No — this capability does not process personal data.
+❌ No — this capability does not process personal data.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -781,6 +821,10 @@ Files served publicly under `/d/`; retention = files persist until deleted (no a
 
 ## CAP-INTEG-11 — Change logs / audit
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin | Admin → Change logs (`/admin/change-logs`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an admin/auditor, I can view a paginated audit trail of create/update/delete changes on Models and Prototypes (with field diffs) so I can trace who changed what; frequent code updates are batched into throttled entries.
@@ -791,9 +835,9 @@ Admins/auditors (trace changes).
 
 ### Acceptance criteria
 
-- When I open the change logs view as an admin, I see a paginated list of audit entries showing the action, the changed fields, and who made the change.
-- When I am not an admin, I am prevented from viewing the change logs.
-- When a prototype's code is updated frequently, the changes are batched into throttled entries rather than logged one-by-one.
+- When an **admin** opens the change logs view at **Admin → Change logs (`/admin/change-logs`)**, they see a paginated list of audit entries showing the action, the changed fields, and who made the change.
+- When a non-admin **user** attempts to view change logs at **Admin → Change logs (`/admin/change-logs`)**, they are prevented from viewing them.
+- When a **user** updates a prototype's code frequently, the changes are batched into throttled entries rather than logged one-by-one at **Admin → Change logs (`/admin/change-logs`)**.
 
 ### API contract
 
@@ -832,7 +876,7 @@ flowchart LR
 - **Audit tampering:** the plugin writes to a capped collection; a compromised admin with write access could rotate/clear entries to cover tracks. *Mitigation:* stream audit events to an append-only external sink.
 
 ### Personal data processing
-No — this capability does not process personal data.
+❌ No — this capability does not process personal data.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -855,6 +899,10 @@ N/A.
 
 ## CAP-INTEG-12 — Static serving, SPA, VSS static
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user (observes) | All pages (no specific page) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a user, the platform serves the app and its static assets to my browser so I can load pages, assets, and VSS data without configuring anything.
@@ -865,9 +913,9 @@ All users (the app + assets); integrators (VSS data).
 
 ### Acceptance criteria
 
-- When I open the app root or any unknown route in production, the platform serves the single-page app so client-side routing works.
-- When I request a static asset (images, plugins, built-in widgets, uploaded files), the platform serves it with the correct MIME type.
-- When I request a VSS JSON for a given version and filename, the platform returns the JSON; when the version/filename doesn't exist, I see that it is not found.
+- When a **user** opens the app root or any unknown route in production at **All pages (no specific page)**, the platform serves the single-page app so client-side routing works.
+- When a **user** requests a static asset (images, plugins, built-in widgets, uploaded files) at **All pages (no specific page)**, the platform serves it with the correct MIME type.
+- When a **user** requests a VSS JSON for a given version and filename at **All pages (no specific page)**, the platform returns the JSON; when the version/filename doesn't exist, they see that it is not found.
 
 ### API contract
 
@@ -907,7 +955,7 @@ Public; Helmet CSP applies (wildcard in both envs — known permissive).
 - **Path traversal in static serving:** a misconfigured static root or lax path handling could let `/static`/`/d` resolve to files outside the asset directory. *Mitigation:* keep static roots pinned and reject `..` traversal.
 
 ### Personal data processing
-No — this capability does not process personal data.
+❌ No — this capability does not process personal data.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -929,6 +977,10 @@ Static assets only.
 
 ## CAP-INTEG-13 — CORS / Helmet CSP / security middleware
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user (observes) | Global middleware (no page) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a user, every page I load is protected by security headers (CSP, HSTS) and cross-origin rules so my session is protected from inline-script injection and rogue sites.
@@ -939,9 +991,9 @@ DevOps (deploy securely); the app (browser loading).
 
 ### Acceptance criteria
 
-- When my browser loads any platform page, the platform sets security headers (CSP, HSTS) on the response.
-- When a request comes from an origin not in the configured allowlist, the platform rejects the cross-origin request.
-- When I load the app, inputs I submit are sanitized so NoSQL-injection payloads are stripped before reaching the database.
+- When a **user** loads any page at **Global middleware (no page)**, the platform applies security headers (CSP, HSTS) on the response so their session is protected from inline-script injection.
+- When a **user**'s request comes from an origin not in the configured allowlist at **Global middleware (no page)**, the platform rejects the cross-origin request.
+- When a **user** loads the app and submits inputs at **Global middleware (no page)**, the inputs are sanitized so NoSQL-injection payloads are stripped before reaching the database.
 
 ### API contract
 
@@ -985,7 +1037,7 @@ flowchart LR
 - **CORS origin regex bypass:** a regex CORS allowlist can be subverted (e.g. attacker origin matching a substring), allowing cross-origin credentialed requests from rogue sites. *Mitigation:* anchor CORS regexes (`^...$`) and test against rogue origins.
 
 ### Personal data processing
-No — this capability does not process personal data.
+❌ No — this capability does not process personal data.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -1008,6 +1060,10 @@ mongo-sanitize strips `$`/`.` keys from inputs; cookies httpOnly.
 
 ## CAP-INTEG-14 — Socket.IO (realtime)
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user (observes) | Runtime panel (realtime) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a user, I see real-time runtime updates (such as GitHub OAuth completion) without refreshing the page so I can complete flows without polling.
@@ -1018,9 +1074,9 @@ Auth flows (GitHub token delivery); future realtime features.
 
 ### Acceptance criteria
 
-- When I complete a GitHub OAuth flow, the platform pushes the result to my browser in real time so I see the linked token / login outcome without refreshing.
-- When my session is not authenticated, I cannot open a realtime connection.
-- When an auth flow errors, the platform pushes the error to my browser in real time.
+- When a **user** completes a GitHub OAuth flow at **Runtime panel (realtime)**, the platform pushes the result to their browser in real time so they see the linked token / login outcome without refreshing.
+- When a **user** without an authenticated session attempts to open a realtime connection at **Runtime panel (realtime)**, they cannot open one.
+- When an auth flow errors at **Runtime panel (realtime)**, the platform pushes the error to the **user**'s browser in real time.
 
 ### API contract
 
@@ -1062,7 +1118,7 @@ JWT verified on handshake.
 - **Event spoofing to wrong socket:** GitHub OAuth tokens are pushed over `auth/github`; a session-binding flaw could emit a token to a socket that isn't the originating user. *Mitigation:* bind `socket.user` to the session and verify the recipient before emitting.
 
 ### Personal data processing
-No — this capability does not process personal data.
+❌ No — this capability does not process personal data.
 N/A.
 **Risks:**
 - none — no personal data processed.
@@ -1085,6 +1141,10 @@ Token in query string (use TLS in prod); event payloads may include GitHub token
 
 ## CAP-INTEG-15 — Log / cache service clients
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| operator | Operator config (`.env`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an operator, the platform forwards audit and forgot-password events to my configured log service and pulls recent-prototype activity from my configured cache service so I can centralize logs and activity views.
@@ -1095,9 +1155,9 @@ DevOps (centralized logs/activity).
 
 ### Acceptance criteria
 
-- When I configure a log service URL, the platform forwards audit and forgot-password events to it; when I don't configure it, forwarding is inactive.
-- When I configure a cache service URL, the platform pulls recent-prototype activity from it; when I don't configure it, the pull is inactive.
-- When either service fails, the main platform flows are not blocked.
+- When an **operator** configures a log service URL at **Operator config (`.env`)**, the platform forwards audit and forgot-password events to it; when they don't configure it, forwarding is inactive.
+- When an **operator** configures a cache service URL at **Operator config (`.env`)**, the platform pulls recent-prototype activity from it; when they don't configure it, the pull is inactive.
+- When either service fails at **Operator config (`.env`)**, the main platform flows an **operator** relies on are not blocked.
 
 ### API contract
 
@@ -1135,7 +1195,7 @@ Internal clients; configure with appropriate auth on the target services.
 - **SSRF via misconfigured URL:** an attacker able to influence `LOG_URL`/`CACHE_URL` could redirect audit events (including password-reset metadata) to an attacker endpoint. *Mitigation:* allowlist `LOG_URL`/`CACHE_URL` at deploy time and reject runtime overrides.
 
 ### Personal data processing
-No — this capability does not process personal data.
+❌ No — this capability does not process personal data.
 N/A.
 **Risks:**
 - none — no personal data processed.

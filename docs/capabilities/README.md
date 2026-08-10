@@ -12,7 +12,7 @@ Each capability is an `## CAP-<CLUSTER>-NN — <title>` heading with a **stable 
 
 - **Description** — what the **user** can do in the **UI** and what they get out of it. Lead with "As a `<role>`, I can `<do X in the UI>` so that `<value>`." No endpoint paths, HTTP statuses, flag names, or internal mechanics. For capabilities with no direct UI (infra/security/static serving), describe what the user **observes** ("As a user, every page I load is protected by security headers…") or what an **admin/operator** configures in the admin UI.
 - **Who uses it / who gets value** — the roles that use or benefit (end user, model owner, admin, DevOps/integrator, plugin author, …).
-- **Acceptance criteria** — what the **user does in the UI and what they observe**, framed as "When I `<UI action>`, I `<see / get / am prevented from…>`." Cover success, error, and edge cases the **user** experiences (signed-out, no permission, not found, validation error shown in the UI). **No endpoint paths, HTTP statuses, or flag names here** — the technical contract lives in API contract.
+- **Acceptance criteria** — what the **user does in the UI and what they observe**. Every bullet is framed as "**When a `<actor>` `<action>` at `<Page name (URL)>`, `<they see / get / are prevented from…>`**" — always name the **actor** (`guest` / `user` / `owner` / `admin` / `operator` / `integrator`) and the **where** (page name + URL); never use first-person "I". Cover success, error, and edge cases (signed-out, no permission, not found, validation error shown in the UI). **No endpoint paths, HTTP statuses, or flag names here** — the technical contract lives in API contract.
 - **API contract** — the technical contract for implementers/QA: endpoint path, HTTP method, status codes, body shape, auth gating, and relevant flags — kept **verbatim** (code-grounded). This is where `GET /v2/models (optional auth via PUBLIC_VIEWING) → 200` lives. If the capability has no HTTP surface (a pure UI behavior or static config), state that explicitly.
 - **Quality control** — how the **user/operator verifies the capability via the UI** (manual steps: open page, click, observe).
 - **Security** — auth, permissions, sandboxing, attack surface, followed by a **Risks:** bullet list. **Every Security section must address each of these topics explicitly** (state the real value, or `N/A`, or `not implemented` — never leave a topic absent):
@@ -22,7 +22,7 @@ Each capability is an `## CAP-<CLUSTER>-NN — <title>` heading with a **stable 
   - **Rate limiting** — applied / not applied (cite the `authLimiter` gap if relevant) / `N/A`.
   - **Secrets** — any secrets/credentials the consumer handles or the system stores, and how protected (or `none`).
   - **Risks** — each risk bullet ends with a `*Mitigation:*` (what the system does or should do to control it; `none currently — <recommendation>` if absent).
-- **Personal data processing** — states **explicitly whether the capability processes personal data** (`Yes — <what: email, name, …>` or `No — this capability does not process personal data.`). If yes, how it's handled: what's collected, where stored, retention, encryption, who can access. Every CAP answers yes or no — absence is not allowed. Followed by a **Risks:** bullet list for personal-data risks (`none — no personal data processed.` when no).
+- **Personal data processing** — states **explicitly whether the capability processes personal data**, led by an emoji: `✅ Yes — <what: email, name, …>` or `❌ No — this capability does not process personal data.` If yes, how it's handled: what's collected, where stored, retention, encryption, who can access. Every CAP answers yes or no — absence is not allowed. Followed by a **Risks:** bullet list for personal-data risks (`none — no personal data processed.` when no).
 - **AutoWRX data** — the operational/business data AutoWRX stores for the capability, with a **Coverage:** checklist (every topic explicit — `N/A`/`not implemented` where true) and a **Risks:** bullet list:
   - **Stored data** — what operational data is persisted and where (or `none`).
   - **Retention** — how long kept / TTL / hard vs soft delete / indefinite (or `N/A`).
@@ -31,6 +31,78 @@ Each capability is an `## CAP-<CLUSTER>-NN — <title>` heading with a **stable 
 - **Test coverage** — E2E (Playwright) test-case count for this capability, the spec file(s), SITEMAP status (`✅`/`⚠️`/`❌`), an **Estimated coverage:** `≈N% (est.)` with a one-line basis, and unit (Jest) count if any. State `0 — not covered` when there is no E2E spec.
 
 > Absence is ambiguous. The checklists above exist so a reader can tell "not applicable" from "forgotten" — every topic gets an explicit answer.
+
+## Capability template
+
+Every CAP follows this exact structure. Copy it; replace `<…>`.
+
+```markdown
+## CAP-<CLUSTER>-NN — <Title>
+
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| <user/admin/owner/guest/operator/integrator> | <Page name> (`/url`) | ✅ Yes — <kind> / ❌ No | ✅/⚠️/❌ <N> cases, ≈<N>% (est.) |
+
+### Description
+As a <role>, I can <do X in the UI at <Page>> so that <value>.
+
+### Who uses it / value
+<roles>
+
+### Acceptance criteria
+- When a <user/admin/owner/guest> <does X> at <Page name (`/url`)>, <they see / get / are prevented from…>.
+- <one bullet per success / error / edge case, each naming actor + where>
+
+### API contract
+- `<METHOD> /v2/...` (auth gating) → `<status>` <body>; <flags>
+- <or: No HTTP surface — <transparent middleware / static config>.>
+
+### Quality control
+<UI verification steps at <Page>>
+
+### Security
+<prose>
+**Coverage:**
+- **Auth:** …
+- **Authorization:** …
+- **Input validation:** …
+- **Rate limiting:** …
+- **Secrets:** …
+**Risks:**
+- **<risk>:** <desc>. *Mitigation:* <…>
+
+### Personal data processing
+✅ Yes — <what personal data>. <handling: collected from, stored in, retention, encryption, who can access>
+**Risks:**
+- <personal-data risks>
+
+— or, when no —
+
+❌ No — this capability does not process personal data.
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
+<prose>
+**Coverage:**
+- **Stored data:** …
+- **Retention:** …
+- **Encryption:** …
+- **Logging:** …
+**Risks:**
+- <operational-data risks>
+
+### Test coverage
+- **E2E (Playwright):** <N> case(s) in `<spec>.ts` — SITEMAP: ✅/⚠️/❌
+- **Estimated coverage:** ≈<N>% (est.) — <basis>
+- **Unit (Jest):** <N or `none`>
+```
+
+**Conventions:**
+- **Quick-facts table** (directly under the `## CAP-…` heading, before `### Description`): one row — Actor · Where · Personal data · E2E coverage.
+- **Actors** (use the most specific): `guest` (signed-out) · `user` (signed-in) · `owner` (owns the resource) · `admin` · `operator` (infra/deploy) · `integrator` (external API). Acceptance criteria always name the actor — never first-person "I".
+- **Where**: every UI action names the page + URL, e.g. `Models page (\`/model\`)`, `Model detail (\`/model/:id\`)`, `Admin → Site Config (\`/admin/site-config\`)`, `Sign-in dialog`. Infra CAPs with no page: `Global middleware (no page)` or `Operator config (\`.env\` / admin)`.
+- **Emojis**: Personal data = `✅ Yes` / `❌ No`; E2E coverage = `✅` (covered) / `⚠️` (partial) / `❌` (not covered).
 
 ## Clusters
 

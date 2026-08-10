@@ -56,6 +56,10 @@ flowchart TD
 
 ## CAP-IDENTITY-01 — Login / logout / token refresh
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| guest / user | Sign-in dialog; User menu | ✅ Yes — email, password (hashed) | ✅ 7 cases, ≈50% (est.) |
+
 ### Description
 
 As a user, I can sign in with my email and password from the sign-in dialog, stay signed in across page reloads via a silent background refresh, and sign out from the user menu so that my session is convenient yet remains under my control.
@@ -66,11 +70,11 @@ All end users (sign in); every downstream capability depends on a valid session.
 
 ### Acceptance criteria
 
-- When I open the sign-in dialog and submit my email + password, I am signed in, the dialog closes, and my avatar appears in the navbar.
-- When I submit the wrong password, or an email belonging to an SSO-only account that has no password, I see an error message in the dialog and I remain signed out.
-- When I reload the page while my session is still valid, I stay signed in without being prompted again.
-- When my session expires while I am using the platform, the system silently refreshes it once and continues my pending action without prompting me; if the refresh fails, I am signed out and the next protected action sends me back to the sign-in dialog.
-- When I choose Logout from the user menu, I am signed out and sent to the home page; the next time I try a protected action, I am prompted to sign in again.
+- When a **guest** submits a valid email + password at the **Sign-in dialog**, they are signed in, the dialog closes, and their avatar appears in the navbar.
+- When a **guest** submits a wrong password, or an email belonging to an SSO-only account that has no password, at the **Sign-in dialog**, they see an error message in the dialog and remain signed out.
+- When a **user** reloads any page while their session is still valid, they stay signed in without being prompted again.
+- When a **user**'s session expires while they are using the platform, the system silently refreshes it once and continues their pending action without prompting them; if the refresh fails, they are signed out and the next protected action sends them back to the **Sign-in dialog**.
+- When a **user** chooses Logout from the **User menu**, they are signed out and sent to the home page; the next time they try a protected action, they are prompted to sign in again.
 
 ### API contract
 
@@ -119,7 +123,7 @@ Access token short-lived (`JWT_ACCESS_EXPIRATION_MINUTES`, 30 min prod / 30 days
 
 ### Personal data processing
 
-Yes — my email and password (hashed). Collected from me at `POST /v2/auth/login` (email + password); stored in the `User` collection (email, bcrypt password hash) and the `Token` collection (refresh tokens owned by my user id); retained indefinitely on my user record, refresh tokens until logout/revoked; encrypted — password bcrypt-hashed (8 rounds), tokens JWT-signed with `config.jwt.secret`; accessible to me (my own user object) and to admins via user management (`MANAGE_USERS`). My password is never returned (`private`); my refresh cookie is `httpOnly` (no JS access), `Secure`/`SameSite=None`/`domain` only in production; my access token lives only in memory (`authStore`), not persisted client-side.
+✅ Yes — my email and password (hashed). Collected from me at `POST /v2/auth/login` (email + password); stored in the `User` collection (email, bcrypt password hash) and the `Token` collection (refresh tokens owned by my user id); retained indefinitely on my user record, refresh tokens until logout/revoked; encrypted — password bcrypt-hashed (8 rounds), tokens JWT-signed with `config.jwt.secret`; accessible to me (my own user object) and to admins via user management (`MANAGE_USERS`). My password is never returned (`private`); my refresh cookie is `httpOnly` (no JS access), `Secure`/`SameSite=None`/`domain` only in production; my access token lives only in memory (`authStore`), not persisted client-side.
 
 **Risks:**
 - **Low bcrypt cost factor:** my password is hashed at 8 rounds, below the modern ≥12 recommendation — an offline brute-force against a leaked user DB cracks 8-round hashes faster.
@@ -147,6 +151,10 @@ My refresh-token document is operational session state; access tokens are epheme
 
 ## CAP-IDENTITY-02 — Registration
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| guest | Register dialog (Sign-in dialog → Register) | ✅ Yes — email, name, password (hashed) | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a new visitor, I can create my own account from the sign-in dialog's "Register" link so that I can start using the platform without an admin having to provision me, when self-registration is enabled by the site.
@@ -157,11 +165,11 @@ New end users (sign up); admins benefit from reduced account-provisioning load.
 
 ### Acceptance criteria
 
-- When self-registration is enabled, I see a "Register" link in the sign-in dialog; switching to the register form, I fill in my name, email, password, and password confirmation, and on submit I am signed in immediately.
-- When I submit mismatched passwords or leave required fields blank, I see a validation error in the form and am not registered.
-- When I register with an email that is already taken, I see an "email already taken" error and am not registered.
-- When self-registration is disabled by the site, the "Register" link is hidden in the sign-in dialog, and I cannot self-create an account.
-- On successful registration the site sends me a welcome email (non-blocking — a mail failure does not block my registration).
+- When a **guest** opens the **Sign-in dialog** and self-registration is enabled, they see a "Register" link; switching to the register form at **Register dialog**, they fill in name, email, password, and password confirmation, and on submit they are signed in immediately.
+- When a **guest** submits mismatched passwords or leaves required fields blank at the **Register dialog**, they see a validation error in the form and are not registered.
+- When a **guest** registers with an email that is already taken at the **Register dialog**, they see an "email already taken" error and are not registered.
+- When self-registration is disabled by the site, the "Register" link is hidden in the **Sign-in dialog**, and a **guest** cannot self-create an account.
+- When a **guest** successfully registers at the **Register dialog**, the site sends them a welcome email (non-blocking — a mail failure does not block registration).
 
 ### API contract
 
@@ -201,7 +209,7 @@ Registration is gated by the `SELF_REGISTRATION` site auth flag; no admin needed
 
 ### Personal data processing
 
-Yes — my email, name, and password (hashed). Collected from me at `POST /v2/auth/register` (email, password, name; optional `image_file`/`provider`); stored in my `User` document (name, email unique+lowercased, bcrypt password hash, `email_verified=false`, provider, timestamps); retained indefinitely until an admin deletes it (no TTL/soft-delete); encrypted — password bcrypt-hashed (8 rounds), no at-rest encryption beyond hashing; accessible to me (my own user object) and to admins via user management (`MANAGE_USERS`), masked in public list responses (`name,id,image_file` only).
+✅ Yes — my email, name, and password (hashed). Collected from me at `POST /v2/auth/register` (email, password, name; optional `image_file`/`provider`); stored in my `User` document (name, email unique+lowercased, bcrypt password hash, `email_verified=false`, provider, timestamps); retained indefinitely until an admin deletes it (no TTL/soft-delete); encrypted — password bcrypt-hashed (8 rounds), no at-rest encryption beyond hashing; accessible to me (my own user object) and to admins via user management (`MANAGE_USERS`), masked in public list responses (`name,id,image_file` only).
 
 **Risks:**
 - **Email enumeration via duplicate signal:** the `400 email already taken` response lets an attacker probe which addresses are registered, enabling account-enumeration and targeted phishing.
@@ -227,6 +235,10 @@ The welcome email is an operational side-effect of account creation; my `User` d
 
 ## CAP-IDENTITY-03 — Password reset & email verification
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| guest / user | Forgot-password page (`/forgot-password`) | ✅ Yes — email, new password (hashed) | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a user, I can recover a forgotten password from the sign-in dialog by entering my email, receiving a 6-digit code, and choosing a new password — without an admin's help — so that I can regain access to my account; I can also verify my email so the site marks it as trusted.
@@ -237,12 +249,12 @@ End users who lost a password or need to verify email; admins (fewer password re
 
 ### Acceptance criteria
 
-- When I click "Forget Password" in the sign-in dialog and enter my email, I see the next step asking for the 6-digit code that was emailed to me, regardless of whether that email exists (the site does not reveal which addresses are registered).
-- When I enter the 6-digit code and a new password (twice, matching, at least 8 characters), my password is reset and I see a success screen that lets me return to sign in with the new password.
-- When I enter a wrong or expired code, or mismatched/too-short passwords, I see an error and my password is not changed.
-- When I didn't receive the code, I can resend it from the same screen; I can also go back to use a different email.
-- When I click the verify-email link in the email the site sends me, my email is marked as verified. (There is no dedicated verify-email screen in the UI — the link confirms my address and lands me on the site.)
-- Password reset/verify actions are only available when password management is enabled by the site.
+- When a **guest** clicks "Forget Password" in the **Sign-in dialog** and enters their email at the **Forgot-password page (`/forgot-password`)**, they see the next step asking for the 6-digit code that was emailed to them, regardless of whether that email exists (the site does not reveal which addresses are registered).
+- When a **guest** enters the 6-digit code and a new password (twice, matching, at least 8 characters) at the **Forgot-password page (`/forgot-password`)**, their password is reset and they see a success screen that lets them return to sign in with the new password.
+- When a **guest** enters a wrong or expired code, or mismatched/too-short passwords, at the **Forgot-password page (`/forgot-password`)**, they see an error and their password is not changed.
+- When a **guest** didn't receive the code, they can resend it from the **Forgot-password page (`/forgot-password`)**; they can also go back to use a different email.
+- When a **user** clicks the verify-email link in the email the site sends them, their email is marked as verified. (There is no dedicated verify-email screen in the UI — the link confirms their address and lands them on the site.)
+- Password reset/verify actions are only available at the **Forgot-password page (`/forgot-password`)** when password management is enabled by the site.
 
 ### API contract
 
@@ -291,7 +303,7 @@ My reset code is persisted in `Token` (`type=RESET_PASSWORD`); existing reset to
 
 ### Personal data processing
 
-Yes — my email (recovery handle) and my new password (hashed). Collected from me at `POST /v2/auth/forgot-password {email}`, `POST /v2/auth/reset-password {email,code,password}`, and `POST /v2/auth/verify-email?token=…`; stored in my `User` document (new password bcrypt-hashed on reset) and `Token` docs (`type=RESET_PASSWORD` 60-min code, `type=VERIFY_EMAIL` token) tied to my email/user id; retained — password indefinite, reset/verify tokens single-use deleted on success (no TTL index so abandoned codes persist until the expiry check); encrypted — new password bcrypt-hashed, reset/verify tokens JWT-signed, 6-digit code stored as plaintext in the `Token` collection; accessible to me (the code/token is emailed to me) and to the system — never logged.
+✅ Yes — my email (recovery handle) and my new password (hashed). Collected from me at `POST /v2/auth/forgot-password {email}`, `POST /v2/auth/reset-password {email,code,password}`, and `POST /v2/auth/verify-email?token=…`; stored in my `User` document (new password bcrypt-hashed on reset) and `Token` docs (`type=RESET_PASSWORD` 60-min code, `type=VERIFY_EMAIL` token) tied to my email/user id; retained — password indefinite, reset/verify tokens single-use deleted on success (no TTL index so abandoned codes persist until the expiry check); encrypted — new password bcrypt-hashed, reset/verify tokens JWT-signed, 6-digit code stored as plaintext in the `Token` collection; accessible to me (the code/token is emailed to me) and to the system — never logged.
 
 **Risks:**
 - **Recovery-handle hijack:** email is the sole recovery handle; anyone controlling the mailbox receives the 6-digit code and can take over the account, regardless of password strength.
@@ -318,6 +330,10 @@ My reset/verify tokens are one-time, short-lived operational secrets, deleted on
 
 ## CAP-IDENTITY-04 — SSO (OIDC ID-token + GitHub OAuth)
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| guest / user | Sign-in dialog (SSO buttons) | ✅ Yes — email, display name, avatar, provider profile | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a user, I can sign in through a configured SSO provider (Microsoft-style OIDC or GitHub) from a "Sign in with …" button under the sign-in form so that I do not need a platform password; my account is created automatically on my first SSO sign-in when auto-registration is enabled.
@@ -328,12 +344,12 @@ End users (passwordless login); enterprises (SSO integration); DevOps/integrator
 
 ### Acceptance criteria
 
-- When at least one SSO provider is configured and enabled, I see an "Or continue with" section with a "Sign in with <provider>" button under the sign-in form.
-- When I click the SSO button (Microsoft), a popup opens to authenticate me with the provider; on success I am signed in, the popup closes, and I see a welcome toast. If I cancel the popup, I see a "Login Cancelled" toast and remain signed out. If the popup is blocked, I see a "Popup Blocked" toast.
-- When I click the GitHub SSO button, I am redirected to GitHub to authorize, then redirected back to the site signed in.
-- When the provider is disabled or its configuration is invalid, the SSO button is hidden (or I see an SSO configuration error toast), and I am not signed in.
-- When auto-registration is enabled, my account is created on my first SSO sign-in; when it is disabled, a matching existing account is required for me to sign in.
-- When email login is disabled by the site, the sign-in dialog shows only the SSO provider button(s).
+- When a **guest** opens the **Sign-in dialog** and at least one SSO provider is configured and enabled, they see an "Or continue with" section with a "Sign in with <provider>" button under the sign-in form.
+- When a **guest** clicks the SSO button (Microsoft) at the **Sign-in dialog**, a popup opens to authenticate them with the provider; on success they are signed in, the popup closes, and they see a welcome toast. If they cancel the popup, they see a "Login Cancelled" toast and remain signed out. If the popup is blocked, they see a "Popup Blocked" toast.
+- When a **guest** clicks the GitHub SSO button at the **Sign-in dialog**, they are redirected to GitHub to authorize, then redirected back to the site signed in.
+- When a **guest** finds the provider disabled or its configuration invalid at the **Sign-in dialog**, the SSO button is hidden (or they see an SSO configuration error toast), and they are not signed in.
+- When auto-registration is enabled, a **guest**'s account is created on their first SSO sign-in at the **Sign-in dialog**; when it is disabled, a matching existing account is required for them to sign in.
+- When email login is disabled by the site, the **Sign-in dialog** shows a **guest** only the SSO provider button(s).
 
 ### API contract
 
@@ -386,7 +402,7 @@ Provider `clientSecret`s are **encrypted at rest**, decrypted only for admin dis
 
 ### Personal data processing
 
-Yes — my email, display name, avatar URL, and provider profile data (`provider_data`). Collected from my SSO provider at `POST /v2/auth/sso {providerId,idToken}` and the GitHub OAuth callback (`GET /v2/auth/github-sso/callback?code=`); stored in my `User` doc (`provider`, `provider_user_id`, `provider_data[]`, `email_verified=true` for SSO-created users, avatar `image_file`), updated on each SSO login; retained indefinitely until an admin deletes it; encrypted — provider `clientSecret`s are encrypted at rest (never exposed to me as a non-admin; the public list returns only enabled providers without secrets), my JWT is signed with `config.jwt.secret`, HTTPS to provider endpoints; accessible to me (my own user object) and to admins via user management. A password is optional for SSO accounts.
+✅ Yes — my email, display name, avatar URL, and provider profile data (`provider_data`). Collected from my SSO provider at `POST /v2/auth/sso {providerId,idToken}` and the GitHub OAuth callback (`GET /v2/auth/github-sso/callback?code=`); stored in my `User` doc (`provider`, `provider_user_id`, `provider_data[]`, `email_verified=true` for SSO-created users, avatar `image_file`), updated on each SSO login; retained indefinitely until an admin deletes it; encrypted — provider `clientSecret`s are encrypted at rest (never exposed to me as a non-admin; the public list returns only enabled providers without secrets), my JWT is signed with `config.jwt.secret`, HTTPS to provider endpoints; accessible to me (my own user object) and to admins via user management. A password is optional for SSO accounts.
 
 **Risks:**
 - **Provider-data persistence:** `provider_data` (profile/emails from the IdP) is stored indefinitely; if the provider later revokes or changes the user's identity, stale `provider_user_id` bindings keep pointing at the local account, enabling identity confusion or takeovers after an email change at the IdP.
@@ -413,6 +429,10 @@ SSO provider configuration (secrets, enabled flags) is operational config; my SS
 
 ## CAP-IDENTITY-05 — User profile
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Profile page (`/profile`) | ✅ Yes — name, email, avatar, password | ⚠️ 2 cases, ≈50% (est.) |
+
 ### Description
 
 As a signed-in user, I can open the Profile page to view my identity and update my display name, avatar, and (when password management is enabled) my password so that I keep my identity current.
@@ -423,12 +443,12 @@ End users (manage their identity/avatar).
 
 ### Acceptance criteria
 
-- When I open the Profile page, I see my avatar, my display name, and my email (read-only).
-- When I click "Change name", edit my name, and save, my updated name appears immediately on the page and across the UI (navbar, etc.); clicking Cancel reverts without saving.
-- When I click the avatar edit button and choose an image file, my avatar updates immediately on the page.
-- When password management is enabled, I see a "Change password" button that opens a dialog where I enter a new password twice; on submit I see a success message and am redirected to sign in again with the new password. When the two passwords don't match, I see an error and the password is not changed.
-- When password management is disabled, the password section is not shown.
-- When I am not signed in, the Profile page does not show my identity (I am prompted to sign in for protected access).
+- When a **user** opens the **Profile page (`/profile`)**, they see their avatar, their display name, and their email (read-only).
+- When a **user** clicks "Change name", edits their name, and saves at the **Profile page (`/profile`)**, their updated name appears immediately on the page and across the UI (navbar, etc.); clicking Cancel reverts without saving.
+- When a **user** clicks the avatar edit button and chooses an image file at the **Profile page (`/profile`)**, their avatar updates immediately on the page.
+- When password management is enabled, a **user** sees a "Change password" button at the **Profile page (`/profile`)** that opens a dialog where they enter a new password twice; on submit they see a success message and are redirected to sign in again with the new password. When the two passwords don't match, they see an error and the password is not changed.
+- When password management is disabled, the password section is not shown at the **Profile page (`/profile`)**.
+- When a **guest** (not signed in) opens the **Profile page (`/profile`)**, their identity is not shown and they are prompted to sign in for protected access.
 
 ### API contract
 
@@ -470,7 +490,7 @@ I must be signed in; I can edit only myself (no cross-user self-edit).
 
 ### Personal data processing
 
-Yes — my name, email, avatar (file path), and password (when changed). Collected from me at `GET`/`PATCH /v2/users/self` (name, avatar; password only when `PASSWORD_MANAGEMENT=true`); stored in my `User` doc (name, `image_file` path, password hashed if changed); retained indefinitely (user-controlled, no TTL); encrypted — password bcrypt-hashed (marked `private`, never returned), avatar stored as a file path (no encryption); accessible to me (my own user object) and to admins via user management.
+✅ Yes — my name, email, avatar (file path), and password (when changed). Collected from me at `GET`/`PATCH /v2/users/self` (name, avatar; password only when `PASSWORD_MANAGEMENT=true`); stored in my `User` doc (name, `image_file` path, password hashed if changed); retained indefinitely (user-controlled, no TTL); encrypted — password bcrypt-hashed (marked `private`, never returned), avatar stored as a file path (no encryption); accessible to me (my own user object) and to admins via user management.
 
 **Risks:**
 - **Self-edit of personal identifier:** if validation is loose, a user could change their `email` via `PATCH /v2/users/self` to collide with another account, enabling impersonation (see also Security).
@@ -496,6 +516,10 @@ My avatar is stored as a file path; my password is hashed and `private` (never r
 
 ## CAP-IDENTITY-06 — User management (admin)
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin / guest | Admin → Manage Users (`/manage-users`) | ✅ Yes — name, email, password (hashed) | ✅ 4 cases, ≈80% (est.) |
+
 ### Description
 
 As an admin, I can open the Manage Users page to browse, search, create, update, and delete user accounts so that I can provision and manage the platform's directory; as a visitor I can browse discoverable profiles when public viewing is enabled, with emails masked.
@@ -506,13 +530,13 @@ Admins (provision/manage users); end users (discoverable profiles when `PUBLIC_V
 
 ### Acceptance criteria
 
-- When I open the Manage Users page as an admin, I see a paginated list of users with their name, avatar, and created-at timestamp, a total count, a "Create new user" button, and a search box that filters by name or email.
-- When I click "Create new user" and fill in name/email/password, the new user appears in the list with a success toast; if the email is already taken or input is invalid, I see an error toast and no user is created.
-- When I click a user's edit button, a dialog opens pre-filled with their name/email; saving updates the list with a success toast.
-- When I click a user's delete button, I am asked to confirm; confirming removes the user from the list with a success toast. Cancelling keeps the user.
-- When there are more users than fit on one page, a "Load more" button loads the next page; when there are no more, I see "No more users to load." (or "No matches." if the search returned nothing).
-- When I am a non-admin, the "Manage Users" nav entry is hidden and writes are refused; when public viewing is off and I am signed out, I cannot read the directory and am prompted to sign in.
-- As a signed-out visitor with public viewing on, I can browse the public user list but emails are masked and full details are admin-only.
+- When an **admin** opens the **Manage Users page (`/manage-users`)**, they see a paginated list of users with their name, avatar, and created-at timestamp, a total count, a "Create new user" button, and a search box that filters by name or email.
+- When an **admin** clicks "Create new user" and fills in name/email/password at the **Manage Users page (`/manage-users`)**, the new user appears in the list with a success toast; if the email is already taken or input is invalid, they see an error toast and no user is created.
+- When an **admin** clicks a user's edit button at the **Manage Users page (`/manage-users`)**, a dialog opens pre-filled with their name/email; saving updates the list with a success toast.
+- When an **admin** clicks a user's delete button at the **Manage Users page (`/manage-users`)**, they are asked to confirm; confirming removes the user from the list with a success toast. Cancelling keeps the user.
+- When there are more users than fit on one page at the **Manage Users page (`/manage-users`)**, a "Load more" button loads the next page; when there are no more, an **admin** sees "No more users to load." (or "No matches." if the search returned nothing).
+- When a **user** (non-admin) visits the **Manage Users page (`/manage-users`)**, the "Manage Users" nav entry is hidden and writes are refused; when public viewing is off and they are signed out, they cannot read the directory and are prompted to sign in.
+- When a **guest** (signed-out visitor) browses the **Manage Users page (`/manage-users`)** with public viewing on, they can browse the public user list but emails are masked and full details are admin-only.
 
 ### API contract
 
@@ -551,7 +575,7 @@ Writes require `MANAGE_USERS`. The `includeFullDetails` read is admin-gated.
 
 ### Personal data processing
 
-Yes — the full user directory: name, email, password (hashed). Collected from admins at `POST /v2/users` and from each user at registration; stored in the `users` collection (full `User` docs); retained indefinitely (hard delete, no soft-delete); encrypted — passwords bcrypt-hashed (marked `private`, never returned), emails masked in public list responses (`name,id,image_file` only), `includeFullDetails` admin-only; accessible to admins (`MANAGE_USERS`) and to each user for their own record.
+✅ Yes — the full user directory: name, email, password (hashed). Collected from admins at `POST /v2/users` and from each user at registration; stored in the `users` collection (full `User` docs); retained indefinitely (hard delete, no soft-delete); encrypted — passwords bcrypt-hashed (marked `private`, never returned), emails masked in public list responses (`name,id,image_file` only), `includeFullDetails` admin-only; accessible to admins (`MANAGE_USERS`) and to each user for their own record.
 
 **Risks:**
 - **PII leakage via masked-but-recoverable emails:** masked emails still leak structure (domain, length, prefix length); combined with the public list when `PUBLIC_VIEWING=true`, this enables user-enumeration and targeted phishing.
@@ -578,6 +602,10 @@ The `users` collection is the operational identity directory; admin writes are o
 
 ## CAP-IDENTITY-07 — RBAC v1 (primary)
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin / owner / user | Admin → Manage Users (`/manage-users`); resource pages | ✅ Yes — user IDs, capability mappings | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a model/asset owner or admin, I can grant resource-scoped permissions to other users so that they can act on specific models or assets; as a user I only see what I've been granted, and as the owner of a resource I am not blocked from acting on my own resource.
@@ -588,11 +616,11 @@ Model/asset owners (grant access); admins (assign global roles); end users (only
 
 ### Acceptance criteria
 
-- As an admin, when I assign a user a permission on a resource (e.g. the right to edit a given model), that user can now perform the matching action on that resource in the UI; when I remove the permission, their attempts to perform that action are blocked (they see a denial / the action is unavailable).
-- As a user, I only see and act on resources for which I hold the relevant permission; actions I lack permission for are hidden or refused.
-- As the owner of a resource, I can act on it (edit, manage) even when I have not explicitly granted myself a permission — ownership bypasses the check.
-- As an admin, I can view which users hold which permissions, and which users are grouped by role, to audit access.
-- When a permission I query does not exist or I lack it, the system treats it as denied (I do not get access).
+- When an **admin** assigns a user a permission on a resource (e.g. the right to edit a given model) at the **Manage Users page (`/manage-users`)**, that user can now perform the matching action on that resource in the UI; when the **admin** removes the permission, that user's attempts to perform that action are blocked (they see a denial / the action is unavailable).
+- When a **user** browses resource pages, they only see and act on resources for which they hold the relevant permission; actions they lack permission for are hidden or refused.
+- When an **owner** acts on their own resource (edits, manages it) at the resource page, they can do so even when they have not explicitly granted themselves a permission — ownership bypasses the check.
+- When an **admin** views which users hold which permissions and which users are grouped by role at the **Manage Users page (`/manage-users`)**, they can audit access.
+- When a **user** queries a permission that does not exist or they lack it, the system treats it as denied (they do not get access).
 
 ### API contract
 
@@ -642,7 +670,7 @@ Assign/remove require `MANAGE_USERS`; `has-permission` requires me to be signed 
 
 ### Personal data processing
 
-Yes — user IDs and their capability mappings (relationship/capability data linking a person to what they can do). Collected from admins at `POST /v2/permissions {user,role,ref}`; stored in `UserRole` documents (`user`, `role`, `ref`; unique compound); retained indefinitely until manually revoked; encrypted — none (no secrets stored); accessible to admins (`MANAGE_USERS`) and to each user for their own roles (`GET /v2/permissions/self`).
+✅ Yes — user IDs and their capability mappings (relationship/capability data linking a person to what they can do). Collected from admins at `POST /v2/permissions {user,role,ref}`; stored in `UserRole` documents (`user`, `role`, `ref`; unique compound); retained indefinitely until manually revoked; encrypted — none (no secrets stored); accessible to admins (`MANAGE_USERS`) and to each user for their own roles (`GET /v2/permissions/self`).
 
 **Risks:**
 - **Relationship/capability leak:** `GET /v2/permissions` and `users-by-roles` expose who can do what on which resource — a capability map an attacker can use to target high-privilege users or sensitive `ref`s.
@@ -669,6 +697,10 @@ Yes — user IDs and their capability mappings (relationship/capability data lin
 
 ## CAP-IDENTITY-08 — Casbin RBAC v2 (partial)
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user / admin | Global middleware (no page) | ✅ Yes — subject/user identifiers | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a user/admin, my permissions are additionally checked against a second-generation (Casbin) policy so that the system can decide whether a subject may perform an action on an object; this is a partial, internal path that coexists with the primary RBAC and is not directly surfaced as a dedicated screen in the UI — I observe it only through whether my actions are allowed or denied.
@@ -679,10 +711,10 @@ Integrators building programmatic auth checks; future migration target.
 
 ### Acceptance criteria
 
-- As a user, when the system routes one of my actions through the v2 policy, I experience the same allow/deny outcome as a permission check: permitted actions succeed, denied actions are blocked.
-- As an admin, policy assignments I make via the v2 path take effect for the subject on subsequent actions.
-- Because v1 remains the primary path for most resource checks, I may see allow/deny outcomes driven by v1 for some resources and v2 for others during the partial migration — the system does not expose which path was used.
-- No dedicated user/admin UI screen is provided for the v2 authorize decision; it is observed only via the allow/deny outcome of my actions.
+- When a **user** performs an action routed through the v2 policy via **Global middleware (no page)**, they experience the same allow/deny outcome as a permission check: permitted actions succeed, denied actions are blocked.
+- When an **admin** makes policy assignments via the v2 path at **Global middleware (no page)**, they take effect for the subject on subsequent actions.
+- Because v1 remains the primary path for most resource checks, a **user** may see allow/deny outcomes driven by v1 for some resources and v2 for others during the partial migration at **Global middleware (no page)** — the system does not expose which path was used.
+- No dedicated user/admin UI screen is provided for the v2 authorize decision at **Global middleware (no page)**; a **user** observes it only via the allow/deny outcome of their actions.
 
 ### API contract
 
@@ -720,7 +752,7 @@ Auth is required; policy assignment is admin-only. **Partial** — v1 remains th
 
 ### Personal data processing
 
-Yes — subject/user identifiers embedded in Casbin policies. Collected from admins via `assignRoleToUserV2`; stored in the policy store (owner/writer/reader grouping policies binding subjects to objects); retained indefinitely until rewritten; encrypted — none (no secrets stored); accessible to admins and to the internal `/authorize` caller.
+✅ Yes — subject/user identifiers embedded in Casbin policies. Collected from admins via `assignRoleToUserV2`; stored in the policy store (owner/writer/reader grouping policies binding subjects to objects); retained indefinitely until rewritten; encrypted — none (no secrets stored); accessible to admins and to the internal `/authorize` caller.
 
 **Risks:**
 - **Subject enumeration via policy read:** the policy store encodes which user can do what on which object; a read (via a backup leak or admin API) reveals the full capability graph keyed by user id.
@@ -747,6 +779,10 @@ Casbin policies are the operational v2 capability graph; no secrets are stored.
 
 ## CAP-IDENTITY-09 — Manage Users & Manage Features (admin)
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin | Admin → Manage Users (`/admin/manage-users`); Admin → Manage Features (`/manage-features`) | ✅ Yes — name, email | ✅ 3 cases, ≈70% (est.) |
+
 ### Description
 
 As an admin, I can use the dedicated Manage Users and Manage Features pages to provision accounts and grant or revoke feature/role capabilities per user so that I can control who can do what across the platform.
@@ -757,11 +793,11 @@ Admins (provision users, grant capabilities).
 
 ### Acceptance criteria
 
-- On the Manage Users page, I get a paginated, searchable list of users with a "Create new user" action and per-user edit/delete actions (same UI as CAP-IDENTITY-06).
-- On the Manage Features page, I see a "Feature Categories" sidebar listing the available feature/permission roles; selecting a category shows the users currently granted that feature, with a count and an "Add User" button.
-- When I click "Add User" on a feature and pick a user, that user is added to the feature with a success toast; when I click a user's remove button, they are removed from the feature with a success toast. Errors show a destructive toast.
-- When a feature has no users, I see "No users found for this feature."; when no categories exist, I see "No features available"; when none is selected, I see "Please select a feature category".
-- As a non-admin, the "Manage Users" and "Manage Features" nav entries are hidden and the pages do not grant me access; I cannot perform grants or edits.
+- When an **admin** opens the **Manage Users page (`/admin/manage-users`)**, they get a paginated, searchable list of users with a "Create new user" action and per-user edit/delete actions (same UI as CAP-IDENTITY-06).
+- When an **admin** opens the **Manage Features page (`/manage-features`)**, they see a "Feature Categories" sidebar listing the available feature/permission roles; selecting a category shows the users currently granted that feature, with a count and an "Add User" button.
+- When an **admin** clicks "Add User" on a feature and picks a user at the **Manage Features page (`/manage-features`)**, that user is added to the feature with a success toast; when the **admin** clicks a user's remove button, they are removed from the feature with a success toast. Errors show a destructive toast.
+- When a feature has no users at the **Manage Features page (`/manage-features`)**, an **admin** sees "No users found for this feature."; when no categories exist, they see "No features available"; when none is selected, they see "Please select a feature category".
+- When a **user** (non-admin) tries to access the **Manage Users page (`/admin/manage-users`)** or **Manage Features page (`/manage-features`)**, the nav entries are hidden and the pages do not grant them access; they cannot perform grants or edits.
 
 ### API contract
 
@@ -800,7 +836,7 @@ Both pages require `MANAGE_USERS`.
 
 ### Personal data processing
 
-Yes — the full user directory (name, email) is surfaced and editable by admins. Collected from admins via the `/admin/manage-users` and `/manage-features` pages; stored in `User` and `UserRole` records (via the underlying `/v2/users` and `/v2/permissions` endpoints); retained indefinitely (matches user management — no TTL/soft-delete); encrypted — bcrypt for passwords, none for directory/role data; accessible to admins (`MANAGE_USERS`).
+✅ Yes — the full user directory (name, email) is surfaced and editable by admins. Collected from admins via the `/admin/manage-users` and `/manage-features` pages; stored in `User` and `UserRole` records (via the underlying `/v2/users` and `/v2/permissions` endpoints); retained indefinitely (matches user management — no TTL/soft-delete); encrypted — bcrypt for passwords, none for directory/role data; accessible to admins (`MANAGE_USERS`).
 
 **Risks:**
 - **Mass PII access:** manage-users surfaces a searchable, paginated list of all users with editable PII — a single compromised admin session exposes and can mutate the entire user directory.

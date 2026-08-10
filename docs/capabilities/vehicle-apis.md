@@ -38,6 +38,10 @@ flowchart TD
 
 ## CAP-VAPI-01 — VSS versions & CVI trees
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| integrator | Vehicle API view (`/model/:id/api`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an end user or integrator, I can list the available VSS (Vehicle Signal Specification) versions and fetch a version's computed CVI (Computed Vehicle Interface) tree so that I can browse the canonical signal catalog and pick a version to build against.
@@ -48,10 +52,10 @@ End users (browse signals); integrators (pick a VSS version); the platform (cano
 
 ### Acceptance criteria
 
-- When I browse the VSS catalog, I see a non-empty list of available versions.
-- When I select a version, I get its computed CVI tree.
-- When I fetch a static VSS file for a version, I get the raw JSON back.
-- These are available to anyone without signing in.
+- When an **integrator** browses the VSS catalog at the Vehicle API view (`/model/:id/api`), they see a non-empty list of available versions.
+- When an **integrator** selects a version at the Vehicle API view (`/model/:id/api`), they get its computed CVI tree.
+- When an **integrator** fetches a static VSS file for a version, they get the raw JSON back.
+- These are available to a **guest** without signing in.
 
 ### API contract
 
@@ -79,7 +83,7 @@ Public — anyone can call these without signing in.
 - **Catalog exposure:** the unauthenticated version list discloses every VSS version the platform supports, giving an attacker the full signal taxonomy to target downstream integrations against. *Mitigation:* versions are a public catalog by design (no auth); accept the disclosure as intended, or gate behind `PUBLIC_VIEWING` if the catalog must be hidden.
 
 ### Personal data processing
-No — this capability does not process personal data. (Static VSS reference JSON only; no user email/name is stored or returned.)
+❌ No — this capability does not process personal data. (Static VSS reference JSON only; no user email/name is stored or returned.)
 N/A
 **Risks:**
 - none — no personal data processed.
@@ -101,6 +105,10 @@ Static reference data only.
 
 ## CAP-VAPI-02 — Per-model VSS/COVESA API CRUD + computed tree
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner | Vehicle API view (`/model/:id/api`) | ❌ No | ✅ 2 cases, ≈45% (est.) |
+
 ### Description
 
 As a model owner, I can define the VSS/COVESA signal set for my model. As an end user, I can read the computed CVI tree that merges VSS and extended (wishlist) signals into one view so that dashboards and code have a single signal tree to consume.
@@ -111,10 +119,10 @@ Model owners (define the signal set); end users (consume signals in dashboards/c
 
 ### Acceptance criteria
 
-- When I open a model's Vehicle API view, I see the computed CVI tree merging the model's VSS signals with its extended (wishlist) signals.
-- When I (as owner) create, edit, or delete an API for my model, the computed tree updates accordingly.
-- When I look up a specific signal (e.g. Vehicle.Speed), I see its detail (datatype, unit, description, min/max where set).
-- When I'm signed out and public viewing is off, I'm prevented from reading a private model's computed tree.
+- When a **user** opens a model's Vehicle API view (`/model/:id/api`), they see the computed CVI tree merging the model's VSS signals with its extended (wishlist) signals.
+- When an **owner** creates, edits, or deletes an API for their model at the Vehicle API view (`/model/:id/api`), the computed tree updates accordingly.
+- When a **user** looks up a specific signal (e.g. Vehicle.Speed) at the Vehicle API view (`/model/:id/api`), they see its detail (datatype, unit, description, min/max where set).
+- When a **guest** visits the Vehicle API view (`/model/:id/api`) for a private model with public viewing off, they're prevented from reading the computed tree.
 
 ### API contract
 
@@ -149,7 +157,7 @@ Reading the computed tree is optional via `PUBLIC_VIEWING`; creating/editing/del
 - **Unauthorized signal tampering:** a missing auth check on `PATCH /v2/apis/:id` would let any authenticated user rewrite another tenant's signal definitions, corrupting dashboards and downstream consumers. *Mitigation:* `PATCH`/`DELETE` are restricted to owner-or-admin; keep the auth + authorization middleware on the route. ⚠️ `POST /v2/apis` lacks a model-access check — none currently — wire a `WRITE_MODEL` check to `POST` before creating the `Api`.
 
 ### Personal data processing
-No — this capability does not process personal data. (`created_by` is a user reference; no email/name is stored on the `Api` document.)
+❌ No — this capability does not process personal data. (`created_by` is a user reference; no email/name is stored on the `Api` document.)
 N/A
 **Risks:**
 - none — no personal data processed.
@@ -171,6 +179,10 @@ API definitions are stored linked to the model and the creating user.
 
 ## CAP-VAPI-03 — Replace APIs from a VSS spec
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner | Vehicle API view (`/model/:id/api`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a model owner, I can replace all APIs for my model by pointing the system at a VSS spec JSON URL so that the model's signal set is swapped to a new VSS version.
@@ -181,10 +193,10 @@ Model owners (swap the signal set to a new VSS version).
 
 ### Acceptance criteria
 
-- When I open the "Replace Vehicle API" dialog and provide a VSS spec JSON file/URL and confirm, all of the model's APIs are replaced with the new spec.
-- When I don't provide a spec, I'm prevented from replacing (the action is disabled / I see an error).
-- When the replace succeeds, the computed tree changes to the new spec; the old signal set is lost with no undo.
-- When I lack edit rights, the replace action is hidden and I'm prevented from replacing.
+- When an **owner** opens the "Replace Vehicle API" dialog at the Vehicle API view (`/model/:id/api`), provides a VSS spec JSON file/URL, and confirms, all of the model's APIs are replaced with the new spec.
+- When an **owner** doesn't provide a spec at the Vehicle API view (`/model/:id/api`), they're prevented from replacing (the action is disabled / they see an error).
+- When the replace succeeds at the Vehicle API view (`/model/:id/api`), the computed tree changes to the new spec; the old signal set is lost with no undo.
+- When a **user** lacks edit rights at the Vehicle API view (`/model/:id/api`), the replace action is hidden and they're prevented from replacing.
 
 ### API contract
 
@@ -225,7 +237,7 @@ Requires `WRITE_MODEL` (owner bypass).
 - **Destructive overwrite by a stolen token:** a single call replaces the entire `Api` document, so a leaked `WRITE_MODEL` token lets an attacker wipe a model's signal set irreversibly in one request. *Mitigation:* the route requires `WRITE_MODEL` (owner bypass); revoke `WRITE_MODEL` tokens on suspected compromise and snapshot the `Api` set before overwrite for recovery.
 
 ### Personal data processing
-No — this capability does not process personal data. (Only the model id and a user-supplied `api_data_url`; no user email/name is stored.)
+❌ No — this capability does not process personal data. (Only the model id and a user-supplied `api_data_url`; no user email/name is stored.)
 N/A
 **Risks:**
 - none — no personal data processed.
@@ -247,6 +259,10 @@ Calling replace overwrites the model's API document; the old set is lost (no und
 
 ## CAP-VAPI-04 — Vehicle API view (List / Tree / Hierarchical / Compare)
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Vehicle API view (`/model/:id/api`) | ❌ No | ✅ 2 cases, ≈40% (est.) |
+
 ### Description
 
 As an end user, I can browse the computed COVESA/VSS APIs in List, Tree, Hierarchical, and a Version Diff (compare) view, and download the computed VSS. As a model owner, I can upload or replace the VSS and switch VSS version from the UI.
@@ -257,12 +273,12 @@ End users (explore signals); model owners (compare/replace VSS).
 
 ### Acceptance criteria
 
-- When I open a model's Vehicle API page, I can switch between List, Tree, and Hierarchical views; each renders the computed signals accordingly.
-- When I open the Version Diff view, I can compare two VSS versions and see the diffs.
-- When I click "Download as JSON", the computed VSS JSON downloads.
-- When I (as owner) click "Replace Vehicle API" and upload a spec, the model's APIs are replaced.
-- When I'm signed out and public viewing is off, I'm prevented from browsing a private model's API view.
-- When I lack edit rights, the replace action is hidden.
+- When a **user** opens a model's Vehicle API page (`/model/:id/api`), they can switch between List, Tree, and Hierarchical views; each renders the computed signals accordingly.
+- When a **user** opens the Version Diff view at the Vehicle API view (`/model/:id/api`), they can compare two VSS versions and see the diffs.
+- When a **user** clicks "Download as JSON" at the Vehicle API view (`/model/:id/api`), the computed VSS JSON downloads.
+- When an **owner** clicks "Replace Vehicle API" and uploads a spec at the Vehicle API view (`/model/:id/api`), the model's APIs are replaced.
+- When a **guest** visits the Vehicle API view (`/model/:id/api`) for a private model with public viewing off, they're prevented from browsing the API view.
+- When a **user** lacks edit rights at the Vehicle API view (`/model/:id/api`), the replace action is hidden.
 
 ### API contract
 
@@ -289,7 +305,7 @@ Browsing the view is optional via `PUBLIC_VIEWING`; replacing requires `WRITE_MO
 - **Replace-action privilege bypass:** the replace/upload path in the UI must enforce `WRITE_MODEL` server-side; relying on UI hiding alone would let a crafted `POST /v2/models/:id/replace-api` call succeed for any authenticated user. *Mitigation:* `POST /v2/models/:id/replace-api` enforces `WRITE_MODEL` (owner bypass) server-side; keep the permission middleware on the route and do not trust UI hiding.
 
 ### Personal data processing
-No — this capability does not process personal data. (Computed signal tree only; no user email/name is stored or returned.)
+❌ No — this capability does not process personal data. (Computed signal tree only; no user email/name is stored or returned.)
 N/A
 **Risks:**
 - none — no personal data processed.
@@ -311,6 +327,10 @@ The view is computed from stored API/extended-API data; downloading exposes the 
 
 ## CAP-VAPI-05 — Extended APIs (wishlist signals)
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner | Vehicle API view (`/model/:id/api`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a model owner, I can add custom per-model signals (wishlist signals) on top of the VSS tree so that my model can expose signals beyond the standard set. As an end user, these extended signals are merged into the computed API I consume.
@@ -321,10 +341,10 @@ Model owners (add signals beyond standard VSS); end users (use the extended sign
 
 ### Acceptance criteria
 
-- When I (as owner) add an extended signal to my model, it appears in the computed tree.
-- When I try to create a duplicate signal (same name + model), it's rejected.
-- When I access another user's private model without permission, I'm prevented from reading or writing its extended signals.
-- When I edit or delete an extended signal I own, the computed tree updates.
+- When an **owner** adds an extended signal to their model at the Vehicle API view (`/model/:id/api`), it appears in the computed tree.
+- When an **owner** tries to create a duplicate signal (same name + model) at the Vehicle API view (`/model/:id/api`), it's rejected.
+- When a **user** accesses another user's private model without permission at the Vehicle API view (`/model/:id/api`), they're prevented from reading or writing its extended signals.
+- When an **owner** edits or deletes an extended signal they own at the Vehicle API view (`/model/:id/api`), the computed tree updates.
 
 ### API contract
 
@@ -361,7 +381,7 @@ Reading is optional via `PUBLIC_VIEWING`; writing requires auth + model access; 
 - **Uniqueness-bypass collision:** the `(apiName, model)` unique index is the only dedupe guard; a race or a check that runs before index validation could create duplicate signals that confuse downstream consumers. *Mitigation:* rely on the Mongo unique index as the authoritative dedupe guard; surface index-violation errors as a `409` so callers retry rather than race.
 
 ### Personal data processing
-No — this capability does not process personal data. (Extended signal definitions keyed by `(apiName, model)`; no user email/name is stored.)
+❌ No — this capability does not process personal data. (Extended signal definitions keyed by `(apiName, model)`; no user email/name is stored.)
 N/A
 **Risks:**
 - none — no personal data processed.
@@ -383,6 +403,10 @@ Extended signals are stored with a unique `(apiName, model)` index.
 
 ## CAP-VAPI-06 — Custom API schemas
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin | Custom API Schema manager (`/admin/plugins`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an admin, I can define API schema templates — choosing a structure type (tree, list, or graph), a JSON schema, an id format, relationships, tree config, and display mapping — that integrators use to validate non-COVESA Custom API Sets (e.g. REST/USP).
@@ -393,11 +417,11 @@ Admins (define custom API shapes); integrators (non-COVESA APIs like REST/USP).
 
 ### Acceptance criteria
 
-- When I open the Custom API Schema manager, I see the list of schemas.
-- When I (as admin) create a new schema with the required fields, it's created and appears in the list.
-- When I (as admin) edit or delete a schema, the change persists / the schema is removed.
-- When I'm a non-admin, I'm prevented from creating, editing, or deleting schemas.
-- When I submit an invalid or incomplete schema, I'm shown a validation error.
+- When an **admin** opens the Custom API Schema manager (`/admin/plugins`), they see the list of schemas.
+- When an **admin** creates a new schema with the required fields at the Custom API Schema manager (`/admin/plugins`), it's created and appears in the list.
+- When an **admin** edits or deletes a schema at the Custom API Schema manager (`/admin/plugins`), the change persists / the schema is removed.
+- When a **user** who is a non-admin tries to create, edit, or delete schemas at the Custom API Schema manager (`/admin/plugins`), they're prevented from doing so.
+- When an **admin** submits an invalid or incomplete schema at the Custom API Schema manager (`/admin/plugins`), they're shown a validation error.
 
 ### API contract
 
@@ -432,7 +456,7 @@ Anyone can read schemas; writing requires `MANAGE_USERS` (admin). No secrets in 
 - **Weak validation as an attack surface:** item validation is only basic (full JSON-schema validation is a TODO), so malformed or oversized `schema` strings could trigger parser/DB issues in downstream set storage. *Mitigation:* none currently — implement full JSON-schema validation and enforce a size cap on `schema` strings before persistence.
 
 ### Personal data processing
-No — this capability does not process personal data. (`created_by` is an admin user reference; no email/name is stored on the schema.)
+❌ No — this capability does not process personal data. (`created_by` is an admin user reference; no email/name is stored on the schema.)
 N/A
 **Risks:**
 - none — no personal data processed.
@@ -454,6 +478,10 @@ Schema definitions stored in `customapischemas` (`code` unique).
 
 ## CAP-VAPI-07 — Custom API sets
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Vehicle API view (`/model/:id/api`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a user or admin, I can create instances of a Custom API Schema and attach them to a model so that consumers see custom APIs alongside COVESA. I can scope a set as system (public) or user (owner-only) and add, update, or remove items with validation.
@@ -464,11 +492,11 @@ End users/admins (create per-model API sets); model consumers (view custom APIs 
 
 ### Acceptance criteria
 
-- When I create a system-scoped set, any authenticated user can read it; when I create a user-scoped set, only I (the owner) can read it.
-- When I add, update, or remove items in a set, the changes appear in the set.
-- When I attach a custom API set to a model, it appears as a tab alongside COVESA in the model's Vehicle API view.
-- When the custom API set feature is disabled, the custom API UI (tabs and picker) is hidden.
-- When I create a set, my data is validated against the referenced schema.
+- When a **user** creates a system-scoped set at the Vehicle API view (`/model/:id/api`), any authenticated **user** can read it; when they create a user-scoped set, only the **owner** can read it.
+- When a **user** adds, updates, or removes items in a set at the Vehicle API view (`/model/:id/api`), the changes appear in the set.
+- When a **user** attaches a custom API set to a model at the Vehicle API view (`/model/:id/api`), it appears as a tab alongside COVESA in the model's Vehicle API view.
+- When a **user** views the Vehicle API view (`/model/:id/api`) with the custom API set feature disabled, the custom API UI (tabs and picker) is hidden.
+- When a **user** creates a set at the Vehicle API view (`/model/:id/api`), their data is validated against the referenced schema.
 
 ### API contract
 
@@ -509,7 +537,7 @@ flowchart TD
 - **Item-level bypass:** `POST/PATCH/DELETE /:id/items` require auth but not re-validated ownership on every item op in the spec — if item ops aren't scoped to the set owner, any authenticated user could mutate another user's set items. *Mitigation:* none currently — re-check set ownership on every item op and reject non-owner mutations (system-scope sets still need the admin gate from above).
 
 ### Personal data processing
-No — this capability does not process personal data. (`owner`/`created_by` are user references; no email/name is stored on the set.)
+❌ No — this capability does not process personal data. (`owner`/`created_by` are user references; no email/name is stored on the set.)
 N/A
 **Risks:**
 - none — no personal data processed.

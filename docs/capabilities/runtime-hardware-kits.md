@@ -38,6 +38,10 @@ flowchart TD
 
 ## CAP-RUNTIME-01 — Runtime control panel
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Runtime panel (`/model/:id/prototype/:id?tab=runtime`) | ❌ No | ✅ 1 case, ≈33% (est.) |
+
 ### Description
 
 As a prototype author, I can run, stop, and watch my prototype's Python/C++/Rust code from the runtime control panel — seeing live terminal output, vehicle signals, and trace variables — and manage dependencies and the vehicle model from the same panel, so that I can test my prototype against a live runtime without leaving the workspace.
@@ -48,12 +52,12 @@ Prototype authors (run/test code); hardware-kit operators.
 
 ### Acceptance criteria
 
-- When I expand the runtime control panel and pick a runtime from the Runtime selector, the panel connects; when I press Run, my prototype's code executes on the connected runtime and the Terminal tab streams its output; when I press Stop, execution halts and the Run button becomes available again.
-- When I have no runtime selected, the Run button is disabled and shows a hint to select a runtime; when nothing is running, the Stop button is disabled.
-- When I open the Signals Watch tab, I see live values for the vehicle APIs my prototype uses and can write a value back to the runtime; when I open the Vars Watch tab (C++ prototypes), I see trace variables and can write values back.
-- When I choose "Install New Python Library" from the Send Request menu and type a library name, the runtime fetches the dependency and I see the result in the terminal; when I choose "Rebuild Vehicle Model" or "Revert to default Vehicle Model", the runtime applies the change.
-- When I open "Config Runtime Server" and enter a custom runtime URL, my session uses that server instead of the instance default; when I clear it, the panel falls back to the default runtime.
-- When I am not signed in or lack read access to the prototype's model, I am prevented from opening the control panel.
+- When a **user** expands the runtime control panel at **Runtime panel (`/model/:id/prototype/:id?tab=runtime`)** and picks a runtime from the Runtime selector, the panel connects; when they press Run, their prototype's code executes on the connected runtime and the Terminal tab streams its output; when they press Stop, execution halts and the Run button becomes available again.
+- When a **user** has no runtime selected at **Runtime panel (`/model/:id/prototype/:id?tab=runtime`)**, the Run button is disabled and shows a hint to select a runtime; when nothing is running, the Stop button is disabled.
+- When a **user** opens the Signals Watch tab at **Runtime panel (`/model/:id/prototype/:id?tab=runtime`)**, they see live values for the vehicle APIs their prototype uses and can write a value back to the runtime; when they open the Vars Watch tab (C++ prototypes), they see trace variables and can write values back.
+- When a **user** chooses "Install New Python Library" from the Send Request menu at **Runtime panel (`/model/:id/prototype/:id?tab=runtime`)** and types a library name, the runtime fetches the dependency and they see the result in the terminal; when they choose "Rebuild Vehicle Model" or "Revert to default Vehicle Model", the runtime applies the change.
+- When a **user** opens "Config Runtime Server" at **Runtime panel (`/model/:id/prototype/:id?tab=runtime`)** and enters a custom runtime URL, their session uses that server instead of the instance default; when they clear it, the panel falls back to the default runtime.
+- When a **guest** (not signed in) or a **user** lacking read access to the prototype's model tries to open the control panel at **Runtime panel (`/model/:id/prototype/:id?tab=runtime`)**, they are prevented from opening it.
 
 ### API contract
 
@@ -105,7 +109,7 @@ Read `READ_MODEL`. Direct Socket.IO to external kit server (auth via asset token
 
 ### Personal data processing
 
-No — this capability does not process personal data. Signal/var values and prototype code are not personal data.
+❌ No — this capability does not process personal data. Signal/var values and prototype code are not personal data.
 
 **Risks:**
 - none — no personal data processed.
@@ -131,6 +135,10 @@ Runtime signal values are transient (kept in memory, not persisted); prototype c
 
 ## CAP-RUNTIME-02 — Runtime / asset manager
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user | Runtime / asset manager dialog | ❌ No | ✅ 1 case, ≈50% (est.) |
+
 ### Description
 
 As a prototype author, I can add a cloud runtime by its runtime code, rename it, share it with collaborators, remove it from my list, and pick which runtime is active for my prototype, so that I can keep and switch between the runtimes I use.
@@ -141,11 +149,11 @@ End users (manage their runtimes/kits); collaborators (shared access).
 
 ### Acceptance criteria
 
-- When I open the runtime manager from the control panel ("Add Runtime"), I see my cloud runtimes listed; when I enter a runtime code and click Add, the runtime appears in my list and becomes selectable in the control panel.
-- When I click the edit icon on a runtime and change its name, the list updates to the new name; when I click the delete icon and confirm, the runtime is removed from my list and is no longer selectable.
-- When I click the share icon, the share dialog opens and I can share the runtime with collaborators (CAP-ASSET-04); when a collaborator opens their manager, they see the shared runtime.
-- When I try to add a runtime with an empty name, the Add button is disabled; when a create, rename, or delete fails, I see a failure toast and my list is unchanged.
-- When I am not signed in, I am prevented from opening the manager.
+- When a **user** opens the runtime manager from the control panel ("Add Runtime") at **Runtime / asset manager dialog**, they see their cloud runtimes listed; when they enter a runtime code and click Add, the runtime appears in their list and becomes selectable in the control panel.
+- When a **user** clicks the edit icon on a runtime at **Runtime / asset manager dialog** and changes its name, the list updates to the new name; when they click the delete icon and confirm, the runtime is removed from their list and is no longer selectable.
+- When a **user** clicks the share icon at **Runtime / asset manager dialog**, the share dialog opens and they can share the runtime with collaborators (CAP-ASSET-04); when a collaborator opens their manager, they see the shared runtime.
+- When a **user** tries to add a runtime with an empty name at **Runtime / asset manager dialog**, the Add button is disabled; when a create, rename, or delete fails, they see a failure toast and their list is unchanged.
+- When a **guest** (not signed in) tries to open the manager at **Runtime / asset manager dialog**, they are prevented from opening it.
 
 ### API contract
 
@@ -179,7 +187,7 @@ Auth required; sharing via `WRITE_ASSET` (see [assets-sharing.md](./assets-shari
 
 ### Personal data processing
 
-No — this capability does not process personal data. `created_by` is a userId reference, not personal data.
+❌ No — this capability does not process personal data. `created_by` is a userId reference, not personal data.
 
 **Risks:**
 - none — no personal data processed.
@@ -204,6 +212,10 @@ Asset `data` (e.g. endpoint config) stored in `assets`.
 
 ## CAP-RUNTIME-03 — Hardware kit manager
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| operator | Hardware kit manager dialog | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a hardware-kit operator, I can open my hardware kit from My Assets, edit its signal-mapping (Config) and VSS files in a code editor, and push them to or pull them from the kit, so that the runtime connector targets a correctly-configured kit.
@@ -214,11 +226,11 @@ Hardware-kit operators.
 
 ### Acceptance criteria
 
-- When I open a `HARDWARE_KIT` asset from My Assets and click the manage (kit) icon, the hardware kit manager opens with Config and VSS tabs.
-- When I click "Load from device" on the Config (or VSS) tab, the kit's current signal-mapping (or VSS) file is loaded into the editor; when I edit the content and click "Set to device", the file is written to the kit.
-- When I set a new VSS file, the kit rebuilds its vehicle model from the new VSS shortly after.
-- When the kit is unreachable or the operation fails, the Load/Set buttons show a loading state and time out without applying the change.
-- When I am not signed in or lack read access to the asset, I am prevented from opening the manager.
+- When an **operator** opens a `HARDWARE_KIT` asset from My Assets and clicks the manage (kit) icon at **Hardware kit manager dialog**, the hardware kit manager opens with Config and VSS tabs.
+- When an **operator** clicks "Load from device" on the Config (or VSS) tab at **Hardware kit manager dialog**, the kit's current signal-mapping (or VSS) file is loaded into the editor; when they edit the content and click "Set to device", the file is written to the kit.
+- When an **operator** sets a new VSS file at **Hardware kit manager dialog**, the kit rebuilds its vehicle model from the new VSS shortly after.
+- When the kit is unreachable or an operation fails at **Hardware kit manager dialog**, the Load/Set buttons show a loading state and time out without applying the change.
+- When a **guest** (not signed in) or a **user** lacking read access to the asset tries to open the manager at **Hardware kit manager dialog**, they are prevented from opening it.
 
 ### API contract
 
@@ -260,7 +272,7 @@ Auth required; kit operations open their own Socket.IO to the kit server.
 
 ### Personal data processing
 
-No — this capability does not process personal data. Kit identity is configuration, not personal data.
+❌ No — this capability does not process personal data. Kit identity is configuration, not personal data.
 
 **Risks:**
 - none — no personal data processed.
@@ -286,6 +298,10 @@ Kit connection config in the asset `data`; signal/VSS files read/written on the 
 
 ## CAP-RUNTIME-04 — Asset access tokens
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| integrator | Backend API (no page) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a DevOps/integrator, I can mint an access token bound to my asset (via the API — there is no in-app button) so that an external runtime or kit client can authenticate as that asset without my user credentials.
@@ -296,10 +312,10 @@ DevOps/integrators (programmatic runtime access); the kit server (authenticating
 
 ### Acceptance criteria
 
-- When I mint an access token for my asset, I receive a token I can hand to my kit/runtime; when the kit/runtime presents that token, the system treats the caller as my asset's identity.
-- When the kit/runtime calls without a valid token, the request is rejected as unauthenticated.
-- When I lack read access to the asset, I am prevented from minting a token.
-- There is no in-app UI button to mint a token — it is obtained via the API and handed to the kit out of band.
+- When an **integrator** mints an access token for their asset at **Backend API (no page)**, they receive a token they can hand to their kit/runtime; when the kit/runtime presents that token, the system treats the caller as that asset's identity.
+- When the kit/runtime calls without a valid token at **Backend API (no page)**, the request is rejected as unauthenticated.
+- When a **user** lacks read access to the asset and tries to mint a token at **Backend API (no page)**, they are prevented from minting it.
+- There is no in-app UI button to mint a token — an **integrator** obtains it via the API at **Backend API (no page)** and hands it to the kit out of band.
 
 ### API contract
 
@@ -340,7 +356,7 @@ Requires auth + `READ_ASSET` on the asset. Asset tokens are access-only (short-l
 
 ### Personal data processing
 
-No — this capability does not process personal data. The token carries asset identity, not personal data.
+❌ No — this capability does not process personal data. The token carries asset identity, not personal data.
 
 **Risks:**
 - none — no personal data processed.
@@ -365,6 +381,10 @@ Token is a bearer credential — treat as a secret; no persistence client-side b
 
 ## CAP-RUNTIME-05 — Kit server proxy
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| operator | Operator config (`.env` / admin) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As a prototype author, my browser's runtime connection works against the kit server through the instance's same-origin path, so that my prototype runs against the connected runtime without cross-origin errors; I never configure this directly — I just see my prototype run.
@@ -375,9 +395,9 @@ The frontend runtime connector (a same-origin entry point to the kit server); De
 
 ### Acceptance criteria
 
-- When the instance is configured with a kit server, my browser's runtime connection works without cross-origin errors and my prototype runs against the connected runtime.
-- When the instance is not configured with a kit server, the runtime connection is unavailable.
-- I never see or configure the proxy path myself — it is transparent to me.
+- When an **operator** configures the instance with a kit server at **Operator config (`.env` / admin)**, a **user**'s browser runtime connection works without cross-origin errors and their prototype runs against the connected runtime at **Runtime panel (`/model/:id/prototype/:id?tab=runtime`)**.
+- When the instance is not configured with a kit server at **Operator config (`.env` / admin)**, the runtime connection is unavailable.
+- A **user** never sees or configures the proxy path at **Runtime panel (`/model/:id/prototype/:id?tab=runtime`)** — it is transparent to them.
 
 ### API contract
 
@@ -408,7 +428,7 @@ Passthrough — the kit server enforces its own auth (often via asset tokens). C
 
 ### Personal data processing
 
-No — this capability does not process personal data. The proxy does not inspect or store payload.
+❌ No — this capability does not process personal data. The proxy does not inspect or store payload.
 
 **Risks:**
 - none — no personal data processed.
@@ -433,6 +453,10 @@ Proxies runtime traffic; no storage on the backend.
 
 ## CAP-RUNTIME-06 — Runtime server config
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin | Admin → Site Config (`/admin/site-config`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an admin, I can point my instance at a runtime/kit server (server address + connection options) from Admin → Site Config, and confirm reachability from the health page, so that prototype runtime connections target the right server.
@@ -443,10 +467,10 @@ Admins/DevOps (point instances at a kit server).
 
 ### Acceptance criteria
 
-- When I set the runtime server address and connection options in the admin site-config page, prototype runtime connections use the new server.
-- When I open the health page, I see whether the runtime server is reachable and how long the check took.
-- When the runtime server URL is not configured, the health page shows the runtime server as skipped.
-- When I am a non-admin, I am prevented from changing the runtime server config; anonymous users can see only the public value.
+- When an **admin** sets the runtime server address and connection options at **Admin → Site Config (`/admin/site-config`)**, prototype runtime connections use the new server.
+- When an **admin** opens the health page, they see whether the runtime server is reachable and how long the check took.
+- When the runtime server URL is not configured at **Admin → Site Config (`/admin/site-config`)**, the health page shows the runtime server as skipped.
+- When a **user** who is a non-admin tries to change the runtime server config at **Admin → Site Config (`/admin/site-config`)**, they are prevented; anonymous users can see only the public value.
 
 ### API contract
 
@@ -476,7 +500,7 @@ Public read (URL only, no secrets); admin write.
 
 ### Personal data processing
 
-No — this capability does not process personal data. URL and connection options are not personal data.
+❌ No — this capability does not process personal data. URL and connection options are not personal data.
 
 **Risks:**
 - none — no personal data processed.

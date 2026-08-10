@@ -43,6 +43,10 @@ flowchart TD
 
 ## CAP-PROTO-01 — Prototype library
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner / user / guest | Prototype library (`/model/:id/library`) | ❌ No | ✅ 4 cases, ≈80% (est.) |
+
 ### Description
 
 As a model owner or contributor, I can browse, search, and sort a model's prototypes across list and portfolio views, and create new prototypes or import them from a ZIP archive, so I can manage and showcase my model's SDV work.
@@ -53,14 +57,14 @@ Model owners/contributors (manage prototypes); end users (browse/portfolio).
 
 ### Acceptance criteria
 
-- When I open a model's Library page, I see the model's prototypes as cards in a list view, and I can switch between List and Portfolio views.
-- When I type in the search box, the list filters to prototypes whose name matches; when I pick a sort option (Last view, First view, Newest, Oldest, Name A-Z, Name Z-A, Rating), the list reorders accordingly.
-- When I am not signed in or lack write permission on the model, the Create New Prototype and Import Prototype controls appear dimmed and are not clickable; when I have write permission, I can open the create dialog or import a prototype.
-- When I import a ZIP, I'm limited to `.zip` files under 10 MB; a non-ZIP or oversized file shows an error message and the import is blocked.
-- When I confirm an import, I'm asked to confirm the prototype name; on success the new prototype appears in the library and I'm taken to its detail page.
-- When I type a prototype (or model) name that already exists, I'm shown a duplicate-name hint with a suggested alternative name, and the Create button stays disabled until I change it.
-- When the library has no prototypes, I see an empty "No prototype found. Please create a new prototype." state.
-- When public viewing is off and I'm not signed in (or can't access a private model), I'm prevented from browsing that model's prototypes.
+- When a **user** opens the Library page at **Prototype library (`/model/:id/library`)**, they see the model's prototypes as cards in a list view, and they can switch between List and Portfolio views.
+- When a **user** types in the search box at **Prototype library (`/model/:id/library`)**, the list filters to prototypes whose name matches; when they pick a sort option (Last view, First view, Newest, Oldest, Name A-Z, Name Z-A, Rating), the list reorders accordingly.
+- When a **guest** (or a **user** lacking write permission) views the library at **Prototype library (`/model/:id/library`)**, the Create New Prototype and Import Prototype controls appear dimmed and are not clickable; when an **owner** with write permission views it, they can open the create dialog or import a prototype.
+- When an **owner** imports a ZIP at **Prototype library (`/model/:id/library`)**, they are limited to `.zip` files under 10 MB; a non-ZIP or oversized file shows an error message and the import is blocked.
+- When an **owner** confirms an import at **Prototype library (`/model/:id/library`)**, they are asked to confirm the prototype name; on success the new prototype appears in the library and they are taken to its detail page.
+- When an **owner** types a prototype (or model) name that already exists at **Prototype library (`/model/:id/library`)**, they are shown a duplicate-name hint with a suggested alternative name, and the Create button stays disabled until they change it.
+- When a **user** opens a library with no prototypes at **Prototype library (`/model/:id/library`)**, they see an empty "No prototype found. Please create a new prototype." state.
+- When a **guest** is not signed in (or can't access a private model) at **Prototype library (`/model/:id/library`)** and public viewing is off, they are prevented from browsing that model's prototypes.
 
 ### API contract
 
@@ -100,7 +104,7 @@ Creating or importing requires `WRITE_MODEL`; browsing is public only under `PUB
 
 ### Personal data processing
 
-No — this capability does not process personal data (the `created_by` field holds an internal userId reference; names/emails live in the Identity cluster).
+❌ No — this capability does not process personal data (the `created_by` field holds an internal userId reference; names/emails live in the Identity cluster).
 
 N/A.
 
@@ -128,6 +132,10 @@ Prototype metadata and code are stored; import reads archive contents.
 
 ## CAP-PROTO-02 — New prototype layout
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner | New prototype dialog (`/new-prototype`) | ❌ No | ✅ 1 case, ≈35% (est.) |
+
 ### Description
 
 As a model owner, I can use a guided full-page create flow that previews the selected model's (or default template's) prototype shell — sidebar, tab bar, plugin preview — behind the create dialog, then takes me to my new prototype, so I can start a prototype with a clear picture of the result.
@@ -138,12 +146,12 @@ Model owners (a guided create experience).
 
 ### Acceptance criteria
 
-- When I open the full-page create flow while signed out, I'm redirected to the home page.
-- When signed in and the flow is enabled, I see the selected model's (or default template's) prototype shell — sidebar, tab bar, and plugin preview — rendered behind the create dialog.
-- When I open the flow in model-creation mode (via the `?create-model` query), I get the create-model dialog instead of the create-prototype dialog.
-- When I submit the create form with a valid name (and optionally a chosen template), a new prototype is created and I'm navigated to its detail page.
-- When I close the create dialog without submitting, I'm taken back to where I came from (or the library).
-- When the full-page flow is disabled, the library's Create button opens the inline create dialog instead (CAP-PROTO-01).
+- When a **guest** opens the full-page create flow at **New prototype dialog (`/new-prototype`)** while signed out, they are redirected to the home page.
+- When an **owner** is signed in and the flow is enabled at **New prototype dialog (`/new-prototype`)**, they see the selected model's (or default template's) prototype shell — sidebar, tab bar, and plugin preview — rendered behind the create dialog.
+- When an **owner** opens the flow in model-creation mode (via the `?create-model` query) at **New prototype dialog (`/new-prototype`)**, they get the create-model dialog instead of the create-prototype dialog.
+- When an **owner** submits the create form with a valid name (and optionally a chosen template) at **New prototype dialog (`/new-prototype`)**, a new prototype is created and they are navigated to its detail page.
+- When an **owner** closes the create dialog without submitting at **New prototype dialog (`/new-prototype`)**, they are taken back to where they came from (or the library).
+- When an **owner** views the library while the full-page flow is disabled at **Prototype library (`/model/:id/library`)**, the Create button opens the inline create dialog instead (CAP-PROTO-01).
 
 ### API contract
 
@@ -188,7 +196,7 @@ Access requires sign-in; the flow is gated by `ENABLE_NEW_PROTOTYPE_PAGE`.
 
 ### Personal data processing
 
-No — this capability does not process personal data.
+❌ No — this capability does not process personal data.
 
 N/A.
 
@@ -215,6 +223,10 @@ No extra data is stored; the system reads the model/template to preview.
 
 ## CAP-PROTO-03 — Prototype CRUD / bulk / recent / popular / execute-code
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner / user / guest | Prototype library (`/model/:id/library`) + Home (`/`) | ❌ No | ⚠️ 4 cases, ≈55% (est.) |
+
 ### Description
 
 As a prototype owner, I can create, update, and delete prototypes — including bulk create — so I can manage their lifecycle; as an end user, I can browse my recent prototypes and a popular (top-executed, released, public) list, and the system counts each code execution so popularity reflects real use.
@@ -225,13 +237,13 @@ Owners (lifecycle); end users (discover recent/popular); analytics (execution co
 
 ### Acceptance criteria
 
-- When I browse the library or home page, I see the prototype list; when public viewing is on, anonymous visitors can browse public prototypes, and when it's off they're blocked.
-- When I create a prototype (via the create dialog or ZIP import) with write permission, it's created and I'm taken to it; when I lack write permission, the create/import controls are disabled.
-- When I'm signed in and open the home page, I see a "Recent Prototypes" section listing prototypes I recently visited; when signed out, the section is hidden.
-- When I open the home page, I see a "Popular Prototypes" section (top-executed, released, public prototypes); when public viewing is off and I'm signed out, clicking a popular prototype prompts me to sign in.
-- When I run a prototype's code (staging/runtime), its execution counter is counted so popularity reflects real use.
-- When I open a prototype under a private model I can't access, I'm prevented from viewing it.
-- When an owner/admin deletes a prototype, it's removed from the library and no longer appears.
+- When a **user** browses the library or home page at **Prototype library (`/model/:id/library`)** / **Home (`/`)**, they see the prototype list; when public viewing is on, anonymous visitors can browse public prototypes, and when it's off they're blocked.
+- When an **owner** creates a prototype (via the create dialog or ZIP import) with write permission at **Prototype library (`/model/:id/library`)**, it's created and they are taken to it; when a **user** lacks write permission, the create/import controls are disabled.
+- When a **user** is signed in and opens the home page at **Home (`/`)**, they see a "Recent Prototypes" section listing prototypes they recently visited; when a **guest** is signed out, the section is hidden.
+- When a **user** opens the home page at **Home (`/`)**, they see a "Popular Prototypes" section (top-executed, released, public prototypes); when public viewing is off and a **guest** is signed out, clicking a popular prototype prompts them to sign in.
+- When a **user** runs a prototype's code (staging/runtime) at **Prototype workspace (`/model/:id/library/prototype/:pid/staging`)**, its execution counter is counted so popularity reflects real use.
+- When a **user** opens a prototype under a private model they can't access at **Prototype workspace (`/model/:id/library/prototype/:pid`)**, they are prevented from viewing it.
+- When an **owner** or **admin** deletes a prototype at **Prototype library (`/model/:id/library`)**, it's removed from the library and no longer appears.
 
 ### API contract
 
@@ -282,7 +294,7 @@ Writes require `WRITE_MODEL`; the recent list requires sign-in; reads are public
 
 ### Personal data processing
 
-No — this capability does not process personal data (the recent list and `last_viewed`/`rated_by` use internal userId references; names/emails live in the Identity cluster).
+❌ No — this capability does not process personal data (the recent list and `last_viewed`/`rated_by` use internal userId references; names/emails live in the Identity cluster).
 
 N/A.
 
@@ -310,6 +322,10 @@ The system stores `last_viewed`, `executed_turns`, `rated_by`, and `state` per p
 
 ## CAP-PROTO-04 — Prototype workspace (tabs)
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner / user / guest | Prototype workspace (`/model/:id/library/prototype/:pid/:tab`) | ❌ No | ⚠️ 8 cases, ≈90% (est.) |
+
 ### Description
 
 As a prototype author or reviewer, I can open a prototype's workspace and switch between built-in tabs (view, journey, code, dashboard, feedback, staging, plug) plus custom plugin tabs, and configure right-nav actions, so I can build, review, stage, and present a prototype in one place.
@@ -320,14 +336,14 @@ Authors (build); reviewers (feedback); operators (staging); end users (view).
 
 ### Acceptance criteria
 
-- When I open a prototype's workspace, I see the tab bar with built-in tabs (Overview, Customer Journey, SDV Code, Dashboard, Feedback) plus any custom plugin tabs and a Staging right-nav action; the first visible tab is shown by default.
-- When I click a built-in tab, its content renders; when I click a custom plugin tab, the plugin's page loads.
-- When I have write permission and non-admin addon config is allowed, I see a "+" button to add addon tabs and a "Customize Layout…" menu item; otherwise both are hidden.
-- When I add an addon tab, I pick a plugin and a label; if that plugin is already added, I'm told it's already in the tabs; on success the new tab appears.
-- When I open "Customize Layout", I can reorder, show/hide, and rename tabs, set the sidebar plugin, tab style and border radius, and configure right-nav buttons; on save the layout persists.
-- When I'm an admin, I see a "Save Prototype as Template" menu item; non-admins don't see it.
-- When the prototype has no code, the Staging tab is hidden and I'm redirected to the Code tab; when I'm signed out and open Staging, I'm shown an "Authentication Required" prompt to sign in.
-- When I collapse the plugin sidebar, it collapses to a thin strip and I can expand it again.
+- When a **user** opens a prototype's workspace at **Prototype workspace (`/model/:id/library/prototype/:pid/:tab`)**, they see the tab bar with built-in tabs (Overview, Customer Journey, SDV Code, Dashboard, Feedback) plus any custom plugin tabs and a Staging right-nav action; the first visible tab is shown by default.
+- When a **user** clicks a built-in tab at **Prototype workspace (`/model/:id/library/prototype/:pid/:tab`)**, its content renders; when they click a custom plugin tab, the plugin's page loads.
+- When an **owner** has write permission and non-admin addon config is allowed at **Prototype workspace (`/model/:id/library/prototype/:pid/:tab`)**, they see a "+" button to add addon tabs and a "Customize Layout…" menu item; otherwise both are hidden.
+- When an **owner** adds an addon tab at **Prototype workspace (`/model/:id/library/prototype/:pid/:tab`)**, they pick a plugin and a label; if that plugin is already added, they are told it's already in the tabs; on success the new tab appears.
+- When an **owner** opens "Customize Layout" at **Prototype workspace (`/model/:id/library/prototype/:pid/:tab`)**, they can reorder, show/hide, and rename tabs, set the sidebar plugin, tab style and border radius, and configure right-nav buttons; on save the layout persists.
+- When an **admin** views the workspace at **Prototype workspace (`/model/:id/library/prototype/:pid/:tab`)**, they see a "Save Prototype as Template" menu item; non-admins don't see it.
+- When a **user** opens a code-less prototype at **Prototype workspace (`/model/:id/library/prototype/:pid/staging`)**, the Staging tab is hidden and they are redirected to the Code tab; when a **guest** is signed out and opens Staging, they are shown an "Authentication Required" prompt to sign in.
+- When a **user** collapses the plugin sidebar at **Prototype workspace (`/model/:id/library/prototype/:pid/:tab`)**, it collapses to a thin strip and they can expand it again.
 
 ### API contract
 
@@ -371,7 +387,7 @@ Tab management requires `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG`; Staging 
 
 ### Personal data processing
 
-No — this capability does not process personal data (`last_viewed` is tied to an internal userId/session reference; names/emails live in the Identity cluster).
+❌ No — this capability does not process personal data (`last_viewed` is tied to an internal userId/session reference; names/emails live in the Identity cluster).
 
 N/A.
 
@@ -399,6 +415,10 @@ Tab config and `extend` (the plugin data sink) are stored on the prototype; `las
 
 ## CAP-PROTO-05 — Code editor
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner | Code tab (`/model/:id/library/prototype/:pid/code`) | ❌ No | ⚠️ 2 cases, ≈50% (est.) |
+
 ### Description
 
 As a prototype author, I can write and edit SDV code in the Monaco editor with auto-save, browse the Vehicle API panel, launch the SDV ProtoPilot GenAI tool to generate code, and view a diff of changes, so I can iterate on my prototype's code efficiently.
@@ -409,12 +429,12 @@ Prototype authors (write/edit SDV code); GenAI users (generate code).
 
 ### Acceptance criteria
 
-- When I open the Code tab, I see the Monaco editor with my prototype's code and a language label (Python or Rust); when I lack write permission, the editor is read-only.
-- When I edit code with write permission, my changes auto-save periodically and on blur, and persist to the prototype.
-- When the Vehicle API panel is shown, I see the vehicle signals list beside the editor, and I can resize or collapse it.
-- When the SDV ProtoPilot button is shown (and I have GenAI permission), I can launch the GenAI dialog, generate code, preview it, and apply it to my editor.
-- When code diff is enabled and my code changes (via GenAI or a plugin), a "Show Diff" toggle appears comparing the previous version with the current; I can show or hide the diff.
-- When my prototype's code is a JSON project (an array), the multi-file project editor (CAP-PROTO-06) loads instead of the single-file Monaco editor.
+- When an **owner** opens the Code tab at **Code tab (`/model/:id/library/prototype/:pid/code`)**, they see the Monaco editor with their prototype's code and a language label (Python or Rust); when a **user** lacks write permission, the editor is read-only.
+- When an **owner** edits code with write permission at **Code tab (`/model/:id/library/prototype/:pid/code`)**, their changes auto-save periodically and on blur, and persist to the prototype.
+- When an **owner** views the Code tab with the Vehicle API panel shown at **Code tab (`/model/:id/library/prototype/:pid/code`)**, they see the vehicle signals list beside the editor, and they can resize or collapse it.
+- When an **owner** with GenAI permission views the Code tab with the SDV ProtoPilot button shown at **Code tab (`/model/:id/library/prototype/:pid/code`)**, they can launch the GenAI dialog, generate code, preview it, and apply it to their editor.
+- When an **owner** has code diff enabled and their code changes (via GenAI or a plugin) at **Code tab (`/model/:id/library/prototype/:pid/code`)**, a "Show Diff" toggle appears comparing the previous version with the current; they can show or hide the diff.
+- When an **owner** opens a prototype whose code is a JSON project (an array) at **Code tab (`/model/:id/library/prototype/:pid/code`)**, the multi-file project editor (CAP-PROTO-06) loads instead of the single-file Monaco editor.
 
 ### API contract
 
@@ -465,7 +485,7 @@ Editing requires `WRITE_MODEL`; GenAI is gated by `USE_GEN_AI` and the `SHOW_SDV
 
 ### Personal data processing
 
-No — this capability does not process personal data (source code only).
+❌ No — this capability does not process personal data (source code only).
 
 N/A.
 
@@ -493,6 +513,10 @@ My code (potentially large) is stored in `prototype.code`; auto-save writes freq
 
 ## CAP-PROTO-06 — Project editor (multi-file)
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner | Project editor (`/model/:id/library/prototype/:pid/code`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an author of a multi-file SDV project, I can use a file-tree editor to create, rename, and delete files and folders, open multiple file tabs, track unsaved changes, save-all, import/export a ZIP, and edit each file in its own Monaco editor — so I can build structured, multi-file prototypes.
@@ -503,13 +527,13 @@ Authors of multi-file SDV projects.
 
 ### Acceptance criteria
 
-- When my prototype's code is a JSON project (an array), the multi-file project editor activates in the Code tab; otherwise the single-file Monaco editor is used.
-- When I create a file or folder, I enter a name in the tree; an empty name, invalid characters (`:*?"<>|`), reserved names (CON, PRN, …), or leading/trailing spaces show an error; a duplicate name at the target location shows an error.
-- When I rename, move, or delete an item, the tree updates; deleting a folder asks for confirmation and removes its contents; closing a file with unsaved changes asks whether to save, discard, or cancel.
-- When I open multiple files, each opens in its own tab with its own Monaco editor; unsaved files are marked.
-- When I press Ctrl/Cmd+S I save the current file; Ctrl/Cmd+Shift+S saves all; structural changes (add/rename/move/delete) auto-save.
-- When I import a ZIP, a confirmation warns that the current project will be replaced; on success the tree is replaced; on a malformed archive I see an error. When I export, I download a ZIP of all my files named after the prototype.
-- When I lack write permission, editing is disabled.
+- When an **owner** opens a prototype whose code is a JSON project (an array) at **Project editor (`/model/:id/library/prototype/:pid/code`)**, the multi-file project editor activates in the Code tab; otherwise the single-file Monaco editor is used.
+- When an **owner** creates a file or folder at **Project editor (`/model/:id/library/prototype/:pid/code`)**, they enter a name in the tree; an empty name, invalid characters (`:*?"<>|`), reserved names (CON, PRN, …), or leading/trailing spaces show an error; a duplicate name at the target location shows an error.
+- When an **owner** renames, moves, or deletes an item at **Project editor (`/model/:id/library/prototype/:pid/code`)**, the tree updates; deleting a folder asks for confirmation and removes its contents; closing a file with unsaved changes asks whether to save, discard, or cancel.
+- When an **owner** opens multiple files at **Project editor (`/model/:id/library/prototype/:pid/code`)**, each opens in its own tab with its own Monaco editor; unsaved files are marked.
+- When an **owner** presses Ctrl/Cmd+S at **Project editor (`/model/:id/library/prototype/:pid/code`)**, they save the current file; Ctrl/Cmd+Shift+S saves all; structural changes (add/rename/move/delete) auto-save.
+- When an **owner** imports a ZIP at **Project editor (`/model/:id/library/prototype/:pid/code`)**, a confirmation warns that the current project will be replaced; on success the tree is replaced; on a malformed archive they see an error. When they export, they download a ZIP of all their files named after the prototype.
+- When a **user** lacks write permission at **Project editor (`/model/:id/library/prototype/:pid/code`)**, editing is disabled.
 
 ### API contract
 
@@ -553,7 +577,7 @@ Editing requires `WRITE_MODEL`. GitHub-based git sync is partially wired but not
 
 ### Personal data processing
 
-No — this capability does not process personal data (project source files only).
+❌ No — this capability does not process personal data (project source files only).
 
 N/A.
 
@@ -581,6 +605,10 @@ The whole project is stored as JSON in `prototype.code`; an export ZIP contains 
 
 ## CAP-PROTO-07 — Prototype feedback
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| user / owner | Feedback tab (`/model/:id/library/prototype/:pid/feedback`) | ✅ Yes — interviewee name + organization, reviewer reference | ✅ 1 case, ≈25% (est.) |
+
 ### Description
 
 As a reviewer, I can leave star-rated feedback (need addressed, relevance, ease of use — 1 to 5, averaged) with a description and interview metadata, and manage my own feedback, so I can help owners improve their prototypes.
@@ -591,11 +619,11 @@ Reviewers (give feedback); owners (improve prototypes).
 
 ### Acceptance criteria
 
-- When I open the Feedback tab, I see the prototype's overall average star rating and a paginated list of feedback entries (interviewee name, organization, per-criterion star ratings, question, recommendation); when there's no feedback I see "No feedback found."
-- When I'm signed in, I see an "Add Feedback" button; when signed out, I can browse feedback only if public viewing is on, otherwise I'm blocked.
-- When I submit the feedback form, I must provide an interviewee name and the three star ratings (needs addressed, relevance, ease of use); on success my feedback appears in the list and the overall average updates.
-- When I view feedback I authored, I see a "Delete Your Feedback" button; I can delete only my own feedback — other users' entries show no delete control, and deleting asks for confirmation.
-- When I paginate, the page changes and the list updates.
+- When a **user** opens the Feedback tab at **Feedback tab (`/model/:id/library/prototype/:pid/feedback`)**, they see the prototype's overall average star rating and a paginated list of feedback entries (interviewee name, organization, per-criterion star ratings, question, recommendation); when there's no feedback they see "No feedback found."
+- When a **user** is signed in at **Feedback tab (`/model/:id/library/prototype/:pid/feedback`)**, they see an "Add Feedback" button; when a **guest** is signed out, they can browse feedback only if public viewing is on, otherwise they are blocked.
+- When a **user** submits the feedback form at **Feedback tab (`/model/:id/library/prototype/:pid/feedback`)**, they must provide an interviewee name and the three star ratings (needs addressed, relevance, ease of use); on success their feedback appears in the list and the overall average updates.
+- When a **user** views feedback they authored at **Feedback tab (`/model/:id/library/prototype/:pid/feedback`)**, they see a "Delete Your Feedback" button; they can delete only their own feedback — other users' entries show no delete control, and deleting asks for confirmation.
+- When a **user** paginates at **Feedback tab (`/model/:id/library/prototype/:pid/feedback`)**, the page changes and the list updates.
 
 ### API contract
 
@@ -644,7 +672,7 @@ Adding feedback requires sign-in; deleting or editing is limited to my own feedb
 
 ### Personal data processing
 
-Yes — interviewee `name` + `organization`, and the `created_by` reviewer user reference.
+✅ Yes — interviewee `name` + `organization`, and the `created_by` reviewer user reference.
 
 Collected from the reviewer via the feedback form; stored in the `feedbacks` collection; retained indefinitely (hard delete on `DELETE`, no soft-delete/TTL); no at-rest encryption (TLS in transit); accessible to signed-in users via `GET /v2/feedbacks` (public when `PUBLIC_VIEWING` is on) and to the feedback's author/owner for `PATCH`/`DELETE`.
 
@@ -672,6 +700,10 @@ Feedback stores scores, description, and `ref`/`ref_type`/`model_id`; `avg_score
 
 ## CAP-PROTO-08 — Project templates
 
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| admin / owner | Prototype Templates manager (admin) + New prototype dialog (`/new-prototype`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
 ### Description
 
 As an admin, I can manage scaffolds for starter projects (code + widget_config + customer_journey) so authors can quick-start new prototypes from a template; as an author, I can pick a template to pre-populate my project. Template names are case-insensitive unique, and predefined templates are seeded at startup.
@@ -682,11 +714,11 @@ Admins (standardize starters); authors (quick-start).
 
 ### Acceptance criteria
 
-- As an admin, I can open the Prototype Templates manager and see all templates (public and private) as cards with a language icon, name, description, and visibility badge; when none exist I see an empty "No prototype templates yet" state.
-- As an admin, I can create a new template (name, description, visibility, and code/widget_config/customer_journey data) via "New Template", edit one by clicking its card, and delete one via a confirmation dialog ("permanently delete … cannot be undone").
-- As an author creating a prototype, I can pick a template from the template selector; the chosen template pre-populates my new prototype's code, language, dashboard config, and customer journey.
-- When predefined templates are seeded at startup, they appear in the selector but never overwrite my admin edits.
-- As a non-admin author, I only see public templates in the create selector; I cannot open the template manager.
+- When an **admin** opens the Prototype Templates manager at **Prototype Templates manager (admin)**, they see all templates (public and private) as cards with a language icon, name, description, and visibility badge; when none exist they see an empty "No prototype templates yet" state.
+- When an **admin** creates a new template (name, description, visibility, and code/widget_config/customer_journey data) via "New Template", edits one by clicking its card, or deletes one via a confirmation dialog ("permanently delete … cannot be undone") at **Prototype Templates manager (admin)**, the template list updates accordingly.
+- When an **owner** creates a prototype and picks a template from the template selector at **New prototype dialog (`/new-prototype`)**, the chosen template pre-populates their new prototype's code, language, dashboard config, and customer journey.
+- When predefined templates are seeded at startup, an **admin** sees them appear in the selector at **Prototype Templates manager (admin)** but they never overwrite their admin edits.
+- When a non-admin **owner** opens the create selector at **New prototype dialog (`/new-prototype`)**, they only see public templates; they cannot open the template manager.
 
 ### API contract
 
@@ -730,7 +762,7 @@ Reads are public; writes require admin permission (`ADMIN`).
 
 ### Personal data processing
 
-No — this capability does not process personal data (`created_by`/`updated_by` hold internal userId references; names/emails live in the Identity cluster).
+❌ No — this capability does not process personal data (`created_by`/`updated_by` hold internal userId references; names/emails live in the Identity cluster).
 
 N/A.
 
