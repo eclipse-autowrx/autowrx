@@ -21,7 +21,20 @@ flowchart TD
 
 ---
 
-## VSS versions & CVI trees
+## Capabilities in this cluster
+
+| ID | Capability |
+|----|------------|
+| [CAP-VAPI-01](#cap-vapi-01--vss-versions--cvi-trees) | VSS versions & CVI trees |
+| [CAP-VAPI-02](#cap-vapi-02--per-model-vsscovesa-api-crud--computed-tree) | Per-model VSS/COVESA API CRUD + computed tree |
+| [CAP-VAPI-03](#cap-vapi-03--replace-apis-from-a-vss-spec) | Replace APIs from a VSS spec |
+| [CAP-VAPI-04](#cap-vapi-04--vehicle-api-view-list--tree--hierarchical--compare) | Vehicle API view (List / Tree / Hierarchical / Compare) |
+| [CAP-VAPI-05](#cap-vapi-05--extended-apis-wishlist-signals) | Extended APIs (wishlist signals) |
+| [CAP-VAPI-06](#cap-vapi-06--custom-api-schemas) | Custom API schemas |
+| [CAP-VAPI-07](#cap-vapi-07--custom-api-sets) | Custom API sets |
+
+
+## CAP-VAPI-01 — VSS versions & CVI trees
 
 ### Description
 
@@ -56,7 +69,7 @@ Static reference data only; no PII.
 **Risks:**
 - **Stale-spec leakage:** cached (1-hour) static JSON can keep serving a deprecated/superseded VSS version long after an admin intends to retire it, so consumers keep building against data the platform believed retired.
 
-## Per-model VSS/COVESA API CRUD + computed tree
+## CAP-VAPI-02 — Per-model VSS/COVESA API CRUD + computed tree
 
 ### Description
 
@@ -98,7 +111,7 @@ API definitions stored in `apis` (references `model` + `created_by`).
 **Risks:**
 - **Cross-tenant signal inference:** `created_by` and `model` references in `Api` documents can reveal which user owns which model's signal set; a listing gap could expose private ownership relationships.
 
-## Replace APIs from a VSS spec
+## CAP-VAPI-03 — Replace APIs from a VSS spec
 
 ### Description
 
@@ -146,7 +159,7 @@ Overwrites the model's `Api` document; the old set is lost (no undo beyond chang
 **Risks:**
 - **Irreversible signal-set loss:** the old API set is hard-overwritten with no soft-delete or snapshot, so a malicious or mistaken replace permanently destroys the prior signal definitions — recoverable only from change logs if they exist.
 
-## Vehicle API view (List / Tree / Hierarchical / Compare)
+## CAP-VAPI-04 — Vehicle API view (List / Tree / Hierarchical / Compare)
 
 ### Description
 
@@ -180,7 +193,7 @@ Computed from stored `Api`/`ExtendedApi`; download exposes the model's signal de
 **Risks:**
 - **Bulk signal export:** a single download bundles every signal (including extended/wishlist signals unique to the model), giving one request a high-value exfiltration payload if access scoping is wrong.
 
-## Extended APIs (wishlist signals)
+## CAP-VAPI-05 — Extended APIs (wishlist signals)
 
 ### Description
 
@@ -224,7 +237,7 @@ Stored in `extendedapis` with `(apiName, model)` unique index.
 **Risks:**
 - **Wishlist-signal disclosure:** extended signals often encode proprietary behavior beyond standard VSS; a read-path gap would expose this proprietary wishlist to unauthorized users.
 
-## Custom API schemas
+## CAP-VAPI-06 — Custom API schemas
 
 ### Description
 
@@ -266,7 +279,7 @@ Schema definitions stored in `customapischemas` (`code` unique).
 **Risks:**
 - **Schema tampering without audit:** a modified schema silently re-shapes what every Custom API Set accepts; without an audit trail of schema changes, a tampered template is hard to detect after malicious sets have been created.
 
-## Custom API sets
+## CAP-VAPI-07 — Custom API sets
 
 ### Description
 

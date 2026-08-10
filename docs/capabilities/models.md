@@ -23,7 +23,19 @@ flowchart TD
 
 ---
 
-## Model list / create / import
+## Capabilities in this cluster
+
+| ID | Capability |
+|----|------------|
+| [CAP-MODEL-01](#cap-model-01--model-list--create--import) | Model list / create / import |
+| [CAP-MODEL-02](#cap-model-02--model-detail--edit) | Model detail / edit |
+| [CAP-MODEL-03](#cap-model-03--model-tabs--addons) | Model tabs & addons |
+| [CAP-MODEL-04](#cap-model-04--model-contributors--permissions) | Model contributors & permissions |
+| [CAP-MODEL-05](#cap-model-05--model-stats) | Model stats |
+| [CAP-MODEL-06](#cap-model-06--model-templates) | Model templates |
+
+
+## CAP-MODEL-01 — Model list / create / import
 
 ### Description
 
@@ -71,7 +83,7 @@ Model metadata (name, description, visibility, state, images, tags) stored in `m
 - **Visibility misconfiguration:** an over-broad `WRITE_MODEL` grant or a wrong default could expose private models publicly.
 - **Irreversible deletion:** deleted models are hard-removed (no soft-delete), so accidental or malicious deletion is permanent user-data loss.
 
-## Model detail / edit
+## CAP-MODEL-02 — Model detail / edit
 
 ### Description
 
@@ -122,7 +134,7 @@ Visibility controls exposure; deleted models removed from the collection (no sof
 - **Public exposure of embedded data:** flipping visibility to public exposes the model and its embedded prototype code/data to everyone — including data the owner believed was private.
 - **Permanent destruction:** hard-delete means a compromised or malicious contributor can permanently destroy model data with no recovery trail.
 
-## Model tabs & addons
+## CAP-MODEL-03 — Model tabs & addons
 
 ### Description
 
@@ -167,7 +179,7 @@ Layout config stored on the model document; no secrets.
 **Risks:**
 - **Untrusted-code distribution:** the tab config is a persistence channel — a malicious layout can repeatedly steer users toward running untrusted plugins until it is noticed and removed.
 
-## Model contributors & permissions
+## CAP-MODEL-04 — Model contributors & permissions
 
 ### Description
 
@@ -216,7 +228,7 @@ Creates/removes UserRole bindings scoped to the model `ref`.
 - **Relationship leak:** contributor bindings reveal who collaborates on which model (users ↔ business assets).
 - **Persistence of mis-grants:** a leaked grant persists until manually revoked; with no audit trail of permission changes, mis-grants are hard to detect after the fact.
 
-## Model stats
+## CAP-MODEL-05 — Model stats
 
 ### Description
 
@@ -248,7 +260,7 @@ Aggregated only; no PII.
 **Risks:**
 - **Existence/scale inference:** counts alone reveal the existence and scale of models; combined with a listing gap this could confirm private assets.
 
-## Model templates
+## CAP-MODEL-06 — Model templates
 
 ### Description
 

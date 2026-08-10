@@ -35,7 +35,28 @@ flowchart TD
 
 ---
 
-## SDV ProtoPilot (GenAI code generation)
+## Capabilities in this cluster
+
+| ID | Capability |
+|----|------------|
+| [CAP-INTEG-01](#cap-integ-01--sdv-protopilot-genai-code-generation) | SDV ProtoPilot (GenAI code generation) |
+| [CAP-INTEG-02](#cap-integ-02--genai-service-proxy) | GenAI service proxy |
+| [CAP-INTEG-03](#cap-integ-03--github-oauth-linking--sso) | GitHub OAuth (linking + SSO) |
+| [CAP-INTEG-04](#cap-integ-04--email-service) | Email service |
+| [CAP-INTEG-05](#cap-integ-05--web-studio-widget-creation) | Web Studio widget creation |
+| [CAP-INTEG-06](#cap-integ-06--search) | Search |
+| [CAP-INTEG-07](#cap-integ-07--discussions) | Discussions |
+| [CAP-INTEG-08](#cap-integ-08--feedback-service) | Feedback service |
+| [CAP-INTEG-09](#cap-integ-09--health-check) | Health check |
+| [CAP-INTEG-10](#cap-integ-10--file-upload) | File upload |
+| [CAP-INTEG-11](#cap-integ-11--change-logs--audit) | Change logs / audit |
+| [CAP-INTEG-12](#cap-integ-12--static-serving-spa-vss-static) | Static serving, SPA, VSS static |
+| [CAP-INTEG-13](#cap-integ-13--cors--helmet-csp--security-middleware) | CORS / Helmet CSP / security middleware |
+| [CAP-INTEG-14](#cap-integ-14--socketio-realtime) | Socket.IO (realtime) |
+| [CAP-INTEG-15](#cap-integ-15--log--cache-service-clients) | Log / cache service clients |
+
+
+## CAP-INTEG-01 — SDV ProtoPilot (GenAI code generation)
 
 ### Description
 
@@ -80,7 +101,7 @@ Prompt + generated code transit the GenAI service; generated code stored in the 
 - **Prompt leakage of private data:** prompts may include model/prototype context, sent to an external GenAI endpoint; sensitive vehicle data could leave the platform and be logged by the provider.
 - **Persistent generated artifacts:** generated code persisted in `prototype.code` may embed provider-influenced content with no redaction trail.
 
-## GenAI service proxy
+## CAP-INTEG-02 — GenAI service proxy
 
 ### Description
 
@@ -125,7 +146,7 @@ Proxies prompts/responses; no backend storage.
 **Risks:**
 - **Prompt/response interception:** prompts and responses stream through the proxy unmodified; a misconfigured or compromised GenAI backend could log or leak user prompt content.
 
-## GitHub OAuth (linking + SSO)
+## CAP-INTEG-03 — GitHub OAuth (linking + SSO)
 
 ### Description
 
@@ -175,7 +196,7 @@ GitHub tokens stored in `githubAuthStore` (persisted); treat as credentials.
 - **Credential-at-rest exposure:** GitHub tokens persisted in `githubAuthStore` are long-lived credentials; a store leak grants repository access under the user's identity.
 - **Token-in-query logging:** OAuth callback codes flow as query params and may be logged by proxies/CDNs before server-side exchange.
 
-## Email service
+## CAP-INTEG-04 — Email service
 
 ### Description
 
@@ -218,7 +239,7 @@ Recipient email + content sent to the provider; reset codes are one-time.
 - **Reset code interception:** reset codes sent in cleartext email; a misconfigured provider or compromised mailbox lets an attacker complete password resets.
 - **Provider-side retention:** recipient emails and content are processed by the external provider and may be retained per that provider's policy.
 
-## Web Studio widget creation
+## CAP-INTEG-05 — Web Studio widget creation
 
 ### Description
 
@@ -250,7 +271,7 @@ Widget URL only.
 **Risks:**
 - **URL-parameter leakage:** widget URLs may carry identifiers that reveal which widgets a user authored/accessed, observable to the external service.
 
-## Search
+## CAP-INTEG-06 — Search
 
 ### Description
 
@@ -294,7 +315,7 @@ Optional auth via `PUBLIC_VIEWING`; scoped to accessible resources (no leakage).
 **Risks:**
 - **Code-content disclosure via by-signal:** `/v2/search/prototypes/by-signal/:signal` scans prototype `code`; a crafted signal pattern could excerpt proprietary code fragments to a caller who lacks direct access to the prototype.
 
-## Discussions
+## CAP-INTEG-07 — Discussions
 
 ### Description
 
@@ -327,7 +348,7 @@ List optional; write auth. **Partial** — no dedicated routed page; wired conte
 **Risks:**
 - **Comment content retention:** `content` is free text and persists until deleted; users may inadvertently embed secrets or PII in comments that are hard to purge.
 
-## Feedback service
+## CAP-INTEG-08 — Feedback service
 
 ### Description
 
@@ -360,7 +381,7 @@ Scores + interviewee metadata stored.
 **Risks:**
 - **Interviewee PII retention:** interview metadata may contain personal identifiers of interviewees; stored without a defined retention/pruning policy.
 
-## Health check
+## CAP-INTEG-09 — Health check
 
 ### Description
 
@@ -406,7 +427,7 @@ Status info only (no secrets).
 **Risks:**
 - **Service fingerprinting:** per-service status messages may disclose internal hostnames, error text, or dependency versions, giving an attacker a footprint map of internal infrastructure.
 
-## File upload
+## CAP-INTEG-10 — File upload
 
 ### Description
 
@@ -456,7 +477,7 @@ Files served publicly under `/d/`; retention = files persist until deleted (no a
 - **Permanent public exposure:** uploads under `/d/` are public and unauthenticated; a private image uploaded for a draft is world-readable by URL, and persists indefinitely with no auto-prune.
 - **Metadata in uploads:** image EXIF or document metadata is not stripped before public serving, potentially leaking author/device/location data.
 
-## Change logs / audit
+## CAP-INTEG-11 — Change logs / audit
 
 ### Description
 
@@ -501,7 +522,7 @@ flowchart LR
 - **Sensitive code in diffs:** field diffs may include `code` content; storing proprietary prototype code in a (capped, overwritten) collection means old audit entries silently age out, losing the audit trail for long-lived disputes.
 - **Capped-collection data loss:** because the collection is capped, high-frequency change volume evicts the oldest audit entries — evidence of early incidents can be permanently lost without warning.
 
-## Static serving, SPA, VSS static
+## CAP-INTEG-12 — Static serving, SPA, VSS static
 
 ### Description
 
@@ -543,7 +564,7 @@ Static assets only.
 **Risks:**
 - **Public asset enumeration:** `/static`, `/d`, and `/vss/:version/:filename` are publicly listable/guessable; an attacker can enumerate uploaded assets and VSS files by date/version without authentication.
 
-## CORS / Helmet CSP / security middleware
+## CAP-INTEG-13 — CORS / Helmet CSP / security middleware
 
 ### Description
 
@@ -589,7 +610,7 @@ mongo-sanitize strips `$`/`.` keys from inputs; cookies httpOnly.
 - **NoSQL injection despite sanitize:** mongo-sanitize targets keys; operator injection via values or array payloads may still bypass it, risking data exfiltration or modification.
 - **Cookie leakage on non-TLS:** httpOnly cookies without `secure` enforcement over non-TLS connections can be sniffed; `trust proxy` must be correctly configured or the trust can be spoofed.
 
-## Socket.IO (realtime)
+## CAP-INTEG-14 — Socket.IO (realtime)
 
 ### Description
 
@@ -635,7 +656,7 @@ Token in query string (use TLS in prod); event payloads may include GitHub token
 - **Credential leakage via logs:** tokens in the query string persist in proxy/load-balancer logs; without TLS termination controls and log redaction, credentials are recoverable from logs.
 - **Payload retention on client:** event payloads carrying GitHub tokens are held in client memory/logic; a misrouted event could surface another user's token to the wrong client.
 
-## Log / cache service clients
+## CAP-INTEG-15 — Log / cache service clients
 
 ### Description
 

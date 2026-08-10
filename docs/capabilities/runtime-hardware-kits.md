@@ -22,7 +22,19 @@ flowchart TD
 
 ---
 
-## Runtime control panel
+## Capabilities in this cluster
+
+| ID | Capability |
+|----|------------|
+| [CAP-RUNTIME-01](#cap-runtime-01--runtime-control-panel) | Runtime control panel |
+| [CAP-RUNTIME-02](#cap-runtime-02--runtime--asset-manager) | Runtime / asset manager |
+| [CAP-RUNTIME-03](#cap-runtime-03--hardware-kit-manager) | Hardware kit manager |
+| [CAP-RUNTIME-04](#cap-runtime-04--asset-access-tokens) | Asset access tokens |
+| [CAP-RUNTIME-05](#cap-runtime-05--kit-server-proxy) | Kit server proxy |
+| [CAP-RUNTIME-06](#cap-runtime-06--runtime-server-config) | Runtime server config |
+
+
+## CAP-RUNTIME-01 — Runtime control panel
 
 ### Description
 
@@ -76,7 +88,7 @@ Runtime signal values are transient (`runtimeStore`); prototype code sent to the
 - **Prototype code exposure:** code is sent to the kit server / remote compiler for execution — a compromised runtime retains and exfiltrates prototype IP.
 - **Signal-value leak:** transient signal/var values flowing into `runtimeStore` could be captured by a malicious widget iframe notified on run/stop.
 
-## Runtime / asset manager
+## CAP-RUNTIME-02 — Runtime / asset manager
 
 ### Description
 
@@ -110,7 +122,7 @@ Asset `data` (e.g. endpoint config) stored in `assets`.
 **Risks:**
 - **Endpoint credential exposure:** asset `data` may embed kit endpoint URLs and connection config; a leaked or over-shared asset exposes the path and parameters to reach a hardware kit.
 
-## Hardware kit manager
+## CAP-RUNTIME-03 — Hardware kit manager
 
 ### Description
 
@@ -154,7 +166,7 @@ Kit connection config in the asset `data`; signal/VSS files read/written on the 
 - **Kit data destruction:** `replaceSignalMapping`/`replaceVss` overwrite on-kit files — a malicious or mistaken replace permanently destroys the prior mapping/VSS with no backend-side recovery.
 - **Connection-config leak:** kit identity/connection config stored in asset `data` is a persistent credential; an over-shared or leaked asset hands operators-of-the-kit access to attackers.
 
-## Asset access tokens
+## CAP-RUNTIME-04 — Asset access tokens
 
 ### Description
 
@@ -200,7 +212,7 @@ Token is a bearer credential — treat as a secret; no persistence client-side b
 **Risks:**
 - **Persistent token leakage:** a token persisted anywhere beyond memory (devtools, network logs, shared dashboards) survives until expiry and enables silent kit access as the asset.
 
-## Kit server proxy
+## CAP-RUNTIME-05 — Kit server proxy
 
 ### Description
 
@@ -234,7 +246,7 @@ Proxies runtime traffic; no storage on the backend.
 **Risks:**
 - **Traffic interception:** the proxy relays runtime traffic (including tokens and prototype code) in transit; a misconfigured `KIT_SERVER_URL` to an attacker host silently exfiltrates both.
 
-## Runtime server config
+## CAP-RUNTIME-06 — Runtime server config
 
 ### Description
 

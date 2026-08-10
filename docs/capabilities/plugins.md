@@ -18,7 +18,20 @@ flowchart TD
 
 ---
 
-## Plugin registry & CRUD
+## Capabilities in this cluster
+
+| ID | Capability |
+|----|------------|
+| [CAP-PLUGIN-01](#cap-plugin-01--plugin-registry--crud) | Plugin registry & CRUD |
+| [CAP-PLUGIN-02](#cap-plugin-02--internal-plugin-upload--static-hosting) | Internal plugin upload & static hosting |
+| [CAP-PLUGIN-03](#cap-plugin-03--plugin-loader) | Plugin loader |
+| [CAP-PLUGIN-04](#cap-plugin-04--plugin-preloading) | Plugin preloading |
+| [CAP-PLUGIN-05](#cap-plugin-05--sample-plugins) | Sample plugins |
+| [CAP-PLUGIN-06](#cap-plugin-06--addon-select--custom-tab-editor) | Addon select / custom tab editor |
+| [CAP-PLUGIN-07](#cap-plugin-07--my-plugins--admin-plugin-management) | My Plugins & admin Plugin management |
+
+
+## CAP-PLUGIN-01 — Plugin registry & CRUD
 
 ### Description
 
@@ -64,7 +77,7 @@ Plugin metadata + `config` (Mixed) stored in `plugins` with `created_by`/`update
 - **Config secret leakage:** the `config` field is Mixed/untyped; if an author stores API keys or tokens in plugin config, the public `GET /v2/plugin` read exposes them to every visitor.
 - **Author identity disclosure:** `created_by`/`updated_by` on a public-read document leaks which users author which plugins, enabling targeted harassment or account takeover of high-value authors.
 
-## Internal plugin upload & static hosting
+## CAP-PLUGIN-02 — Internal plugin upload & static hosting
 
 ### Description
 
@@ -114,7 +127,7 @@ Plugin bundle served publicly from `/plugin/<slug>/`; the bundle can contain arb
 - **Public bundle exposure:** once hosted, the bundle is world-readable; any sensitive data baked into the bundle (author secrets, tenant data) is permanently exfiltrated and irretrievable.
 - **Bundle persistence after delete:** extracted files under `backend/static/plugin/:slug` may persist on disk even if the registry record is deleted, leaving stale malicious code publicly reachable.
 
-## Plugin loader
+## CAP-PLUGIN-03 — Plugin loader
 
 ### Description
 
@@ -162,7 +175,7 @@ Plugin receives `data` (model/prototype), public site `config`, and the `PluginA
 - **Model/prototype data exposure:** `data` passed to the plugin includes model and prototype contents; an unsandboxed plugin can exfiltrate proprietary vehicle data to an external endpoint.
 - **`PluginAPI` abuse:** the `PluginAPI` surface, even without tokens, may expose endpoints a plugin can call to read or modify data the user didn't intend to expose.
 
-## Plugin preloading
+## CAP-PLUGIN-04 — Plugin preloading
 
 ### Description
 
@@ -204,7 +217,7 @@ Only fetches public bundle URLs.
 **Risks:**
 - **User activity inference:** prefetch patterns (which slugs, how many) can reveal which models a user visits, leaking usage patterns to external plugin hosts via referer/log entries.
 
-## Sample plugins
+## CAP-PLUGIN-05 — Sample plugins
 
 ### Description
 
@@ -237,7 +250,7 @@ Static sample assets.
 **Risks:**
 - **No user data involved:** samples are static reference bundles with no user data; the residual risk is only that a tampered sample misleads authors into embedding malicious code.
 
-## Addon select / custom tab editor
+## CAP-PLUGIN-06 — Addon select / custom tab editor
 
 ### Description
 
@@ -285,7 +298,7 @@ Tab/layout config on the model document.
 - **Untrusted-code distribution channel:** the tab layout is a persisted delivery channel — a malicious layout keeps steering visitors toward running untrusted plugins until it is noticed and removed.
 - **Layout as metadata leak:** `custom_template` reveals which plugins and staging stages a model relies on, exposing internal architecture to anyone with read access.
 
-## My Plugins & admin Plugin management
+## CAP-PLUGIN-07 — My Plugins & admin Plugin management
 
 ### Description
 

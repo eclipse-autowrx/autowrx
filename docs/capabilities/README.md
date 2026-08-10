@@ -6,7 +6,7 @@ A code-grounded catalog of what AutoWRX does, organized into **clusters** of rel
 
 ## Capability sections (every capability has these)
 
-Each capability is an `## Capability` heading; the six sections below are `### Section` headers, each followed by a paragraph (or a bullet list under Acceptance criteria). Every cluster file also opens with a mermaid diagram of the cluster's overall flow, and capabilities include a per-capability mermaid diagram where a request flow or state transition is worth illustrating.
+Each capability is an `## CAP-<CLUSTER>-NN — <title>` heading with a **stable ID** (e.g. `CAP-MODEL-01`); each cluster file lists its IDs + titles in a **Capabilities in this cluster** table at the top. Use these IDs to reference capabilities in issues, PRs, and skills. The six sections below are `### Section` headers, each followed by a paragraph (or a bullet list under Acceptance criteria). Every cluster file also opens with a mermaid diagram of the cluster's overall flow, and capabilities include a per-capability mermaid diagram where a request flow or state transition is worth illustrating.
 
 - **Description** — what it is and does.
 - **Who uses it / who gets value** — the roles that use or benefit (end user, model owner, admin, DevOps/integrator, plugin author, …).
@@ -17,18 +17,20 @@ Each capability is an `## Capability` heading; the six sections below are `### S
 
 ## Clusters
 
-| Cluster | Capabilities | File |
-|---|---|---|
-| Identity & Access | login/refresh/logout, register, password reset + email verify, SSO, profile, user management, RBAC v1 + Casbin v2, manage users/features | [identity-access.md](./identity-access.md) |
-| Models | model list/create/import, detail/edit, tabs & addons, contributors & permissions, stats, model templates | [models.md](./models.md) |
-| Vehicle APIs | VSS versions/trees, per-model API CRUD + computed, replace APIs, vehicle API view, extended APIs, custom API schemas, custom API sets | [vehicle-apis.md](./vehicle-apis.md) |
-| Prototypes & Code | prototype library, new-prototype, CRUD/recent/popular, workspace tabs, code editor, project editor, feedback, project templates | [prototypes-code.md](./prototypes-code.md) |
-| Dashboards & Widgets | dashboard renderer/editor, widget sources, builtin widgets, dashboard templates, Widget ProtoPilot (roadmap) | [dashboards-widgets.md](./dashboards-widgets.md) |
-| Runtime & Hardware Kits | runtime control, runtime/asset manager, hardware kit manager, asset access tokens, kit server proxy, runtime server config | [runtime-hardware-kits.md](./runtime-hardware-kits.md) |
-| Assets & Sharing | user assets CRUD, admin all-assets, My Assets, asset sharing, model contributors, access invitation, user lookup | [assets-sharing.md](./assets-sharing.md) |
-| Plugins | plugin registry/CRUD, internal upload/hosting, loader, preloading, sample plugins, addon/custom-tab editor, My Plugins + admin management | [plugins.md](./plugins.md) |
-| Site Config & Theming | site config CRUD, public read, admin management, global CSS, home config, branding, auth flags, SSO/email config, snapshots/restore, privacy | [site-config-theming.md](./site-config-theming.md) |
-| Integrations & Platform | SDV ProtoPilot/GenAI, GitHub OAuth, email, web studio, search, discussions, feedback, health, file upload, change logs/audit, static/SPA, VSS static, CORS/CSP, Socket.IO, log/cache | [integrations-platform.md](./integrations-platform.md) |
+Each cluster has an ID prefix (`CAP-<CODE>-NN`).
+
+| ID prefix | Cluster | Capabilities | File |
+|---|---|---|---|
+| `CAP-IDENTITY` | Identity & Access | login/refresh/logout, register, password reset + email verify, SSO, profile, user management, RBAC v1 + Casbin v2, manage users/features | [identity-access.md](./identity-access.md) |
+| `CAP-MODEL` | Models | model list/create/import, detail/edit, tabs & addons, contributors & permissions, stats, model templates | [models.md](./models.md) |
+| `CAP-VAPI` | Vehicle APIs | VSS versions/trees, per-model API CRUD + computed, replace APIs, vehicle API view, extended APIs, custom API schemas, custom API sets | [vehicle-apis.md](./vehicle-apis.md) |
+| `CAP-PROTO` | Prototypes & Code | prototype library, new-prototype, CRUD/recent/popular, workspace tabs, code editor, project editor, feedback, project templates | [prototypes-code.md](./prototypes-code.md) |
+| `CAP-DASHBOARD` | Dashboards & Widgets | dashboard renderer/editor, widget sources, builtin widgets, dashboard templates, Widget ProtoPilot (roadmap) | [dashboards-widgets.md](./dashboards-widgets.md) |
+| `CAP-RUNTIME` | Runtime & Hardware Kits | runtime control, runtime/asset manager, hardware kit manager, asset access tokens, kit server proxy, runtime server config | [runtime-hardware-kits.md](./runtime-hardware-kits.md) |
+| `CAP-ASSET` | Assets & Sharing | user assets CRUD, admin all-assets, My Assets, asset sharing, model contributors, access invitation, user lookup | [assets-sharing.md](./assets-sharing.md) |
+| `CAP-PLUGIN` | Plugins | plugin registry/CRUD, internal upload/hosting, loader, preloading, sample plugins, addon/custom-tab editor, My Plugins + admin management | [plugins.md](./plugins.md) |
+| `CAP-CONFIG` | Site Config & Theming | site config CRUD, public read, admin management, global CSS, home config, branding, auth flags, SSO/email config, snapshots/restore, privacy | [site-config-theming.md](./site-config-theming.md) |
+| `CAP-INTEG` | Integrations & Platform | SDV ProtoPilot/GenAI, GitHub OAuth, email, web studio, search, discussions, feedback, health, file upload, change logs/audit, static/SPA, VSS static, CORS/CSP, Socket.IO, log/cache | [integrations-platform.md](./integrations-platform.md) |
 
 ## Cross-cutting model
 

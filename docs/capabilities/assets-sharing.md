@@ -19,7 +19,20 @@ flowchart TD
 
 ---
 
-## User assets CRUD
+## Capabilities in this cluster
+
+| ID | Capability |
+|----|------------|
+| [CAP-ASSET-01](#cap-asset-01--user-assets-crud) | User assets CRUD |
+| [CAP-ASSET-02](#cap-asset-02--admin-all-assets-view) | Admin all-assets view |
+| [CAP-ASSET-03](#cap-asset-03--my-assets) | My Assets |
+| [CAP-ASSET-04](#cap-asset-04--asset-sharing) | Asset sharing |
+| [CAP-ASSET-05](#cap-asset-05--model-contributors) | Model contributors |
+| [CAP-ASSET-06](#cap-asset-06--access-invitation) | Access invitation |
+| [CAP-ASSET-07](#cap-asset-07--user-lookup-by-email) | User lookup by email |
+
+
+## CAP-ASSET-01 — User assets CRUD
 
 ### Description
 
@@ -67,7 +80,7 @@ Asset `data` (arbitrary config — endpoint URLs, tokens, kit identity) stored i
 - **Secrets in cleartext:** `data` may hold GenAI auth tokens or runtime credentials; stored unencrypted at rest, a DB leak or admin-view exposure hands plaintext secrets to the attacker.
 - **Irreversible delete:** assets are hard-removed (no soft-delete), so accidental or malicious deletion permanently destroys the user's runtime/kit config.
 
-## Admin all-assets view
+## CAP-ASSET-02 — Admin all-assets view
 
 ### Description
 
@@ -100,7 +113,7 @@ Exposes all asset records to admins (incl. `data` which may hold tokens — admi
 **Risks:**
 - **Bulk secret exposure:** one endpoint returns all users' `data` at once; a leak of an admin session token exposes every user's credentials simultaneously with no per-record gate.
 
-## My Assets
+## CAP-ASSET-03 — My Assets
 
 ### Description
 
@@ -141,7 +154,7 @@ Auth required.
 **Risks:**
 - **Cleartext token at rest:** the GenAI token sits unencrypted in the asset `data`; any path that reads the asset (admin view, a leaked `READ_ASSET` grant, DB backup) exposes it.
 
-## Asset sharing
+## CAP-ASSET-04 — Asset sharing
 
 ### Description
 
@@ -190,7 +203,7 @@ Creates/removes authorized-user bindings on the asset; no secrets duplicated.
 **Risks:**
 - **Relationship leak:** asset-sharing bindings reveal who collaborates on which runtime/kit (users ↔ business assets), exposing business relationships.
 
-## Model contributors
+## CAP-ASSET-05 — Model contributors
 
 ### Description
 
@@ -237,7 +250,7 @@ UserRole bindings scoped to the model.
 - **Relationship leak:** contributor bindings reveal who collaborates on which model (users ↔ business assets).
 - **Mis-grant persistence:** a leaked grant persists until manually revoked; with no audit trail of permission changes, mis-grants are hard to detect after the fact.
 
-## Access invitation
+## CAP-ASSET-06 — Access invitation
 
 ### Description
 
@@ -278,7 +291,7 @@ Driven by the underlying permission endpoints (no separate data store).
 **Risks:**
 - **No independent data store:** because the dialog owns no state, all data-protection risk is inherited from the asset/model permission endpoints — a regression there surfaces directly through this UI.
 
-## User lookup by email
+## CAP-ASSET-07 — User lookup by email
 
 ### Description
 

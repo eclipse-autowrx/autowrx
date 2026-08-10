@@ -27,7 +27,22 @@ flowchart TD
 
 ---
 
-## Site config CRUD
+## Capabilities in this cluster
+
+| ID | Capability |
+|----|------------|
+| [CAP-CONFIG-01](#cap-config-01--site-config-crud) | Site config CRUD |
+| [CAP-CONFIG-02](#cap-config-02--site-config-management-admin) | Site Config management (admin) |
+| [CAP-CONFIG-03](#cap-config-03--global-css-theming) | Global CSS theming |
+| [CAP-CONFIG-04](#cap-config-04--home-config-editor) | Home config editor |
+| [CAP-CONFIG-05](#cap-config-05--branding) | Branding |
+| [CAP-CONFIG-06](#cap-config-06--auth-config-flags) | Auth config flags |
+| [CAP-CONFIG-07](#cap-config-07--sso--email-configuration) | SSO & Email configuration |
+| [CAP-CONFIG-08](#cap-config-08--site-config-snapshots--restore) | Site config snapshots & restore |
+| [CAP-CONFIG-09](#cap-config-09--privacy-policy) | Privacy policy |
+
+
+## CAP-CONFIG-01 — Site config CRUD
 
 ### Description
 
@@ -71,7 +86,7 @@ Public routes public; everything else requires `MANAGE_USERS`. `secret` configs 
 - **Plaintext-at-rest fallback:** if encryption were bypassed or a new secret type were added without wiring it through `utils/encryption.js`, secrets would sit in plaintext and a DB dump would expose live credentials.
 - **Admin-display interception:** secrets are decrypted for admin display, so a compromised admin session or logged response body leaks usable SSO/email credentials directly.
 
-## Site Config management (admin)
+## CAP-CONFIG-02 — Site Config management (admin)
 
 ### Description
 
@@ -114,7 +129,7 @@ Edit history (snapshots) retained; secret sections mask values.
 - **Snapshot retention of secrets:** edit history snapshots may retain prior secret values; if those snapshots aren't masked/encrypted like the live config, old credentials remain recoverable.
 - **Change history leak:** config edit history can reveal administrative actions, SSO provider changes, and email setup patterns to anyone with admin access.
 
-## Global CSS theming
+## CAP-CONFIG-03 — Global CSS theming
 
 ### Description
 
@@ -162,7 +177,7 @@ Stylesheet text only; no PII.
 **Risks:**
 - **Indirect PII leak:** if CSS can target elements that render user data (e.g. names in attribute values), attribute-value exfiltration could disclose PII to an attacker-controlled endpoint.
 
-## Home config editor
+## CAP-CONFIG-04 — Home config editor
 
 ### Description
 
@@ -202,7 +217,7 @@ Block content (titles/descriptions/image URLs); `requiredLogin` flags on action 
 **Risks:**
 - **Login-flow confusion:** a `requiredLogin` flag on action buttons drives auth gating; if misconfigured or tampered with, buttons could route users to attacker-controlled auth flows (credential phishing) from the public landing page.
 
-## Branding
+## CAP-CONFIG-05 — Branding
 
 ### Description
 
@@ -235,7 +250,7 @@ Branding asset URLs only.
 **Risks:**
 - **Asset-URL leakage:** branding URLs can reveal internal hosting paths or third-party providers in the public config response.
 
-## Auth config flags
+## CAP-CONFIG-06 — Auth config flags
 
 ### Description
 
@@ -279,7 +294,7 @@ Boolean flags only.
 **Risks:**
 - **Inference of attack surface:** while flags are booleans only, exposing which gates are enabled tells an attacker exactly which registration/SSO avenues to target.
 
-## SSO & Email configuration
+## CAP-CONFIG-07 — SSO & Email configuration
 
 ### Description
 
@@ -329,7 +344,7 @@ Secrets (clientSecret/apiKey/smtp pass) encrypted; email logs may include recipi
 - **Recipient disclosure in logs:** test-send logs may include recipient addresses, surfacing the admin's email (and any test recipients) in audit/log stores.
 - **Persistent credential reuse:** encrypted secrets persist until rotated; a past compromise leaves stolen credentials valid until an admin manually rotates them.
 
-## Site config snapshots & restore
+## CAP-CONFIG-08 — Site config snapshots & restore
 
 ### Description
 
@@ -372,7 +387,7 @@ Snapshots hold site-scope configs incl. encrypted secrets.
 - **Snapshot of secrets at rest:** snapshots include encrypted secrets; if encryption keys are rotated but old snapshots aren't re-encrypted, they become unreadable or, worse, decryptable with a leaked old key.
 - **Recovery-time secret exposure:** during restore, decrypted secrets may flow into admin-visible output/logs, widening the window for capture.
 
-## Privacy policy
+## CAP-CONFIG-09 — Privacy policy
 
 ### Description
 

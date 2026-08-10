@@ -25,7 +25,19 @@ flowchart TD
 
 ---
 
-## Dashboard renderer
+## Capabilities in this cluster
+
+| ID | Capability |
+|----|------------|
+| [CAP-DASHBOARD-01](#cap-dashboard-01--dashboard-renderer) | Dashboard renderer |
+| [CAP-DASHBOARD-02](#cap-dashboard-02--dashboard-editor) | Dashboard editor |
+| [CAP-DASHBOARD-03](#cap-dashboard-03--widget-sources-built-in--marketplace--url) | Widget sources (Built-in / Marketplace / URL) |
+| [CAP-DASHBOARD-04](#cap-dashboard-04--builtin-widgets-hosting) | Builtin widgets hosting |
+| [CAP-DASHBOARD-05](#cap-dashboard-05--dashboard-templates) | Dashboard templates |
+| [CAP-DASHBOARD-06](#cap-dashboard-06--widget-protopilot-genai-widgets--roadmap) | Widget ProtoPilot (GenAI widgets) — roadmap |
+
+
+## CAP-DASHBOARD-01 — Dashboard renderer
 
 ### Description
 
@@ -71,7 +83,7 @@ Read `READ_MODEL`. Widgets are third-party iframes — same-origin policy depend
 - **Cross-widget signal exposure:** because signals are broadcast to every iframe, a single untrusted widget can exfiltrate the prototype's full runtime signal stream to a remote endpoint.
 - **Config tampering:** `widget_config` is mutable via the editor; a tampered config can point every widget at an attacker-controlled URL, persisting the leak across dashboard opens.
 
-## Dashboard editor
+## CAP-DASHBOARD-02 — Dashboard editor
 
 ### Description
 
@@ -116,7 +128,7 @@ Widget config (URLs/options) stored in `prototype.widget_config`; options may re
 - **Persistent widget-config tampering:** a malicious `widget_config` (URLs/options) is persisted on the prototype and re-rendered for every viewer until manually fixed, repeatedly steering users toward untrusted widgets.
 - **Signal-reference leakage:** options that reference runtime signals encode which signals the prototype exposes; a tampered config can be crafted to surface and exfiltrate sensitive signals.
 
-## Widget sources (Built-in / Marketplace / URL)
+## CAP-DASHBOARD-03 — Widget sources (Built-in / Marketplace / URL)
 
 ### Description
 
@@ -161,7 +173,7 @@ No PII; widget URLs/options stored in widget config.
 **Risks:**
 - **URL persistence as exfil channel:** widget URLs are persisted in `widget_config`; a URL pointing to an attacker endpoint can receive (via postMessage or query params) runtime data every time the dashboard renders.
 
-## Builtin widgets hosting
+## CAP-DASHBOARD-04 — Builtin widgets hosting
 
 ### Description
 
@@ -194,7 +206,7 @@ Static assets only.
 **Risks:**
 - **Bundled data exposure:** some bundles embed data such as `vss.json`; if a bundle accidentally includes prototype or tenant data, public unauthed serving would leak it to anyone.
 
-## Dashboard templates
+## CAP-DASHBOARD-05 — Dashboard templates
 
 ### Description
 
@@ -235,7 +247,7 @@ Template `widget_config` stored; no secrets.
 **Risks:**
 - **Persistent distribution channel:** a malicious template propagates its widget URLs/options to all dashboards derived from it until an admin notices and removes it, repeatedly exposing users to untrusted widget content.
 
-## Widget ProtoPilot (GenAI widgets) — roadmap
+## CAP-DASHBOARD-06 — Widget ProtoPilot (GenAI widgets) — roadmap
 
 ### Description
 

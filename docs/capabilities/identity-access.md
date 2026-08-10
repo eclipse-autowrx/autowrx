@@ -37,7 +37,22 @@ flowchart TD
 
 ---
 
-## Login / logout / token refresh
+## Capabilities in this cluster
+
+| ID | Capability |
+|----|------------|
+| [CAP-IDENTITY-01](#cap-identity-01--login--logout--token-refresh) | Login / logout / token refresh |
+| [CAP-IDENTITY-02](#cap-identity-02--registration) | Registration |
+| [CAP-IDENTITY-03](#cap-identity-03--password-reset--email-verification) | Password reset & email verification |
+| [CAP-IDENTITY-04](#cap-identity-04--sso-oidc-id-token--github-oauth) | SSO (OIDC ID-token + GitHub OAuth) |
+| [CAP-IDENTITY-05](#cap-identity-05--user-profile) | User profile |
+| [CAP-IDENTITY-06](#cap-identity-06--user-management-admin) | User management (admin) |
+| [CAP-IDENTITY-07](#cap-identity-07--rbac-v1-primary) | RBAC v1 (primary) |
+| [CAP-IDENTITY-08](#cap-identity-08--casbin-rbac-v2-partial) | Casbin RBAC v2 (partial) |
+| [CAP-IDENTITY-09](#cap-identity-09--manage-users--manage-features-admin) | Manage Users & Manage Features (admin) |
+
+
+## CAP-IDENTITY-01 — Login / logout / token refresh
 
 ### Description
 
@@ -93,7 +108,7 @@ Passwords hashed (`bcrypt`) and marked `private` (never returned in user objects
 - **Password exposure on transport:** in dev the cookie is `Lax`/non-`Secure`, so a refresh cookie captured on a non-HTTPS dev/demo network exposes a long-lived session.
 - **Access-token leak via memory dump:** access tokens live in JS memory; a compromised browser extension or tab crash dump can exfiltrate the short-lived access token — bounded by expiry but enough to act within 30 min in prod.
 
-## Registration
+## CAP-IDENTITY-02 — Registration
 
 ### Description
 
@@ -140,7 +155,7 @@ Stores `email` (unique, lowercased), hashed `password`, `email_verified=false`. 
 - **Email enumeration via duplicate signal:** the `400 email already taken` response lets an attacker probe which addresses are registered, enabling account-enumeration and targeted phishing.
 - **Unverified-identity persistence:** accounts are created with `email_verified=false` and no proof of email ownership at creation time, so an attacker can register using someone else's email and impersonate them until verification is enforced.
 
-## Password reset & email verification
+## CAP-IDENTITY-03 — Password reset & email verification
 
 ### Description
 
@@ -196,7 +211,7 @@ Codes/tokens are one-time, short-lived, and deleted on use. Passwords hashed; ne
 - **Recovery-handle hijack:** email is the sole recovery handle; anyone controlling the mailbox receives the 6-digit code and can take over the account, regardless of password strength.
 - **Code-in-log exposure:** if the mailed 6-digit code or legacy token is captured by mailbox middleware or logged by an upstream mail relay, the one-time secret leaks before use.
 
-## SSO (OIDC ID-token + GitHub OAuth)
+## CAP-IDENTITY-04 — SSO (OIDC ID-token + GitHub OAuth)
 
 ### Description
 
@@ -256,7 +271,7 @@ SSO provider secrets never exposed to non-admins (public list returns only enabl
 - **Provider-data persistence:** `provider_data` (profile/emails from the IdP) is stored indefinitely; if the provider later revokes or changes the user's identity, stale `provider_user_id` bindings keep pointing at the local account, enabling identity confusion or takeovers after an email change at the IdP.
 - **Secret-at-rest dependence:** encryption-at-rest protects `clientSecret`s only as long as the encryption key is separate from the database; a key leak makes all provider secrets decryptable at once.
 
-## User profile
+## CAP-IDENTITY-05 — User profile
 
 ### Description
 
@@ -303,7 +318,7 @@ Avatar stored as a file path; password hashed and `private` (never returned).
 - **Avatar path injection:** storing an avatar as a file path (rather than an opaque asset id) opens the door to path traversal or SSRF if the path is rendered/loaded without normalization.
 - **Password-in-history loss:** changing a password has no documented "current password" requirement, so a hijacked session can rotate the password and lock the legitimate user out irreversibly.
 
-## User management (admin)
+## CAP-IDENTITY-06 — User management (admin)
 
 ### Description
 
@@ -349,7 +364,7 @@ Email masking in list responses; `password` field `private`; `includeFullDetails
 - **PII leakage via masked-but-recoverable emails:** masked emails still leak structure (domain, length, prefix length); combined with the public list when `PUBLIC_VIEWING=true`, this enables user-enumeration and targeted phishing.
 - **Hard-delete audit gap:** deleting a user removes the identity anchored to all their prior actions, breaking attribution of historical activity and leaving an audit gap.
 
-## RBAC v1 (primary)
+## CAP-IDENTITY-07 — RBAC v1 (primary)
 
 ### Description
 
@@ -406,7 +421,7 @@ UserRole records bind `(user, role, ref)` (unique); no secrets stored.
 - **Relationship/capability leak:** `GET /v2/permissions` and `users-by-roles` expose who can do what on which resource — a capability map an attacker can use to target high-privilege users or sensitive `ref`s.
 - **Persistence of mis-grants:** without an audit trail of permission changes, a mis-granted role persists silently until someone notices and manually revokes it.
 
-## Casbin RBAC v2 (partial)
+## CAP-IDENTITY-08 — Casbin RBAC v2 (partial)
 
 ### Description
 
@@ -451,7 +466,7 @@ Casbin policies stored via mongoose adapter; no secrets.
 - **Policy-set exposure:** the policy store encodes the full capability graph; a read of the mongoose-backed policies (via a backup leak or admin API) reveals the entire authorization model.
 - **Silent policy drift:** partial adoption means v2 policies may be stale or inconsistent with v1, so a "denied" decision can flip to "allowed" (or vice versa) on a policy reload with no audit signal.
 
-## Manage Users & Manage Features (admin)
+## CAP-IDENTITY-09 — Manage Users & Manage Features (admin)
 
 ### Description
 

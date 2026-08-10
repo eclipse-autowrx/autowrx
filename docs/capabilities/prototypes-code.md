@@ -25,7 +25,21 @@ flowchart TD
 
 ---
 
-## Prototype library
+## Capabilities in this cluster
+
+| ID | Capability |
+|----|------------|
+| [CAP-PROTO-01](#cap-proto-01--prototype-library) | Prototype library |
+| [CAP-PROTO-02](#cap-proto-02--new-prototype-layout) | New prototype layout |
+| [CAP-PROTO-03](#cap-proto-03--prototype-crud--bulk--recent--popular--execute-code) | Prototype CRUD / bulk / recent / popular / execute-code |
+| [CAP-PROTO-04](#cap-proto-04--prototype-workspace-tabs) | Prototype workspace (tabs) |
+| [CAP-PROTO-05](#cap-proto-05--code-editor) | Code editor |
+| [CAP-PROTO-06](#cap-proto-06--project-editor-multi-file) | Project editor (multi-file) |
+| [CAP-PROTO-07](#cap-proto-07--prototype-feedback) | Prototype feedback |
+| [CAP-PROTO-08](#cap-proto-08--project-templates) | Project templates |
+
+
+## CAP-PROTO-01 — Prototype library
 
 ### Description
 
@@ -70,7 +84,7 @@ Prototype metadata + code stored in `prototypes`; import reads archive contents.
 - **Source data loss on bad import:** a malformed or hostile ZIP could overwrite or shadow existing prototype code during import without a rollback path.
 - **Code exposure via visibility:** a prototype under a private model still stores full source code; a misapplied `PUBLIC_VIEWING` toggle exposes that code to anonymous users.
 
-## New prototype layout
+## CAP-PROTO-02 — New prototype layout
 
 ### Description
 
@@ -119,7 +133,7 @@ No extra data; reads model/template to preview.
 **Risks:**
 - **Template data leakage:** previewing the default template exposes template layout/plugin references to any author; a misconfigured template could leak references to private plugins or internal assets.
 
-## Prototype CRUD / bulk / recent / popular / execute-code
+## CAP-PROTO-03 — Prototype CRUD / bulk / recent / popular / execute-code
 
 ### Description
 
@@ -166,7 +180,7 @@ Write `WRITE_MODEL`; recent requires auth; reads respect `PUBLIC_VIEWING` + mode
 - **Activity profiling:** `last_viewed` and recent lists are per-user activity trails; a compromised account exposes which prototypes a user touched and when.
 - **Irreversible delete:** `DELETE /v2/prototypes/:id` hard-removes the prototype (no soft-delete), so accidental or malicious deletion is permanent source-data loss.
 
-## Prototype workspace (tabs)
+## CAP-PROTO-04 — Prototype workspace (tabs)
 
 ### Description
 
@@ -212,7 +226,7 @@ Tab config + `extend` (plugin data sink) stored on the prototype; `last_viewed` 
 - **Plugin data sink persistence:** `extend` stores arbitrary plugin-supplied data on the prototype; a malicious plugin could persist hostile payloads that re-activate on every visit.
 - **View-tracking exposure:** `last_viewed` updates on every visit, creating a fine-grained viewing log tied to the visitor's session.
 
-## Code editor
+## CAP-PROTO-05 — Code editor
 
 ### Description
 
@@ -264,7 +278,7 @@ Code (potentially large text) stored in `prototype.code`; auto-save writes frequ
 - **Source data loss on autosave:** frequent auto-save with no history means a bad paste or GenAI apply can irreversibly overwrite the author's prior code with no recovery trail.
 - **Large-payload bloat:** unthrottled code growth could bloat the `prototypes` document, degrading backups and reads.
 
-## Project editor (multi-file)
+## CAP-PROTO-06 — Project editor (multi-file)
 
 ### Description
 
@@ -310,7 +324,7 @@ Whole project stored as JSON in `prototype.code`; export contains all files.
 - **Bulk source loss:** a single destructive file delete or a corrupt save-all overwrites the entire project JSON; with no per-file history, the whole project can be lost at once.
 - **Export exfiltration:** export ZIP bundles every project file, so a leaked edit token lets an attacker steal the complete multi-file source in one action.
 
-## Prototype feedback
+## CAP-PROTO-07 — Prototype feedback
 
 ### Description
 
@@ -361,7 +375,7 @@ Feedback stores `interviewee` (name/organization), scores, `ref`/`model_id`; no 
 - **PII exposure:** `interviewee` name/organization is PII; a public `GET /v2/feedbacks` could expose reviewer and interviewee identities to anonymous users.
 - **Relationship inference:** feedback records tie a reviewer and interviewee to a specific prototype and model, leaking business relationships.
 
-## Project templates
+## CAP-PROTO-08 — Project templates
 
 ### Description
 
