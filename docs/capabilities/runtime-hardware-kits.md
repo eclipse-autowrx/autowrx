@@ -85,17 +85,23 @@ Read `READ_MODEL`. Direct Socket.IO to external kit server (auth via asset token
 - **Secrets:** The asset access token is a bearer secret carried on the runtime channel; no other secrets handled by the panel.
 
 **Risks:**
-- **Workspace escape via runtime:** the connected kit server executes arbitrary prototype code (Python/Rust); a compromised or rogue kit could reach back into browser context or shared storage and escape the prototype workspace.
-- **Remote compile code exfiltration:** Rust remote compile ships source to an external compiler — a hostile or misconfigured compiler endpoint receives the user's prototype IP.
-- **Token theft over Socket.IO:** the direct Socket.IO channel carries the asset token; an XSS in the panel or a tampered custom runtime URL (localStorage) could leak it.
+- **Workspace escape via runtime:** the connected kit server executes arbitrary prototype code (Python/Rust); a compromised or rogue kit could reach back into browser context or shared storage and escape the prototype workspace. *Mitigation:* the system relays via the kit server over an authenticated Socket.IO channel; don't pass tokens to the runtime.
+- **Remote compile code exfiltration:** Rust remote compile ships source to an external compiler — a hostile or misconfigured compiler endpoint receives the user's prototype IP. *Mitigation:* none currently — pin the remote compiler endpoint and restrict it to trusted hosts.
+- **Token theft over Socket.IO:** the direct Socket.IO channel carries the asset token; an XSS in the panel or a tampered custom runtime URL (localStorage) could leak it. *Mitigation:* none currently — validate the custom runtime URL and avoid persisting the asset token in localStorage.
 
-### Data protection
+### Personal data processing
+
+No — this capability does not process personal data. Signal/var values and prototype code are not personal data.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
 
 Runtime signal values are transient (kept in memory, not persisted); prototype code sent to the kit/remote compiler for execution.
 
 **Coverage:**
 - **Stored data:** None on the backend — signal/var values are transient in the browser session; the panel does not persist code.
-- **PII:** No — signal/var values and prototype code are not personal data.
 - **Retention:** N/A — transient, session-scoped in the browser; not persisted.
 - **Encryption:** In transit on the runtime channel (TLS deployment-dependent); nothing stored at rest by the panel.
 - **Logging:** Standard logger only; the runtime server logs "a user connected" — no signal/code/token logging observed.
@@ -106,6 +112,7 @@ Runtime signal values are transient (kept in memory, not persisted); prototype c
 
 ### Test coverage
 - **E2E (Playwright):** 1 test case in `prototype-runtime.spec.ts` — SITEMAP: ✅
+- **Estimated coverage:** ≈33% (est.) — 1 E2E covers connect/run/stop; pip-install and rebuild paths untested across 3 acceptance criteria.
 - **Unit (Jest):** none
 
 ## CAP-RUNTIME-02 — Runtime / asset manager
@@ -139,16 +146,22 @@ Auth required; sharing via `WRITE_ASSET` (see [assets-sharing.md](./assets-shari
 - **Secrets:** Asset `data` may hold kit endpoint URLs and connection config — stored at rest with no app-level encryption; no separate secret store.
 
 **Risks:**
-- **Kit endpoint tampering:** any user with edit access can repoint an asset's endpoint to an attacker-controlled kit server, redirecting all runs (and tokens) to it.
-- **Shared-runtime hijack:** a shared runtime's `WRITE_ASSET` grant lets collaborators reconfigure the kit; a mis-grant widens the attacker set who can tamper with the active runtime.
+- **Kit endpoint tampering:** any user with edit access can repoint an asset's endpoint to an attacker-controlled kit server, redirecting all runs (and tokens) to it. *Mitigation:* none currently — require re-auth or admin approval before changing an asset's endpoint URL.
+- **Shared-runtime hijack:** a shared runtime's `WRITE_ASSET` grant lets collaborators reconfigure the kit; a mis-grant widens the attacker set who can tamper with the active runtime. *Mitigation:* none currently — default shares to `read_asset` and audit `write_asset` grants.
 
-### Data protection
+### Personal data processing
+
+No — this capability does not process personal data. `created_by` is a userId reference, not personal data.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
 
 Asset `data` (e.g. endpoint config) stored in `assets`.
 
 **Coverage:**
 - **Stored data:** `name`, `type`, `data` (Mixed), `created_by`, timestamps — persisted in the `assets` collection.
-- **PII:** No direct PII; `created_by` is a userId reference.
 - **Retention:** Indefinite until hard-deleted (no soft delete, no TTL).
 - **Encryption:** No app-level at-rest encryption; in transit TLS deployment-dependent.
 - **Logging:** Standard logger; no asset-data logging observed.
@@ -158,6 +171,7 @@ Asset `data` (e.g. endpoint config) stored in `assets`.
 
 ### Test coverage
 - **E2E (Playwright):** 1 test case in `my-assets.spec.ts` (create + delete runtime asset via the manager UI) — SITEMAP: ✅
+- **Estimated coverage:** ≈50% (est.) — 1 E2E covers create/delete; share/select-active-runtime untested across 2 acceptance criteria.
 - **Unit (Jest):** none
 
 ## CAP-RUNTIME-03 — Hardware kit manager
@@ -200,16 +214,22 @@ Auth required; kit operations open their own Socket.IO to the kit server.
 - **Secrets:** Kit identity/connection config held in asset `data`; the asset token is used as a bearer secret.
 
 **Risks:**
-- **Hardware kit tampering:** `replaceSignalMapping`/`replaceVss` mutate the kit's signal/VSS files; a stolen asset token or broken auth check lets an attacker rewrite the kit's mapping and corrupt vehicle data.
-- **Direct kit channel abuse:** the manager's own Socket.IO to the kit server bypasses backend mediation, so a compromised kit identity can issue arbitrary kit commands unchecked.
+- **Hardware kit tampering:** `replaceSignalMapping`/`replaceVss` mutate the kit's signal/VSS files; a stolen asset token or broken auth check lets an attacker rewrite the kit's mapping and corrupt vehicle data. *Mitigation:* the system relays via the kit server over an authenticated Socket.IO channel; enforce `WRITE_ASSET` on replace ops.
+- **Direct kit channel abuse:** the manager's own Socket.IO to the kit server bypasses backend mediation, so a compromised kit identity can issue arbitrary kit commands unchecked. *Mitigation:* none currently — mediate kit commands through the backend and validate the asset token per command.
 
-### Data protection
+### Personal data processing
+
+No — this capability does not process personal data. Kit identity is configuration, not personal data.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
 
 Kit connection config in the asset `data`; signal/VSS files read/written on the kit.
 
 **Coverage:**
 - **Stored data:** Kit connection config in `assets.data`; signal/VSS files live on the kit server, not the backend.
-- **PII:** No direct PII; kit identity is configuration, not personal data.
 - **Retention:** Asset config indefinite until hard-deleted; on-kit files overwritten by replace operations (no backend-side recovery).
 - **Encryption:** No app-level at-rest encryption for asset `data`; kit-server storage is governed by the kit.
 - **Logging:** Standard logger; no kit-config or signal-mapping logging observed.
@@ -220,6 +240,7 @@ Kit connection config in the asset `data`; signal/VSS files read/written on the 
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-RUNTIME-04 — Asset access tokens
@@ -265,16 +286,22 @@ Requires auth + `READ_ASSET` on the asset. Asset tokens are access-only (short-l
 - **Secrets:** The issued JWT is a bearer credential (access-only, no refresh), signed with the JWT secret.
 
 **Risks:**
-- **Bearer credential theft:** the token is a bearer credential; any leak (logs, localStorage, referrer) lets the holder act as the asset against the kit server for the token's lifetime.
-- **Scope over-grant:** if `READ_ASSET` is granted too broadly, users who can read an asset can mint tokens that authenticate as it — escalating readers to runtime actors.
+- **Bearer credential theft:** the token is a bearer credential; any leak (logs, localStorage, referrer) lets the holder act as the asset against the kit server for the token's lifetime. *Mitigation:* tokens are access-only (short-lived, no refresh); avoid persisting them beyond memory.
+- **Scope over-grant:** if `READ_ASSET` is granted too broadly, users who can read an asset can mint tokens that authenticate as it — escalating readers to runtime actors. *Mitigation:* none currently — restrict token minting to `WRITE_ASSET` or admin only.
 
-### Data protection
+### Personal data processing
+
+No — this capability does not process personal data. The token carries asset identity, not personal data.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
 
 Token is a bearer credential — treat as a secret; no persistence client-side beyond memory.
 
 **Coverage:**
 - **Stored data:** None persisted by the endpoint — the token is returned in the response body only; no refresh token is stored.
-- **PII:** No — the token carries asset identity, not personal data.
 - **Retention:** Token valid until JWT expiry (short-lived access token); no refresh; no server-side persistence.
 - **Encryption:** JWT signed (HMAC with the JWT secret); in transit TLS deployment-dependent.
 - **Logging:** Standard logger; the token is not logged.
@@ -284,6 +311,7 @@ Token is a bearer credential — treat as a secret; no persistence client-side b
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-RUNTIME-05 — Kit server proxy
@@ -317,16 +345,22 @@ Passthrough — the kit server enforces its own auth (often via asset tokens). C
 - **Secrets:** No secrets handled by the proxy; tokens pass through in transit only.
 
 **Risks:**
-- **SSRF via misconfigured `KIT_SERVER_URL`:** an admin misconfiguration (or compromise of the admin setting) could point `/kit-server/*` at an internal host, turning the backend into an SSRF proxy reachable from any browser.
-- **Auth-bypass perception:** because the proxy is a passthrough, a frontend that assumes same-origin = trusted could skip token checks and reach the kit server unauthenticated.
+- **SSRF via misconfigured `KIT_SERVER_URL`:** an admin misconfiguration (or compromise of the admin setting) could point `/kit-server/*` at an internal host, turning the backend into an SSRF proxy reachable from any browser. *Mitigation:* none currently — validate `KIT_SERVER_URL` against an allow-list of external hosts.
+- **Auth-bypass perception:** because the proxy is a passthrough, a frontend that assumes same-origin = trusted could skip token checks and reach the kit server unauthenticated. *Mitigation:* the kit server enforces its own asset-token auth; the frontend must still send the token.
 
-### Data protection
+### Personal data processing
+
+No — this capability does not process personal data. The proxy does not inspect or store payload.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
 
 Proxies runtime traffic; no storage on the backend.
 
 **Coverage:**
 - **Stored data:** None — the proxy relays traffic; it is active only when `KIT_SERVER_URL` is configured.
-- **PII:** No — the proxy does not inspect or store payload.
 - **Retention:** N/A — no storage.
 - **Encryption:** In transit TLS deployment-dependent; websockets are upgraded.
 - **Logging:** Proxy errors are surfaced by the proxy defaults; no payload logging.
@@ -336,6 +370,7 @@ Proxies runtime traffic; no storage on the backend.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-RUNTIME-06 — Runtime server config
@@ -369,16 +404,22 @@ Public read (URL only, no secrets); admin write.
 - **Secrets:** `RUNTIME_SERVER_CONFIG` is not expected to hold secrets; the URL is non-secret.
 
 **Risks:**
-- **Public URL tampering signal:** the public-read URL reveals the runtime server's origin to anonymous users, enabling targeted attacks against the kit server.
-- **Admin-only write bypass:** a missing admin check on the config write would let any user repoint all clients' runtime traffic to a hostile server.
+- **Public URL tampering signal:** the public-read URL reveals the runtime server's origin to anonymous users, enabling targeted attacks against the kit server. *Mitigation:* none currently — restrict public read to non-sensitive metadata, or hide the URL behind auth.
+- **Admin-only write bypass:** a missing admin check on the config write would let any user repoint all clients' runtime traffic to a hostile server. *Mitigation:* the system enforces admin-only write (`MANAGE_USERS`); audit config changes.
 
-### Data protection
+### Personal data processing
+
+No — this capability does not process personal data. URL and connection options are not personal data.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
 
 URL + Socket.IO options only; `RUNTIME_SERVER_CONFIG` should not hold secrets.
 
 **Coverage:**
 - **Stored data:** `RUNTIME_SERVER_URL` + `RUNTIME_SERVER_CONFIG` in site config.
-- **PII:** No — URL and connection options are not personal data.
 - **Retention:** Indefinite until admin-updated (no TTL).
 - **Encryption:** No app-level at-rest encryption; the public-read endpoint exposes config to anonymous users.
 - **Logging:** Standard logger; config values are not specially logged.
@@ -388,4 +429,5 @@ URL + Socket.IO options only; `RUNTIME_SERVER_CONFIG` should not hold secrets.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none

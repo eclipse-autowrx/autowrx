@@ -77,27 +77,34 @@ All routes auth; get/update/delete gated by `READ_ASSET`/`WRITE_ASSET` permissio
 - **Secrets:** Asset `data` may hold GenAI tokens or runtime credentials — stored at rest with no app-level encryption.
 
 **Risks:**
-- **Cross-user asset access:** a missing `READ_ASSET`/`WRITE_ASSET` check would let any authenticated user read or modify another user's assets, exposing runtime configs, hardware-kit identity and GenAI tokens.
-- **Type bypass:** if the `USER_ASSET_TYPES` gate were skipped, users could create asset types outside the allowed set, introducing untrusted config shapes the frontend/backend aren't built to handle safely.
-- **Arbitrary `data` abuse:** because `data` is arbitrary, a missing type/size guard could let a user store oversized payloads, exhausting per-user storage.
+- **Cross-user asset access:** a missing `READ_ASSET`/`WRITE_ASSET` check would let any authenticated user read or modify another user's assets, exposing runtime configs, hardware-kit identity and GenAI tokens. *Mitigation:* the system gates get/update/delete on `READ_ASSET`/`WRITE_ASSET` (owner bypass); keep the check on every route.
+- **Type bypass:** if the `USER_ASSET_TYPES` gate were skipped, users could create asset types outside the allowed set, introducing untrusted config shapes the frontend/backend aren't built to handle safely. *Mitigation:* none currently — enforce the `USER_ASSET_TYPES` allow-list in the validation layer.
+- **Arbitrary `data` abuse:** because `data` is arbitrary, a missing type/size guard could let a user store oversized payloads, exhausting per-user storage. *Mitigation:* none currently — add a schema/size guard on `data`.
 
-### Data protection
+### Personal data processing
+
+No — this capability does not process personal data. `created_by` is a userId reference; asset `data` holds credentials/secrets (AutoWRX-operational), not personal data.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
 
 Asset `data` (arbitrary config — endpoint URLs, tokens, kit identity) stored in `assets` with `created_by`.
 
 **Coverage:**
 - **Stored data:** `name`, `type`, `data` (Mixed), `created_by`, timestamps — persisted in the `assets` collection.
-- **PII:** No direct PII; `created_by` is a userId reference.
 - **Retention:** Indefinite until hard-deleted (no soft delete, no TTL).
 - **Encryption:** No app-level at-rest encryption; in transit TLS deployment-dependent.
 - **Logging:** Standard logger; no asset-data logging observed.
 
 **Risks:**
-- **Secrets in cleartext:** `data` may hold GenAI auth tokens or runtime credentials; stored unencrypted at rest, a DB leak or admin-view exposure hands plaintext secrets to the attacker.
+- **Secrets in cleartext:** `data` may hold GenAI auth tokens or runtime credentials; stored unencrypted at rest, a DB leak or admin-view exposure hands plaintext secrets to the attacker. *Mitigation:* none currently — encrypt asset `data` credentials at rest.
 - **Irreversible delete:** assets are hard-removed (no soft-delete), so accidental or malicious deletion permanently destroys the user's runtime/kit config.
 
 ### Test coverage
 - **E2E (Playwright):** 1 test case in `my-assets.spec.ts` (create + delete runtime asset via UI) — SITEMAP: ✅
+- **Estimated coverage:** ≈50% (est.) — 1 E2E covers create/delete across 2 acceptance criteria; type-restriction and share paths untested.
 - **Unit (Jest):** none
 
 ## CAP-ASSET-02 — Admin all-assets view
@@ -130,16 +137,22 @@ As an admin, call `GET /v2/assets/manage` and confirm all assets are returned; a
 - **Secrets:** Returns all asset `data` (may include GenAI tokens / runtime credentials) to admins — no per-record secret redaction.
 
 **Risks:**
-- **Privilege abuse:** an admin (or anyone who obtains `MANAGE_USERS`) can read every user's assets, including GenAI tokens and runtime credentials — a single compromised admin drains all users' secrets.
-- **Missing gate:** if the `MANAGE_USERS` check regressed, the manage endpoint would become a full cross-user data exfiltration path for any authenticated user.
+- **Privilege abuse:** an admin (or anyone who obtains `MANAGE_USERS`) can read every user's assets, including GenAI tokens and runtime credentials — a single compromised admin drains all users' secrets. *Mitigation:* none currently — redact secrets in `data` for the admin view and audit access.
+- **Missing gate:** if the `MANAGE_USERS` check regressed, the manage endpoint would become a full cross-user data exfiltration path for any authenticated user. *Mitigation:* the system enforces `MANAGE_USERS` on `GET /v2/assets/manage`; keep the check and add a regression test.
 
-### Data protection
+### Personal data processing
+
+No — this capability does not process personal data. `created_by` references users but no personal fields are returned.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
 
 Exposes all asset records to admins (incl. `data` which may hold tokens — admin-only).
 
 **Coverage:**
 - **Stored data:** Returns all asset records (`name`/`type`/`data`/`created_by`) — admin-only read.
-- **PII:** No direct PII; `created_by` references users.
 - **Retention:** N/A — read-only view; retention is governed by CAP-ASSET-01.
 - **Encryption:** No app-level at-rest encryption; data is exposed in the response body.
 - **Logging:** Standard logger; no bulk-response logging observed.
@@ -149,6 +162,7 @@ Exposes all asset records to admins (incl. `data` which may hold tokens — admi
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-ASSET-03 — My Assets
@@ -190,24 +204,31 @@ Auth required.
 - **Secrets:** The GenAI auth token is captured and stored in asset `data` (cleartext at rest); it is held in browser memory by the editor.
 
 **Risks:**
-- **Token in browser memory:** the GenAI editor loads and submits auth tokens through the client; a malicious browser extension or XSS on the page can read the token from the form state.
+- **Token in browser memory:** the GenAI editor loads and submits auth tokens through the client; a malicious browser extension or XSS on the page can read the token from the form state. *Mitigation:* none currently — treat the token as secret in the editor and avoid exposing it to page scripts beyond the form.
 
-### Data protection
+### Personal data processing
+
+No — this capability does not process personal data. The GenAI token is a third-party credential (secret/AutoWRX-operational), not personal data.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
 
 `GENAI-PYTHON` asset `data` may hold an auth token — stored in asset `data` (not encrypted at rest; access `READ_ASSET`/`WRITE_ASSET` gated).
 
 **Coverage:**
 - **Stored data:** GenAI endpoint config (method/URL/token/request/response fields) in `assets.data`.
-- **PII:** No direct PII; the token is a third-party credential, not user PII.
 - **Retention:** Indefinite until the asset is hard-deleted.
 - **Encryption:** No app-level at-rest encryption; in transit TLS deployment-dependent.
 - **Logging:** Standard logger; no token logging observed.
 
 **Risks:**
-- **Cleartext token at rest:** the GenAI token sits unencrypted in the asset `data`; any path that reads the asset (admin view, a leaked `READ_ASSET` grant, DB backup) exposes it.
+- **Cleartext token at rest:** the GenAI token sits unencrypted in the asset `data`; any path that reads the asset (admin view, a leaked `READ_ASSET` grant, DB backup) exposes it. *Mitigation:* none currently — encrypt asset `data` credentials at rest.
 
 ### Test coverage
 - **E2E (Playwright):** 3 test cases in `my-assets.spec.ts` (page loads, filter tabs, create/delete runtime asset) — SITEMAP: ✅
+- **Estimated coverage:** ≈100% (est.) — 3 E2E cases cover page load, filter tabs, create/delete against the acceptance criteria.
 - **Unit (Jest):** none
 
 ## CAP-ASSET-04 — Asset sharing
@@ -256,16 +277,22 @@ Both ops require `WRITE_ASSET` on the asset. Roles are `read_asset`/`write_asset
 - **Secrets:** No secrets handled directly; the grant exposes asset `data` (which may hold secrets) via `read_asset`/`write_asset`.
 
 **Risks:**
-- **Privilege escalation:** a missing `WRITE_ASSET` check would let any user grant themselves or others `write_asset` on private assets — escalation to read/modify the owner's runtime configs and tokens.
-- **Over-grant persistence:** a `write_asset` grant survives until manually revoked; a leaked or malicious grant keeps an attacker inside the asset with no auto-expiry.
+- **Privilege escalation:** a missing `WRITE_ASSET` check would let any user grant themselves or others `write_asset` on private assets — escalation to read/modify the owner's runtime configs and tokens. *Mitigation:* the system enforces `WRITE_ASSET` (owner bypass) on both add and remove; keep the check on the permission route.
+- **Over-grant persistence:** a `write_asset` grant survives until manually revoked; a leaked or malicious grant keeps an attacker inside the asset with no auto-expiry. *Mitigation:* none currently — add grant expiry and an audit trail for permission changes.
 
-### Data protection
+### Personal data processing
+
+Yes — sharing by email processes the invitee's email to resolve their userId; the email is not persisted by this capability (only the resolved userId binding).
+
+**Risks:**
+- **Email-based recipient resolution:** the owner enters an invitee email to share; the lookup (CAP-ASSET-07) processes that email. *Mitigation:* none currently — rate-limit the lookup or require admin.
+
+### AutoWRX data
 
 Creates/removes authorized-user bindings on the asset; no secrets duplicated.
 
 **Coverage:**
 - **Stored data:** UserRole binding (role ref scoped to the asset id) — no asset `data` is duplicated.
-- **PII:** No direct PII; the binding references userIds (relationship data).
 - **Retention:** Binding persists until manually revoked (no auto-expiry).
 - **Encryption:** No app-level at-rest encryption for bindings; standard storage.
 - **Logging:** Standard logger; no binding-content logging observed.
@@ -275,6 +302,7 @@ Creates/removes authorized-user bindings on the asset; no secrets duplicated.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-ASSET-05 — Model contributors
@@ -321,15 +349,21 @@ Requires `WRITE_MODEL` on the model.
 - **Secrets:** No secrets handled; the grant confers `writeModel` access (model data, prototype code).
 
 **Risks:**
-- **Privilege escalation:** a missing `WRITE_MODEL` check would let any user add themselves as a contributor to private models, gaining edit access to model data and prototype code.
+- **Privilege escalation:** a missing `WRITE_MODEL` check would let any user add themselves as a contributor to private models, gaining edit access to model data and prototype code. *Mitigation:* the system enforces `WRITE_MODEL` (owner bypass) on add/remove; keep the check and add a regression test.
 
-### Data protection
+### Personal data processing
+
+No — this capability does not process personal data. The binding references userIds (relationship data); no email or profile fields are processed here.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
 
 UserRole bindings scoped to the model.
 
 **Coverage:**
 - **Stored data:** UserRole binding (role ref scoped to the model id) — no model data is duplicated.
-- **PII:** No direct PII; the binding references userIds (relationship data).
 - **Retention:** Binding persists until manually revoked (no auto-expiry, no audit trail).
 - **Encryption:** No app-level at-rest encryption for bindings; standard storage.
 - **Logging:** Standard logger; no binding-content logging observed.
@@ -340,6 +374,7 @@ UserRole bindings scoped to the model.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-ASSET-06 — Access invitation
@@ -381,15 +416,21 @@ Invoker must be the object owner / authorized.
 - **Secrets:** None — the dialog owns no state; secrets risk is inherited from the underlying endpoints.
 
 **Risks:**
-- **Client-side auth bypass:** the dialog is UI only; the real gate is the underlying permission endpoint. If a frontend-only check were trusted, a user could call the permission API directly to grant themselves access.
+- **Client-side auth bypass:** the dialog is UI only; the real gate is the underlying permission endpoint. If a frontend-only check were trusted, a user could call the permission API directly to grant themselves access. *Mitigation:* the system enforces `WRITE_ASSET`/`WRITE_MODEL` on the underlying endpoints; never trust a frontend-only check.
 
-### Data protection
+### Personal data processing
+
+Yes — the dialog invites users by email, processing the invitee's email to address a sharing invitation (resolved via CAP-ASSET-07); nothing is stored by the dialog itself.
+
+**Risks:**
+- **Invitee email processing:** the owner enters an invitee email in the dialog; the email is passed to the lookup/permission endpoints. *Mitigation:* none currently — rate-limit the email lookup or require admin.
+
+### AutoWRX data
 
 Driven by the underlying permission endpoints (no separate data store).
 
 **Coverage:**
 - **Stored data:** None — no separate store; data lives in the underlying permission bindings.
-- **PII:** No — the dialog enters email/role; nothing is stored by the dialog itself.
 - **Retention:** N/A — inherited from the underlying permission endpoints.
 - **Encryption:** N/A — no separate storage.
 - **Logging:** N/A — no separate logging beyond the underlying endpoints.
@@ -399,6 +440,7 @@ Driven by the underlying permission endpoints (no separate data store).
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-ASSET-07 — User lookup by email
@@ -440,16 +482,22 @@ Optional auth via `PUBLIC_VIEWING`; returns minimal fields (id/name/image) — n
 - **Secrets:** None — returns `id`/`name`/`image_file` only.
 
 **Risks:**
-- **Email enumeration:** exact-email lookup with `404` vs `200` lets an attacker confirm whether a given email is registered, enabling account enumeration for downstream phishing.
-- **Recipient discovery:** with `PUBLIC_VIEWING=true`, an unauthenticated attacker can resolve any user's id/name/image from their email, seeding targeted abuse of sharing flows.
+- **Email enumeration:** exact-email lookup with `404` vs `200` lets an attacker confirm whether a given email is registered, enabling account enumeration for downstream phishing. *Mitigation:* none currently — rate-limit the lookup or require admin.
+- **Recipient discovery:** with `PUBLIC_VIEWING=true`, an unauthenticated attacker can resolve any user's id/name/image from their email, seeding targeted abuse of sharing flows. *Mitigation:* none currently — require auth for the lookup or restrict to sharing-authorized callers.
 
-### Data protection
+### Personal data processing
+
+Yes — the email query key is personal data, and the response returns the matched user's `name`/`image_file` (profile data).
+
+**Risks:**
+- **Email-based enumeration:** the email is the lookup key and the response returns profile fields; processing personal data for matching. *Mitigation:* none currently — rate-limit the lookup or require admin.
+
+### AutoWRX data
 
 Returns minimal profile fields; not an enumeration endpoint (exact email required).
 
 **Coverage:**
 - **Stored data:** None — read-only lookup against the `User` collection.
-- **PII:** Yes — the email is used as the query key; the response returns `name`/`image_file` (profile data) for the matched user.
 - **Retention:** N/A — no storage; source `User` records are governed by the identity cluster.
 - **Encryption:** No at-rest encryption concern (read-only); in transit TLS deployment-dependent.
 - **Logging:** Standard logger; no query/response logging observed.
@@ -459,4 +507,5 @@ Returns minimal profile fields; not an enumeration endpoint (exact email require
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none

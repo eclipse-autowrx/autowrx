@@ -81,26 +81,29 @@ Reading is optional via `PUBLIC_VIEWING`; creating a model requires me to be sig
 - **Secrets:** none (no credentials in model metadata).
 
 **Risks:**
-- **Private-model enumeration:** without server-side access scoping, a signed-out or cross-tenant user could enumerate private models through list filters, leaking proprietary vehicle data and model IP.
-- **Anonymous model creation:** a missing auth check on `POST` would let anonymous users spawn models inside any tenant, polluting namespaces and consuming storage.
+- **Private-model enumeration:** without server-side access scoping, a signed-out or cross-tenant user could enumerate private models through list filters, leaking proprietary vehicle data and model IP. *Mitigation:* the system scopes list queries server-side to public + owned + role-permissioned models; verify the scope on every list endpoint.
+- **Anonymous model creation:** a missing auth check on `POST` would let anonymous users spawn models inside any tenant, polluting namespaces and consuming storage. *Mitigation:* `POST /v2/models` requires auth and attaches the signed-in user as `created_by`; keep the auth middleware on the route and enforce the per-user 3-model cap server-side.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (`created_by` is a user reference, not personal data; no email/name is stored on the model.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
-Model metadata (name, description, visibility, state, images, tags) is stored on the model; images are uploaded via the file service.
-
+### AutoWRX data
+Model metadata (name, description, visibility, state, images, tags) stored in the `models` collection; images via the file service.
 **Coverage:**
 - **Stored data:** `models` collection (name, description, visibility, state, images, tags, `created_by`, `custom_template`, `custom_api_sets`).
-- **PII:** no (model metadata is not personal; `created_by` is a user ref, email not stored on the model).
 - **Retention:** indefinite until hard delete (no soft-delete, no TTL).
-- **Encryption:** bcrypt for user passwords (separate collection); TLS in transit; model data not encrypted at rest beyond Mongo defaults.
+- **Encryption:** TLS in transit; model data not encrypted at rest beyond Mongo defaults.
 - **Logging:** request logs; no sensitive data logged (model metadata only).
-
 **Risks:**
-- **Visibility misconfiguration:** an over-broad `WRITE_MODEL` grant or a wrong default could expose private models publicly.
-- **Irreversible deletion:** deleted models are hard-removed (no soft-delete), so accidental or malicious deletion is permanent user-data loss.
+- **Visibility misconfiguration:** an over-broad `WRITE_MODEL` grant or wrong default could expose private models publicly.
+- **Irreversible deletion:** hard-removed (no soft-delete), so accidental or malicious deletion is permanent.
 
 ### Test coverage
 - **E2E (Playwright):** 4 test case(s) in `vehicle-models.spec.ts` — SITEMAP: ✅
+- **Estimated coverage:** ≈55% (est.) — 4 E2E cases cover list/create/import; ~7 acceptance paths; detail image/description paths uncovered.
 - **Unit (Jest):** none
 
 ## CAP-MODEL-02 — Model detail / edit
@@ -150,27 +153,30 @@ I can read a model with `READ_MODEL` (owner/admin/contributor bypass), and edit 
 - **Secrets:** none (no credentials on the model document).
 
 **Risks:**
-- **Unauthorized state/visibility flip:** a broken `WRITE_MODEL` check would let any user flip a private model to `public`/`released`, exposing it.
-- **Unauthorized delete:** missing checks would let a non-owner delete others' models — irreversible data loss.
-- **Export exfiltration:** export bundles the model's prototype code/data, so a leaked edit token widens what an attacker can steal.
+- **Unauthorized state/visibility flip:** a broken `WRITE_MODEL` check would let any user flip a private model to `public`/`released`, exposing it. *Mitigation:* `PATCH /v2/models/:id` enforces `WRITE_MODEL` (owner bypass) server-side; keep the permission middleware on the route and add a regression test for the flip path.
+- **Unauthorized delete:** missing checks would let a non-owner delete others' models — irreversible data loss. *Mitigation:* `DELETE` requires `WRITE_MODEL` (owner bypass); ensure the check runs before the hard-delete and cannot be bypassed by params.
+- **Export exfiltration:** export bundles the model's prototype code/data, so a leaked edit token widens what an attacker can steal. *Mitigation:* export is gated behind the same `READ_MODEL`/owner access as the model detail; rotate/revoke tokens on suspected compromise and audit export downloads.
 
-### Data protection
+### Personal data processing
+Yes — contributor/member user identities (user ↔ model relationship) and masked emails surfaced in the model response when I have `WRITE_MODEL`.
+Contributor/member emails are collected from the user store, surfaced only in the model detail response to callers with `WRITE_MODEL` (masked otherwise), retained as long as the binding exists, protected by TLS in transit, and accessible only to the model owner/admin and granted contributors.
+**Risks:**
+- **Email exposure to non-writers:** if the masking gate were bypassed, contributor/member emails could leak to readers without `WRITE_MODEL`.
 
+### AutoWRX data
 The model's visibility controls who can see it; deleting a model removes it from the collection (no soft-delete). The export ZIP includes the model's prototype code/data.
-
 **Coverage:**
 - **Stored data:** `models` collection (visibility, state, props, `custom_template`); export bundles the model's prototype code/data.
-- **PII:** no — contributor/member emails are masked in the model response when I have `WRITE_MODEL`.
 - **Retention:** hard delete (no soft-delete, no snapshot); export data persists as long as the model exists.
-- **Encryption:** bcrypt for user passwords (separate); TLS in transit; model data not encrypted at rest beyond Mongo defaults.
+- **Encryption:** TLS in transit; model data not encrypted at rest beyond Mongo defaults.
 - **Logging:** request logs; template-fetch warnings logged; no sensitive data.
-
 **Risks:**
 - **Public exposure of embedded data:** flipping visibility to public exposes the model and its embedded prototype code/data to everyone — including data the owner believed was private.
 - **Permanent destruction:** hard-delete means a compromised or malicious contributor can permanently destroy model data with no recovery trail.
 
 ### Test coverage
 - **E2E (Playwright):** 4 test case(s) in `vehicle-models.spec.ts` — SITEMAP: ⚠️
+- **Estimated coverage:** ≈50% (est.) — 4 E2E cases cover edit/visibility/export/delete; ~8 acceptance paths; state-flip, 403-on-no-WRITE_MODEL, and contributor-masking paths uncovered.
 - **Unit (Jest):** none
 
 ## CAP-MODEL-03 — Model tabs & addons
@@ -215,25 +221,28 @@ Tab management gated by `WRITE_MODEL` + the addon-config flag. Plugins run unsan
 - **Secrets:** none.
 
 **Risks:**
-- **Malicious tab injection:** a plugin addon tab embeds arbitrary code running unsandboxed in visitors' browsers. If the `ALLOW_NON_ADMIN_ADDON_CONFIG` gate were bypassed, a non-admin could inject a hostile tab into every visitor's view (XSS / token theft).
-- **Plugin supply chain:** a tab config references plugin IDs; a compromised or rogue plugin becomes an attack surface for all models using that layout.
+- **Malicious tab injection:** a plugin addon tab embeds arbitrary code running unsandboxed in visitors' browsers. If the `ALLOW_NON_ADMIN_ADDON_CONFIG` gate were bypassed, a non-admin could inject a hostile tab into every visitor's view (XSS / token theft). *Mitigation:* tab writes require `WRITE_MODEL` + the `ALLOW_NON_ADMIN_ADDON_CONFIG` flag (admins always allowed); keep the flag check server-side and prefer sandboxed plugin rendering (see [plugins.md](./plugins.md)).
+- **Plugin supply chain:** a tab config references plugin IDs; a compromised or rogue plugin becomes an attack surface for all models using that layout. *Mitigation:* only reference plugins from trusted sources; admins should review referenced plugin IDs before saving a layout and remove rogue plugins from the registry.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (Tab/layout config references plugin IDs and model structure only; no email/name is stored on the layout.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Layout config stored on the model document; no secrets.
-
 **Coverage:**
 - **Stored data:** `model.custom_template` (`model_tabs`, `prototype_tabs`, `prototype_sidebar_plugin`, `prototype_right_nav_buttons`) on the model doc.
-- **PII:** no.
 - **Retention:** follows the model (hard-deleted with it).
 - **Encryption:** none beyond Mongo defaults / TLS in transit.
 - **Logging:** request logs; no sensitive data.
-
 **Risks:**
 - **Untrusted-code distribution:** the tab config is a persistence channel — a malicious layout can repeatedly steer users toward running untrusted plugins until it is noticed and removed.
 
 ### Test coverage
 - **E2E (Playwright):** 2 test case(s) in `plugin-management.spec.ts` — SITEMAP: ✅
+- **Estimated coverage:** ≈45% (est.) — 2 E2E cases cover addon-tab add/reorder; ~5 acceptance paths; admin "Save as Template" and non-admin block paths uncovered.
 - **Unit (Jest):** none
 
 ## CAP-MODEL-04 — Model contributors & permissions
@@ -282,25 +291,26 @@ Both add and remove require `WRITE_MODEL` on the model (owner bypass).
 - **Secrets:** none.
 
 **Risks:**
-- **Privilege escalation:** a missing `WRITE_MODEL` check would let any user grant themselves or others write access to private models — escalation to data theft or tampering.
+- **Privilege escalation:** a missing `WRITE_MODEL` check would let any user grant themselves or others write access to private models — escalation to data theft or tampering. *Mitigation:* both `POST` and `DELETE /v2/models/:id/permissions` enforce `WRITE_MODEL` (owner bypass) server-side; keep the check on the route and reject role values outside `{model_contributor,model_member}`.
 
-### Data protection
+### Personal data processing
+Yes — contributor/member user identities (user ↔ model relationship). Bindings map a user id to a model id and role; collected from the user store on add, stored in the `userroles` collection, retained until explicitly revoked, protected by TLS in transit, and readable only by the model owner/admin and granted contributors (emails masked in the model response unless the caller has `WRITE_MODEL`).
+**Risks:**
+- **Relationship leak:** contributor bindings reveal who collaborates on which model (users ↔ business assets).
 
+### AutoWRX data
 Adding/removing a contributor creates/removes a binding scoped to the model.
-
 **Coverage:**
 - **Stored data:** `userroles` collection (`user`, `role`, `ref` = model id).
-- **PII:** yes — contributor/member user identities (user ↔ model relationship); the model response masks emails, but bindings reveal who collaborates on which model.
 - **Retention:** bindings persist until explicitly revoked (hard delete); no TTL, no audit trail of permission changes.
 - **Encryption:** none beyond Mongo defaults / TLS in transit.
 - **Logging:** request logs; no sensitive data.
-
 **Risks:**
-- **Relationship leak:** contributor bindings reveal who collaborates on which model (users ↔ business assets).
 - **Persistence of mis-grants:** a leaked grant persists until manually revoked; with no audit trail of permission changes, mis-grants are hard to detect after the fact.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none
 
 ## CAP-MODEL-05 — Model stats
@@ -333,24 +343,27 @@ Optional auth; I only get stats for models I can read.
 - **Secrets:** none.
 
 **Risks:**
-- **Metadata enumeration:** if the aggregation didn't respect access scoping, an attacker could probe arbitrary model IDs to confirm the existence and size of private models even when the list endpoint is locked down.
+- **Metadata enumeration:** if the aggregation didn't respect access scoping, an attacker could probe arbitrary model IDs to confirm the existence and size of private models even when the list endpoint is locked down. *Mitigation:* the stats aggregation is scoped to public + owned + role-permissioned models (anonymous → public only); verify the access scope on the aggregation pipeline and reject invalid `ids` early.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (Only aggregated counts keyed by model id; no user email/name is stored or returned.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
-Aggregated only; no PII.
-
+### AutoWRX data
+Aggregated only; no operational data persisted.
 **Coverage:**
 - **Stored data:** none — counts are computed on demand and cached per request.
-- **PII:** no (aggregated counts only).
 - **Retention:** N/A (not persisted).
 - **Encryption:** N/A (no stored data); TLS in transit.
 - **Logging:** request logs; no sensitive data.
-
 **Risks:**
 - **Existence/scale inference:** counts alone reveal the existence and scale of models; combined with a listing gap this could confirm private assets.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none
 
 ## CAP-MODEL-06 — Model templates
@@ -391,22 +404,25 @@ Anyone can read templates; writing requires `MANAGE_USERS` (admin).
 - **Secrets:** none.
 
 **Risks:**
-- **Platform-wide payload:** templates apply to every model created from them. A compromised admin could seed a default template embedding a malicious plugin tab, pushing untrusted code to all future models.
+- **Platform-wide payload:** templates apply to every model created from them. A compromised admin could seed a default template embedding a malicious plugin tab, pushing untrusted code to all future models. *Mitigation:* writes require `manageUsers` (admin only); review referenced plugin IDs before saving a default template and remove rogue plugins from the registry to break the distribution chain.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (`created_by`/`updated_by` are admin user references; no email/name is stored on the template.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Template config (tabs/prototype tabs/sidebar) stored; no secrets.
-
 **Coverage:**
 - **Stored data:** `modeltemplates` collection (config layout, referenced plugin IDs, `created_by`, `updated_by`).
-- **PII:** no.
 - **Retention:** indefinite until hard delete (no soft-delete, no TTL).
 - **Encryption:** none beyond Mongo defaults / TLS in transit.
 - **Logging:** request logs; no sensitive data.
-
 **Risks:**
 - **Persistent distribution channel:** a malicious template propagates its layout and referenced plugins to all derived models until an admin notices and removes it.
 
 ### Test coverage
 - **E2E (Playwright):** 1 test case(s) in `admin-extended.spec.ts` — SITEMAP: ✅
+- **Estimated coverage:** ≈40% (est.) — 1 E2E case covers template create/list; ~3 acceptance paths; apply-to-new-model and delete paths uncovered.
 - **Unit (Jest):** none

@@ -74,17 +74,21 @@ Reads public; writes require auth + ownership (or admin). The upload admin gate 
 - **Secrets:** none handled by CRUD; the untyped `config` field could hold author-supplied secrets, but they are not protected or surfaced specially.
 
 **Risks:**
-- **Anonymous-style metadata spoofing:** public read access lets attackers enumerate all plugin slugs, URLs, and config, mapping the attack surface for later exploitation or impersonation via look-alike slugs.
-- **Ownership bypass on update/delete:** a broken ownership check would let any authenticated user overwrite or delete another author's plugin, swapping a trusted bundle for a malicious one (supply-chain takeover).
-- **Commented-out admin gate:** with the `ADMIN` check disabled on upload, any authenticated user can publish plugins, lowering the bar for injecting malicious code into the registry.
+- **Anonymous-style metadata spoofing:** public read access lets attackers enumerate all plugin slugs, URLs, and config, mapping the attack surface for later exploitation or impersonation via look-alike slugs. *Mitigation:* none currently — public read is by design for plugin discovery; constrain sensitive values in `config` and consider slug look-alike warnings.
+- **Ownership bypass on update/delete:** a broken ownership check would let any authenticated user overwrite or delete another author's plugin, swapping a trusted bundle for a malicious one (supply-chain takeover). *Mitigation:* owner-or-admin check enforced on PUT/DELETE; monitor for check regressions.
+- **Commented-out admin gate:** with the `ADMIN` check disabled on upload, any authenticated user can publish plugins, lowering the bar for injecting malicious code into the registry. *Mitigation:* none currently — re-enable the admin gate on the upload route.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data directly; `created_by`/`updated_by` are user ObjectIds (no email/name PII collected).
+N/A.
+**Risks:**
+- none — no personal data processed. (Author-identity linkage via `created_by`/`updated_by` ObjectIds is tracked under AutoWRX data.)
 
+### AutoWRX data
 Plugin metadata + `config` (Mixed) stored in `plugins` with `created_by`/`updated_by`.
 
 **Coverage:**
 - **Stored data:** Plugin docs in MongoDB `plugins` collection — name, slug, image, description, is_internal, url, config (Mixed), type, created_by, updated_by, timestamps.
-- **PII:** no direct PII; `created_by`/`updated_by` are user ObjectIds (author identity is exposed via public read).
 - **Retention:** indefinite — hard delete on DELETE; no soft delete, no TTL.
 - **Encryption:** TLS in transit (HTTPS); no at-rest encryption beyond MongoDB defaults; no hashing (no passwords).
 - **Logging:** standard request logging only; no sensitive-data logging identified.
@@ -95,6 +99,7 @@ Plugin metadata + `config` (Mixed) stored in `plugins` with `created_by`/`update
 
 ### Test coverage
 - **E2E (Playwright):** 3 test case(s) in `plugin-management.spec.ts`, `my-plugins.spec.ts` — SITEMAP: ✅
+- **Estimated coverage:** ≈60% (est.) — 2 AC bullets; 3 E2E cases cover create/read/update/delete + 403; SITEMAP ✅.
 - **Unit (Jest):** none
 
 ## CAP-PLUGIN-02 — Internal plugin upload & static hosting
@@ -142,17 +147,21 @@ Auth required; ownership enforced on existing slug. Upload accepts any file type
 - **Secrets:** none handled by the route; bundle contents are code (authors could embed secrets, but the system does not inspect or protect them).
 
 **Risks:**
-- **Zip-slip / arbitrary file write:** invoking system `unzip` on untrusted archives risks path-traversal (zip-slip) writing files outside `static/plugin/:slug`, potentially overwriting server code or config.
-- **Malicious bundle execution:** the uploaded bundle runs unsandboxed in every visitor's browser; a compromised or rogue author can push XSS, token theft, or data-exfiltration code to all users who open the tab.
-- **Unrestricted file type:** accepting any file type with only a 50 MB cap allows non-JS payloads (e.g. large binary blobs, polyglot files) to be hosted and abused for storage abuse or content-type confusion attacks.
+- **Zip-slip / arbitrary file write:** invoking system `unzip` on untrusted archives risks path-traversal (zip-slip) writing files outside `static/plugin/:slug`, potentially overwriting server code or config. *Mitigation:* none currently — use a zip library that rejects `..`/absolute paths, or sanitize extraction targets.
+- **Malicious bundle execution:** the uploaded bundle runs unsandboxed in every visitor's browser; a compromised or rogue author can push XSS, token theft, or data-exfiltration code to all users who open the tab. *Mitigation:* none currently — plugins run unsandboxed by design; only install trusted plugins, and don't pass tokens/PII into PluginAPI/config/data.
+- **Unrestricted file type:** accepting any file type with only a 50 MB cap allows non-JS payloads (e.g. large binary blobs, polyglot files) to be hosted and abused for storage abuse or content-type confusion attacks. *Mitigation:* none currently — restrict accepted MIME types and validate bundle entrypoints.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data; the bundle is code, not designed to hold PII (embedded data is an author responsibility).
+N/A.
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Plugin bundle served publicly from `/plugin/<slug>/`; the bundle can contain arbitrary JS (executes in users' browsers).
 
 **Coverage:**
 - **Stored data:** extracted bundle files on disk at `backend/static/plugin/<slug>/`; plugin doc updated with `is_internal=true` + `url`; multer temp file in `static/uploads/<date>/` (unlinked after extract).
-- **PII:** no — bundle is code; not designed to hold PII (embedded data is an author responsibility).
 - **Retention:** bundle files persist on disk indefinitely; not cleaned when the plugin record is deleted (stale files remain reachable).
 - **Encryption:** TLS in transit; bundle served same-origin over HTTP/HTTPS; no at-rest encryption for extracted files.
 - **Logging:** `console.error` on temp-file unlink failure; standard request logging.
@@ -163,6 +172,7 @@ Plugin bundle served publicly from `/plugin/<slug>/`; the bundle can contain arb
 
 ### Test coverage
 - **E2E (Playwright):** 1 test case in `plugin-management.spec.ts` (ZIP upload) — SITEMAP: ✅
+- **Estimated coverage:** ≈40% (est.) — 2 AC bullets; 1 E2E case covers ZIP upload + 403; no delete/cleanup test; SITEMAP ✅.
 - **Unit (Jest):** none
 
 ## CAP-PLUGIN-03 — Plugin loader
@@ -208,17 +218,21 @@ Same-origin, unsandboxed — full DOM/window access. Only public site configs su
 - **Secrets:** none — the plugin API exposes only public site config (no tokens/secrets); no auth tokens are passed to the plugin.
 
 **Risks:**
-- **Unsandboxed code execution:** a loaded plugin has full access to `window`, DOM, cookies, and `localStorage`, enabling XSS, session-token theft, and silent exfiltration of any data the page holds.
-- **Global namespace pollution:** priming `window.React`, `window.ReactDOM`, the `require` shim, and `__webpack_require__.cache` lets a malicious plugin tamper with shared globals, breaking or hijacking other plugins and the host app.
-- **Advisory-only `editable`:** the `editable` flag is advisory; a plugin can ignore it and mutate model data despite the user lacking `WRITE_MODEL`, causing unauthorized data modification.
+- **Unsandboxed code execution:** a loaded plugin has full access to `window`, DOM, cookies, and `localStorage`, enabling XSS, session-token theft, and silent exfiltration of any data the page holds. *Mitigation:* none currently — plugins run unsandboxed by design; only install trusted plugins, and don't pass tokens/PII into PluginAPI/config/data.
+- **Global namespace pollution:** priming `window.React`, `window.ReactDOM`, the `require` shim, and `__webpack_require__.cache` lets a malicious plugin tamper with shared globals, breaking or hijacking other plugins and the host app. *Mitigation:* none currently — consider namespacing plugin globals or sandboxing plugins in an iframe/Web Worker.
+- **Advisory-only `editable`:** the `editable` flag is advisory; a plugin can ignore it and mutate model data despite the user lacking `WRITE_MODEL`, causing unauthorized data modification. *Mitigation:* none currently — enforce write checks server-side on every `PluginAPI` mutation, do not trust the client-side `editable` flag.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data; `data` (model/prototype contents) may carry proprietary vehicle data but no email/name PII.
+N/A.
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Plugin receives `data` (model/prototype), public site `config`, and the `PluginAPI`; no auth tokens/secrets passed.
 
 **Coverage:**
 - **Stored data:** none — runtime only; registrations cached in memory per slug (cleared on page unload).
-- **PII:** no direct PII; `data` (model/prototype contents) may carry proprietary vehicle data passed to the plugin.
 - **Retention:** N/A — in-memory registration cache; no persistence by the loader.
 - **Encryption:** TLS in transit (script fetched over HTTPS); bundle executes same-origin, unsandboxed.
 - **Logging:** none — client-side; console only.
@@ -229,6 +243,7 @@ Plugin receives `data` (model/prototype), public site `config`, and the `PluginA
 
 ### Test coverage
 - **E2E (Playwright):** 2 test case(s) in `plugin-management.spec.ts` (plugin detail page renders) — SITEMAP: ✅
+- **Estimated coverage:** ≈50% (est.) — 2 AC bullets; 2 E2E cases cover render + cache reuse; no timeout/load-failure test; SITEMAP ✅.
 - **Unit (Jest):** none
 
 ## CAP-PLUGIN-04 — Plugin preloading
@@ -270,16 +285,20 @@ Prefetches external URLs with `credentials:'omit'`.
 - **Secrets:** none — prefetch uses `credentials:'omit'`; no tokens are sent.
 
 **Risks:**
-- **External URL prefetch leak:** prefetching external plugin URLs reveals the user's browsing of a model to the external host (timing + access logs) even if the tab is never opened.
-- **Untrusted bundle warmed:** prefetching warms the cache for a bundle that will execute unsandboxed; a compromised external host can swap the bundle between prefetch and load, defeating integrity assumptions.
+- **External URL prefetch leak:** prefetching external plugin URLs reveals the user's browsing of a model to the external host (timing + access logs) even if the tab is never opened. *Mitigation:* `credentials:'omit'` is set; consider skipping prefetch for external URLs or adding a Subresource Integrity check.
+- **Untrusted bundle warmed:** prefetching warms the cache for a bundle that will execute unsandboxed; a compromised external host can swap the bundle between prefetch and load, defeating integrity assumptions. *Mitigation:* none currently — plugins run unsandboxed by design; only install trusted plugins, and don't pass tokens/PII into PluginAPI/config/data.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data; prefetch sends no cookies (`credentials:'omit'`) and no PII.
+N/A.
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Only fetches public bundle URLs.
 
 **Coverage:**
 - **Stored data:** none — browser HTTP cache only.
-- **PII:** no.
 - **Retention:** N/A — browser cache; cleared per browser policy.
 - **Encryption:** TLS in transit (HTTPS prefetch); `credentials:'omit'` sends no cookies.
 - **Logging:** none — client-side.
@@ -289,6 +308,7 @@ Only fetches public bundle URLs.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none
 
 ## CAP-PLUGIN-05 — Sample plugins
@@ -321,16 +341,20 @@ Same as any plugin (unsandboxed).
 - **Secrets:** none — static reference bundles.
 
 **Risks:**
-- **Copy-paste of insecure patterns:** samples are the template authors copy; if a sample ships an insecure pattern (e.g. trusting `data`, calling `eval`), it propagates to community plugins.
-- **Static asset tampering:** samples live under `backend/static/plugin/`; if write access is not restricted, an attacker who can modify them can poison the reference implementation every author trusts.
+- **Copy-paste of insecure patterns:** samples are the template authors copy; if a sample ships an insecure pattern (e.g. trusting `data`, calling `eval`), it propagates to community plugins. *Mitigation:* none currently — audit sample bundles for insecure patterns before release.
+- **Static asset tampering:** samples live under `backend/static/plugin/`; if write access is not restricted, an attacker who can modify them can poison the reference implementation every author trusts. *Mitigation:* none currently — restrict write access to the static plugin directory; serve samples as read-only.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data; samples are static reference bundles with no user data.
+N/A.
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Static sample assets.
 
 **Coverage:**
 - **Stored data:** static files under `backend/static/plugin/` (`sample-tsx`, `sample-esm` builds + shared libs).
-- **PII:** no.
 - **Retention:** indefinite — static files; no TTL.
 - **Encryption:** TLS in transit; no at-rest encryption for static files.
 - **Logging:** standard static-serving access logs.
@@ -340,6 +364,7 @@ Static sample assets.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none
 
 ## CAP-PLUGIN-06 — Addon select / custom tab editor
@@ -385,17 +410,21 @@ sequenceDiagram
 - **Secrets:** none — tab config references plugin IDs/slugs and layout only.
 
 **Risks:**
-- **Malicious tab injection:** a non-admin bypassing `ALLOW_NON_ADMIN_ADDON_CONFIG` could inject a hostile plugin tab into every visitor's view, running arbitrary unsandboxed code (XSS / token theft) across the whole model audience.
-- **Sidebar/right-nav persistence:** sidebar and right-nav buttons are always-visible surfaces; a malicious plugin placed there executes on every model open, not just when a tab is activated.
-- **Supply-chain via referenced plugin IDs:** tab config references plugin IDs/slugs; if a referenced plugin is later compromised, the layout becomes a dormant delivery channel for malicious code.
+- **Malicious tab injection:** a non-admin bypassing `ALLOW_NON_ADMIN_ADDON_CONFIG` could inject a hostile plugin tab into every visitor's view, running arbitrary unsandboxed code (XSS / token theft) across the whole model audience. *Mitigation:* `WRITE_MODEL` + addon flag gate enforced; audit flag default and enforce plugin allowlists.
+- **Sidebar/right-nav persistence:** sidebar and right-nav buttons are always-visible surfaces; a malicious plugin placed there executes on every model open, not just when a tab is activated. *Mitigation:* none currently — plugins run unsandboxed by design; only install trusted plugins, and don't pass tokens/PII into PluginAPI/config/data.
+- **Supply-chain via referenced plugin IDs:** tab config references plugin IDs/slugs; if a referenced plugin is later compromised, the layout becomes a dormant delivery channel for malicious code. *Mitigation:* none currently — pin plugin versions or re-validate referenced plugins on load.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data; tab/layout config references plugin IDs/slugs and layout only.
+N/A.
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Tab/layout config on the model document.
 
 **Coverage:**
 - **Stored data:** `model.custom_template` (`model_tabs`/`prototype_tabs`/`prototype_sidebar_plugin`/`prototype_right_nav_buttons`) in MongoDB.
-- **PII:** no.
 - **Retention:** indefinite — lives with the model document; removed when the model is deleted.
 - **Encryption:** TLS in transit; no at-rest encryption beyond MongoDB defaults.
 - **Logging:** standard request logging on model save.
@@ -406,6 +435,7 @@ Tab/layout config on the model document.
 
 ### Test coverage
 - **E2E (Playwright):** 2 test case(s) in `plugin-management.spec.ts` (add plugin tab via + button) — SITEMAP: ✅
+- **Estimated coverage:** ≈50% (est.) — 2 AC bullets; 2 E2E cases cover add-tab via + button; no reorder/hide/staging test; SITEMAP ✅.
 - **Unit (Jest):** none
 
 ## CAP-PLUGIN-07 — My Plugins & admin Plugin management
@@ -452,17 +482,21 @@ My Plugins auth; admin `MANAGE_USERS`; non-admin visibility gated by addon flag.
 - **Secrets:** none — the admin UI manages plugin records and per-stage mapping; no secrets handled.
 
 **Risks:**
-- **Flag misconfiguration widens authoring:** if `ALLOW_NON_ADMIN_ADDON_CONFIG` defaults to true, any authenticated user can author and publish plugins, enlarging the supply-chain attack surface.
-- **Admin plugin takeover:** a stolen `MANAGE_USERS` session lets an attacker reconfigure or replace any plugin (including deploy plugins that run during staging), turning admin actions into platform-wide compromise.
-- **Deploy-plugin execution context:** deploy plugins configured per staging stage run in the staging/deploy pipeline; a malicious deploy plugin can interfere with deployments or exfiltrate build artifacts.
+- **Flag misconfiguration widens authoring:** if `ALLOW_NON_ADMIN_ADDON_CONFIG` defaults to true, any authenticated user can author and publish plugins, enlarging the supply-chain attack surface. *Mitigation:* flag is site-config driven; set it to `false` on sensitive tenants and audit who can author plugins.
+- **Admin plugin takeover:** a stolen `MANAGE_USERS` session lets an attacker reconfigure or replace any plugin (including deploy plugins that run during staging), turning admin actions into platform-wide compromise. *Mitigation:* require re-auth / step-up auth for admin plugin management; audit-log admin plugin changes.
+- **Deploy-plugin execution context:** deploy plugins configured per staging stage run in the staging/deploy pipeline; a malicious deploy plugin can interfere with deployments or exfiltrate build artifacts. *Mitigation:* none currently — plugins run unsandboxed by design; only install trusted plugins, and don't pass tokens/PII into PluginAPI/config/data.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data directly; `created_by`/`updated_by` are user ObjectIds (no email/name PII collected).
+N/A.
+**Risks:**
+- none — no personal data processed. (Author-identity linkage via `created_by`/`updated_by` ObjectIds is tracked under AutoWRX data.)
 
+### AutoWRX data
 Plugin records + per-stage config (`STAGING_FRAME` site config holds stage → plugin mapping).
 
 **Coverage:**
 - **Stored data:** plugin records in MongoDB `plugins`; `STAGING_FRAME` site config (stage → plugin mapping) in site config.
-- **PII:** no direct PII; `created_by`/`updated_by` are user ObjectIds.
 - **Retention:** indefinite — hard delete via `DELETE /v2/plugin/:id`; no soft delete/TTL.
 - **Encryption:** TLS in transit; no at-rest encryption beyond MongoDB defaults.
 - **Logging:** standard request logging.
@@ -473,4 +507,5 @@ Plugin records + per-stage config (`STAGING_FRAME` site config holds stage → p
 
 ### Test coverage
 - **E2E (Playwright):** 3 test case(s) in `plugin-management.spec.ts`, `my-plugins.spec.ts` — SITEMAP: ✅
+- **Estimated coverage:** ≈60% (est.) — 2 AC bullets; 3 E2E cases cover /me + /admin CRUD + staging; SITEMAP ✅.
 - **Unit (Jest):** none

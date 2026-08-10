@@ -99,26 +99,29 @@ Gated by `USE_GEN_AI` permission + `SHOW_SDV_PROTOPILOT_BUTTON`. Backend proxy r
 - **Secrets:** `GENAI_SDV_APP_ENDPOINT`/`GENAI_MARKETPLACE_URL` are env-driven; the caller handles no secrets here.
 
 **Risks:**
-- **Permission gate bypass:** if `USE_GEN_AI` were not enforced server-side, any user could consume GenAI compute (cost abuse) and inject generated code into prototypes they don't own.
-- **Untrusted generated code:** generated code is applied directly to `prototype.code`; a malicious or compromised generator could plant backdoors/exploits that later run in the prototype runtime.
+- **Permission gate bypass:** if `USE_GEN_AI` were not enforced server-side, any user could consume GenAI compute (cost abuse) and inject generated code into prototypes they don't own. *Mitigation:* enforce `USE_GEN_AI` server-side on `/v2/genai/*` before proxying.
+- **Untrusted generated code:** generated code is applied directly to `prototype.code`; a malicious or compromised generator could plant backdoors/exploits that later run in the prototype runtime. *Mitigation:* sandbox the prototype runtime and review generated code before apply.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data.
+N/A.
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Prompt + generated code transit the GenAI service; generated code stored in the prototype.
-
 **Coverage:**
 - **Stored data:** Generated code persisted into `prototype.code` (Prototype document in MongoDB); prompts are not stored backend-side.
-- **PII:** Potentially — prompts may carry user/prototype context that includes PII; generated code may embed provider-influenced content.
 - **Retention:** Indefinite — lives in `prototype.code` until the prototype is deleted; no redaction trail.
 - **Encryption:** In transit (TLS to the GenAI endpoint); at rest via the MongoDB platform default; no app-level encryption.
 - **Logging:** The SSE stream is passthrough (the proxy does not log content); the GenAI provider may log prompts per its own policy.
-
 **Risks:**
 - **Prompt leakage of private data:** prompts may include model/prototype context, sent to an external GenAI endpoint; sensitive vehicle data could leave the platform and be logged by the provider.
 - **Persistent generated artifacts:** generated code persisted in `prototype.code` may embed provider-influenced content with no redaction trail.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered in `global-search.spec.ts`/`home-sections.spec.ts`/`home-prototypes.spec.ts`/`layout.spec.ts`/`nav-bar-actions.spec.ts` — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-INTEG-02 — GenAI service proxy
@@ -164,25 +167,28 @@ Auth required; SSE streaming passthrough.
 - **Secrets:** `GENAI_URL` is env-driven (SSRF watch if attacker-controllable); the proxy handles no secrets.
 
 **Risks:**
-- **SSRF via proxy path:** if the path/host were not validated, an attacker could steer `/v2/genai/*` requests at internal endpoints through a controllable `GENAI_URL`.
-- **Auth bypass on proxy:** a missing auth check would expose the GenAI backend (and its compute cost) to anonymous callers.
+- **SSRF via proxy path:** if the path/host were not validated, an attacker could steer `/v2/genai/*` requests at internal endpoints through a controllable `GENAI_URL`. *Mitigation:* none currently — allowlist `GENAI_URL` or validate the upstream.
+- **Auth bypass on proxy:** a missing auth check would expose the GenAI backend (and its compute cost) to anonymous callers. *Mitigation:* keep the JWT auth check enforced on `/v2/genai/*`.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data.
+N/A.
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Proxies prompts/responses; no backend storage.
-
 **Coverage:**
 - **Stored data:** None — proxy only, no backend persistence.
-- **PII:** Depends on caller — prompts/responses may carry user content (PII risk via prompt content).
 - **Retention:** N/A on backend (nothing stored); provider-side retention per the GenAI service policy.
 - **Encryption:** In transit (TLS to `GENAI_URL`); no at-rest (nothing stored).
 - **Logging:** The proxy does not log stream content; SSE chunks are passed through unmodified.
-
 **Risks:**
 - **Prompt/response interception:** prompts and responses stream through the proxy unmodified; a misconfigured or compromised GenAI backend could log or leak user prompt content.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-INTEG-03 — GitHub OAuth (linking + SSO)
@@ -232,26 +238,29 @@ OAuth code exchange server-side; token delivered via authenticated socket.
 - **Secrets:** `GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET` are env-driven, used server-side only in the token exchange.
 
 **Risks:**
-- **Token delivery to wrong socket:** the token is emitted over the user's socket; a mismatched socket-to-session binding could deliver a GitHub token to the wrong user, granting account linking to an attacker.
-- **Client secret exposure:** a leaked `GITHUB_CLIENT_SECRET` would let an attacker impersonate the app and intercept OAuth codes via a rogue redirect.
+- **Token delivery to wrong socket:** the token is emitted over the user's socket; a mismatched socket-to-session binding could deliver a GitHub token to the wrong user, granting account linking to an attacker. *Mitigation:* bind socket-to-session with the authenticated `userId` before emitting.
+- **Client secret exposure:** a leaked `GITHUB_CLIENT_SECRET` would let an attacker impersonate the app and intercept OAuth codes via a rogue redirect. *Mitigation:* keep `GITHUB_CLIENT_SECRET` env-only; rotate on suspected leak.
 
-### Data protection
+### Personal data processing
+Yes — GitHub account identity (login/email scope) via OAuth; `userId` binds the session.
+GitHub profile/email is retrieved server-side during OAuth code exchange and bound to the logged-in `userId`; the access token is delivered over the authenticated socket and held client-side.
+**Risks:**
+- **Credential-at-rest exposure:** GitHub tokens persisted in `githubAuthStore` are long-lived credentials; a store leak grants repository access under the user's identity. *Mitigation:* none currently — store tokens server-side, not in localStorage.
+- **Token-in-query logging:** OAuth callback codes flow as query params and may be logged by proxies/CDNs before server-side exchange. *Mitigation:* exchange codes server-side promptly; strip `code` from access logs.
 
+### AutoWRX data
 GitHub tokens stored in `githubAuthStore` (persisted); treat as credentials.
-
 **Coverage:**
 - **Stored data:** GitHub access token stored client-side in `githubAuthStore` (Zustand `persist` → browser localStorage); not stored backend-side.
-- **PII:** Yes — GitHub account identity (login/email scope) via OAuth; `userId` binds the session.
 - **Retention:** Token retained in browser localStorage indefinitely until `clear()` is called; no server-side retention.
 - **Encryption:** TLS in transit to GitHub; the token at rest in browser localStorage is NOT encrypted (credential exposure).
 - **Logging:** The OAuth callback `code` flows as a query param (may be logged by proxies/CDNs); errors logged via `logger.error`.
-
 **Risks:**
-- **Credential-at-rest exposure:** GitHub tokens persisted in `githubAuthStore` are long-lived credentials; a store leak grants repository access under the user's identity.
-- **Token-in-query logging:** OAuth callback codes flow as query params and may be logged by proxies/CDNs before server-side exchange.
+- **Unencrypted client-side token:** the access token at rest in browser localStorage is not encrypted and has no server-side TTL, persisting beyond session end.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-INTEG-04 — Email service
@@ -295,26 +304,29 @@ Secrets encrypted at rest; admin-only config.
 - **Secrets:** Resend `apiKey` / SMTP `pass` are encrypted at rest in `SiteConfig`, decrypted at send time.
 
 **Risks:**
-- **Secret decryption failure:** encrypted Resend/SMTP secrets decrypted at send time; a key rotation mishap could brick all transactional email (reset/verify) silently.
-- **Admin config abuse:** a compromised admin could repoint SMTP/Resend to an attacker-controlled server and capture every reset code/verification email.
+- **Secret decryption failure:** encrypted Resend/SMTP secrets decrypted at send time; a key rotation mishap could brick all transactional email (reset/verify) silently. *Mitigation:* alert on decryption failure and back up encryption keys.
+- **Admin config abuse:** a compromised admin could repoint SMTP/Resend to an attacker-controlled server and capture every reset code/verification email. *Mitigation:* restrict the test-email endpoint to `ADMIN` and audit provider config changes.
 
-### Data protection
+### Personal data processing
+Yes — recipient email address; the reset code is a sensitive one-time credential.
+Recipient emails and reset/verify codes are generated server-side for account flows; codes are one-time entries in the `Token` collection with TTL; emails are sent via the configured Resend/SMTP provider.
+**Risks:**
+- **Reset code interception:** reset codes sent in cleartext email; a misconfigured provider or compromised mailbox lets an attacker complete password resets. *Mitigation:* short TTL on reset codes and rate-limit forgot-password.
+- **Provider-side retention:** recipient emails and content are processed by the external provider and may be retained per that provider's policy. *Mitigation:* review and configure the provider's retention policy.
 
+### AutoWRX data
 Recipient email + content sent to the provider; reset codes are one-time.
-
 **Coverage:**
 - **Stored data:** Email config (provider, from, encrypted apiKey/smtp pass) in `SiteConfig`; reset/verify codes are one-time entries in the `Token` collection.
-- **PII:** Yes — recipient email address; the reset code is a sensitive one-time credential.
 - **Retention:** Reset/verify codes are one-time with token expiry (TTL); email config persists until admin-changed.
 - **Encryption:** Secrets encrypted at rest (decrypted only at send); in transit TLS to Resend/SMTP.
 - **Logging:** Welcome-email failures are logged (`error.message`); reset codes are not logged.
-
 **Risks:**
-- **Reset code interception:** reset codes sent in cleartext email; a misconfigured provider or compromised mailbox lets an attacker complete password resets.
-- **Provider-side retention:** recipient emails and content are processed by the external provider and may be retained per that provider's policy.
+- **Email config persistence:** email config (encrypted provider secrets) persists in `SiteConfig` indefinitely until admin-changed; no TTL on stored provider credentials.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-INTEG-05 — Web Studio widget creation
@@ -348,24 +360,27 @@ External service; same caveats as remote widgets.
 - **Secrets:** `studioBeUrl` config (external endpoint); no secrets on the backend.
 
 **Risks:**
-- **Unvetted remote widget:** widgets created via the external bewebstudio service execute remotely and load into the platform; a compromised service could inject hostile scripts into authorized sessions.
+- **Unvetted remote widget:** widgets created via the external bewebstudio service execute remotely and load into the platform; a compromised service could inject hostile scripts into authorized sessions. *Mitigation:* sandbox loaded widgets and vet the external service before enabling.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data.
+N/A.
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Widget URL only.
-
 **Coverage:**
 - **Stored data:** Widget created on the external bewebstudio service; widget URL referenced in the dashboard config.
-- **PII:** No — widget name/uid only (no PII passed).
 - **Retention:** Delegated to the external bewebstudio service (no platform control).
 - **Encryption:** In transit (TLS if `studioBeUrl` is https); no at-rest on backend.
 - **Logging:** None on backend (frontend-only call).
-
 **Risks:**
 - **URL-parameter leakage:** widget URLs may carry identifiers that reveal which widgets a user authored/accessed, observable to the external service.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-INTEG-06 — Search
@@ -410,25 +425,28 @@ Optional auth via `PUBLIC_VIEWING`; scoped to accessible resources (no leakage).
 - **Secrets:** None.
 
 **Risks:**
-- **Access-scope bypass:** if scoping weren't enforced server-side, a `q` regex could enumerate private models/prototypes by name/description across tenants.
-- **User enumeration by email:** `/v2/search/email/:email` returns `200`/`404`, enabling account-existence enumeration for phishing targeting known users.
+- **Access-scope bypass:** if scoping weren't enforced server-side, a `q` regex could enumerate private models/prototypes by name/description across tenants. *Mitigation:* enforce the access-scope filter server-side on every search query.
+- **User enumeration by email:** `/v2/search/email/:email` returns `200`/`404`, enabling account-existence enumeration for phishing targeting known users. *Mitigation:* return a generic response and rate-limit the endpoint.
 
-### Data protection
+### Personal data processing
+Yes — `/search/email/:email` returns user existence (email PII, enumeration).
+The email-lookup endpoint exposes whether a user account exists for a given email; `by-signal` scans prototype `code` in memory; no personal data is stored by this capability.
+**Risks:**
+- **User enumeration by email:** `/v2/search/email/:email` returns `200`/`404`, enabling account-existence enumeration for phishing targeting known users. *Mitigation:* return a generic response and rate-limit the endpoint.
 
+### AutoWRX data
 `q` regex over name/description; by-signal scans prototype `code` in memory.
-
 **Coverage:**
 - **Stored data:** None — read-only search over existing models/prototypes/users.
-- **PII:** Yes — `/search/email/:email` returns user existence (email PII, enumeration); by-signal scans prototype `code`.
 - **Retention:** N/A (no storage); source data retained per its own lifecycle.
 - **Encryption:** In transit (TLS); no at-rest (nothing stored).
 - **Logging:** Query params not specifically logged beyond standard morgan access logs.
-
 **Risks:**
 - **Code-content disclosure via by-signal:** `/v2/search/prototypes/by-signal/:signal` scans prototype `code`; a crafted signal pattern could excerpt proprietary code fragments to a caller who lacks direct access to the prototype.
 
 ### Test coverage
 - **E2E (Playwright):** 2 test case(s) in `global-search.spec.ts` (1) + `nav-bar-actions.spec.ts` (1 — "search action opens global search dialog") — SITEMAP: ✅
+- **Estimated coverage:** ≈50% (est.) — 4 acceptance criteria; 2 E2E cover the global search dialog UI only; `/email/:email` and `/by-signal/:signal` endpoints untested
 - **Unit (Jest):** none
 
 ## CAP-INTEG-07 — Discussions
@@ -463,25 +481,28 @@ List optional; write auth. **Partial** — no dedicated routed page; wired conte
 - **Secrets:** None.
 
 **Risks:**
-- **Cross-resource spam:** `ref`+`ref_type` accept any value; without an access check on the referenced resource, a user could attach hostile comments to private resources they can't read, polluting them.
-- **Unauthorized edit/delete:** if ownership weren't enforced on `PATCH/DELETE`, any authenticated user could alter or remove others' comments.
+- **Cross-resource spam:** `ref`+`ref_type` accept any value; without an access check on the referenced resource, a user could attach hostile comments to private resources they can't read, polluting them. *Mitigation:* add an access check on the referenced `ref` resource before write.
+- **Unauthorized edit/delete:** if ownership weren't enforced on `PATCH/DELETE`, any authenticated user could alter or remove others' comments. *Mitigation:* keep the own-only ownership check enforced on patch/delete.
 
-### Data protection
+### Personal data processing
+Yes — `created_by` records the author identity; `content` is free text that may include PII.
+`created_by` binds each comment to its author; `content` is user-entered free text that may inadvertently carry PII or secrets.
+**Risks:**
+- **Comment content retention:** `content` is free text and persists until deleted; users may inadvertently embed secrets or PII in comments that are hard to purge. *Mitigation:* provide a purge/edit path and scan for secrets before persist.
 
+### AutoWRX data
 `ref`/`ref_type`/`content`/`created_by` stored.
-
 **Coverage:**
 - **Stored data:** `ref`/`ref_type`/`content`/`created_by`/`parent` in the `Discussion` collection (MongoDB).
-- **PII:** Potentially — `content` is free text and may include PII or secrets.
 - **Retention:** Indefinite until deleted; no auto-prune.
 - **Encryption:** At rest via the MongoDB platform default; in transit TLS.
 - **Logging:** Standard request logging; comment `content` is not specifically logged.
-
 **Risks:**
-- **Comment content retention:** `content` is free text and persists until deleted; users may inadvertently embed secrets or PII in comments that are hard to purge.
+- **Indefinite comment retention:** comments persist with no auto-prune, leaving stale or hostile content attached to resources indefinitely.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-INTEG-08 — Feedback service
@@ -515,25 +536,28 @@ Add auth; delete own only.
 - **Secrets:** None.
 
 **Risks:**
-- **Ownership bypass on delete:** if the own-only check failed, a user could delete others' feedback, destroying review records.
-- **Feedback spam:** write auth alone (no rate limit) could let a user flood a prototype with feedback entries.
+- **Ownership bypass on delete:** if the own-only check failed, a user could delete others' feedback, destroying review records. *Mitigation:* keep the own-only ownership check enforced on patch/delete.
+- **Feedback spam:** write auth alone (no rate limit) could let a user flood a prototype with feedback entries. *Mitigation:* apply a per-user write rate limit on feedback creation.
 
-### Data protection
+### Personal data processing
+Yes — interviewee metadata may contain personal identifiers of interviewees.
+Interviewee metadata is submitted by reviewers and persisted in the `Feedback` collection bound to `created_by` (the author identity); no defined retention/pruning policy.
+**Risks:**
+- **Interviewee PII retention:** interview metadata may contain personal identifiers of interviewees; stored without a defined retention/pruning policy. *Mitigation:* define a retention policy and prune aged feedback entries.
 
+### AutoWRX data
 Scores + interviewee metadata stored.
-
 **Coverage:**
 - **Stored data:** Scores (1–5), interviewee metadata, `ref`/`ref_type`/`created_by` in the `Feedback` collection.
-- **PII:** Yes — interviewee metadata may contain personal identifiers of interviewees.
 - **Retention:** Indefinite until deleted; no defined retention/pruning policy.
 - **Encryption:** At rest via the MongoDB platform default; in transit TLS.
 - **Logging:** Standard request logging.
-
 **Risks:**
-- **Interviewee PII retention:** interview metadata may contain personal identifiers of interviewees; stored without a defined retention/pruning policy.
+- **Unbounded feedback accumulation:** feedback entries accumulate indefinitely with no pruning, growing storage and leaving stale review records attached to resources.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered (the prototype-extended feedback-tab test belongs to the prototypes cluster, not this feedback-service integration) — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-INTEG-09 — Health check
@@ -580,25 +604,28 @@ Public.
 - **Secrets:** None exposed (per-service messages only; no secrets in responses).
 
 **Risks:**
-- **Information disclosure:** `503`/`200` responses include per-service messages; a public endpoint leaking which service is down (e.g. Mongo unreachable) aids attackers in timing attacks and targeting the weak link.
-- **Unauthenticated probing:** SSO reachability checks from a public endpoint can be abused to enumerate/confirm external identity-provider endpoints.
+- **Information disclosure:** `503`/`200` responses include per-service messages; a public endpoint leaking which service is down (e.g. Mongo unreachable) aids attackers in timing attacks and targeting the weak link. *Mitigation:* restrict detailed per-service messages to authenticated operators; return a coarse status publicly.
+- **Unauthenticated probing:** SSO reachability checks from a public endpoint can be abused to enumerate/confirm external identity-provider endpoints. *Mitigation:* gate SSO reachability checks behind auth or remove from the public endpoint.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data.
+N/A.
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Status info only (no secrets).
-
 **Coverage:**
 - **Stored data:** None — status is computed on demand from live checks.
-- **PII:** No.
 - **Retention:** N/A (no storage).
 - **Encryption:** In transit TLS; no at-rest (nothing stored).
 - **Logging:** The crash case logs `err.message` (may include internal details); normal responses are not logged beyond morgan.
-
 **Risks:**
 - **Service fingerprinting:** per-service status messages may disclose internal hostnames, error text, or dependency versions, giving an attacker a footprint map of internal infrastructure.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-INTEG-10 — File upload
@@ -648,26 +675,29 @@ Auth required; any file type allowed (50 MB cap) — validate on use.
 - **Secrets:** None.
 
 **Risks:**
-- **Malicious file storage:** any file type is accepted (50 MB cap); an attacker can upload HTML/SVG/executable payloads served from `/d/...`, enabling stored XSS via SVG/HTML or malware hosting.
-- **Storage exhaustion:** with auth but no per-user quota, a user could fill disk with 50 MB uploads, degrading the platform.
+- **Malicious file storage:** any file type is accepted (50 MB cap); an attacker can upload HTML/SVG/executable payloads served from `/d/...`, enabling stored XSS via SVG/HTML or malware hosting. *Mitigation:* validate MIME/extension and serve uploads with `Content-Disposition: attachment` + a strict CSP.
+- **Storage exhaustion:** with auth but no per-user quota, a user could fill disk with 50 MB uploads, degrading the platform. *Mitigation:* enforce a per-user upload quota and prune orphaned files.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data.
+N/A.
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Files served publicly under `/d/`; retention = files persist until deleted (no auto-prune).
-
 **Coverage:**
 - **Stored data:** Files written to `static/uploads/YYYY-MM-DD/` on the filesystem; only the generated filename is metadata.
-- **PII:** Potentially — uploaded images may carry EXIF/metadata (not stripped); user-controlled content.
 - **Retention:** Indefinite — files persist until manually deleted (no auto-prune); served publicly at `/d/...` with a 1-year cache header.
 - **Encryption:** At rest on the filesystem (platform default, no app-level encryption); in transit TLS.
 - **Logging:** Standard request logging; file content is not logged.
-
 **Risks:**
 - **Permanent public exposure:** uploads under `/d/` are public and unauthenticated; a private image uploaded for a draft is world-readable by URL, and persists indefinitely with no auto-prune.
 - **Metadata in uploads:** image EXIF or document metadata is not stripped before public serving, potentially leaking author/device/location data.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-INTEG-11 — Change logs / audit
@@ -711,26 +741,29 @@ flowchart LR
 - **Secrets:** None (audit entries may incidentally contain code/content).
 
 **Risks:**
-- **Admin-only bypass via PUBLIC_VIEWING ambiguity:** the "optional auth via `PUBLIC_VIEWING`" wording could be misimplemented to expose audit diffs publicly if the `checkPermission(ADMIN)` gate were ever dropped, leaking full change history.
-- **Audit tampering:** the plugin writes to a capped collection; a compromised admin with write access could rotate/clear entries to cover tracks.
+- **Admin-only bypass via PUBLIC_VIEWING ambiguity:** the "optional auth via `PUBLIC_VIEWING`" wording could be misimplemented to expose audit diffs publicly if the `checkPermission(ADMIN)` gate were ever dropped, leaking full change history. *Mitigation:* keep the `checkPermission(ADMIN)` gate mandatory regardless of `PUBLIC_VIEWING`.
+- **Audit tampering:** the plugin writes to a capped collection; a compromised admin with write access could rotate/clear entries to cover tracks. *Mitigation:* stream audit events to an append-only external sink.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data.
+N/A.
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 `changelogs` is a **capped** collection (bounded size); stores field diffs (may include code/content).
-
 **Coverage:**
 - **Stored data:** `changelogs` (ChangeLog) — `action`, `changes` (field diffs incl. `code`), `ref`/`ref_type`/`created_by`; the collection is size-capped (`LOGS_MAX_SIZE`, default 100 MB).
-- **PII:** Potentially — diffs may include user-identifying content; `created_by` references the user.
 - **Retention:** Capped collection — oldest entries are evicted on overflow (audit eviction risk); no controlled TTL.
 - **Encryption:** At rest via the MongoDB platform default; in transit TLS.
 - **Logging:** The audit log IS the stored data; no additional logging layer.
-
 **Risks:**
 - **Sensitive code in diffs:** field diffs may include `code` content; storing proprietary prototype code in a (capped, overwritten) collection means old audit entries silently age out, losing the audit trail for long-lived disputes.
-- **Capped-collection data loss:** because the collection is capped, high-frequency change volume evicts the oldest audit entries — evidence of early incidents can be permanently lost without warning.
+- **Capped-collection data loss:** because the collection is capped, high-frequency change volume evicts the oldest audit entries — evidence of early incidents can be permanently lost without warning. *Mitigation:* none currently — use an uncapped audit collection.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-INTEG-12 — Static serving, SPA, VSS static
@@ -774,25 +807,28 @@ Public; Helmet CSP applies (wildcard in both envs — known permissive).
 - **Secrets:** None.
 
 **Risks:**
-- **Permissive CSP:** wildcard-open CSP in both dev and prod allows broad script sources; combined with `/plugin` and `/builtin-widgets` static serving, it widens the XSS/plugin-injection attack surface.
-- **Path traversal in static serving:** a misconfigured static root or lax path handling could let `/static`/`/d` resolve to files outside the asset directory.
+- **Permissive CSP:** wildcard-open CSP in both dev and prod allows broad script sources; combined with `/plugin` and `/builtin-widgets` static serving, it widens the XSS/plugin-injection attack surface. *Mitigation:* none currently — tighten CSP to an allowlist.
+- **Path traversal in static serving:** a misconfigured static root or lax path handling could let `/static`/`/d` resolve to files outside the asset directory. *Mitigation:* keep static roots pinned and reject `..` traversal.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data.
+N/A.
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Static assets only.
-
 **Coverage:**
 - **Stored data:** Static assets on the filesystem (`frontend-dist`, `static/uploads`, `static/images`, `static/plugin`, `static/builtin-widgets`, `backend/data/<version>.json`).
-- **PII:** Potentially — uploads served under `/d/` may carry image/document metadata; VSS JSONs are vehicle signals (no PII).
 - **Retention:** Indefinite — assets persist until deleted; `/d/` uploads carry a 1-year cache header, `/vss` a 1-hour cache header.
 - **Encryption:** At rest on the filesystem (platform default); in transit TLS.
 - **Logging:** The VSS route logs to console (version/filename/path/exists); static serving uses standard morgan logs.
-
 **Risks:**
 - **Public asset enumeration:** `/static`, `/d`, and `/vss/:version/:filename` are publicly listable/guessable; an attacker can enumerate uploaded assets and VSS files by date/version without authentication.
 
 ### Test coverage
 - **E2E (Playwright):** 0 direct — not covered (`layout.spec.ts`/`home-sections.spec.ts` load the SPA indirectly but there is no dedicated static/VSS spec) — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-INTEG-13 — CORS / Helmet CSP / security middleware
@@ -838,27 +874,30 @@ flowchart LR
 - **Secrets:** `CORS_ORIGINS` env-driven regex allowlist; no secrets in middleware.
 
 **Risks:**
-- **Permissive CSP allows injection:** wildcard-open CSP (only `objectSrc` restricted) lets injected or compromised scripts execute freely, weakening the only header-based XSS mitigation.
-- **Unused rate limiter:** `authLimiter` defined but not applied; auth endpoints have no rate limiting, enabling credential-stuffing brute force.
-- **CORS origin regex bypass:** a regex CORS allowlist can be subverted (e.g. attacker origin matching a substring), allowing cross-origin credentialed requests from rogue sites.
+- **Permissive CSP allows injection:** wildcard-open CSP (only `objectSrc` restricted) lets injected or compromised scripts execute freely, weakening the only header-based XSS mitigation. *Mitigation:* none currently — tighten CSP to an allowlist.
+- **Unused rate limiter:** `authLimiter` defined but not applied; auth endpoints have no rate limiting, enabling credential-stuffing brute force. *Mitigation:* none currently — wire `authLimiter`.
+- **CORS origin regex bypass:** a regex CORS allowlist can be subverted (e.g. attacker origin matching a substring), allowing cross-origin credentialed requests from rogue sites. *Mitigation:* anchor CORS regexes (`^...$`) and test against rogue origins.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data.
+N/A.
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 mongo-sanitize strips `$`/`.` keys from inputs; cookies httpOnly.
-
 **Coverage:**
 - **Stored data:** None — middleware only.
-- **PII:** Cookies are httpOnly; no PII stored by middleware.
 - **Retention:** N/A — cookies per session/JWT expiry.
 - **Encryption:** Cookies httpOnly (no `secure` enforcement); `trust proxy` enabled; TLS handled at the edge.
 - **Logging:** morgan success/error handlers log HTTP requests (method/path/status); no body logging.
-
 **Risks:**
 - **NoSQL injection despite sanitize:** mongo-sanitize targets keys; operator injection via values or array payloads may still bypass it, risking data exfiltration or modification.
 - **Cookie leakage on non-TLS:** httpOnly cookies without `secure` enforcement over non-TLS connections can be sniffed; `trust proxy` must be correctly configured or the trust can be spoofed.
 
 ### Test coverage
 - **E2E (Playwright):** 0 direct — not covered (`layout.spec.ts` checks layout, not CORS/CSP headers) — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-INTEG-14 — Socket.IO (realtime)
@@ -904,26 +943,29 @@ JWT verified on handshake.
 - **Secrets:** JWT secret used for verification; GitHub OAuth tokens are carried in `auth/github` event payloads.
 
 **Risks:**
-- **Token-in-query logging:** the JWT travels as a `access_token` query param; query strings are commonly logged by proxies, CDNs, and access logs, exposing valid tokens.
-- **Event spoofing to wrong socket:** GitHub OAuth tokens are pushed over `auth/github`; a session-binding flaw could emit a token to a socket that isn't the originating user.
+- **Token-in-query logging:** the JWT travels as a `access_token` query param; query strings are commonly logged by proxies, CDNs, and access logs, exposing valid tokens. *Mitigation:* pass the JWT via the auth handshake body or header instead of the query string.
+- **Event spoofing to wrong socket:** GitHub OAuth tokens are pushed over `auth/github`; a session-binding flaw could emit a token to a socket that isn't the originating user. *Mitigation:* bind `socket.user` to the session and verify the recipient before emitting.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data.
+N/A.
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Token in query string (use TLS in prod); event payloads may include GitHub tokens.
-
 **Coverage:**
 - **Stored data:** None server-side (ephemeral socket events); GitHub tokens are stored client-side in `githubAuthStore` (localStorage).
-- **PII:** Yes — GitHub OAuth tokens (credentials) in event payloads.
 - **Retention:** Tokens held in browser localStorage until `clear()`; no server-side retention of events.
 - **Encryption:** In transit (wss/TLS in prod); the JWT travels as a query string (commonly logged by proxies/CDNs).
 - **Logging:** Connection logged (`logger.info('a user connected')`); token payloads are not logged server-side.
-
 **Risks:**
 - **Credential leakage via logs:** tokens in the query string persist in proxy/load-balancer logs; without TLS termination controls and log redaction, credentials are recoverable from logs.
 - **Payload retention on client:** event payloads carrying GitHub tokens are held in client memory/logic; a misrouted event could surface another user's token to the wrong client.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-INTEG-15 — Log / cache service clients
@@ -966,24 +1008,27 @@ Internal clients; configure with appropriate auth on the target services.
 - **Secrets:** `LOG_URL`/`CACHE_URL` env-driven (SSRF watch if attacker-controllable); no secrets on the client.
 
 **Risks:**
-- **Unauthenticated outbound forwarding:** `LOG_URL`/`CACHE_URL` are internal clients; if the target services aren't auth-protected, anyone who can reach them can read forwarded audit events or poison the activity cache.
-- **SSRF via misconfigured URL:** an attacker able to influence `LOG_URL`/`CACHE_URL` could redirect audit events (including password-reset metadata) to an attacker endpoint.
+- **Unauthenticated outbound forwarding:** `LOG_URL`/`CACHE_URL` are internal clients; if the target services aren't auth-protected, anyone who can reach them can read forwarded audit events or poison the activity cache. *Mitigation:* require auth on the target services and restrict network reachability.
+- **SSRF via misconfigured URL:** an attacker able to influence `LOG_URL`/`CACHE_URL` could redirect audit events (including password-reset metadata) to an attacker endpoint. *Mitigation:* allowlist `LOG_URL`/`CACHE_URL` at deploy time and reject runtime overrides.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data.
+N/A.
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Forwards event metadata (incl. email for forgot-password); respect target service retention.
-
 **Coverage:**
 - **Stored data:** None on backend — forwards events to `LOG_URL`; cache is pull-only for recent-prototype activity.
-- **PII:** Yes — forgot-password events include the user's email forwarded to `LOG_URL`.
 - **Retention:** Delegated to the target `LOG_URL`/`CACHE_URL` services (no platform control).
 - **Encryption:** In transit (TLS if `LOG_URL`/`CACHE_URL` are https); no at-rest on backend.
 - **Logging:** Cache-pull failures logged via `logger.error`; the `LOG_URL` forwards ARE the log.
-
 **Risks:**
 - **Email leakage to logs:** forgot-password events include the user's email and are forwarded to `LOG_URL`; a permissive logging target retains user emails indefinitely.
 - **Divergent retention:** retention is delegated to the target services; with no platform control, user data may be retained far longer than the source system's policy allows.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none

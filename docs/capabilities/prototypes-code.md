@@ -82,16 +82,24 @@ Creating or importing requires `WRITE_MODEL`; browsing is public only under `PUB
 - **Secrets:** none.
 
 **Risks:**
-- **Private-prototype enumeration:** if server-side access scoping lags behind `PUBLIC_VIEWING`, a signed-out or cross-tenant user could enumerate private prototypes through list/portfolio filters, leaking proprietary SDV code.
-- **Malicious ZIP import:** import reads archive contents; an attacker-crafted archive could exploit path traversal or oversized payloads during extraction to corrupt storage or inject code.
+- **Private-prototype enumeration:** if server-side access scoping lags behind `PUBLIC_VIEWING`, a signed-out or cross-tenant user could enumerate private prototypes through list/portfolio filters, leaking proprietary SDV code. *Mitigation:* enforce `READ_MODEL` server-side on list/portfolio filters before returning; deny-by-default when scoping state is unclear.
+- **Malicious ZIP import:** import reads archive contents; an attacker-crafted archive could exploit path traversal or oversized payloads during extraction to corrupt storage or inject code. *Mitigation:* none currently — sanitize ZIP entry paths (reject `../` and absolute paths) and cap entry size/count before extraction.
 
-### Data protection
+### Personal data processing
+
+No — this capability does not process personal data (the `created_by` field holds an internal userId reference; names/emails live in the Identity cluster).
+
+N/A.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
 
 Prototype metadata and code are stored; import reads archive contents.
 
 **Coverage:**
 - **Stored data:** `prototypes` collection (name, code, model_id, description, image_file, created_by); ZIP archive contents read during import.
-- **PII:** no — only prototype metadata and author reference.
 - **Retention:** indefinite (hard delete on `DELETE`, no soft-delete/TTL).
 - **Encryption:** none at rest; TLS in transit via platform.
 - **Logging:** change log records create/update/remove; malformed `extend`/`requirements_data` JSON triggers a warning.
@@ -102,6 +110,7 @@ Prototype metadata and code are stored; import reads archive contents.
 
 ### Test coverage
 - **E2E (Playwright):** 4 test case(s) in `prototype.spec.ts` + `prototype-extended.spec.ts` — SITEMAP: ✅
+- **Estimated coverage:** ≈80% (est.) — 3 acceptance-criteria paths, 4 E2E cases cover create/browse/import + duplicate-name; SITEMAP ✅.
 - **Unit (Jest):** none
 
 ## CAP-PROTO-02 — New prototype layout
@@ -151,16 +160,24 @@ Access requires sign-in; the flow is gated by `ENABLE_NEW_PROTOTYPE_PAGE`.
 - **Secrets:** none.
 
 **Risks:**
-- **Flag-bypass create:** if the `ENABLE_NEW_PROTOTYPE_PAGE` guard were bypassed or the underlying create endpoint didn't re-check `WRITE_MODEL`, an unauthenticated user reaching `/new-prototype` could open a model-scoped create flow.
-- **Template-driven code injection:** the shell preview loads a template's plugin config; a compromised template could render unsandboxed plugin code during creation.
+- **Flag-bypass create:** if the `ENABLE_NEW_PROTOTYPE_PAGE` guard were bypassed or the underlying create endpoint didn't re-check `WRITE_MODEL`, an unauthenticated user reaching `/new-prototype` could open a model-scoped create flow. *Mitigation:* re-check `WRITE_MODEL` server-side on the create endpoint regardless of the flag; flag defaults to `false`.
+- **Template-driven code injection:** the shell preview loads a template's plugin config; a compromised template could render unsandboxed plugin code during creation. *Mitigation:* none currently — plugins run unsandboxed by design; only install trusted plugins.
 
-### Data protection
+### Personal data processing
+
+No — this capability does not process personal data.
+
+N/A.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
 
 No extra data is stored; the system reads the model/template to preview.
 
 **Coverage:**
 - **Stored data:** none directly (preview only); the subsequent create stores a prototype via CAP-PROTO-03.
-- **PII:** no.
 - **Retention:** N/A (no data stored by this capability).
 - **Encryption:** none (preview read of model/template).
 - **Logging:** none specific.
@@ -170,6 +187,7 @@ No extra data is stored; the system reads the model/template to preview.
 
 ### Test coverage
 - **E2E (Playwright):** 1 test case(s) in `prototype.spec.ts` — SITEMAP: ✅
+- **Estimated coverage:** ≈35% (est.) — 3 acceptance-criteria paths, 1 E2E case covers signed-out redirect + create-navigation; flag-on/`?create-model` modes lightly covered; SITEMAP ✅.
 - **Unit (Jest):** none
 
 ## CAP-PROTO-03 — Prototype CRUD / bulk / recent / popular / execute-code
@@ -218,17 +236,25 @@ Writes require `WRITE_MODEL`; the recent list requires sign-in; reads are public
 - **Secrets:** none.
 
 **Risks:**
-- **Bulk-create abuse:** `POST /v2/prototypes/bulk` without rate limiting lets an attacker spawn many prototypes, exhausting storage and polluting the model namespace.
-- **Counter inflation:** `execute-code` is unauthenticated relative to popularity ranking; an attacker could inflate `executed_turns` to manipulate the popular list.
-- **Cross-tenant read:** if `READ_MODEL` isn't enforced for private models on `GET /v2/prototypes/:id`, a user could read private prototype code by ID.
+- **Bulk-create abuse:** `POST /v2/prototypes/bulk` without rate limiting lets an attacker spawn many prototypes, exhausting storage and polluting the model namespace. *Mitigation:* none currently — wire authLimiter / add a per-user bulk-create throttle.
+- **Counter inflation:** `execute-code` is unauthenticated relative to popularity ranking; an attacker could inflate `executed_turns` to manipulate the popular list. *Mitigation:* none currently — require auth for `execute-code` and cap increments per session/user.
+- **Cross-tenant read:** if `READ_MODEL` isn't enforced for private models on `GET /v2/prototypes/:id`, a user could read private prototype code by ID. *Mitigation:* enforce `READ_MODEL` server-side on every `GET /v2/prototypes/:id` whose parent model is private.
 
-### Data protection
+### Personal data processing
+
+No — this capability does not process personal data (the recent list and `last_viewed`/`rated_by` use internal userId references; names/emails live in the Identity cluster).
+
+N/A.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
 
 The system stores `last_viewed`, `executed_turns`, `rated_by`, and `state` per prototype; the recent list is sourced from the cache service.
 
 **Coverage:**
 - **Stored data:** `prototypes` (last_viewed, executed_turns, rated_by Map, state, code); recent list sourced from the external cache (`CACHE_URL`, `/get-recent-activities/:userId`).
-- **PII:** no direct PII; the recent list is a per-user activity trail (prototype ids + times) tied to my userId.
 - **Retention:** indefinite (hard delete, no soft-delete; recent-cache retention governed by the external cache service).
 - **Encryption:** none at rest; TLS in transit.
 - **Logging:** change log records create/update/remove; cache fetch failures are logged.
@@ -239,6 +265,7 @@ The system stores `last_viewed`, `executed_turns`, `rated_by`, and `state` per p
 
 ### Test coverage
 - **E2E (Playwright):** 4 test case(s) in `prototype.spec.ts` + `prototype-extended.spec.ts` + `prototype-runtime.spec.ts` — SITEMAP: ⚠️
+- **Estimated coverage:** ≈55% (est.) — 7 acceptance-criteria paths, 4 E2E cases cover list/create/bulk/recent/popular/CRUD; `execute-code` counter and private-read paths untested; SITEMAP ⚠️.
 - **Unit (Jest):** none
 
 ## CAP-PROTO-04 — Prototype workspace (tabs)
@@ -283,16 +310,24 @@ Tab management requires `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG`; Staging 
 - **Secrets:** none.
 
 **Risks:**
-- **Malicious addon tab:** plugins run unsandboxed via `PluginPageRender`; if the `ALLOW_NON_ADMIN_ADDON_CONFIG` gate were bypassed, a non-admin could inject a hostile tab into every visitor's view (XSS / token theft).
-- **Staging bypass:** Staging requires auth + prototype code; a missing check could expose staging execution to anonymous users or code-less prototypes.
+- **Malicious addon tab:** plugins run unsandboxed via `PluginPageRender`; if the `ALLOW_NON_ADMIN_ADDON_CONFIG` gate were bypassed, a non-admin could inject a hostile tab into every visitor's view (XSS / token theft). *Mitigation:* none currently — plugins run unsandboxed by design; only install trusted plugins.
+- **Staging bypass:** Staging requires auth + prototype code; a missing check could expose staging execution to anonymous users or code-less prototypes. *Mitigation:* enforce auth + code-present check server-side before staging execution.
 
-### Data protection
+### Personal data processing
+
+No — this capability does not process personal data (`last_viewed` is tied to an internal userId/session reference; names/emails live in the Identity cluster).
+
+N/A.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
 
 Tab config and `extend` (the plugin data sink) are stored on the prototype; `last_viewed` is updated on each visit.
 
 **Coverage:**
 - **Stored data:** `prototype.extend` (Mixed, plugin data sink), tab/right-nav config, `last_viewed` updated per visit.
-- **PII:** no direct PII; `last_viewed` is a viewing log tied to my session.
 - **Retention:** indefinite (lives with the prototype; hard-deleted with it).
 - **Encryption:** none at rest; TLS in transit.
 - **Logging:** change log records updates; view tracking persisted to `last_viewed`.
@@ -303,6 +338,7 @@ Tab config and `extend` (the plugin data sink) are stored on the prototype; `las
 
 ### Test coverage
 - **E2E (Playwright):** 8 test case(s) in `prototype.spec.ts` + `prototype-extended.spec.ts` + `prototype-tabs.spec.ts` — SITEMAP: ⚠️
+- **Estimated coverage:** ≈90% (est.) — 3 acceptance-criteria paths, 8 E2E cases cover tab switching/addon manage/layout/reorder + staging-hidden; SITEMAP ⚠️.
 - **Unit (Jest):** none
 
 ## CAP-PROTO-05 — Code editor
@@ -355,16 +391,24 @@ Editing requires `WRITE_MODEL`; GenAI is gated by `USE_GEN_AI` and the `SHOW_SDV
 - **Secrets:** the GenAI endpoint config (`GENAI_SDV_APP_ENDPOINT`, `USE_GEN_AI`) lives in site config, not in my prototype.
 
 **Risks:**
-- **GenAI prompt-injection:** generated code from ProtoPilot is applied to `prototype.code`; a malicious prompt could inject code that runs in staging or exfiltrates prototype data when later executed.
-- **Unauthed auto-save:** if the `WRITE_MODEL` check were skipped on the auto-save path, any viewer could overwrite an author's code with no version history to revert.
+- **GenAI prompt-injection:** generated code from ProtoPilot is applied to `prototype.code`; a malicious prompt could inject code that runs in staging or exfiltrates prototype data when later executed. *Mitigation:* none currently — review generated code before apply; sandbox staging execution.
+- **Unauthed auto-save:** if the `WRITE_MODEL` check were skipped on the auto-save path, any viewer could overwrite an author's code with no version history to revert. *Mitigation:* re-check `WRITE_MODEL` server-side on every auto-save PATCH.
 
-### Data protection
+### Personal data processing
+
+No — this capability does not process personal data (source code only).
+
+N/A.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
 
 My code (potentially large) is stored in `prototype.code`; auto-save writes frequently.
 
 **Coverage:**
 - **Stored data:** `prototype.code` (string or JSON project descriptor); auto-save writes frequently (throttled).
-- **PII:** no (source code only).
 - **Retention:** indefinite (no version history; hard-deleted with the prototype).
 - **Encryption:** none at rest; TLS in transit.
 - **Logging:** change log records updates; code content is not logged by this path.
@@ -375,6 +419,7 @@ My code (potentially large) is stored in `prototype.code`; auto-save writes freq
 
 ### Test coverage
 - **E2E (Playwright):** 2 test case(s) in `prototype-tabs.spec.ts` + `prototype-runtime.spec.ts` — SITEMAP: ⚠️
+- **Estimated coverage:** ≈50% (est.) — 4 acceptance-criteria paths, 2 E2E cases cover edit/auto-save + API panel; GenAI launch + diff toggle lightly covered; SITEMAP ⚠️.
 - **Unit (Jest):** none
 
 ## CAP-PROTO-06 — Project editor (multi-file)
@@ -418,17 +463,25 @@ Editing requires `WRITE_MODEL`. GitHub-based git sync is partially wired but not
 - **Secrets:** partial GitHub auth wiring exists for an intended git sync (not active).
 
 **Risks:**
-- **Path traversal in file ops:** create/rename/delete operate on paths inside the JSON project; without validation an attacker could craft `../` paths to escape the project root and overwrite unrelated files.
-- **ZIP import traversal:** importing a ZIP with malicious entry names (`../`) could write files outside the project tree if extraction doesn't sanitize paths.
-- **Partial git-sync exposure:** the partial GitHub auth wiring, if reachable, could leak credentials or push prototype code to an unintended remote.
+- **Path traversal in file ops:** create/rename/delete operate on paths inside the JSON project; without validation an attacker could craft `../` paths to escape the project root and overwrite unrelated files. *Mitigation:* none currently — normalize and validate paths, reject `../` and absolute paths before any file op.
+- **ZIP import traversal:** importing a ZIP with malicious entry names (`../`) could write files outside the project tree if extraction doesn't sanitize paths. *Mitigation:* none currently — sanitize ZIP entry names, reject absolute/`../` paths during extraction.
+- **Partial git-sync exposure:** the partial GitHub auth wiring, if reachable, could leak credentials or push prototype code to an unintended remote. *Mitigation:* none currently — disable/remove the unused GitHub auth wiring until git sync is active.
 
-### Data protection
+### Personal data processing
+
+No — this capability does not process personal data (project source files only).
+
+N/A.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
 
 The whole project is stored as JSON in `prototype.code`; an export ZIP contains every file.
 
 **Coverage:**
 - **Stored data:** entire project as JSON in `prototype.code`; export ZIP bundles all files.
-- **PII:** no (project source files).
 - **Retention:** indefinite (no per-file history; the whole project is overwritten on save-all).
 - **Encryption:** none at rest; TLS in transit.
 - **Logging:** change log records updates.
@@ -439,6 +492,7 @@ The whole project is stored as JSON in `prototype.code`; an export ZIP contains 
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none
 
 ## CAP-PROTO-07 — Prototype feedback
@@ -490,26 +544,35 @@ Adding feedback requires sign-in; deleting or editing is limited to my own feedb
 - **Secrets:** none.
 
 **Risks:**
-- **Impersonated feedback:** if the own-only check on `PATCH/DELETE` is missing, a user could delete or alter others' feedback, manipulating a prototype's averaged scores.
-- **Anonymous spam:** `POST` only requires sign-in, so a burner account could flood feedback with biased ratings to inflate or tank a prototype's score.
+- **Impersonated feedback:** if the own-only check on `PATCH/DELETE` is missing, a user could delete or alter others' feedback, manipulating a prototype's averaged scores. *Mitigation:* enforce the own-only check server-side on `PATCH/DELETE` (the system already returns FORBIDDEN for non-owners).
+- **Anonymous spam:** `POST` only requires sign-in, so a burner account could flood feedback with biased ratings to inflate or tank a prototype's score. *Mitigation:* none currently — wire authLimiter / add a per-account feedback throttle.
 
-### Data protection
+### Personal data processing
 
-Feedback stores interviewee (name/organization), scores, and `ref`/`model_id`; no secrets.
+Yes — interviewee `name` + `organization`, and the `created_by` reviewer user reference.
 
-**Coverage:**
-- **Stored data:** `feedbacks` collection (interviewee name/organization, scores, description, ref/ref_type/model_id, created_by, avg_score).
-- **PII:** yes — interviewee name + organization; `created_by` user reference.
-- **Retention:** indefinite (hard delete on `DELETE`; no soft-delete/TTL).
-- **Encryption:** none at rest; TLS in transit.
-- **Logging:** standard request logging; no sensitive data explicitly logged.
+Collected from the reviewer via the feedback form; stored in the `feedbacks` collection; retained indefinitely (hard delete on `DELETE`, no soft-delete/TTL); no at-rest encryption (TLS in transit); accessible to signed-in users via `GET /v2/feedbacks` (public when `PUBLIC_VIEWING` is on) and to the feedback's author/owner for `PATCH`/`DELETE`.
 
 **Risks:**
 - **PII exposure:** `interviewee` name/organization is PII; a public `GET /v2/feedbacks` could expose reviewer and interviewee identities to anonymous users.
 - **Relationship inference:** feedback records tie a reviewer and interviewee to a specific prototype and model, leaking business relationships.
 
+### AutoWRX data
+
+Feedback stores scores, description, and `ref`/`ref_type`/`model_id`; `avg_score` is derived.
+
+**Coverage:**
+- **Stored data:** `feedbacks` collection (scores, description, question, recommendation, ref/ref_type/model_id, avg_score).
+- **Retention:** indefinite (hard delete on `DELETE`; no soft-delete/TTL).
+- **Encryption:** none at rest; TLS in transit.
+- **Logging:** standard request logging; no sensitive data explicitly logged.
+
+**Risks:**
+- **Averaged-score integrity:** `avg_score` is derived from stored feedback; bulk or biased submissions distort prototype rankings displayed to users.
+
 ### Test coverage
 - **E2E (Playwright):** 1 test case(s) in `prototype-extended.spec.ts` — SITEMAP: ✅
+- **Estimated coverage:** ≈25% (est.) — 4 acceptance-criteria paths, 1 E2E case covers add + delete-own; `GET` pagination and public-browsing paths lightly covered; SITEMAP ✅.
 - **Unit (Jest):** none
 
 ## CAP-PROTO-08 — Project templates
@@ -554,16 +617,24 @@ Reads are public; writes require admin permission (`ADMIN`).
 - **Secrets:** none.
 
 **Risks:**
-- **Platform-wide payload:** templates apply to every prototype created from them. A compromised admin could seed a template embedding hostile code, pushing it to all new projects.
-- **Seed-supply chain:** the predefined seed (`predefinedProjectTemplates.js`) runs at startup; a compromised seed file silently seeds malicious starter code into every deployment.
+- **Platform-wide payload:** templates apply to every prototype created from them. A compromised admin could seed a template embedding hostile code, pushing it to all new projects. *Mitigation:* restrict `ADMIN`/template writes to vetted admins; review template code before publish.
+- **Seed-supply chain:** the predefined seed (`predefinedProjectTemplates.js`) runs at startup; a compromised seed file silently seeds malicious starter code into every deployment. *Mitigation:* pin/verify the predefined seed file in version control; audit startup seed logs.
 
-### Data protection
+### Personal data processing
+
+No — this capability does not process personal data (`created_by`/`updated_by` hold internal userId references; names/emails live in the Identity cluster).
+
+N/A.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
 
 Template data (code/widget_config/journey) is stored; no secrets.
 
 **Coverage:**
 - **Stored data:** `projecttemplates` collection (name, description, data JSON, visibility, created_by, updated_by); seeded at startup (seed never overwrites admin edits).
-- **PII:** no.
 - **Retention:** indefinite (hard delete on `DELETE`; seeded defaults re-insert only if absent).
 - **Encryption:** none at rest; TLS in transit.
 - **Logging:** seed outcome logged; no sensitive data logged.
@@ -574,4 +645,5 @@ Template data (code/widget_config/journey) is stored; no secrets.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none

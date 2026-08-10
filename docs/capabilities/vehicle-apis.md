@@ -68,25 +68,28 @@ Public — anyone can call these without signing in.
 - **Secrets:** none.
 
 **Risks:**
-- **Path-traversal in static serving:** the static `GET /vss/:version/:filename` handler maps URL segments to files under `backend/data/`; a weak normalization/caching path could be abused to read arbitrary JSON files from the server if segment sanitization misses encoded or `..` paths.
-- **Catalog exposure:** the unauthenticated version list discloses every VSS version the platform supports, giving an attacker the full signal taxonomy to target downstream integrations against.
+- **Path-traversal in static serving:** the static `GET /vss/:version/:filename` handler maps URL segments to files under `backend/data/`; a weak normalization/caching path could be abused to read arbitrary JSON files from the server if segment sanitization misses encoded or `..` paths. *Mitigation:* `version` is validated against `^v\d+\.` and `filename` is not used to resolve the file (RC→rc normalization applied); keep the segment validation on the route and add a test for encoded/`..` inputs.
+- **Catalog exposure:** the unauthenticated version list discloses every VSS version the platform supports, giving an attacker the full signal taxonomy to target downstream integrations against. *Mitigation:* versions are a public catalog by design (no auth); accept the disclosure as intended, or gate behind `PUBLIC_VIEWING` if the catalog must be hidden.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (Static VSS reference JSON only; no user email/name is stored or returned.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
-Static reference data only; no PII.
-
+### AutoWRX data
+Static reference data only.
 **Coverage:**
 - **Stored data:** none — static reference JSON files.
-- **PII:** no (reference signal data).
 - **Retention:** N/A (static files; 1-hour cache on `/vss/:version/:filename`).
 - **Encryption:** none (public static JSON); TLS in transit.
 - **Logging:** the static handler logs the requested path/version/filename; no sensitive data.
-
 **Risks:**
 - **Stale-spec leakage:** cached (1-hour) static JSON can keep serving a deprecated/superseded VSS version long after an admin intends to retire it, so consumers keep building against data the platform believed retired.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none
 
 ## CAP-VAPI-02 — Per-model VSS/COVESA API CRUD + computed tree
@@ -128,25 +131,28 @@ Reading the computed tree is optional via `PUBLIC_VIEWING`; creating/editing/del
 - **Secrets:** none.
 
 **Risks:**
-- **Computed-tree leak of private signals:** `GET /v2/models/:id/api` is optional-auth via `PUBLIC_VIEWING`; if a private model's computed tree were served without the access-scoping check, its entire signal definition set would leak to anonymous callers.
-- **Unauthorized signal tampering:** a missing auth check on `PATCH /v2/apis/:id` would let any authenticated user rewrite another tenant's signal definitions, corrupting dashboards and downstream consumers.
+- **Computed-tree leak of private signals:** `GET /v2/models/:id/api` is optional-auth via `PUBLIC_VIEWING`; if a private model's computed tree were served without the access-scoping check, its entire signal definition set would leak to anonymous callers. *Mitigation:* the computed-tree read is scoped to public + owned + role-permissioned models (private requires `READ_MODEL`, owner bypass); verify the scope on the read path and on `GET /v2/apis/model_id/:modelId` (currently no auth).
+- **Unauthorized signal tampering:** a missing auth check on `PATCH /v2/apis/:id` would let any authenticated user rewrite another tenant's signal definitions, corrupting dashboards and downstream consumers. *Mitigation:* `PATCH`/`DELETE` are restricted to owner-or-admin; keep the auth + authorization middleware on the route. ⚠️ `POST /v2/apis` lacks a model-access check — none currently — wire a `WRITE_MODEL` check to `POST` before creating the `Api`.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (`created_by` is a user reference; no email/name is stored on the `Api` document.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 API definitions are stored linked to the model and the creating user.
-
 **Coverage:**
 - **Stored data:** `apis` collection (`model` ref, `cvi` JSON, `created_by`).
-- **PII:** no (signal definitions; `created_by` is a user ref).
 - **Retention:** hard delete (no soft-delete, no snapshot).
 - **Encryption:** none beyond Mongo defaults / TLS in transit.
 - **Logging:** request logs; no sensitive data.
-
 **Risks:**
 - **Cross-tenant signal inference:** `created_by` and `model` references in `Api` documents can reveal which user owns which model's signal set; a listing gap could expose private ownership relationships.
 
 ### Test coverage
 - **E2E (Playwright):** 2 test case(s) in `vehicle-api.spec.ts` — SITEMAP: ✅
+- **Estimated coverage:** ≈45% (est.) — 2 E2E cases cover computed-tree read; ~6 acceptance paths; CRUD, `model_id/:modelId`, and detail-by-name paths uncovered.
 - **Unit (Jest):** none
 
 ## CAP-VAPI-03 — Replace APIs from a VSS spec
@@ -194,25 +200,28 @@ Requires `WRITE_MODEL` (owner bypass).
 - **Secrets:** none (the URL is user-supplied, not a stored secret).
 
 **Risks:**
-- **SSRF via `api_data_url`:** the server fetches the user-supplied URL to pull the VSS spec; without an allowlist or internal-address blocking, an attacker with `WRITE_MODEL` can make the server probe internal services (`http://169.254.169.254/…`, localhost admin ports).
-- **Destructive overwrite by a stolen token:** a single call replaces the entire `Api` document, so a leaked `WRITE_MODEL` token lets an attacker wipe a model's signal set irreversibly in one request.
+- **SSRF via `api_data_url`:** the server fetches the user-supplied URL to pull the VSS spec; without an allowlist or internal-address blocking, an attacker with `WRITE_MODEL` can make the server probe internal services (`http://169.254.169.254/…`, localhost admin ports). *Mitigation:* none currently — add an SSRF allowlist/blocklist (block link-local, loopback, and metadata IPs) before fetching `api_data_url`, and strip query params from logs.
+- **Destructive overwrite by a stolen token:** a single call replaces the entire `Api` document, so a leaked `WRITE_MODEL` token lets an attacker wipe a model's signal set irreversibly in one request. *Mitigation:* the route requires `WRITE_MODEL` (owner bypass); revoke `WRITE_MODEL` tokens on suspected compromise and snapshot the `Api` set before overwrite for recovery.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (Only the model id and a user-supplied `api_data_url`; no user email/name is stored.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Calling replace overwrites the model's API document; the old set is lost (no undo beyond change logs).
-
 **Coverage:**
 - **Stored data:** overwrites the model's `Api` document and hard-deletes/recreates `extendedapis` for the model.
-- **PII:** no.
 - **Retention:** old `Api` set hard-overwritten (no soft-delete, no snapshot); `extendedapis` hard-deleted.
 - **Encryption:** none beyond Mongo defaults / TLS in transit.
 - **Logging:** the model id and `api_data_url` are logged (the URL is logged — may carry query params).
-
 **Risks:**
 - **Irreversible signal-set loss:** the old API set is hard-overwritten with no soft-delete or snapshot, so a malicious or mistaken replace permanently destroys the prior signal definitions — recoverable only from change logs if they exist.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none
 
 ## CAP-VAPI-04 — Vehicle API view (List / Tree / Hierarchical / Compare)
@@ -246,25 +255,28 @@ Browsing the view is optional via `PUBLIC_VIEWING`; replacing requires `WRITE_MO
 - **Secrets:** none.
 
 **Risks:**
-- **Download exfiltration:** the download action returns the full computed VSS JSON, so a `PUBLIC_VIEWING=true` misconfiguration or a leaked read path hands the entire signal definition set to an anonymous user.
-- **Replace-action privilege bypass:** the replace/upload path in the UI must enforce `WRITE_MODEL` server-side; relying on UI hiding alone would let a crafted `POST /v2/models/:id/replace-api` call succeed for any authenticated user.
+- **Download exfiltration:** the download action returns the full computed VSS JSON, so a `PUBLIC_VIEWING=true` misconfiguration or a leaked read path hands the entire signal definition set to an anonymous user. *Mitigation:* download is gated by the same `READ_MODEL`/owner access scoping as the computed-tree read (private requires `READ_MODEL`); verify the scope on the download endpoint and avoid relying on `PUBLIC_VIEWING` alone for private models.
+- **Replace-action privilege bypass:** the replace/upload path in the UI must enforce `WRITE_MODEL` server-side; relying on UI hiding alone would let a crafted `POST /v2/models/:id/replace-api` call succeed for any authenticated user. *Mitigation:* `POST /v2/models/:id/replace-api` enforces `WRITE_MODEL` (owner bypass) server-side; keep the permission middleware on the route and do not trust UI hiding.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (Computed signal tree only; no user email/name is stored or returned.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 The view is computed from stored API/extended-API data; downloading exposes the model's signal definitions.
-
 **Coverage:**
 - **Stored data:** none new (computed on demand); download exposes the full signal set.
-- **PII:** no.
 - **Retention:** N/A (computed on demand).
 - **Encryption:** none (public signal data); TLS in transit.
 - **Logging:** request logs; no sensitive data.
-
 **Risks:**
 - **Bulk signal export:** a single download bundles every signal (including extended/wishlist signals unique to the model), giving one request a high-value exfiltration payload if access scoping is wrong.
 
 ### Test coverage
 - **E2E (Playwright):** 2 test case(s) in `vehicle-api.spec.ts` — SITEMAP: ✅
+- **Estimated coverage:** ≈40% (est.) — 2 E2E cases cover view-mode browse; ~5 acceptance paths; compare, download, and replace/upload paths uncovered.
 - **Unit (Jest):** none
 
 ## CAP-VAPI-05 — Extended APIs (wishlist signals)
@@ -308,25 +320,28 @@ Reading is optional via `PUBLIC_VIEWING`; writing requires auth + model access; 
 - **Secrets:** none.
 
 **Risks:**
-- **Cross-tenant signal injection:** if the model-access check on `POST` were bypassed, an authenticated user could inject extended signals into another tenant's private model, polluting its computed CVI.
-- **Uniqueness-bypass collision:** the `(apiName, model)` unique index is the only dedupe guard; a race or a check that runs before index validation could create duplicate signals that confuse downstream consumers.
+- **Cross-tenant signal injection:** if the model-access check on `POST` were bypassed, an authenticated user could inject extended signals into another tenant's private model, polluting its computed CVI. *Mitigation:* create requires `WRITE_MODEL` on the target model (owner bypass) and reads follow model access (public allowed, else `READ_MODEL`/owner); keep the model-access check on `POST` and reject `apiName` not starting with `Vehicle.`.
+- **Uniqueness-bypass collision:** the `(apiName, model)` unique index is the only dedupe guard; a race or a check that runs before index validation could create duplicate signals that confuse downstream consumers. *Mitigation:* rely on the Mongo unique index as the authoritative dedupe guard; surface index-violation errors as a `409` so callers retry rather than race.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (Extended signal definitions keyed by `(apiName, model)`; no user email/name is stored.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Extended signals are stored with a unique `(apiName, model)` index.
-
 **Coverage:**
 - **Stored data:** `extendedapis` collection (`apiName`, `model`, `skeleton`, `datatype`, …); unique index `(apiName, model)`.
-- **PII:** no.
 - **Retention:** hard delete (no soft-delete); removed when the model is deleted or when `replace-api` runs.
 - **Encryption:** none beyond Mongo defaults / TLS in transit.
 - **Logging:** request logs; no sensitive data.
-
 **Risks:**
 - **Wishlist-signal disclosure:** extended signals often encode proprietary behavior beyond standard VSS; a read-path gap would expose this proprietary wishlist to unauthorized users.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none
 
 ## CAP-VAPI-06 — Custom API schemas
@@ -368,25 +383,28 @@ Anyone can read schemas; writing requires `MANAGE_USERS` (admin). No secrets in 
 - **Secrets:** none (schema definitions only).
 
 **Risks:**
-- **Platform-wide validation template poisoning:** schemas are the validation gate for every Custom API Set; a compromised admin could push a permissive `schema` that accepts arbitrary malicious API payloads into all derived sets.
-- **Weak validation as an attack surface:** item validation is only basic (full JSON-schema validation is a TODO), so malformed or oversized `schema` strings could trigger parser/DB issues in downstream set storage.
+- **Platform-wide validation template poisoning:** schemas are the validation gate for every Custom API Set; a compromised admin could push a permissive `schema` that accepts arbitrary malicious API payloads into all derived sets. *Mitigation:* writes require `manageUsers` (admin only); review schema changes before publishing and keep an audit trail of schema mutations to detect tampering.
+- **Weak validation as an attack surface:** item validation is only basic (full JSON-schema validation is a TODO), so malformed or oversized `schema` strings could trigger parser/DB issues in downstream set storage. *Mitigation:* none currently — implement full JSON-schema validation and enforce a size cap on `schema` strings before persistence.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (`created_by` is an admin user reference; no email/name is stored on the schema.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Schema definitions stored in `customapischemas` (`code` unique).
-
 **Coverage:**
 - **Stored data:** `customapischemas` collection (`code` unique, `name`, `type`, `schema` JSON string, `relationships`, `tree_config`, `display_mapping`, `version`, `is_active`, `created_by`).
-- **PII:** no.
 - **Retention:** indefinite until hard delete (no soft-delete, no TTL).
 - **Encryption:** none beyond Mongo defaults / TLS in transit.
 - **Logging:** request logs; no sensitive data.
-
 **Risks:**
 - **Schema tampering without audit:** a modified schema silently re-shapes what every Custom API Set accepts; without an audit trail of schema changes, a tampered template is hard to detect after malicious sets have been created.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none
 
 ## CAP-VAPI-07 — Custom API sets
@@ -433,25 +451,28 @@ flowchart TD
 - **Secrets:** none.
 
 **Risks:**
-- **System-scope set takeover:** because system-scope sets have no admin gate, any authenticated user (not just admins) can create, update, or delete system-scoped sets that every tenant reads — a low-privilege account can tamper with shared, platform-visible API definitions.
-- **Cross-tenant system-set pollution:** a system-scoped set is public across tenants; without ownership/tenant scoping on system-scope writes, one user can push hostile or malformed API definitions visible to all consumers, with no admin approval step.
-- **Item-level bypass:** `POST/PATCH/DELETE /:id/items` require auth but not re-validated ownership on every item op in the spec — if item ops aren't scoped to the set owner, any authenticated user could mutate another user's set items.
+- **System-scope set takeover:** because system-scope sets have no admin gate, any authenticated user (not just admins) can create, update, or delete system-scoped sets that every tenant reads — a low-privilege account can tamper with shared, platform-visible API definitions. *Mitigation:* none currently — gate system-scope writes behind `manageUsers` (admin) and audit system-scope mutations.
+- **Cross-tenant system-set pollution:** a system-scoped set is public across tenants; without ownership/tenant scoping on system-scope writes, one user can push hostile or malformed API definitions visible to all consumers, with no admin approval step. *Mitigation:* none currently — add an admin approval step or tenant scoping for system-scope writes; flag `DISABLE_CUSTOM_API_SETS` to hide the UI if the gate cannot be added.
+- **Item-level bypass:** `POST/PATCH/DELETE /:id/items` require auth but not re-validated ownership on every item op in the spec — if item ops aren't scoped to the set owner, any authenticated user could mutate another user's set items. *Mitigation:* none currently — re-check set ownership on every item op and reject non-owner mutations (system-scope sets still need the admin gate from above).
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (`owner`/`created_by` are user references; no email/name is stored on the set.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Sets are stored with an `owner`/`created_by`; the entire API set lives in one document (`data.items[]` — mind the 16 MB limit).
-
 **Coverage:**
 - **Stored data:** `customapisets` collection (`custom_api_schema` ref, `custom_api_schema_code`, `scope`, `owner`, `created_by`, `name`, `description`, `avatar`, `provider_url`, `data.items[]`, `data.metadata`); entire set in one document (16 MB Mongo limit).
-- **PII:** no (API definitions; `owner` is a user ref).
 - **Retention:** hard delete (no soft-delete, no snapshot).
 - **Encryption:** none beyond Mongo defaults / TLS in transit.
 - **Logging:** request logs; no sensitive data.
-
 **Risks:**
 - **Document-growth DoS:** the whole set lives in one MongoDB document capped at 16 MB; an attacker who can append items unbounded could push the document toward the limit, corrupting or rejecting the entire set's storage.
 - **Owner-data leak via system scope:** a user mistakenly creating a system-scoped set instead of a user-scoped one exposes their custom API definitions (potentially proprietary) to every authenticated user — an irreversible misclassification with no prompt to revert.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none

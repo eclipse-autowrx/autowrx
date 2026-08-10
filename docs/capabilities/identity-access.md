@@ -105,27 +105,36 @@ Access token short-lived (`JWT_ACCESS_EXPIRATION_MINUTES`, 30 min prod / 30 days
 - **Secrets:** My access/refresh tokens are signed with the JWT secret (`config.jwt.secret`); my password is bcrypt-hashed; my refresh token is stored server-side in the `Token` collection.
 
 **Risks:**
-- **Credential brute-force / online guessing:** `authLimiter` is defined but not wired to any route, so `POST /v2/auth/login` can be hammered without throttling — weak passwords are exposed to online brute-force and credential-stuffing attacks.
-- **Refresh-token theft:** the long-lived refresh cookie is the equivalent of a long-lived session; an XSS-less cookie steal (e.g. via a compromised subdomain or log injection capturing the cookie) yields persistent account takeover, since the cookie is `httpOnly` but not bound to the access token or device.
-- **No expiry sweep:** the `Token` collection has no TTL index, so revoked/abandoned refresh tokens accumulate, and a stolen refresh token stays valid until explicit logout — extending the window of a token-theft attack.
+- **Credential brute-force / online guessing:** `authLimiter` is defined but not wired to any route, so `POST /v2/auth/login` can be hammered without throttling — weak passwords are exposed to online brute-force and credential-stuffing attacks. *Mitigation:* none currently — wire `authLimiter` to login/register/reset.
+- **Refresh-token theft:** the long-lived refresh cookie is the equivalent of a long-lived session; an XSS-less cookie steal (e.g. via a compromised subdomain or log injection capturing the cookie) yields persistent account takeover, since the cookie is `httpOnly` but not bound to the access token or device. *Mitigation:* none currently — bind the refresh token to the access token/device fingerprint and rotate on reuse.
+- **No expiry sweep:** the `Token` collection has no TTL index, so revoked/abandoned refresh tokens accumulate, and a stolen refresh token stays valid until explicit logout — extending the window of a token-theft attack. *Mitigation:* none currently — add a TTL index on the `Token` collection.
 
-### Data protection
+### Personal data processing
 
-My password is hashed (`bcrypt`) and never returned in user objects. My refresh cookie is `httpOnly` (no JS access); `Secure`/`SameSite=None`/`domain` apply only in production. My access token lives only in memory (`authStore`), not persisted client-side.
+Yes — my email and password (hashed). Collected from me at `POST /v2/auth/login` (email + password); stored in the `User` collection (email, bcrypt password hash) and the `Token` collection (refresh tokens owned by my user id); retained indefinitely on my user record, refresh tokens until logout/revoked; encrypted — password bcrypt-hashed (8 rounds), tokens JWT-signed with `config.jwt.secret`; accessible to me (my own user object) and to admins via user management (`MANAGE_USERS`). My password is never returned (`private`); my refresh cookie is `httpOnly` (no JS access), `Secure`/`SameSite=None`/`domain` only in production; my access token lives only in memory (`authStore`), not persisted client-side.
+
+**Risks:**
+- **Low bcrypt cost factor:** my password is hashed at 8 rounds, below the modern ≥12 recommendation — an offline brute-force against a leaked user DB cracks 8-round hashes faster.
+- **Email as sole login handle:** my email is the only login identifier and is returned in my user object, so a leaked email is sufficient to attempt login or password reset.
+
+### AutoWRX data
+
+My refresh-token document is operational session state; access tokens are ephemeral and not stored server-side.
 
 **Coverage:**
 - **Stored data:** My refresh-token document in the `Token` collection (`type=REFRESH`, `expires`, `blacklisted`); no TTL index. Access tokens are not stored server-side.
-- **PII:** yes — my email and password (hashed). Email is returned in my user object; password is never returned (`private`).
 - **Retention:** My refresh token stays valid until I sign out or it's revoked (no TTL index — revoked/abandoned tokens accumulate); my access token is short-lived (`JWT_ACCESS_EXPIRATION_MINUTES`, 30 min prod / 30 days dev).
-- **Encryption:** My password is bcrypt-hashed (8 rounds); tokens are JWT-signed with `config.jwt.secret`; my refresh cookie is `Secure`+`SameSite=None` in prod, `Lax` in dev; token documents have no at-rest encryption.
+- **Encryption:** Tokens are JWT-signed with `config.jwt.secret`; my refresh cookie is `Secure`+`SameSite=None` in prod, `Lax` in dev; token documents have no at-rest encryption.
 - **Logging:** Auth failures are logged via `logger` in the `auth` middleware; no credentials or tokens are logged.
 
 **Risks:**
-- **Password exposure on transport:** in dev the cookie is `Lax`/non-`Secure`, so a refresh cookie captured on a non-HTTPS dev/demo network exposes a long-lived session.
+- **Refresh-cookie theft:** the long-lived refresh cookie is the equivalent of a long-lived session; an XSS-less cookie steal (e.g. via a compromised subdomain or log injection capturing the cookie) yields persistent account takeover, since the cookie is `httpOnly` but not bound to the access token or device.
+- **Dev/demo transport exposure:** in dev the cookie is `Lax`/non-`Secure`, so a refresh cookie captured on a non-HTTPS dev/demo network exposes a long-lived session.
 - **Access-token leak via memory dump:** access tokens live in JS memory; a compromised browser extension or tab crash dump can exfiltrate the short-lived access token — bounded by expiry but enough to act within 30 min in prod.
 
 ### Test coverage
 - **E2E (Playwright):** 7 test case(s) in `auth.spec.ts` (5: sign-in prompt, login modal, admin login, wrong password, logout) + `debug-login.spec.ts` (2: login via Enter, login via API) — SITEMAP: ✅
+- **Estimated coverage:** ≈50% (est.) — of 4 acceptance-criteria bullets, E2E covers login + logout directly; refresh-tokens and 401-no-retry are Jest-only
 - **Unit (Jest):** 24 in `backend/tests/integration/auth.test.js` (login 3, logout 4, refresh-tokens 7, auth middleware 10) — v1 integration
 
 ## CAP-IDENTITY-02 — Registration
@@ -171,26 +180,33 @@ Registration is gated by the `SELF_REGISTRATION` site auth flag; no admin needed
 - **Secrets:** My password is bcrypt-hashed and stored; the system issues me JWT access/refresh tokens.
 
 **Risks:**
-- **Account-spam / namespace squatting:** with `SELF_REGISTRATION` enabled and no rate limit (the `authLimiter` gap), an attacker can bulk-create accounts to squat names/emails or enumerate which addresses are already registered via the `400` duplicate signal.
-- **Welcome-email enumeration / abuse:** the welcome email is sent on every successful registration; a script can weaponize registration to spam arbitrary addresses from the platform's mail reputation.
+- **Account-spam / namespace squatting:** with `SELF_REGISTRATION` enabled and no rate limit (the `authLimiter` gap), an attacker can bulk-create accounts to squat names/emails or enumerate which addresses are already registered via the `400` duplicate signal. *Mitigation:* none currently — wire `authLimiter` to login/register/reset.
+- **Welcome-email enumeration / abuse:** the welcome email is sent on every successful registration; a script can weaponize registration to spam arbitrary addresses from the platform's mail reputation. *Mitigation:* none currently — throttle welcome-email sends and add a per-IP registration cap.
 
-### Data protection
+### Personal data processing
 
-My `email` (unique, lowercased), hashed `password`, and `email_verified=false` are stored. My email is masked in public list responses.
-
-**Coverage:**
-- **Stored data:** My `User` document (name, email unique+lowercased, hashed password, `email_verified=false`, provider, timestamps).
-- **PII:** yes — my email, name, password (hashed). My email is masked in public list responses (`name,id,image_file` only).
-- **Retention:** indefinite — my user record persists until an admin deletes it (no TTL/soft-delete).
-- **Encryption:** My password is bcrypt-hashed (8 rounds); no at-rest encryption beyond hashing.
-- **Logging:** The welcome email is sent non-blocking; errors are logged via `logger`. No PII logged.
+Yes — my email, name, and password (hashed). Collected from me at `POST /v2/auth/register` (email, password, name; optional `image_file`/`provider`); stored in my `User` document (name, email unique+lowercased, bcrypt password hash, `email_verified=false`, provider, timestamps); retained indefinitely until an admin deletes it (no TTL/soft-delete); encrypted — password bcrypt-hashed (8 rounds), no at-rest encryption beyond hashing; accessible to me (my own user object) and to admins via user management (`MANAGE_USERS`), masked in public list responses (`name,id,image_file` only).
 
 **Risks:**
 - **Email enumeration via duplicate signal:** the `400 email already taken` response lets an attacker probe which addresses are registered, enabling account-enumeration and targeted phishing.
 - **Unverified-identity persistence:** accounts are created with `email_verified=false` and no proof of email ownership at creation time, so an attacker can register using someone else's email and impersonate them until verification is enforced.
 
+### AutoWRX data
+
+The welcome email is an operational side-effect of account creation; my `User` document holds the operational identity record.
+
+**Coverage:**
+- **Stored data:** My `User` document (name, email unique+lowercased, hashed password, `email_verified=false`, provider, timestamps).
+- **Retention:** indefinite — my user record persists until an admin deletes it (no TTL/soft-delete).
+- **Encryption:** My password is bcrypt-hashed (8 rounds); no at-rest encryption beyond hashing.
+- **Logging:** The welcome email is sent non-blocking; errors are logged via `logger`. No PII logged.
+
+**Risks:**
+- **Indefinite retention without soft-delete:** user records persist until a hard admin delete with no TTL/soft-delete, so stale or erroneously created accounts accumulate with no recovery path.
+
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered (no register spec; `auth.spec.ts` covers login/logout only) — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** 5 in `backend/tests/integration/auth.test.js` (`POST /v1/auth/register`) — v1 integration
 
 ## CAP-IDENTITY-03 — Password reset & email verification
@@ -244,27 +260,35 @@ My reset code is persisted in `Token` (`type=RESET_PASSWORD`); existing reset to
 - **Secrets:** I receive a 6-digit reset code (`crypto.randomInt`), a JWT legacy reset token, and a JWT verify-email token; my new password is bcrypt-hashed.
 
 **Risks:**
-- **6-digit code brute-force:** the primary reset is a 6-digit code with no documented rate limit on `POST /v2/auth/reset-password`; an attacker holding an email can attempt codes until success within the 60-minute window (only ~1M space, and the always-`200` forgot-password response prevents enumeration but not guessing).
-- **Account takeover via legacy token path:** the `?token` legacy reset path is retained; if those tokens are predictable, long-lived, or not single-use, an attacker can forge or reuse them to reset passwords without controlling the email.
-- **Audit gap on reset:** reset events are logged but only `forgot-password` is noted as logged — a successful `reset-password` from a stolen code leaves a thin trail, complicating takeover forensics.
+- **6-digit code brute-force:** the primary reset is a 6-digit code with no documented rate limit on `POST /v2/auth/reset-password`; an attacker holding an email can attempt codes until success within the 60-minute window (only ~1M space, and the always-`200` forgot-password response prevents enumeration but not guessing). *Mitigation:* none currently — wire `authLimiter` to login/register/reset and add per-email code-attempt throttling.
+- **Account takeover via legacy token path:** the `?token` legacy reset path is retained; if those tokens are predictable, long-lived, or not single-use, an attacker can forge or reuse them to reset passwords without controlling the email. *Mitigation:* none currently — retire the legacy token path or enforce single-use + short TTL on legacy tokens.
+- **Audit gap on reset:** reset events are logged but only `forgot-password` is noted as logged — a successful `reset-password` from a stolen code leaves a thin trail, complicating takeover forensics. *Mitigation:* none currently — log successful `reset-password` events with origin/referer to match `forgot-password`.
 
-### Data protection
+### Personal data processing
 
-My codes/tokens are one-time, short-lived, and deleted on use. My password is hashed and never logged. My email is the recovery handle.
-
-**Coverage:**
-- **Stored data:** My `Token` docs (`type=RESET_PASSWORD` 60-min expiry, `type=VERIFY_EMAIL`); deleted on success. My password is updated (hashed) on my `User` doc.
-- **PII:** yes — my email (recovery handle), my new password (hashed).
-- **Retention:** My reset/verify tokens are single-use, deleted on success; 60-min code expiry; no TTL index so abandoned codes persist until the expiry check. My password is retained indefinitely.
-- **Encryption:** My new password is bcrypt-hashed; reset/verify tokens are JWT-signed; my 6-digit code is stored as plaintext in the `Token` collection.
-- **Logging:** `forgot_password` and `password_reset` events are logged via `logService` (origin/referer captured); no code/token is logged.
+Yes — my email (recovery handle) and my new password (hashed). Collected from me at `POST /v2/auth/forgot-password {email}`, `POST /v2/auth/reset-password {email,code,password}`, and `POST /v2/auth/verify-email?token=…`; stored in my `User` document (new password bcrypt-hashed on reset) and `Token` docs (`type=RESET_PASSWORD` 60-min code, `type=VERIFY_EMAIL` token) tied to my email/user id; retained — password indefinite, reset/verify tokens single-use deleted on success (no TTL index so abandoned codes persist until the expiry check); encrypted — new password bcrypt-hashed, reset/verify tokens JWT-signed, 6-digit code stored as plaintext in the `Token` collection; accessible to me (the code/token is emailed to me) and to the system — never logged.
 
 **Risks:**
 - **Recovery-handle hijack:** email is the sole recovery handle; anyone controlling the mailbox receives the 6-digit code and can take over the account, regardless of password strength.
+- **Reset does not re-verify ownership:** a successful reset does not re-verify email ownership, so a mailbox compromise at any point lets the attacker rotate the password and persist access.
+
+### AutoWRX data
+
+My reset/verify tokens are one-time, short-lived operational secrets, deleted on use.
+
+**Coverage:**
+- **Stored data:** My `Token` docs (`type=RESET_PASSWORD` 60-min expiry, `type=VERIFY_EMAIL`); deleted on success. My password is updated (hashed) on my `User` doc.
+- **Retention:** My reset/verify tokens are single-use, deleted on success; 60-min code expiry; no TTL index so abandoned codes persist until the expiry check.
+- **Encryption:** reset/verify tokens are JWT-signed; my 6-digit code is stored as plaintext in the `Token` collection; token documents have no at-rest encryption.
+- **Logging:** `forgot_password` and `password_reset` events are logged via `logService` (origin/referer captured); no code/token is logged.
+
+**Risks:**
 - **Code-in-log exposure:** if the mailed 6-digit code or legacy token is captured by mailbox middleware or logged by an upstream mail relay, the one-time secret leaks before use.
+- **Plaintext code at rest:** the 6-digit code is stored as plaintext in the `Token` collection, so a DB read leaks a live reset code directly.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered (no forgot-password/reset/verify-email spec) — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** 16 in `backend/tests/integration/auth.test.js` (forgot-password 3, reset-password 6, send-verification-email 2, verify-email 5) — v1 integration
 
 ## CAP-IDENTITY-04 — SSO (OIDC ID-token + GitHub OAuth)
@@ -322,27 +346,35 @@ Provider `clientSecret`s are **encrypted at rest**, decrypted only for admin dis
 - **Secrets:** Provider `clientSecret`s are encrypted at rest; the GitHub `client_secret` is used for code exchange; JWT access/refresh tokens are issued to me on success.
 
 **Risks:**
-- **ID-token replay / acceptance of forged tokens:** `POST /v2/auth/sso` trusts a client-supplied `idToken`; if the provider's signature/issuer/audience is not strictly validated (or a stolen ID token is replayed within its lifetime), an attacker can impersonate any user by submitting a captured or crafted token.
-- **Auto-registration identity squatting:** with `SSO_AUTO_REGISTRATION=true`, an attacker controlling a provider tenant or a permissive email claim can mint accounts matching arbitrary emails, then later collide with a real user's email when that user first signs in.
-- **Supply-chain / misconfigured provider:** a malicious or misconfigured provider in `SSO_PROVIDERS` (over-broad scopes, leaked `clientSecret` despite encryption-at-rest) becomes a silent backdoor to account creation and login.
+- **ID-token replay / acceptance of forged tokens:** `POST /v2/auth/sso` trusts a client-supplied `idToken`; if the provider's signature/issuer/audience is not strictly validated (or a stolen ID token is replayed within its lifetime), an attacker can impersonate any user by submitting a captured or crafted token. *Mitigation:* none currently — strictly validate the ID-token signature, issuer, and audience server-side; enforce `nonce` and single-use replay.
+- **Auto-registration identity squatting:** with `SSO_AUTO_REGISTRATION=true`, an attacker controlling a provider tenant or a permissive email claim can mint accounts matching arbitrary emails, then later collide with a real user's email when that user first signs in. *Mitigation:* none currently — pin auto-registration to a trusted provider tenant list and reconcile on email collision.
+- **Supply-chain / misconfigured provider:** a malicious or misconfigured provider in `SSO_PROVIDERS` (over-broad scopes, leaked `clientSecret` despite encryption-at-rest) becomes a silent backdoor to account creation and login. *Mitigation:* none currently — audit `SSO_PROVIDERS` scopes and rotate `clientSecret`s; enforce least-privilege scopes.
 
-### Data protection
+### Personal data processing
 
-SSO provider secrets are never exposed to me as a non-admin (the public list returns only enabled providers without secrets). My SSO-linked account stores `provider`/`provider_user_id`/`provider_data`; a password is optional for SSO accounts.
-
-**Coverage:**
-- **Stored data:** My `User` doc (`provider`, `provider_user_id`, `provider_data[]`, `email_verified=true` for SSO-created users, avatar `image_file`); updated on each SSO login.
-- **PII:** yes — my email, display name, avatar URL, and provider profile data (`provider_data`).
-- **Retention:** My `provider_data` is retained indefinitely; my SSO user persists until an admin deletes it.
-- **Encryption:** Provider `clientSecret`s are encrypted at rest; my JWT is signed with `config.jwt.secret`; HTTPS is used to provider endpoints.
-- **Logging:** Parse/exchange errors are logged via `logger`; my ID-token claim JSON may be included in error messages (`logger.error`).
+Yes — my email, display name, avatar URL, and provider profile data (`provider_data`). Collected from my SSO provider at `POST /v2/auth/sso {providerId,idToken}` and the GitHub OAuth callback (`GET /v2/auth/github-sso/callback?code=`); stored in my `User` doc (`provider`, `provider_user_id`, `provider_data[]`, `email_verified=true` for SSO-created users, avatar `image_file`), updated on each SSO login; retained indefinitely until an admin deletes it; encrypted — provider `clientSecret`s are encrypted at rest (never exposed to me as a non-admin; the public list returns only enabled providers without secrets), my JWT is signed with `config.jwt.secret`, HTTPS to provider endpoints; accessible to me (my own user object) and to admins via user management. A password is optional for SSO accounts.
 
 **Risks:**
 - **Provider-data persistence:** `provider_data` (profile/emails from the IdP) is stored indefinitely; if the provider later revokes or changes the user's identity, stale `provider_user_id` bindings keep pointing at the local account, enabling identity confusion or takeovers after an email change at the IdP.
+- **ID-token claim leakage in logs:** parse/exchange errors are logged via `logger` and my ID-token claim JSON may be included in error messages, exposing personal claims to anyone with log access.
+
+### AutoWRX data
+
+SSO provider configuration (secrets, enabled flags) is operational config; my SSO user record links to it.
+
+**Coverage:**
+- **Stored data:** Provider config in `SSO_PROVIDERS` (`clientSecret` encrypted at rest); my `User` doc links (`provider`, `provider_user_id`, `provider_data[]`).
+- **Retention:** My `provider_data` is retained indefinitely; my SSO user persists until an admin deletes it; provider config persists until rewritten.
+- **Encryption:** Provider `clientSecret`s are encrypted at rest; my JWT is signed with `config.jwt.secret`; HTTPS is used to provider endpoints; no at-rest encryption for user/`provider_data` docs.
+- **Logging:** Parse/exchange errors are logged via `logger`; my ID-token claim JSON may be included in error messages (`logger.error`).
+
+**Risks:**
 - **Secret-at-rest dependence:** encryption-at-rest protects `clientSecret`s only as long as the encryption key is separate from the database; a key leak makes all provider secrets decryptable at once.
+- **Provider config has no audit trail:** changes to `SSO_PROVIDERS` (add/remove/rotate) are not audited, so a backdoor provider can be added and removed without a trace.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered (no SSO/GitHub-OAuth spec) — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-IDENTITY-05 — User profile
@@ -388,26 +420,34 @@ I must be signed in; I can edit only myself (no cross-user self-edit).
 - **Secrets:** My password is bcrypt-hashed (marked `private`, never returned); the `PASSWORD_MANAGEMENT` gate is enforced server-side.
 
 **Risks:**
-- **Password-change bypass:** if the `PASSWORD_MANAGEMENT` gate is checked client-side only, a direct `PATCH /v2/users/self` with a `password` field could change a password without the flag, defeating the policy.
-- **Self-edit of identifier:** if validation is loose, a user could change their `email` or other identifying field via `PATCH /v2/users/self` to collide with another account, enabling impersonation.
+- **Password-change bypass:** if the `PASSWORD_MANAGEMENT` gate is checked client-side only, a direct `PATCH /v2/users/self` with a `password` field could change a password without the flag, defeating the policy. *Mitigation:* the `PASSWORD_MANAGEMENT` gate is enforced server-side (route-level check) — keep it there; do not move to client-only.
+- **Self-edit of identifier:** if validation is loose, a user could change their `email` or other identifying field via `PATCH /v2/users/self` to collide with another account, enabling impersonation. *Mitigation:* none currently — reject `email`/identifier changes on the self-edit route.
+- **Password change without current password:** `PATCH /v2/users/self` with a `password` field rotates the password with no "current password" proof, so a hijacked session can rotate the password and lock the legitimate user out irreversibly. *Mitigation:* none currently — require current password on self-change.
 
-### Data protection
+### Personal data processing
+
+Yes — my name, email, avatar (file path), and password (when changed). Collected from me at `GET`/`PATCH /v2/users/self` (name, avatar; password only when `PASSWORD_MANAGEMENT=true`); stored in my `User` doc (name, `image_file` path, password hashed if changed); retained indefinitely (user-controlled, no TTL); encrypted — password bcrypt-hashed (marked `private`, never returned), avatar stored as a file path (no encryption); accessible to me (my own user object) and to admins via user management.
+
+**Risks:**
+- **Self-edit of personal identifier:** if validation is loose, a user could change their `email` via `PATCH /v2/users/self` to collide with another account, enabling impersonation (see also Security).
+- **Avatar leaks identity:** my avatar file path is tied to my identity and may be publicly fetchable when `PUBLIC_VIEWING=true`, exposing my presence without consent.
+
+### AutoWRX data
 
 My avatar is stored as a file path; my password is hashed and `private` (never returned).
 
 **Coverage:**
 - **Stored data:** My `User` doc (name, `image_file` path, password hashed if changed).
-- **PII:** yes — my name, email, avatar (file path). My password is never returned (`private`).
 - **Retention:** indefinite — my name/avatar are user-controlled; no TTL.
 - **Encryption:** My password is bcrypt-hashed; my avatar is stored as a file path (no encryption).
 - **Logging:** Errors are logged via `logger`; no PII logged.
 
 **Risks:**
 - **Avatar path injection:** storing an avatar as a file path (rather than an opaque asset id) opens the door to path traversal or SSRF if the path is rendered/loaded without normalization.
-- **Password-in-history loss:** changing a password has no documented "current password" requirement, so a hijacked session can rotate the password and lock the legitimate user out irreversibly.
 
 ### Test coverage
 - **E2E (Playwright):** 2 test case(s) in `profile.spec.ts` (profile layout, edit display name) — SITEMAP: ⚠️ (avatar ❌, change-password not covered; ~50%)
+- **Estimated coverage:** ≈50% (est.) — E2E covers name edit only; avatar and change-password paths are not exercised
 - **Unit (Jest):** 7 in `backend/tests/unit/models/user.model.test.js` (User validation + toJSON)
 
 ## CAP-IDENTITY-06 — User management (admin)
@@ -451,27 +491,35 @@ Writes require `MANAGE_USERS`. The `includeFullDetails` read is admin-gated.
 - **Secrets:** Passwords are bcrypt-hashed (marked `private`); emails are masked in public list responses.
 
 **Risks:**
-- **Privilege escalation via user edit:** a missing or weak `MANAGE_USERS` check on `PATCH /v2/users/:userId` could let an attacker elevate a victim to admin (or elevate their own account), granting platform-wide control.
-- **Unmasked-email enumeration:** if email masking is applied at the response layer but `includeFullDetails` (admin-only) is not enforced server-side, a non-admin could recover full emails of every user.
-- **Irreversible user delete:** `DELETE /v2/users/:userId` is a hard operation; a compromised or rogue admin permanently destroys a user record and its audit trail with no soft-delete recovery.
+- **Privilege escalation via user edit:** a missing or weak `MANAGE_USERS` check on `PATCH /v2/users/:userId` could let an attacker elevate a victim to admin (or elevate their own account), granting platform-wide control. *Mitigation:* `MANAGE_USERS` is enforced server-side on POST/PATCH/DELETE — keep it route-level; add a separate guard against self-elevation/role escalation.
+- **Unmasked-email enumeration:** if email masking is applied at the response layer but `includeFullDetails` (admin-only) is not enforced server-side, a non-admin could recover full emails of every user. *Mitigation:* none currently — enforce `includeFullDetails` server-side, not only in the response serializer.
+- **Irreversible user delete:** `DELETE /v2/users/:userId` is a hard operation; a compromised or rogue admin permanently destroys a user record and its audit trail with no soft-delete recovery. *Mitigation:* none currently — add soft-delete + an admin audit trail for deletes.
 
-### Data protection
+### Personal data processing
 
-Emails are masked in list responses; the `password` field is `private`; `includeFullDetails` is admin-only.
+Yes — the full user directory: name, email, password (hashed). Collected from admins at `POST /v2/users` and from each user at registration; stored in the `users` collection (full `User` docs); retained indefinitely (hard delete, no soft-delete); encrypted — passwords bcrypt-hashed (marked `private`, never returned), emails masked in public list responses (`name,id,image_file` only), `includeFullDetails` admin-only; accessible to admins (`MANAGE_USERS`) and to each user for their own record.
+
+**Risks:**
+- **PII leakage via masked-but-recoverable emails:** masked emails still leak structure (domain, length, prefix length); combined with the public list when `PUBLIC_VIEWING=true`, this enables user-enumeration and targeted phishing.
+- **Admin mass-PII access:** any admin with `MANAGE_USERS` can read and mutate the full PII of every user, so a single compromised admin session exposes the entire directory.
+
+### AutoWRX data
+
+The `users` collection is the operational identity directory; admin writes are operational provisioning actions.
 
 **Coverage:**
 - **Stored data:** `users` collection (full `User` docs); deleted hard (no soft-delete).
-- **PII:** yes — name, email (masked in public list), password (hashed, `private`).
 - **Retention:** indefinite; hard delete (no soft-delete / no audit trail of deletes).
 - **Encryption:** Passwords are bcrypt-hashed; no at-rest encryption for user docs.
 - **Logging:** Errors are logged via `logger`; no audit trail of admin user edits.
 
 **Risks:**
-- **PII leakage via masked-but-recoverable emails:** masked emails still leak structure (domain, length, prefix length); combined with the public list when `PUBLIC_VIEWING=true`, this enables user-enumeration and targeted phishing.
 - **Hard-delete audit gap:** deleting a user removes the identity anchored to all their prior actions, breaking attribution of historical activity and leaving an audit gap.
+- **No admin-edit audit trail:** admin user edits (create/update/delete) are not audited, so privileged changes leave no forensic trail.
 
 ### Test coverage
 - **E2E (Playwright):** 4 test case(s) in `admin.spec.ts` (3: user management page, `/manage-users` route, non-admin blocked) + `admin-extended.spec.ts` (1: create-user form fill + cancel) — SITEMAP: ✅
+- **Estimated coverage:** ≈80% (est.) — E2E covers list, create, and non-admin block; PATCH/DELETE and `includeFullDetails` not directly asserted
 - **Unit (Jest):** 42 in `backend/tests/integration/user.test.js` (POST/GET/GET-id/DELETE/PATCH `/v1/users`) — v1 integration
 
 ## CAP-IDENTITY-07 — RBAC v1 (primary)
@@ -526,27 +574,35 @@ Assign/remove require `MANAGE_USERS`; `has-permission` requires me to be signed 
 - **Secrets:** none — UserRole bindings carry no credentials.
 
 **Risks:**
-- **Privilege escalation via grant:** a missing `MANAGE_USERS` check on `POST /v2/permissions` lets any authenticated user grant themselves or others arbitrary roles (e.g. `writeModel:*`), escalating to global write access.
-- **Owner-bypass abuse:** ownership bypass means whoever owns a `ref` gains full rights to it; an unintended ownership transfer (or a model created with a hijacked `created_by`) silently grants full control to the wrong party.
-- **Wildcard ref explosion:** `ref=*` grants apply globally; an over-broad `*` grant is a one-shot privilege escalation that no per-resource check can ever deny.
+- **Privilege escalation via grant:** a missing `MANAGE_USERS` check on `POST /v2/permissions` lets any authenticated user grant themselves or others arbitrary roles (e.g. `writeModel:*`), escalating to global write access. *Mitigation:* `MANAGE_USERS` is enforced server-side on POST/DELETE — keep it route-level; reject self-grants.
+- **Owner-bypass abuse:** ownership bypass means whoever owns a `ref` gains full rights to it; an unintended ownership transfer (or a model created with a hijacked `created_by`) silently grants full control to the wrong party. *Mitigation:* none currently — make ownership transfers explicit and verify `created_by` on creation.
+- **Wildcard ref explosion:** `ref=*` grants apply globally; an over-broad `*` grant is a one-shot privilege escalation that no per-resource check can ever deny. *Mitigation:* none currently — disallow `*` refs or scope them to admins only.
 
-### Data protection
+### Personal data processing
 
-UserRole records bind `(user, role, ref)` (unique); no secrets are stored.
+Yes — user IDs and their capability mappings (relationship/capability data linking a person to what they can do). Collected from admins at `POST /v2/permissions {user,role,ref}`; stored in `UserRole` documents (`user`, `role`, `ref`; unique compound); retained indefinitely until manually revoked; encrypted — none (no secrets stored); accessible to admins (`MANAGE_USERS`) and to each user for their own roles (`GET /v2/permissions/self`).
+
+**Risks:**
+- **Relationship/capability leak:** `GET /v2/permissions` and `users-by-roles` expose who can do what on which resource — a capability map an attacker can use to target high-privilege users or sensitive `ref`s.
+- **No notice for grants:** a user is granted capabilities without notification, so unexpected access changes go unnoticed by the subject.
+
+### AutoWRX data
+
+`UserRole` records are the operational capability graph; no secrets are stored.
 
 **Coverage:**
 - **Stored data:** `UserRole` documents (`user`, `role`, `ref`; unique compound); no secrets.
-- **PII:** yes — user IDs and their capability mappings (relationship/capability data).
 - **Retention:** Bindings persist indefinitely until manually revoked; no audit trail of changes.
 - **Encryption:** none (no secrets stored).
 - **Logging:** none / N/A — no permission-change audit log.
 
 **Risks:**
-- **Relationship/capability leak:** `GET /v2/permissions` and `users-by-roles` expose who can do what on which resource — a capability map an attacker can use to target high-privilege users or sensitive `ref`s.
 - **Persistence of mis-grants:** without an audit trail of permission changes, a mis-granted role persists silently until someone notices and manually revokes it.
+- **No permission-change audit log:** grant/revoke events are not recorded, so privilege changes leave no forensic trail.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered (permission endpoints `/v2/permissions*` and `has-permission` not directly tested; access denial exercised indirectly via `admin.spec.ts`) — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none (no Jest tests for `permission.service` / `checkPermission`)
 
 ## CAP-IDENTITY-08 — Casbin RBAC v2 (partial)
@@ -589,17 +645,24 @@ Auth is required; policy assignment is admin-only. **Partial** — v1 remains th
 - **Secrets:** none — Casbin policies carry no credentials.
 
 **Risks:**
-- **Unauthenticated authorize endpoint:** `POST /v2/auth/authorize` has no auth barrier on the route, so an internal caller that reaches it can probe authorization decisions for arbitrary `(sub, act, obj)` — an oracle to enumerate who can do what.
-- **Dual-RBAC drift:** v1 and v2 coexist; a resource check routed through v1 may diverge from v2's policy, leaving gaps where one says allow and the other deny — easy to mis-configure during partial migration.
-- **Policy-tamper via admin grant:** `assignRoleToUserV2` is admin-controlled; a compromised admin can rewrite Casbin policies to grant themselves `owner` on every object.
+- **Unauthenticated authorize endpoint:** `POST /v2/auth/authorize` has no auth barrier on the route, so an internal caller that reaches it can probe authorization decisions for arbitrary `(sub, act, obj)` — an oracle to enumerate who can do what. *Mitigation:* none currently — restrict the route to internal callers (loopback/service mesh) or require a service token.
+- **Dual-RBAC drift:** v1 and v2 coexist; a resource check routed through v1 may diverge from v2's policy, leaving gaps where one says allow and the other deny — easy to mis-configure during partial migration. *Mitigation:* none currently — pick one path per resource and add a drift test asserting v1/v2 agreement.
+- **Policy-tamper via admin grant:** `assignRoleToUserV2` is admin-controlled; a compromised admin can rewrite Casbin policies to grant themselves `owner` on every object. *Mitigation:* none currently — audit policy mutations and require a second admin to confirm bulk grants.
 
-### Data protection
+### Personal data processing
 
-Casbin policies are stored in the policy store; no secrets.
+Yes — subject/user identifiers embedded in Casbin policies. Collected from admins via `assignRoleToUserV2`; stored in the policy store (owner/writer/reader grouping policies binding subjects to objects); retained indefinitely until rewritten; encrypted — none (no secrets stored); accessible to admins and to the internal `/authorize` caller.
+
+**Risks:**
+- **Subject enumeration via policy read:** the policy store encodes which user can do what on which object; a read (via a backup leak or admin API) reveals the full capability graph keyed by user id.
+- **No notice for v2 grants:** like v1, v2 grants are made without notifying the subject, so unexpected capability changes go unnoticed.
+
+### AutoWRX data
+
+Casbin policies are the operational v2 capability graph; no secrets are stored.
 
 **Coverage:**
 - **Stored data:** Casbin policies in the policy store (owner/writer/reader grouping policies); no secrets.
-- **PII:** yes — subject/user identifiers embedded in policies.
 - **Retention:** indefinite — the policy store persists until rewritten.
 - **Encryption:** none (no secrets stored).
 - **Logging:** none / N/A — no policy-change audit signal.
@@ -610,6 +673,7 @@ Casbin policies are stored in the policy store; no secrets.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered (no `/v2/auth/authorize` spec) — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
 
 ## CAP-IDENTITY-09 — Manage Users & Manage Features (admin)
@@ -653,25 +717,33 @@ Both pages require `MANAGE_USERS`.
 - **Secrets:** none surfaced to me — passwords are `private`; emails are visible to me as an admin via the directory.
 
 **Risks:**
-- **Bulk privilege grant:** the manage-features UI grants feature roles to users in bulk; a compromised admin can sweep-grant admin-tier capabilities across many accounts in one action.
-- **UI-bypass via direct API:** if the page-level `MANAGE_USERS` guard is enforced in the UI but the underlying `/v2/users` and `/v2/permissions` endpoints are not independently re-checked, an admin UI bypass (or direct API call) could perform the same grants.
-- **Feature-role naming confusion:** feature categories map to permission roles; a mislabeled category can trick an admin into granting a more powerful role than the label suggests.
+- **Bulk privilege grant:** the manage-features UI grants feature roles to users in bulk; a compromised admin can sweep-grant admin-tier capabilities across many accounts in one action. *Mitigation:* none currently — require a second admin to confirm bulk grants and audit sweep-grant actions.
+- **UI-bypass via direct API:** if the page-level `MANAGE_USERS` guard is enforced in the UI but the underlying `/v2/users` and `/v2/permissions` endpoints are not independently re-checked, an admin UI bypass (or direct API call) could perform the same grants. *Mitigation:* the underlying endpoints re-check `MANAGE_USERS` server-side — keep the guard at the API layer, not only in the UI.
+- **Feature-role naming confusion:** feature categories map to permission roles; a mislabeled category can trick an admin into granting a more powerful role than the label suggests. *Mitigation:* none currently — display the backing permission role next to each feature category label.
 
-### Data protection
+### Personal data processing
+
+Yes — the full user directory (name, email) is surfaced and editable by admins. Collected from admins via the `/admin/manage-users` and `/manage-features` pages; stored in `User` and `UserRole` records (via the underlying `/v2/users` and `/v2/permissions` endpoints); retained indefinitely (matches user management — no TTL/soft-delete); encrypted — bcrypt for passwords, none for directory/role data; accessible to admins (`MANAGE_USERS`).
+
+**Risks:**
+- **Mass PII access:** manage-users surfaces a searchable, paginated list of all users with editable PII — a single compromised admin session exposes and can mutate the entire user directory.
+- **PII in feature-grant UI:** the manage-features page lists users by name/email alongside grantable capabilities, exposing PII in a privilege-grant context.
+
+### AutoWRX data
 
 These pages operate on user/role records; no secrets are surfaced beyond what user management already exposes.
 
 **Coverage:**
 - **Stored data:** `User` and `UserRole` records (via the underlying `/v2/users` and `/v2/permissions` endpoints).
-- **PII:** yes — the full user directory (name, email) is surfaced and editable by me as an admin.
 - **Retention:** indefinite — matches user management (no TTL/soft-delete).
 - **Encryption:** bcrypt for passwords; none for directory/role data.
 - **Logging:** none beyond the underlying endpoints — feature-role grants leave a thin forensic trail.
 
 **Risks:**
-- **Mass PII access:** manage-users surfaces a searchable, paginated list of all users with editable PII — a single compromised admin session exposes and can mutate the entire user directory.
 - **Grant-trail gap:** feature-role grants made through the UI may not be audited beyond the underlying permission endpoint, so bulk grants can leave a thin forensic trail.
+- **No soft-delete for managed users:** deletes from manage-users are hard, so an erroneous admin delete loses the operational user record with no recovery.
 
 ### Test coverage
 - **E2E (Playwright):** 3 test case(s) in `admin-extended.spec.ts` (2: `/manage-features` page, create-user form) + `admin-features.spec.ts` (1: assign user to feature via UI) — SITEMAP: ✅
+- **Estimated coverage:** ≈70% (est.) — E2E covers manage-features + create-user + assign-feature; non-admin `403` and revoke paths not directly asserted
 - **Unit (Jest):** none (admin UI only)

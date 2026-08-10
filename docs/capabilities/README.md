@@ -20,13 +20,14 @@ Each capability is an `## CAP-<CLUSTER>-NN — <title>` heading with a **stable 
   - **Input validation** — what the caller must send / what is rejected (or `not validated`).
   - **Rate limiting** — applied / not applied (cite the `authLimiter` gap if relevant) / `N/A`.
   - **Secrets** — any secrets/credentials the consumer handles or the system stores, and how protected (or `none`).
-- **Data protection** — what data is stored/sent, secrets, retention, privacy, followed by a **Risks:** bullet list. **Every Data protection section must address each of these topics explicitly** (real value, `N/A`, or `not implemented` — never absent):
-  - **Stored data** — what is persisted and where (or `none`).
-  - **PII** — personal data handled? (`no` / `yes — <kind>`).
+  - **Risks** — each risk bullet ends with a `*Mitigation:*` (what the system does or should do to control it; `none currently — <recommendation>` if absent).
+- **Personal data processing** — states **explicitly whether the capability processes personal data** (`Yes — <what: email, name, …>` or `No — this capability does not process personal data.`). If yes, how it's handled: what's collected, where stored, retention, encryption, who can access. Every CAP answers yes or no — absence is not allowed. Followed by a **Risks:** bullet list for personal-data risks (`none — no personal data processed.` when no).
+- **AutoWRX data** — the operational/business data AutoWRX stores for the capability, with a **Coverage:** checklist (every topic explicit — `N/A`/`not implemented` where true) and a **Risks:** bullet list:
+  - **Stored data** — what operational data is persisted and where (or `none`).
   - **Retention** — how long kept / TTL / hard vs soft delete / indefinite (or `N/A`).
   - **Encryption** — at rest / in transit / hashing (e.g. bcrypt) / `none`.
   - **Logging** — what is logged, any sensitive data (or `none / N/A`).
-- **Test coverage** — E2E (Playwright) test-case count for this capability, the spec file(s), and SITEMAP status (`✅`/`⚠️`/`❌`); plus unit (Jest) count if any. State `0 — not covered` when there is no E2E spec.
+- **Test coverage** — E2E (Playwright) test-case count for this capability, the spec file(s), SITEMAP status (`✅`/`⚠️`/`❌`), an **Estimated coverage:** `≈N% (est.)` with a one-line basis, and unit (Jest) count if any. State `0 — not covered` when there is no E2E spec.
 
 > Absence is ambiguous. The checklists above exist so a reader can tell "not applicable" from "forgotten" — every topic gets an explicit answer.
 

