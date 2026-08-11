@@ -165,6 +165,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         hideIcon: _stagingNavItem.hideIcon,
         variant: _stagingNavItem.variant,
         corners: _stagingNavItem.corners,
+        renderPlugin: _stagingNavItem.renderPlugin,
       }
     : {}
 
@@ -506,7 +507,10 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             {tab == 'dashboard' && <PrototypeTabDashboard />}
             {tab == 'feedback' && <PrototypeTabFeedback />}
             {tab == 'staging' && hasPrototypeCode(prototype?.code) && (
-              <PrototypeTabStaging prototype={prototype} />
+              <PrototypeTabStaging
+                prototype={prototype}
+                renderPlugin={_stagingNavItem?.renderPlugin}
+              />
             )}
 
             {/* Render ALL plugin components unconditionally - they stay mounted and cached */}

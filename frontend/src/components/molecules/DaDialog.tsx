@@ -30,6 +30,7 @@ interface DaDialogProps {
   onClose?: () => void
   preventOutsideClose?: boolean
   disabled?: boolean
+  hideHeaderDivider?: boolean
 }
 
 const DaDialog = ({
@@ -46,6 +47,7 @@ const DaDialog = ({
   onClose,
   preventOutsideClose = false,
   disabled = false,
+  hideHeaderDivider = false,
 }: DaDialogProps) => {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const isOpen = controlledOpen ?? uncontrolledOpen
@@ -135,7 +137,12 @@ const DaDialog = ({
       >
         {dialogTitle || description ? (
           // Titled dialog: full header zone with inline close button.
-          <div className="flex items-center justify-between gap-2 px-6 py-3 border-b border-border shrink-0">
+          <div
+            className={cn(
+              'flex items-center justify-between gap-2 px-6 pt-3 shrink-0',
+              !hideHeaderDivider && 'border-b border-border pb-3',
+            )}
+          >
             <div className="flex flex-col gap-0.5 min-w-0">
               {dialogTitle && (
                 <h2 className="text-base font-semibold text-primary leading-tight">{dialogTitle}</h2>

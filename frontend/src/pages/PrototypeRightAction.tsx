@@ -34,11 +34,18 @@ const PrototypeRightAction = ({
             dialogTitle={
               action.builtin ? action.label || 'Staging' : action.label
             }
+            hideHeaderDivider
+            contentContainerClassName={
+              action.builtin && action.renderPlugin ? 'p-0! px-2!' : undefined
+            }
             className="max-w-[95vw] w-[1200px]"
           >
             <div className="flex overflow-y-auto max-h-[80vh]  min-h-[20vh] [&>div]:p-0!">
               {action.builtin ? (
-                <PrototypeTabStaging prototype={prototype} />
+                <PrototypeTabStaging
+                  prototype={prototype}
+                  renderPlugin={action.renderPlugin}
+                />
               ) : (
                 <PagePrototypePlugin
                   pluginSlug={action.plugin}

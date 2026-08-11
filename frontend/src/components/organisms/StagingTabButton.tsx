@@ -64,6 +64,14 @@ const StagingTabButton = ({
         </span>
       )
     }
+    if (onClick) {
+      return (
+        <DaTabItem active={isActive} onClick={onClick} dataId="tab-staging">
+          {stagingIcon}
+          {stagingLabel}
+        </DaTabItem>
+      )
+    }
     return (
       <DaTabItem active={isActive} to={stagingTo} dataId="tab-staging">
         {stagingIcon}
