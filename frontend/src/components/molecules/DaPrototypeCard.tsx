@@ -56,8 +56,9 @@ import { Input } from '../atoms/input'
 import PrototypeTabStaging from '@/components/organisms/PrototypeTabStaging'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Skeleton } from '../atoms/skeleton'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
+import { getModel } from '@/services/model.service'
 
 export interface DaPrototypeCardProps {
   prototype: Prototype
@@ -114,6 +115,19 @@ export const DaPrototypeCard = ({
   const [isUploading, setIsUploading] = useState(false)
   const [deployOpen, setDeployOpen] = useState(false)
   const [dotsMenuOpen, setDotsMenuOpen] = useState(false)
+
+  const { data: deployModel, isLoading: isDeployModelLoading } = useQuery({
+    queryKey: ['model', prototype.model_id],
+    queryFn: () => getModel(prototype.model_id),
+    enabled: deployOpen && !!prototype.model_id,
+  })
+
+  const stagingRenderPlugin = useMemo(() => {
+    const buttons =
+      deployModel?.custom_template?.prototype_right_nav_buttons ?? []
+    return buttons.find((b: { builtin?: string }) => b.builtin === 'staging')
+      ?.renderPlugin as string | undefined
+  }, [deployModel])
 
   const suppressClickRef = useRef(false)
   const suppressTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
@@ -503,10 +517,24 @@ export const DaPrototypeCard = ({
         open={deployOpen}
         onOpenChange={withClickSuppression(setDeployOpen)}
         dialogTitle="Deploy"
+        hideHeaderDivider
+        contentContainerClassName={
+          stagingRenderPlugin ? 'p-0! px-2!' : undefined
+        }
         className="max-w-[95vw] w-[1200px]"
       >
-        <div className="flex overflow-y-auto max-h-[80vh]">
-          <PrototypeTabStaging prototype={prototype} />
+        <div className="flex overflow-y-auto max-h-[80vh] min-h-[20vh] [&>div]:p-0!">
+          {isDeployModelLoading ? (
+            <div className="flex w-full items-center justify-center py-12">
+              <TbLoader className="size-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <PrototypeTabStaging
+              prototype={prototype}
+              renderPlugin={stagingRenderPlugin}
+              model={deployModel}
+            />
+          )}
         </div>
       </DaDialog>
 

@@ -10,7 +10,7 @@ import React, { useState, useEffect } from 'react'
 import { configManagementService } from '@/services/configManagement.service'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Spinner } from '@/components/atoms/spinner'
-import { Prototype } from '@/types/model.type'
+import { Model, Prototype } from '@/types/model.type'
 import { DaImage } from '@/components/atoms/DaImage'
 import { TbChevronRight, TbChevronDown, TbArrowLeft } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
@@ -109,6 +109,10 @@ interface StageItem {
 
 interface PrototypeTabStagingProps {
   prototype: Prototype
+  /** When set, render this plugin as the full staging page instead of the default table */
+  renderPlugin?: string
+  /** Optional model override when not on a prototype detail route (e.g. deploy dialog from home) */
+  model?: Model | null
 }
 
 interface PluginDropdownItemProps {
@@ -166,7 +170,11 @@ const PluginDropdownItem: React.FC<PluginDropdownItemProps> = ({ plugin, onClick
 
 type PublicConfig = { key: string; value: any } | null
 
-const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) => {
+const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
+  prototype,
+  renderPlugin,
+  model: modelProp,
+}) => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
   const { setOpenLoginDialog } = useAuthStore()
   const [stagingFrameConfig, setStagingFrameConfig] = useState<PublicConfig>(null)
@@ -178,15 +186,18 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) 
   const [selectedStageName, setSelectedStageName] = useState<string | null>(null) // Stage name for back button
   const [openStageMenuName, setOpenStageMenuName] = useState<string | null>(null)
   const { toast } = useToast()
-  const { data: model } = useCurrentModel()
+  const { data: routeModel } = useCurrentModel()
+  const model = modelProp ?? routeModel
 
   useEffect(() => {
+    // When a render plugin overrides the whole page, skip loading the default staging configs
+    if (renderPlugin) return
     // Wait for user authentication to complete before loading configs
     if (selfLoading) return
     if (!self) return // Will show auth required message
     loadConfigs()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selfLoading, !!self])
+  }, [selfLoading, !!self, renderPlugin])
 
   const loadConfigs = async () => {
     try {
@@ -557,6 +568,21 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) 
           </>
         )}
       </>
+    )
+  }
+
+  // If a render plugin is configured, render it as the full staging page
+  if (renderPlugin) {
+    return (
+      <div className="w-full h-full min-h-[300px]">
+        <PluginPageRender
+          plugin_id={renderPlugin}
+          data={{
+            model: model || null,
+            prototype: prototype || null,
+          }}
+        />
+      </div>
     )
   }
 

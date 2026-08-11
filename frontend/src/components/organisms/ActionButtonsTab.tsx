@@ -44,6 +44,9 @@ const ActionButtonEditor = ({
   onOpenModeChange,
   onVariantChange,
   onCornersChange,
+  onRenderPluginChange,
+  pluginsData,
+  pluginsLoading,
 }: {
   prefixElement?: React.ReactNode
   config: RightNavPluginButton
@@ -57,7 +60,28 @@ const ActionButtonEditor = ({
   onOpenModeChange: (newMode: 'dialog' | 'page') => void
   onVariantChange: (newVariant: 'tab' | 'primary' | 'outline' | 'ghost') => void
   onCornersChange: (newCorners: 'none' | 'round' | 'full') => void
+  onRenderPluginChange?: (slug: string | null) => void
+  pluginsData?: Paged<Plugin>
+  pluginsLoading?: boolean
 }) => {
+  const [showRenderPluginPicker, setShowRenderPluginPicker] = useState(false)
+  const [renderPluginSearchTerm, setRenderPluginSearchTerm] = useState('')
+
+  const selectedRenderPlugin = pluginsData?.results?.find(
+    (p) => p.slug === config.renderPlugin,
+  )
+
+  const filteredRenderPlugins =
+    pluginsData?.results?.filter(
+      (plugin) =>
+        plugin.name
+          .toLowerCase()
+          .includes(renderPluginSearchTerm.toLowerCase()) ||
+        plugin.slug
+          ?.toLowerCase()
+          .includes(renderPluginSearchTerm.toLowerCase()),
+    ) ?? []
+
   return (
     <div className={`border border-border rounded bg-background`}>
       <div className="flex items-center gap-3 p-3">
@@ -126,6 +150,139 @@ const ActionButtonEditor = ({
       </div>
       {expanded && (
         <div className="border-t border-border p-3 flex flex-col gap-3">
+          {/* Render Plugin (staging only) */}
+          {config.builtin === 'staging' && onRenderPluginChange && (
+            <div className="flex items-start gap-3">
+              <Label className="text-xs w-20 shrink-0 text-foreground mt-1">
+                Render as
+              </Label>
+              <div className="flex flex-col gap-2 flex-1">
+                <p className="text-xs text-muted-foreground">
+                  Render this plugin as the full staging page instead of the
+                  default table.
+                </p>
+                {config.renderPlugin && !showRenderPluginPicker ? (
+                  <div className="flex items-center gap-3 p-2 border border-border rounded bg-accent/50">
+                    <TbPuzzle className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {selectedRenderPlugin?.name || config.renderPlugin}
+                      </p>
+                      <p className="text-xs text-muted-foreground font-mono truncate">
+                        plugin: {config.renderPlugin}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowRenderPluginPicker(true)}
+                      className="h-8 w-8"
+                      title="Change plugin"
+                    >
+                      <TbPencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        onRenderPluginChange(null)
+                        setShowRenderPluginPicker(false)
+                      }}
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      title="Remove render plugin"
+                    >
+                      <TbTrash className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : showRenderPluginPicker ? (
+                  <div className="flex flex-col gap-2 border border-border rounded p-2">
+                    <div className="relative">
+                      <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="Search plugins..."
+                        value={renderPluginSearchTerm}
+                        onChange={(e) =>
+                          setRenderPluginSearchTerm(e.target.value)
+                        }
+                        className="pl-10 text-sm"
+                        autoFocus
+                      />
+                    </div>
+                    <div className="flex flex-col max-h-48 overflow-y-auto">
+                      {pluginsLoading ? (
+                        <div className="flex items-center justify-center p-4">
+                          <Spinner size={20} />
+                        </div>
+                      ) : filteredRenderPlugins.length === 0 ? (
+                        <p className="text-xs text-muted-foreground p-4 text-center">
+                          {renderPluginSearchTerm
+                            ? 'No plugins found'
+                            : 'No plugins available'}
+                        </p>
+                      ) : (
+                        filteredRenderPlugins.map((plugin) => (
+                          <button
+                            key={plugin.id}
+                            onClick={() => {
+                              onRenderPluginChange(plugin.slug)
+                              setShowRenderPluginPicker(false)
+                              setRenderPluginSearchTerm('')
+                            }}
+                            className="flex items-center gap-3 p-2 hover:bg-accent rounded transition-colors text-left"
+                          >
+                            {plugin.image ? (
+                              <img
+                                src={plugin.image}
+                                alt={plugin.name}
+                                className="w-8 h-8 rounded object-cover shrink-0"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
+                                <span className="text-xs text-muted-foreground">
+                                  {plugin.name.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">
+                                {plugin.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground font-mono truncate">
+                                {plugin.slug}
+                              </p>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                    <div className="flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setShowRenderPluginPicker(false)
+                          setRenderPluginSearchTerm('')
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-fit"
+                    onClick={() => setShowRenderPluginPicker(true)}
+                  >
+                    <TbPuzzle className="w-4 h-4 mr-2" />
+                    Set Render Plugin
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
           {/* Show Icon */}
           <div className="flex items-center gap-3">
             <Label className="text-xs w-20 shrink-0 text-foreground">
@@ -356,6 +513,9 @@ const ActionButtonsTab = ({
                     onVariantChange={() => {}}
                     onOpenModeChange={() => {}}
                     onCornersChange={() => {}}
+                    onRenderPluginChange={() => {}}
+                    pluginsData={pluginsData}
+                    pluginsLoading={pluginsLoading}
                   />
                 </div>
               )
@@ -467,6 +627,17 @@ const ActionButtonsTab = ({
                                 ),
                               )
                             }
+                            onRenderPluginChange={(slug) =>
+                              setLocalRightNavPlugins((prev) =>
+                                prev.map((b, idx) =>
+                                  idx === i
+                                    ? { ...b, renderPlugin: slug ?? undefined }
+                                    : b,
+                                ),
+                              )
+                            }
+                            pluginsData={pluginsData}
+                            pluginsLoading={pluginsLoading}
                           />
                         </div>
                       )}
