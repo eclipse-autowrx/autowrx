@@ -21,12 +21,42 @@ npx playwright test
 # Specific suite
 npx playwright test tests/auth.spec.ts
 npx playwright test tests/vehicle-models.spec.ts
+npx playwright test tests/import-export.spec.ts
+npx playwright test tests/prototype-context-menu.spec.ts
+npx playwright test tests/home-model-list.spec.ts
+npx playwright test tests/home-prototype-list.spec.ts
+npx playwright test tests/image-fallback.spec.ts
 
 # With screenshots on failure
 npx playwright test --screenshot=only-on-failure
 
 # Headed (see browser)
 npx playwright test --headed
+```
+
+### Windows (CMD / PowerShell)
+
+Playwright treats the file argument as a **regex**. Use **forward slashes** (not `\`) or `npm run`:
+
+```powershell
+cd C:\repo\autowrx\.agents
+npm run test:home-model-list
+```
+
+Or with `npx` (forward slashes work on Windows):
+
+```powershell
+npx playwright test tests/home-model-list.spec.ts
+npx playwright test tests/import-export.spec.ts
+npx playwright test tests/prototype-context-menu.spec.ts
+npx playwright test tests/home-prototype-list.spec.ts
+npx playwright test tests/image-fallback.spec.ts
+```
+
+Run several suites:
+
+```powershell
+npx playwright test tests/import-export.spec.ts tests/prototype-context-menu.spec.ts tests/home-model-list.spec.ts
 ```
 
 ## Test Suites
@@ -38,6 +68,11 @@ npx playwright test --headed
 | `tests/prototype.spec.ts` | Create/Read/Update/Delete prototypes |
 | `tests/admin.spec.ts` | Admin panel: user management, site config |
 | `tests/site-config-restore-default.spec.ts` | Public config restore default (accept + cancel) |
+| `tests/import-export.spec.ts` | Model/prototype export and import round-trips |
+| `tests/prototype-context-menu.spec.ts` | Admin delete prototype via context menu |
+| `tests/home-model-list.spec.ts` | Home model-list: guest visibility, logged-in UI, category filters, all 6 sort options, rename, My Contributions contributor/reader |
+| `tests/home-prototype-list.spec.ts` | Home prototype-list: guest visibility, category tabs, My Prototypes filter, all 6 sort options, navigation |
+| `tests/image-fallback.spec.ts` | Model and prototype cards fall back to default images when primary image fails to load |
 | `tests/layout.spec.ts` | Layout, responsive, visual snapshots |
 
 ## Environment

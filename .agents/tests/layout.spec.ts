@@ -42,6 +42,8 @@ test.describe('Layout & Visual', () => {
 
   test('logged-in layout has no broken elements', async ({ page }) => {
     await loginAsAdmin(page);
+    await page.goto('/');
+    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(1500);
 
     const anomalies = await checkLayoutAnomalies(page, 'logged-in-homepage');
