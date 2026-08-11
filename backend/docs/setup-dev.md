@@ -30,7 +30,11 @@ JWT_COOKIE_NAME=token
 Optional services (leave empty if not used):
 
 ```bash
-AUTH_URL=
+# Deprecated — use AUTH_PROVIDER=platform instead
+# AUTH_URL=
+AUTH_PROVIDER=jwt
+# AUTH_PLATFORM_NAME=Calponia
+# AUTH_PLATFORM_HEADERS={"id":"x-calponia-user-id","email":"x-calponia-user-email","firstname":"x-calponia-user-firstname","lastname":"x-calponia-user-lastname"}
 EMAIL_URL=
 ```
 

@@ -11,16 +11,28 @@ import { getSelfService } from '@/services/user.service.ts'
 import useAuthStore from '@/stores/authStore.ts'
 
 const useSelfProfileQuery = () => {
-  const [authBootstrapped, accessToken] = useAuthStore((state) => [
+  const [authBootstrapped, accessToken, storeUser] = useAuthStore((state) => [
     state.authBootstrapped,
     state.access?.token,
+    state.user,
   ])
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['getSelf'],
     queryFn: getSelfService,
     enabled: authBootstrapped && !!accessToken,
   })
+
+  if (!accessToken && storeUser) {
+    return {
+      ...query,
+      data: storeUser,
+      isLoading: false,
+      isFetching: false,
+    }
+  }
+
+  return query
 }
 
 export default useSelfProfileQuery
