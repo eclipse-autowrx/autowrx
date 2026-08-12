@@ -182,7 +182,7 @@ See `.env.prod.sample` for all available configuration options:
 - [ ] Set up SSL/TLS (via reverse proxy like Nginx)
 - [ ] Regular backups of MongoDB volume
 
-## Next Steps
+## Out of scope
 
 - Set up a reverse proxy (Nginx/Traefik) for SSL/TLS
 - Configure domain DNS
