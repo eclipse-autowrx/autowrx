@@ -34,8 +34,9 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
 import { addLog } from '@/services/log.service'
-import { createModelService, listModelsLite } from '@/services/model.service'
+import { createModelService, listModelsLite, listModelsPage } from '@/services/model.service'
 import { listModelTemplates } from '@/services/modelTemplate.service'
+import { visibilityFromModelTemplate } from '@/utils/modelVisibility'
 import { createPrototypeService } from '@/services/prototype.service'
 import { ModelLite, Prototype } from '@/types/model.type'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -110,16 +111,26 @@ const FormNewPrototype = ({
         enabled: !!currentUser?.id,
     })
 
+    const { data: editableModelsData, isLoading: isFetchingEditableModels } = useQuery({
+        queryKey: ['listModelLiteEditable', currentUser?.id],
+        queryFn: () => listModelsPage({ visibility: 'editable', state: 'released' }),
+        enabled: !!currentUser?.id,
+    })
+
     const allModels = useMemo(() => {
         const owned = ownedModelsData?.results ?? []
         const contributed = contributedModelsData?.results ?? []
+        const editable = editableModelsData?.results ?? []
         const byId = new Map<string, ModelLite>()
-            ;[...owned, ...contributed].forEach((model) => byId.set(model.id, model))
+        ;[...owned, ...contributed, ...editable].forEach((model) => byId.set(model.id, model))
         return { results: Array.from(byId.values()) }
-    }, [ownedModelsData?.results, contributedModelsData?.results])
+    }, [ownedModelsData?.results, contributedModelsData?.results, editableModelsData?.results])
 
     const isFetchingModels =
-        isCurrentUserLoading || isFetchingOwnedModels || isFetchingContributedModels
+        isCurrentUserLoading ||
+        isFetchingOwnedModels ||
+        isFetchingContributedModels ||
+        isFetchingEditableModels
 
     const resolvedDefaultSelection = useMemo((): ModelSelection | null => {
         if (isFetchingModels) return null
@@ -180,7 +191,7 @@ const FormNewPrototype = ({
     })
 
     const defaultTemplate = useMemo(
-        () => templatesData?.results?.find((t) => t.visibility === 'default'),
+        () => templatesData?.results?.find((t) => t.is_default),
         [templatesData],
     )
 
@@ -264,11 +275,17 @@ const FormNewPrototype = ({
 
             if (isCreatingNewModel) {
                 if (!newModelName.trim()) throw new Error('Please enter a model name')
+                const selectedModelTemplate = templatesData?.results?.find(
+                    (t) => t.id === newModelTemplateId,
+                )
                 const newModelBody: any = {
                     main_api: 'Vehicle',
                     name: newModelName.trim(),
                     api_version: newModelApiVersion,
                     model_template_id: newModelTemplateId || null,
+                }
+                if (selectedModelTemplate) {
+                    newModelBody.visibility = visibilityFromModelTemplate(selectedModelTemplate)
                 }
                 if (newModelApiDataUrl) newModelBody.api_data_url = newModelApiDataUrl
                 modelId = await createModelService(newModelBody)

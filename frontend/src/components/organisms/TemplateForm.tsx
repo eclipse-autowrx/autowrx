@@ -80,6 +80,18 @@ const normalizeTabsForTemplate = (tabs?: any[]): TabConfig[] => {
   }))
 }
 
+type TemplateVisibility = 'public' | 'private' | 'editable'
+
+const normalizeTemplateFormFields = (source: {
+  visibility?: string
+  is_default?: boolean
+}) => ({
+  visibility: (
+    source.visibility === 'default' ? 'public' : source.visibility || 'public'
+  ) as TemplateVisibility,
+  is_default: source.is_default ?? source.visibility === 'default',
+})
+
 type Props = {
   templateId?: string
   onClose: () => void
@@ -122,6 +134,7 @@ export default function TemplateForm({
     description: '',
     image: '',
     visibility: 'public',
+    is_default: false,
     config: {},
   })
   const [modelTabs, setModelTabs] = useState<TabConfig[]>([])
@@ -154,7 +167,8 @@ export default function TemplateForm({
 
   useEffect(() => {
     if (initial) {
-      setForm(initial)
+      const { visibility, is_default } = normalizeTemplateFormFields(initial)
+      setForm({ ...initial, visibility, is_default })
       const cfg: any = initial.config || {}
       // Model tabs use getModelTabConfig so empty/missing config shows the 3
       // built-in defaults in the editor (unlike prototype tabs above).
@@ -194,6 +208,7 @@ export default function TemplateForm({
         description: '',
         image: '',
         visibility: 'public',
+        is_default: false,
         config: {},
       })
       setModelTabs(getModelTabConfig([]))
@@ -222,6 +237,7 @@ export default function TemplateForm({
           description: '',
           image: '',
           visibility: 'public',
+          is_default: false,
           config: {},
         })
         setModelTabs([])
@@ -251,13 +267,13 @@ export default function TemplateForm({
         : []
 
       // Pre-populate with initial data, preserving entire config structure
+      const { visibility, is_default } = normalizeTemplateFormFields(initialData)
       setForm({
         name: initialData.name || '',
         description: initialData.description || '',
         image: initialData.image || '',
-        visibility:
-          (initialData.visibility as 'public' | 'private' | 'default') ||
-          'public',
+        visibility,
+        is_default,
         config: fullConfig, // Preserve entire custom_template structure
       })
       // Prefill with full runtime tab config (built-ins + custom, order preserved).
@@ -316,6 +332,7 @@ export default function TemplateForm({
         description: form.description,
         image: form.image,
         visibility: form.visibility || 'public',
+        is_default: form.is_default ?? false,
         config: {
           ...(form.config || {}),
           model_tabs: sanitizeModelTabsForSave(tabsToSave),
@@ -514,35 +531,27 @@ export default function TemplateForm({
                   <div className="flex flex-col gap-1.5">
                     <Label>Visibility</Label>
                     <DaSelect
-                      value={
-                        form.visibility === 'default'
-                          ? 'public'
-                          : form.visibility || 'public'
-                      }
-                      onValueChange={(v) =>
-                        onChange(
-                          'visibility',
-                          form.visibility === 'default' ? 'default' : v,
-                        )
-                      }
-                      disabled={form.visibility === 'default'}
+                      value={form.visibility || 'public'}
+                      onValueChange={(v) => onChange('visibility', v)}
                       className="h-9 text-sm"
                     >
+                      <DaSelectItem value="editable">editable</DaSelectItem>
                       <DaSelectItem value="public">public</DaSelectItem>
                       <DaSelectItem value="private">private</DaSelectItem>
                     </DaSelect>
+                    {form.visibility === 'editable' && (
+                      <p className="text-xs text-muted-foreground">
+                        Models created from this template can allow non-owners to add
+                        prototypes.
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     <input
                       type="checkbox"
                       id="is-default-template"
-                      checked={form.visibility === 'default'}
-                      onChange={(e) =>
-                        onChange(
-                          'visibility',
-                          e.target.checked ? 'default' : 'public',
-                        )
-                      }
+                      checked={!!form.is_default}
+                      onChange={(e) => onChange('is_default', e.target.checked)}
                       className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                     />
                     <Label

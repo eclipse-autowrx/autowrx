@@ -62,7 +62,7 @@ End users (discover models); model owners (create/import); the wider community (
 
 ### API contract
 
-- `GET /v2/models` (optional auth via `PUBLIC_VIEWING`) → `200` paginated list; filters: `name`, `visibility`, `state`, `tenant_id`, `vehicle_category`, `main_api`, `id`, `created_by`, `is_contributor`, `include_stats`, `sortBy`, `page`, `limit`, `fields`.
+- `GET /v2/models` (optional auth via `PUBLIC_VIEWING`) → `200` paginated list; filters: `name`, `visibility` (one value or comma-separated list, e.g. `public,editable`), `state`, `tenant_id`, `vehicle_category`, `main_api`, `id`, `created_by`, `is_contributor`, `include_stats`, `sortBy`, `page`, `limit`, `fields`.
 - `GET /v2/models/all` → expanded/unpaginated aggregation of owned + contributed + public-released models (optional auth via `PUBLIC_VIEWING`; owned/contributed only populated for authenticated users).
 - `POST /v2/models` (auth) → `201` new model. `POST /v2/models/stats` (optional auth) → `200 { statsById: { [modelId]: {...} } }` for the body `ids`.
 - Import from ZIP creates a model from the archive contents.

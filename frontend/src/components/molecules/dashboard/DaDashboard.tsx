@@ -11,9 +11,9 @@ import DaDashboardGrid from './DaDashboardGrid'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import PrototypeTabCodeDashboardCfg from '@/components/organisms/PrototypeTabCodeDashboardCfg'
+import useCanEditPrototype from '@/hooks/useCanEditPrototype'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/const/permission'
-import useCurrentModel from '@/hooks/useCurrentModel'
 import {
   TbArrowsMaximize,
   TbArrowsMinimize,
@@ -68,7 +68,6 @@ const processWidgetItems = (widgetItems: any[], usedApiNames: string[]) => {
 }
 
 const DaDashboard = () => {
-  const { data: model } = useCurrentModel()
   const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
   const [
     prototype,
@@ -85,10 +84,8 @@ const DaDashboard = () => {
   ])
   const [widgetItems, setWidgetItems] = useState<any>([])
   const [mode, setMode] = useState<string>(MODE_RUN)
-  const [isAuthorized, isAdmin] = usePermissionHook(
-    [PERMISSIONS.READ_MODEL, model?.id],
-    [PERMISSIONS.MANAGE_USERS],
-  )
+  const isAuthorized = useCanEditPrototype(prototype)
+  const [isAdmin] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
   const {
     showPrototypeDashboardFullScreen,
     setShowPrototypeDashboardFullScreen,

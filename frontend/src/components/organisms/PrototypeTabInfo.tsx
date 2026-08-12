@@ -42,6 +42,7 @@ import {
   useListModelPrototypes,
 } from '@/hooks/usePrototypeQueries'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
+import useCanEditPrototype from '@/hooks/useCanEditPrototype'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { cn } from '@/lib/utils'
@@ -82,10 +83,8 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
     useDuplicateNameCheck(localPrototype.name, existingPrototypeNames)
   const { refetch: refetchCurrentPrototype } = useCurrentPrototype()
   const navigate = useNavigate()
-  const [isAuthorized, isAdmin] = usePermissionHook(
-    [PERMISSIONS.READ_MODEL, model?.id],
-    [PERMISSIONS.MANAGE_USERS],
-  )
+  const editable = useCanEditPrototype(prototype)
+  const [isAdmin] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
   const [isDeleting, setIsDeleting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -260,7 +259,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                   {localPrototype.name}
                 </h2>
                 <div className="grow" />
-                {isAuthorized && (
+                {editable && (
                   <div className="flex items-center gap-2">
                     {isAdmin && (
                       <Button
@@ -353,7 +352,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                   alt={localPrototype.name}
                 />
               </div>
-              {isAuthorized && (
+              {editable && (
                 <DaImportFile
                   onFileChange={handlePrototypeImageChange}
                   accept=".png, .jpg, .jpeg, .gif, .webp"

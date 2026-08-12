@@ -15,6 +15,7 @@ import { createModelService } from '@/services/model.service'
 import { listModelTemplates } from '@/services/modelTemplate.service'
 import { createPrototypeService } from '@/services/prototype.service'
 import { zipToModel } from '@/lib/zipUtils'
+import { visibilityFromModelTemplate } from '@/utils/modelVisibility'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useToast } from '@/components/molecules/toaster/use-toast'
@@ -56,10 +57,11 @@ const useImportModel = (options?: UseImportModelOptions) => {
           try {
             const templatesData = await listModelTemplates({ limit: 100, page: 1 })
             const defaultTemplate = templatesData?.results?.find(
-              (t) => t.visibility === 'default',
+              (t) => t.is_default,
             )
             if (defaultTemplate) {
               newModel.model_template_id = defaultTemplate.id
+              newModel.visibility = visibilityFromModelTemplate(defaultTemplate)
             }
           } catch (err) {
             console.warn('Could not fetch default model template:', err)

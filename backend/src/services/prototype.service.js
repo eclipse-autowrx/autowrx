@@ -16,6 +16,7 @@ const config = require('../config/config');
 const logger = require('../config/logger');
 const modelService = require('./model.service');
 const _ = require('lodash');
+const { publiclyVisibleVisibilities } = require('../config/enums');
 
 /**
  * Strip trailing number suffix from a prototype name.
@@ -321,7 +322,7 @@ const executeCode = async (id, _) => {
 const listPopularPrototypes = async () => {
   const publicModelIds = (
     await modelService.getModels({
-      visibility: 'public',
+      visibility: { $in: publiclyVisibleVisibilities },
     })
   ).map((model) => String(model._id));
   return Prototype.find({

@@ -248,7 +248,7 @@ const HomeModelList = ({ title }: HomeModelListProps) => {
         await refetchModels()
       } else {
         const res = await listModelsLite({
-          visibility: 'public',
+          visibility: 'public,editable',
           state: 'released',
         })
         setGroups({
