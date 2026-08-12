@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import PrototypeLibraryList from '@/components/organisms/PrototypeLibraryList'
 import PrototypeLibraryPortfolio from '@/components/organisms/PrototypeLibraryPortfolio'
 import { useParams } from 'react-router-dom'
@@ -20,6 +20,7 @@ import { Button } from '@/components/atoms/button'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import useAuthStore from '@/stores/authStore'
 import DaDialog from '@/components/molecules/DaDialog'
 import { useNavigate } from 'react-router-dom'
 import DaFilter from '@/components/atoms/DaFilter'
@@ -29,13 +30,22 @@ import { cn } from '@/lib/utils'
 import FormCreatePrototype from '@/components/molecules/forms/FormCreatePrototype'
 import FormImportPrototype from '@/components/molecules/forms/FormImportPrototype'
 import { useSiteConfig } from '@/utils/siteConfig'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import { canCreatePrototypeOnModel } from '@/utils/modelVisibility'
 
 const PagePrototypeLibrary = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'portfolio'>('list')
   const { model_id, tab } = useParams<{ model_id: string; tab?: string }>()
-  const { data: user } = useSelfProfileQuery()
-  // Prototype "create/import" requires write permission on the parent model
-  const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
+  const { data: user, isLoading, isFetching } = useSelfProfileQuery()
+  const authBootstrapped = useAuthStore((state) => state.authBootstrapped)
+  const isResolvingAuth =
+    !authBootstrapped || (!user && (isLoading || isFetching))
+  const { data: model } = useCurrentModel()
+  const [hasWritePermission] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
+  const canCreatePrototype = useMemo(
+    () => canCreatePrototypeOnModel(model, user?.id, hasWritePermission),
+    [model, user?.id, hasWritePermission],
+  )
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
   const enableNewPrototypePage = useSiteConfig('ENABLE_NEW_PROTOTYPE_PAGE', false)
@@ -73,7 +83,14 @@ const PagePrototypeLibrary = () => {
     <div className="flex flex-col w-full h-full rounded-md overflow-y-auto bg-background da-page-prototype-library">
       <div className="flex flex-col w-full h-full px-6 lg:container">
         <div className="flex w-full items-center">
-          {user ? (
+          {isResolvingAuth ? (
+            <div className="flex w-full py-6 items-center">
+              <Skeleton className="w-[210px] h-[32px]" />
+              <div className="flex-grow" />
+              <Skeleton className="w-[125px] h-[32px] mr-2" />
+              <Skeleton className="w-[157px] h-[32px]" />
+            </div>
+          ) : (
             <div className="flex py-6 h-full w-full items-center">
               {activeTab === 'list' && (
                 <p className="text-sm font-medium text-primary flex-shrink-0 hidden xl:flex">
@@ -131,7 +148,7 @@ const PagePrototypeLibrary = () => {
                 <div
                   className={cn(
                     'flex h-fit opacity-50 pointer-events-none',
-                    isAuthorized && 'opacity-100 pointer-events-auto',
+                    canCreatePrototype && 'opacity-100 pointer-events-auto',
                   )}
                 >
                   <FormImportPrototype />
@@ -170,13 +187,6 @@ const PagePrototypeLibrary = () => {
                   )}
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex w-full py-6 items-center">
-              <Skeleton className="w-[210px] h-[32px]" />
-              <div className="flex-grow" />
-              <Skeleton className="w-[125px] h-[32px] mr-2" />
-              <Skeleton className="w-[157px] h-[32px]" />
             </div>
           )}
         </div>

@@ -66,7 +66,7 @@ export default function TemplateManager() {
               <h3 className="text-base font-semibold text-foreground truncate">
                 {t.name}
               </h3>
-              {t.visibility === 'default' && (
+              {t.is_default && (
                 <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide bg-primary text-primary-foreground rounded px-1.5 py-0.5">
                   Default
                 </span>

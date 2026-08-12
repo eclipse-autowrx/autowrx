@@ -14,9 +14,11 @@ export type Tag = {
   tagCategoryName?: string
 }
 
+export type ModelVisibility = 'public' | 'private' | 'editable'
+
 export type ModelLite = {
   name: string
-  visibility: string
+  visibility: ModelVisibility | string
   model_home_image_file: string
   id: string
   created_at?: Date
@@ -52,7 +54,7 @@ export type Model = {
   model_files?: Record<string, unknown>
   name: string
   cvi?: string
-  visibility: 'public' | 'private'
+  visibility: ModelVisibility
   vehicle_category: string
   property: string
   created_by?: {
@@ -164,7 +166,7 @@ export type ModelCreate = {
   custom_apis?: string
   model_home_image_file?: string
   model_files?: object
-  visibility?: 'public' | 'private'
+  visibility?: ModelVisibility
   extended_apis?: any[]
   api_data_url?: string
   model_template_id?: string | null

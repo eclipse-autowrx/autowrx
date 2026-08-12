@@ -1,7 +1,7 @@
 const Joi = require('joi');
 const { objectId } = require('./custom.validation');
 
-const visibility = Joi.string().valid('public', 'private', 'default');
+const visibility = Joi.string().valid('public', 'private', 'editable');
 
 const list = {
   query: Joi.object().keys({
@@ -23,6 +23,7 @@ const create = {
     description: Joi.string().allow(''),
     image: Joi.string().allow(''),
     visibility: visibility.default('public'),
+    is_default: Joi.boolean().default(false),
     config: Joi.any(),
   }),
 };
@@ -35,6 +36,7 @@ const update = {
       description: Joi.string().allow(''),
       image: Joi.string().allow(''),
       visibility,
+      is_default: Joi.boolean(),
       config: Joi.any(),
     })
     .min(1),
