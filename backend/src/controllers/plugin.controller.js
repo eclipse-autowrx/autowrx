@@ -279,4 +279,6 @@ module.exports = {
   updatePlugin,
   uploadInternalPlugin,
   removePlugin,
+  // Exported for unit testing only (not used by route handlers)
+  safeExtractZip,
 };
