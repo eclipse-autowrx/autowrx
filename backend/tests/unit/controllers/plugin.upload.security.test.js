@@ -176,5 +176,37 @@ describe('Plugin upload security (PR #614 / issue #719)', () => {
       const escaped = path.join(tmpRoot, 'escape.txt');
       expect(fs.existsSync(escaped)).toBe(false);
     });
+
+    it('removes partially extracted content on rejection (no disk accumulation)', async () => {
+      // A valid entry is written first, then a traversal entry triggers failure.
+      // safeExtractZip is transactional: on failure it must remove the whole
+      // target dir so partial plugin directories don't accumulate on disk.
+      const { target, zipPath } = await nextDirs('cleanup');
+      buildZip(zipPath, [
+        { name: 'good.txt', content: 'ok' },
+        { name: 'sub/more.txt', content: 'ok' },
+        { name: '../escape.txt', content: 'bad' },
+      ]);
+
+      await expect(safeExtractZip(zipPath, target)).rejects.toThrow();
+
+      // Target dir (and the partial good.txt / sub/) must be cleaned up.
+      expect(fs.existsSync(target)).toBe(false);
+      expect(fs.existsSync(path.join(target, 'good.txt'))).toBe(false);
+      expect(fs.existsSync(path.join(target, 'sub', 'more.txt'))).toBe(false);
+      // And nothing escaped above the target.
+      expect(fs.existsSync(path.join(tmpRoot, 'escape.txt'))).toBe(false);
+    });
+
+    it('keeps the target dir intact on successful extraction', async () => {
+      // Sanity check: the transactional cleanup must NOT fire on success.
+      const { target, zipPath } = await nextDirs('success-keeps');
+      buildZip(zipPath, [{ name: 'index.js', content: 'ok' }]);
+
+      await safeExtractZip(zipPath, target);
+
+      expect(fs.existsSync(target)).toBe(true);
+      expect(fs.existsSync(path.join(target, 'index.js'))).toBe(true);
+    });
   });
 });

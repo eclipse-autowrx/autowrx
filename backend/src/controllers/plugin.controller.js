@@ -129,31 +129,72 @@ async function findEntryFile(rootDir, candidates = ['index.js', 'index.html']) {
  * Safely extract a zip archive into a target directory.
  * Rejects path traversal (../, absolute paths) and symlink entries
  * to prevent arbitrary file write/read (CWE-22, CWE-59).
+ *
+ * Transactional: on any failure, the zip file descriptor and any in-flight
+ * read/write streams are released, and any partially extracted content is
+ * removed from targetDir. This prevents file-descriptor leaks and orphaned
+ * partial directories from accumulating on disk over time. targetDir should
+ * be a fresh, dedicated directory (the caller creates it immediately before
+ * calling this function).
  */
 async function safeExtractZip(zipPath, targetDir) {
   const resolvedTarget = path.resolve(targetDir);
   return new Promise((resolve, reject) => {
-    yauzl.open(zipPath, { lazyEntries: true, autoClose: true }, (err, zipfile) => {
-      if (err) return reject(err);
+    let settled = false;
+    let zipfile = null;
+    let activeReadStream = null;
+    let activeWriteStream = null;
+
+    // Centralized failure path: release the zip fd and any in-flight streams,
+    // then remove partially extracted content so disk does not accumulate.
+    const fail = (err) => {
+      if (settled) return;
+      settled = true;
+      if (activeReadStream) {
+        activeReadStream.destroy();
+      }
+      if (activeWriteStream) {
+        activeWriteStream.destroy();
+      }
+      if (zipfile) {
+        try {
+          zipfile.close();
+        } catch (_) {
+          // Already auto-closed — ignore.
+        }
+      }
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
+      fsp
+        .rm(resolvedTarget, { recursive: true, force: true })
+        .catch(() => {})
+        .finally(() => reject(err));
+    };
+
+    yauzl.open(zipPath, { lazyEntries: true, autoClose: true }, (err, zf) => {
+      if (err) {
+        // No zipfile handle yet, but still clean up the (empty) target dir.
+        return fail(err);
+      }
+      zipfile = zf;
 
       zipfile.readEntry();
       zipfile.on('entry', (entry) => {
         // Reject absolute paths and path traversal in entry names
         if (path.isAbsolute(entry.fileName) || entry.fileName.includes('..')) {
-          return reject(new ApiError(httpStatus.BAD_REQUEST, `Unsafe zip entry: ${entry.fileName}`));
+          return fail(new ApiError(httpStatus.BAD_REQUEST, `Unsafe zip entry: ${entry.fileName}`));
         }
 
         const entryPath = path.resolve(resolvedTarget, entry.fileName);
         // Containment check: resolved entry must be within target directory
         if (entryPath !== resolvedTarget && !entryPath.startsWith(resolvedTarget + path.sep)) {
-          return reject(new ApiError(httpStatus.BAD_REQUEST, `Unsafe zip entry: ${entry.fileName}`));
+          return fail(new ApiError(httpStatus.BAD_REQUEST, `Unsafe zip entry: ${entry.fileName}`));
         }
 
         // Unix file mode: reject symlinks and non-regular files
         // eslint-disable-next-line no-bitwise
         const mode = (entry.externalFileAttributes >>> 16) & 0o170000;
         if (mode === 0o120000) {
-          return reject(new ApiError(httpStatus.BAD_REQUEST, `Symlink entries are not allowed: ${entry.fileName}`));
+          return fail(new ApiError(httpStatus.BAD_REQUEST, `Symlink entries are not allowed: ${entry.fileName}`));
         }
 
         if (/\/$/.test(entry.fileName)) {
@@ -161,25 +202,37 @@ async function safeExtractZip(zipPath, targetDir) {
           fsp
             .mkdir(entryPath, { recursive: true })
             .then(() => zipfile.readEntry())
-            .catch(reject);
+            .catch(fail);
         } else {
           // File entry — ensure parent directory exists
           fsp
             .mkdir(path.dirname(entryPath), { recursive: true })
             .then(() => {
               zipfile.openReadStream(entry, (readErr, readStream) => {
-                if (readErr) return reject(readErr);
+                if (readErr) return fail(readErr);
+                activeReadStream = readStream;
+                readStream.on('error', fail);
                 const writeStream = fs.createWriteStream(entryPath);
-                writeStream.on('error', reject);
-                writeStream.on('close', () => zipfile.readEntry());
+                activeWriteStream = writeStream;
+                writeStream.on('error', fail);
+                writeStream.on('close', () => {
+                  activeReadStream = null;
+                  activeWriteStream = null;
+                  zipfile.readEntry();
+                });
                 readStream.pipe(writeStream);
               });
             })
-            .catch(reject);
+            .catch(fail);
         }
       });
-      zipfile.on('end', resolve);
-      zipfile.on('error', reject);
+      zipfile.on('end', () => {
+        if (!settled) {
+          settled = true;
+          resolve();
+        }
+      });
+      zipfile.on('error', fail);
     });
   });
 }
@@ -219,17 +272,22 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
 
   await ensureDir(pluginPath);
 
-  // Safely extract zip (rejects symlinks and path traversal — CWE-22, CWE-59)
-  await safeExtractZip(req.file.path, pluginPath);
-
-  // Remove uploaded temp file
+  // Safely extract zip (rejects symlinks and path traversal — CWE-22, CWE-59).
+  // safeExtractZip is transactional: on failure it releases the zip fd and
+  // removes any partially extracted content from pluginPath.
   try {
-    // Temp upload path is provided by the trusted multer middleware.
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
-    fs.unlinkSync(req.file.path);
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.error(e);
+    await safeExtractZip(req.file.path, pluginPath);
+  } finally {
+    // Always remove the uploaded temp file (success or failure) so multer
+    // uploads don't accumulate under static/uploads over time.
+    try {
+      // Temp upload path is provided by the trusted multer middleware.
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
+      fs.unlinkSync(req.file.path);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error(e);
+    }
   }
 
   // Try to detect entry file (index.js preferred, fallback index.html)
