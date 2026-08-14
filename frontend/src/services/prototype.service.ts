@@ -120,12 +120,39 @@ export const getPrototype = async (prototype_id: string) => {
   return (await serverAxios.get<Prototype>(`/prototypes/${prototype_id}`)).data
 }
 
+export const listModelPrototypeCount = async (
+  model_id: string,
+): Promise<number> => {
+  const response = await serverAxios.get<List<Prototype>>('/prototypes', {
+    params: { model_id, page: 1, limit: 1, fields: 'id' },
+  })
+  return response.data.totalResults
+}
+
 export const listModelPrototypes = async (model_id: string) => {
-  return (
-    await serverAxios.get<List<Prototype>>(
-      `/prototypes?model_id=${model_id}&limit=50`,
-    )
-  ).data.results
+  let page = 1
+  const limit = 50
+  const allResults: Prototype[] = []
+  let totalPages = 1
+  const addedIds = new Set<string>()
+
+  do {
+    const response = await serverAxios.get<List<Prototype>>('/prototypes', {
+      params: { model_id, page, limit },
+    })
+
+    response.data.results.forEach((prototype) => {
+      if (!addedIds.has(prototype.id)) {
+        addedIds.add(prototype.id)
+        allResults.push(prototype)
+      }
+    })
+
+    totalPages = response.data.totalPages
+    page++
+  } while (page <= totalPages)
+
+  return allResults
 }
 
 export const createPrototypeService = async (prototype: any) => {

@@ -7,7 +7,7 @@ As a model author or contributor, I can create, organize, and iterate on a model
 ```mermaid
 flowchart TD
     subgraph Authoring
-        L["Library / portfolio<br/>(list · portfolio · search)"] --> C["Create / import ZIP"]
+        L["Library / portfolio<br/>(list · portfolio · search · page buttons)"] --> C["Create / import ZIP"]
         C --> NP["New prototype layout<br/>(shell preview)"]
         C --> CRUD["Prototype CRUD / bulk / recent / popular"]
         CRUD --> WS["Workspace tabs<br/>(view · journey · code · dashboard · feedback · staging · plug)"]
@@ -39,6 +39,7 @@ flowchart TD
 | [CAP-PROTO-06](#cap-proto-06--project-editor-multi-file) | Project editor (multi-file) |
 | [CAP-PROTO-07](#cap-proto-07--prototype-feedback) | Prototype feedback |
 | [CAP-PROTO-08](#cap-proto-08--project-templates) | Project templates |
+| [CAP-PROTO-09](#cap-proto-09--page-number-buttons) | Page-number buttons (medium) |
 
 
 ## CAP-PROTO-01 — Prototype library
@@ -58,6 +59,8 @@ Model owners/contributors (manage prototypes); end users (browse/portfolio).
 ### Acceptance criteria
 
 - When a **user** opens the Library page at **Prototype library (`/model/:id/library`)**, they see the model's prototypes as cards in a list view, and they can switch between List and Portfolio views.
+- When a **user** opens a large library at **Prototype library (`/model/:id/library`)**, they page through prototypes via CAP-PROTO-09 (Previous / page-number / Next).
+- When a **user** views a model at **Prototype library (`/model/:id/library`)**, the Prototype Library tab badge shows the API `totalResults` count for that model, not the length of a single page of results.
 - When a **user** types in the search box at **Prototype library (`/model/:id/library`)**, the list filters to prototypes whose name matches; when they pick a sort option (Last view, First view, Newest, Oldest, Name A-Z, Name Z-A, Rating), the list reorders accordingly.
 - When a **guest** (or a **user** lacking write permission) views the library at **Prototype library (`/model/:id/library`)**, the Create New Prototype and Import Prototype controls appear dimmed and are not clickable; when an **owner** with write permission views it, they can open the create dialog or import a prototype.
 - When an **owner** imports a ZIP at **Prototype library (`/model/:id/library`)**, they are limited to `.zip` files under 10 MB; a non-ZIP or oversized file shows an error message and the import is blocked.
@@ -76,7 +79,7 @@ Model owners/contributors (manage prototypes); end users (browse/portfolio).
 
 ### Quality control
 
-As a creator, I create a prototype and it appears in the list; I switch between list and portfolio views; I import a prototype ZIP and a prototype is created; I sort by name and the list is ordered.
+As a creator, I create a prototype and it appears in the list; I switch between list and portfolio views; I import a prototype ZIP and a prototype is created; I sort by name and the list is ordered; the Prototype Library tab count matches the API total (paging controls: CAP-PROTO-09).
 
 ```mermaid
 flowchart LR
@@ -787,3 +790,86 @@ Template data (code/widget_config/journey) is stored; no secrets.
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
 - **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none
+## CAP-PROTO-09 — Page-number buttons
+
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| owner / user / guest | Prototype library (`/model/:id/library`) | ❌ No | ✅ 3 UI + helper cases, ≈85% (est.) |
+
+**Complexity:** medium
+
+### Description
+
+As a model owner, contributor, or guest browsing a model, I can jump directly to a page of prototypes via numbered buttons (and Previous / Next) on the Prototype Library list so I can reach every prototype without scrolling an unbounded grid.
+
+### Who uses it / value
+
+Model owners/contributors and end users browsing large libraries (50+ prototypes after search/sort).
+
+### Acceptance criteria
+
+- When a **user** opens a library with more than 50 prototypes (after search/sort) at **Prototype library (`/model/:id/library`)**, they see Previous / page-number / Next controls under the card grid; at or below 50 filtered prototypes, the pager is hidden.
+- When a **user** opens a library with more than 7 pages at **Prototype library (`/model/:id/library`)**, they see a truncated page-number window (at most 7 number buttons) with ellipsis; every page remains reachable via Previous / Next and the visible numbers.
+- When a **user** clicks a page-number button at **Prototype library (`/model/:id/library`)**, the grid shows that page’s up-to-50 cards and the clicked number is marked active.
+- When a **user** clicks Next or Previous at **Prototype library (`/model/:id/library`)**, the grid moves one page forward or back; Previous is disabled on page 1 and Next is disabled on the last page.
+- When a **user** changes search or sort at **Prototype library (`/model/:id/library`)**, paging resets to page 1 over the newly filtered/sorted full set (search and sort apply to all prototypes, then the result is paged).
+
+### API contract
+
+- No dedicated HTTP surface — UI paging over the full model prototype list already loaded for CAP-PROTO-01 (`GET /v2/prototypes?model_id=…` walked page-by-page client-side).
+- Page size is fixed at 50 cards per page in the library list UI.
+- Visible page-number buttons are capped at 7 (sliding window with ellipsis) via `getVisiblePageItems`.
+
+### Quality control
+
+Open a model with more than 50 prototypes at `/model/:id/library/list`, confirm page-number buttons appear, click `2`, confirm a different set of cards, click Previous back to page 1; narrow search so results ≤ 50 and confirm the pager disappears. With 8+ pages, confirm ellipsis appears and not every page number is shown.
+
+```mermaid
+flowchart LR
+    U([User]) --> L["Library list<br/>filtered + sorted"]
+    L --> P{filtered count > 50?}
+    P -->|no| G["Show all cards<br/>no pager"]
+    P -->|yes| N["Previous · 1 … 4 5 6 … N · Next"]
+    N -->|click page N| S["Slice cards<br/>(N-1)*50 .. N*50"]
+```
+
+### Security
+
+Same read gating as CAP-PROTO-01 (library browse). Page-number buttons only change client-side slicing of already-authorized results.
+
+**Coverage:**
+- **Auth:** Optional via `PUBLIC_VIEWING` for library reads (same as CAP-PROTO-01).
+- **Authorization:** private-model reads gated by `READ_MODEL`; pager does not widen access.
+- **Input validation:** page index clamped to `1..totalPages` in the UI; no server input.
+- **Rate limiting:** N/A (no extra HTTP calls for page clicks).
+- **Secrets:** none.
+
+**Risks:**
+- **Stale full-list cache:** if the client holds an outdated full prototype list, page-number navigation could show deleted or omit newly created prototypes until refetch. *Mitigation:* invalidate/refetch model prototype queries after create/import/delete (same cache keys as CAP-PROTO-01).
+
+### Personal data processing
+
+❌ No — this capability does not process personal data.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
+
+None beyond the prototype list already loaded for CAP-PROTO-01; page selection is ephemeral UI state.
+
+**Coverage:**
+- **Stored data:** none (page index is client state only).
+- **Retention:** N/A.
+- **Encryption:** N/A.
+- **Logging:** none.
+
+**Risks:**
+- none — no additional operational data stored.
+
+### Test coverage
+- **E2E (Playwright):** 3 UI case(s) in `prototype-extended.spec.ts` + helper cases in `pagination-utils.spec.ts` — SITEMAP: ✅
+- **Estimated coverage:** ≈85% (est.) — pager visibility, page-2 navigation, ellipsis truncation; search/sort reset-to-page-1 lightly covered via existing search/sort cases.
+- **Unit (Jest):** none (frontend has no Jest runner; helper covered via Playwright `pagination-utils.spec.ts`)
+
+**Implementation:** `frontend/src/utils/pagination.ts` (`getVisiblePageItems`); `frontend/src/components/organisms/PrototypeLibraryList.tsx` (`DaPaging` / page-number buttons / `DaPaginationEllipsis`, `PAGE_SIZE = 50`).

@@ -11,6 +11,7 @@ import {
   listPopularPrototypes,
   listRecentPrototypes,
   listModelPrototypes,
+  listModelPrototypeCount,
 } from '@/services/prototype.service'
 
 export const prototypeQueryKeys = {
@@ -20,6 +21,8 @@ export const prototypeQueryKeys = {
   allForViewSort: (params: Record<string, unknown>) =>
     ['prototypes', 'all-for-view-sort', params] as const,
   model: (modelId: string) => ['listModelPrototypes', modelId] as const,
+  modelCount: (modelId: string) =>
+    ['listModelPrototypes', modelId, 'count'] as const,
   recent: () => ['prototypes', 'recent'] as const,
   popular: () => ['prototypes', 'popular'] as const,
 }
@@ -51,8 +54,21 @@ export const useListModelPrototypes = (
   const enabled = options?.enabled ?? !!model_id
 
   return useQuery({
-    queryKey: ['listModelPrototypes', model_id],
+    queryKey: prototypeQueryKeys.model(model_id),
     queryFn: () => listModelPrototypes(model_id),
+    enabled: enabled && !!model_id,
+  })
+}
+
+export const useModelPrototypeCount = (
+  model_id: string,
+  options?: { enabled?: boolean },
+) => {
+  const enabled = options?.enabled ?? !!model_id
+
+  return useQuery({
+    queryKey: prototypeQueryKeys.modelCount(model_id),
+    queryFn: () => listModelPrototypeCount(model_id),
     enabled: enabled && !!model_id,
   })
 }

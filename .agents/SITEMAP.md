@@ -82,6 +82,8 @@
 | Delete prototype | Via API, card removed from UI | ✅ `prototype.spec.ts` |
 | Search / filter | Filter prototypes by name | ✅ `prototype-extended.spec.ts` |
 | Sort prototypes | Sort by date/name | ✅ `prototype-extended.spec.ts` |
+| Library paging (CAP-PROTO-09) | Page-number buttons (max 7 + ellipsis) when more than 50 prototypes | ✅ `prototype-extended.spec.ts` / `pagination-utils.spec.ts` |
+| Tab prototype count | Model tab badge matches API `totalResults` | ✅ `prototype-extended.spec.ts` |
 | Prototype image cover | Thumbnail display | ❌ |
 
 ---
