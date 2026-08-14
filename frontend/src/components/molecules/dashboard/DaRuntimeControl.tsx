@@ -84,6 +84,7 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   const { showPrototypeDashboardFullScreen } = useSystemUI()
 
   const setActiveRuntimeName = useRuntimeStore((state) => state.setActiveRuntimeName)
+  const setIsAppRunning = useRuntimeStore((state) => state.setIsAppRunning)
   const [isExpand, setIsExpand] = useState(false)
   const [isRunning, setIsRunning] = useState(false)
   const [activeRtId, setActiveRtId] = useState<string | undefined>('')
@@ -158,6 +159,7 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
 
   const handleRun = () => {
     setIsRunning(true)
+    setIsAppRunning(true)
     setActiveTab('output')
     setLog('')
 
@@ -194,6 +196,7 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
 
   const handleStop = () => {
     setIsRunning(false)
+    setIsAppRunning(false)
     switch (prototype?.language) {
       case 'rust':
       default:
