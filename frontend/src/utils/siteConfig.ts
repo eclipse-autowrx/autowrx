@@ -9,10 +9,57 @@
 import { useState, useEffect } from 'react'
 import { configManagementService } from '../services/configManagement.service'
 
-// Cache for site configs to avoid repeated API calls
-let configCache = new Map<string, any>()
-let cacheExpiry: number | null = null
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
+const DEFAULT_SITE_CONFIGS: Record<string, any> = {
+  SITE_LOGO_WIDE: '/imgs/logo-wide.png',
+  DEFAULT_MODEL_IMAGE: '/imgs/default-model-image.png',
+  DEFAULT_PROTOTYPE_IMAGE: '/imgs/default_prototype_cover.jpg',
+  SITE_TITLE: 'AutoWRX',
+  SITE_DESCRIPTION: 'Vehicle Signal Specification Management Platform',
+  SITE_FAVICON: '/imgs/favicon.ico',
+  SITE_THEME_COLOR: '#198100',
+  DISABLE_CUSTOM_API_SETS: false,
+  GENAI_SDV_APP_ENDPOINT:
+    'https://workflow.digital.auto/webhook/c0ba14bc-c6a3-4319-ad0a-ad89b1460b36',
+  VSS_PLUGINS: [{ label: 'A2L Importer', plugin: 'a2l-importer' }],
+}
+
+type CachedBulkConfigs = { data: Record<string, any>; expiry: number }
+
+const bulkCache = new Map<string, CachedBulkConfigs>()
+const inFlightBulk = new Map<string, Promise<Record<string, any>>>()
+
+const makeBulkCacheKey = (scope: string, target_id?: string) =>
+  `public_${scope}_${target_id ?? ''}`
+
+const readCachedBulk = (
+  scope: string,
+  target_id?: string,
+): Record<string, any> | null => {
+  const cached = bulkCache.get(makeBulkCacheKey(scope, target_id))
+  if (cached && Date.now() < cached.expiry) {
+    return cached.data
+  }
+  return null
+}
+
+const resolveConfigValue = (raw: any, key: string, defaultValue: any): any => {
+  if (raw !== null && raw !== undefined) {
+    return raw
+  }
+  return defaultValue !== null ? defaultValue : DEFAULT_SITE_CONFIGS[key]
+}
+
+const pickConfigValue = (
+  configs: Record<string, any> | null | undefined,
+  key: string,
+): any => {
+  if (configs && Object.prototype.hasOwnProperty.call(configs, key)) {
+    return configs[key]
+  }
+  return undefined
+}
 
 const parseConfigValue = (raw: any, defaultVal: any): any => {
   if (raw === null || raw === undefined || raw === '') {
@@ -46,28 +93,9 @@ const parseConfigValue = (raw: any, defaultVal: any): any => {
   return raw
 }
 
-// Default fallback values for site configs
-const DEFAULT_SITE_CONFIGS: Record<string, any> = {
-  SITE_LOGO_WIDE: '/imgs/logo-wide.png',
-  DEFAULT_MODEL_IMAGE: '/imgs/default-model-image.png',
-  DEFAULT_PROTOTYPE_IMAGE: '/imgs/default_prototype_cover.jpg',
-  SITE_TITLE: 'AutoWRX',
-  SITE_DESCRIPTION: 'Vehicle Signal Specification Management Platform',
-  SITE_FAVICON: '/imgs/favicon.ico',
-  SITE_THEME_COLOR: '#198100',
-  DISABLE_CUSTOM_API_SETS: false,
-  GENAI_SDV_APP_ENDPOINT:
-    'https://workflow.digital.auto/webhook/c0ba14bc-c6a3-4319-ad0a-ad89b1460b36',
-  VSS_PLUGINS: [{ label: 'A2L Importer', plugin: 'a2l-importer' }],
-}
-
 /**
- * Get a single site config value by key with fallback to default
- * @param key - The config key
- * @param scope - The scope (site, user, model, etc.)
- * @param target_id - The target ID for scoped configs
- * @param defaultValue - Default value if key not found
- * @returns Promise with the config value or default value
+ * Get a single site config value by key with fallback to default.
+ * Reads from the shared public-config bulk cache so many keys share one request.
  */
 export const getConfig = async (
   key: string,
@@ -76,17 +104,8 @@ export const getConfig = async (
   defaultValue: any = null,
 ): Promise<any> => {
   try {
-    const result = await configManagementService.getPublicConfig(
-      key,
-      scope,
-      target_id,
-    )
-    const value = result?.value
-    return value !== null && value !== undefined
-      ? value
-      : defaultValue !== null
-        ? defaultValue
-        : DEFAULT_SITE_CONFIGS[key]
+    const configs = await getPublicConfigs(scope, target_id)
+    return resolveConfigValue(pickConfigValue(configs, key), key, defaultValue)
   } catch (error) {
     console.warn(`Failed to get config for key "${key}":`, error)
     return defaultValue !== null ? defaultValue : DEFAULT_SITE_CONFIGS[key]
@@ -95,24 +114,20 @@ export const getConfig = async (
 
 /**
  * Get a site config value synchronously from cache or return default
- * @param key - The config key
- * @returns The config value or default value
  */
 export const getSiteConfigSync = (key: string): any => {
-  const cacheKey = `public_site_`
-  const cached = configCache.get(cacheKey)
-  if (cached && cached[key]) {
-    return cached[key]
+  const cached = readCachedBulk('site')
+  if (cached && Object.prototype.hasOwnProperty.call(cached, key)) {
+    const raw = cached[key]
+    if (raw !== undefined && raw !== null) {
+      return raw
+    }
   }
   return DEFAULT_SITE_CONFIGS[key]
 }
 
 /**
  * Get multiple site config values by keys
- * @param keys - Array of config keys
- * @param scope - The scope (site, user, model, etc.)
- * @param target_id - The target ID for scoped configs
- * @returns Promise with object containing key-value pairs
  */
 export const getConfigs = async (
   keys: string[],
@@ -120,11 +135,11 @@ export const getConfigs = async (
   target_id?: string,
 ): Promise<Record<string, any>> => {
   try {
-    const all = await configManagementService.getPublicConfigs(scope, target_id)
+    const all = await getPublicConfigs(scope, target_id)
     const result: Record<string, any> = {}
     keys.forEach((k) => {
-      if (all && Object.prototype.hasOwnProperty.call(all, k)) {
-        result[k] = (all as any)[k]
+      if (Object.prototype.hasOwnProperty.call(all, k)) {
+        result[k] = all[k]
       }
     })
     return result
@@ -135,100 +150,94 @@ export const getConfigs = async (
 }
 
 /**
- * Get all public site configs (cached)
- * @param scope - The scope (site, user, model, etc.)
- * @param target_id - The target ID for scoped configs
- * @param forceRefresh - Force refresh cache
- * @returns Promise with object containing all public configs
+ * Get all public site configs (cached, in-flight deduped)
  */
 export const getPublicConfigs = async (
   scope: string = 'site',
   target_id?: string,
   forceRefresh: boolean = false,
 ): Promise<Record<string, any>> => {
-  const now = Date.now()
-  const cacheKey = `public_${scope}_${target_id || 'site'}`
+  const cacheKey = makeBulkCacheKey(scope, target_id)
 
-  // Return cached data if still valid and not forcing refresh
-  if (
-    !forceRefresh &&
-    cacheExpiry &&
-    now < cacheExpiry &&
-    configCache.has(cacheKey)
-  ) {
-    return configCache.get(cacheKey)!
+  if (!forceRefresh) {
+    const cached = readCachedBulk(scope, target_id)
+    if (cached) {
+      return cached
+    }
+
+    const inFlight = inFlightBulk.get(cacheKey)
+    if (inFlight) {
+      return inFlight
+    }
   }
 
+  const request = (async () => {
+    try {
+      const configs =
+        (await configManagementService.getPublicConfigs(scope, target_id)) || {}
+      bulkCache.set(cacheKey, {
+        data: configs,
+        expiry: Date.now() + CACHE_DURATION,
+      })
+      return configs
+    } catch (error) {
+      console.warn('Failed to get public configs:', error)
+      return bulkCache.get(cacheKey)?.data || {}
+    }
+  })()
+
+  inFlightBulk.set(cacheKey, request)
   try {
-    const configs = await configManagementService.getPublicConfigs(
-      scope,
-      target_id,
-    )
-
-    // Update cache
-    configCache.set(cacheKey, configs)
-    cacheExpiry = now + CACHE_DURATION
-
-    return configs
-  } catch (error) {
-    console.warn('Failed to get public configs:', error)
-    return configCache.get(cacheKey) || {}
+    return await request
+  } finally {
+    inFlightBulk.delete(cacheKey)
   }
 }
 
 /**
  * Get a config value synchronously from cache (if available)
- * @param key - The config key
- * @param defaultValue - Default value if key not found
- * @returns The cached config value or default value
  */
-export const getConfigSync = (key: string, defaultValue: any = null): any => {
-  // Try common cache keys for site scope
-  const siteCacheKey = `public_site_site`
-  const fallbackKey = 'public'
-  if (configCache.has(siteCacheKey)) {
-    const publicConfigs = configCache.get(siteCacheKey)!
-    return publicConfigs[key] !== undefined ? publicConfigs[key] : defaultValue
+export const getConfigSync = (
+  key: string,
+  defaultValue: any = null,
+  scope: string = 'site',
+  target_id?: string,
+): any => {
+  const cached = readCachedBulk(scope, target_id)
+  if (!cached) {
+    return defaultValue
   }
-  if (configCache.has(fallbackKey)) {
-    const publicConfigs = configCache.get(fallbackKey)!
-    return publicConfigs[key] !== undefined ? publicConfigs[key] : defaultValue
-  }
-  return defaultValue
+  const raw = pickConfigValue(cached, key)
+  return raw !== undefined && raw !== null ? raw : defaultValue
 }
 
 /**
  * Get multiple config values synchronously from cache (if available)
- * @param keys - Array of config keys
- * @returns Object with key-value pairs
  */
 export const getConfigsSync = (keys: string[]): Record<string, any> => {
-  if (configCache.has('public')) {
-    const publicConfigs = configCache.get('public')!
-    const result: Record<string, any> = {}
-    keys.forEach((key) => {
-      if (publicConfigs[key] !== undefined) {
-        result[key] = publicConfigs[key]
-      }
-    })
-    return result
+  const publicConfigs = readCachedBulk('site')
+  if (!publicConfigs) {
+    return {}
   }
-  return {}
+  const result: Record<string, any> = {}
+  keys.forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(publicConfigs, key)) {
+      result[key] = publicConfigs[key]
+    }
+  })
+  return result
 }
 
 /**
  * Clear the config cache
  */
 export const clearCache = (): void => {
-  configCache.clear()
-  cacheExpiry = null
+  bulkCache.clear()
+  inFlightBulk.clear()
 }
 
 /**
  * React hook for getting site configs
- * @param keys - Array of config keys to watch
- * @param defaultValue - Default values for the keys
- * @returns Object with config values and loading state
  */
 export const useSiteConfigs = (
   keys: string[],
@@ -239,41 +248,50 @@ export const useSiteConfigs = (
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    let cancelled = false
+
     const fetchConfigs = async () => {
       try {
         setLoading(true)
         setError(null)
 
-        // Try to get from cache first
         const cachedConfigs = getConfigsSync(keys)
         if (Object.keys(cachedConfigs).length === keys.length) {
-          setConfigs(cachedConfigs)
-          setLoading(false)
+          if (!cancelled) {
+            setConfigs(cachedConfigs)
+            setLoading(false)
+          }
           return
         }
 
-        // Fetch from API
         const fetchedConfigs = await getConfigs(keys)
-        setConfigs(fetchedConfigs)
+        if (!cancelled) {
+          setConfigs(fetchedConfigs)
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch configs')
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to fetch configs')
+        }
       } finally {
-        setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
 
     fetchConfigs()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keys.join(',')])
 
   return { configs, loading, error }
 }
 
 /**
- * React hook for getting a single site config value
- * @param key - The config key
- * @param scope - The scope (site, user, model, etc.)
- * @param target_id - The target ID for scoped configs
- * @returns Object with value, loading state, and error
+ * React hook for getting a single site config value.
+ * All keys in the same scope share one `/site-config/public` request.
  */
 export const useSiteConfig = (
   key: string,
@@ -283,23 +301,44 @@ export const useSiteConfig = (
 ) => {
   const defaultVal = fallback ?? DEFAULT_SITE_CONFIGS[key]
   const [value, setValue] = useState<any>(() =>
-    parseConfigValue(getConfigSync(key, defaultVal), defaultVal),
+    parseConfigValue(getConfigSync(key, defaultVal, scope, target_id), defaultVal),
   )
 
   useEffect(() => {
-    const loadConfig = async () => {
-      try {
-        const result = await getConfig(key, scope, target_id, defaultVal)
-        const next = parseConfigValue(result, defaultVal)
-        setValue((prev: any) => (Object.is(prev, next) ? prev : next))
-      } catch {
-        setValue((prev: any) =>
-          Object.is(prev, defaultVal) ? prev : defaultVal,
-        )
-      }
+    let cancelled = false
+
+    const applyValue = (raw: any) => {
+      const next = parseConfigValue(
+        resolveConfigValue(raw, key, defaultVal),
+        defaultVal,
+      )
+      setValue((prev: any) => (Object.is(prev, next) ? prev : next))
     }
 
-    loadConfig()
+    const cached = readCachedBulk(scope, target_id)
+    if (cached) {
+      applyValue(pickConfigValue(cached, key))
+      return
+    }
+
+    getConfig(key, scope, target_id, defaultVal)
+      .then((result) => {
+        if (!cancelled) {
+          const next = parseConfigValue(result, defaultVal)
+          setValue((prev: any) => (Object.is(prev, next) ? prev : next))
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setValue((prev: any) =>
+            Object.is(prev, defaultVal) ? prev : defaultVal,
+          )
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, scope, target_id])
 
