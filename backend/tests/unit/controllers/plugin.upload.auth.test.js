@@ -214,4 +214,64 @@ describe('Plugin upload authorization (PR #614 / issue #719, CWE-862)', () => {
         .forEach((n) => fs.rmSync(path.join(PLUGIN_DIR, n), { recursive: true, force: true }));
     }
   });
+
+  it('end-to-end happy path: a valid re-upload swaps the new plugin into place and upserts', async () => {
+    const happySlug = 'pr614-happy-slug';
+    const pluginPath = path.join(PLUGIN_DIR, happySlug);
+    // Pre-create the currently-serving (old) plugin dir being replaced.
+    await fsp.mkdir(pluginPath, { recursive: true });
+    await fsp.writeFile(path.join(pluginPath, 'index.js'), 'console.log("old");');
+    try {
+      // Existing plugin owned by the requester -> auth passes, upsert branch taken.
+      pluginService.getPluginBySlug.mockResolvedValue({ created_by: 'me-user-id' });
+      pluginService.isAdminUser.mockResolvedValue(false);
+      pluginService.upsertPluginBySlug.mockResolvedValue({
+        slug: happySlug,
+        is_internal: true,
+        url: 'placeholder',
+      });
+
+      const goodZip = path.join(os.tmpdir(), `pr614-happy-${happySlug}.zip`);
+      buildZip(goodZip, [
+        { name: 'index.js', content: 'console.log("new");' },
+        { name: 'sub/style.css', content: 'body{color:red}' },
+      ]);
+
+      const { nextErr, sent } = await runHandler({
+        params: { slug: happySlug },
+        user: { id: 'me-user-id', roles: ['user'] },
+        file: { path: goodZip },
+      });
+
+      // No error; a 200 response with the new plugin URL.
+      expect(nextErr).toBeUndefined();
+      expect(sent).toBeDefined();
+      expect(sent.url).toBe(`/plugin/${happySlug}/index.js`);
+      expect(sent.plugin).toEqual({ slug: happySlug, is_internal: true, url: 'placeholder' });
+
+      // upsert was called with the URL derived from the extracted entry file.
+      expect(pluginService.upsertPluginBySlug).toHaveBeenCalledWith(
+        happySlug,
+        expect.objectContaining({
+          is_internal: true,
+          url: `/plugin/${happySlug}/index.js`,
+          updated_by: 'me-user-id',
+        }),
+      );
+
+      // The atomic swap delivered the NEW plugin into pluginPath (not merged
+      // with the old one).
+      expect(fs.existsSync(path.join(pluginPath, 'index.js'))).toBe(true);
+      expect(fs.readFileSync(path.join(pluginPath, 'index.js'), 'utf8')).toBe('console.log("new");');
+      expect(fs.readFileSync(path.join(pluginPath, 'sub', 'style.css'), 'utf8')).toBe('body{color:red}');
+      // The old backup was cleaned up after the swap.
+      expect(fs.existsSync(`${pluginPath}.old`)).toBe(false);
+    } finally {
+      fs.rmSync(pluginPath, { recursive: true, force: true });
+      fs.rmSync(`${pluginPath}.old`, { recursive: true, force: true });
+      fs.readdirSync(PLUGIN_DIR)
+        .filter((n) => n.startsWith(`${happySlug}.tmp-`))
+        .forEach((n) => fs.rmSync(path.join(PLUGIN_DIR, n), { recursive: true, force: true }));
+    }
+  });
 });
