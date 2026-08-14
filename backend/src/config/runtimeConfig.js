@@ -12,7 +12,17 @@
  *
  * Format: "RUNTIME_NAME1:service-name1,RUNTIME_NAME2:service-name2,..."
  * Example: "PUBLIC-01-49aa7a20cb8aaf10:runtime-09,PUBLIC-02-985bfbf92e0a1698:runtime-10"
+ *
+ * Local host-run backend (Windows/WSL outside compose): include host:port
+ * Example: "PUBLIC-01-49aa7a20cb8aaf10:127.0.0.1:8889"
  */
+
+const toTargetUrl = (rest) => {
+  if (!rest) return null;
+  if (/^https?:\/\//i.test(rest)) return rest;
+  if (rest.includes(':')) return `http://${rest}`;
+  return `http://${rest}:8080`;
+};
 
 const parseRuntimeMappings = () => {
   const mappingStr = process.env.RUNTIME_SERVICE_MAPPINGS || '';
@@ -25,18 +35,21 @@ const parseRuntimeMappings = () => {
 
   try {
     mappingStr.split(',').forEach((pair) => {
-      const [runtimeName, serviceName] = pair
-        .trim()
-        .split(':')
-        .map((s) => s.trim());
-      if (runtimeName && serviceName) {
-        mapping[runtimeName] = serviceName;
+      const trimmed = pair.trim();
+      if (!trimmed) return;
+      const sep = trimmed.indexOf(':');
+      if (sep <= 0) return;
+      const runtimeName = trimmed.slice(0, sep).trim();
+      const rest = trimmed.slice(sep + 1).trim();
+      const targetUrl = toTargetUrl(rest);
+      if (runtimeName && targetUrl) {
+        mapping[runtimeName] = targetUrl;
       }
     });
     const count = Object.keys(mapping).length;
     console.log(`[RuntimeConfig] Loaded ${count} runtime mapping(s)`);
-    Object.entries(mapping).forEach(([name, service]) => {
-      console.log(`[RuntimeConfig]   ${name} → ${service}`);
+    Object.entries(mapping).forEach(([name, target]) => {
+      console.log(`[RuntimeConfig]   ${name} → ${target}`);
     });
   } catch (err) {
     console.error('[RuntimeConfig] Error parsing RUNTIME_SERVICE_MAPPINGS:', err.message);
@@ -48,14 +61,26 @@ const parseRuntimeMappings = () => {
 const runtimeMappings = parseRuntimeMappings();
 
 /**
- * Get docker/Kubernetes service name for a given RUNTIME_NAME
+ * Get proxy target URL for a given RUNTIME_NAME
  * @param {string} runtimeName - The RUNTIME_NAME from the request
- * @returns {string|null} - The service hostname or null
+ * @returns {string|null} - e.g. http://runtime-09:8080 or http://127.0.0.1:8889
  */
-function getServiceNameForRuntime(runtimeName) {
+function getRuntimeTarget(runtimeName) {
   return runtimeMappings[runtimeName] || null;
 }
 
+/** @deprecated use getRuntimeTarget */
+function getServiceNameForRuntime(runtimeName) {
+  const target = getRuntimeTarget(runtimeName);
+  if (!target) return null;
+  try {
+    return new URL(target).hostname;
+  } catch {
+    return null;
+  }
+}
+
 module.exports = {
+  getRuntimeTarget,
   getServiceNameForRuntime,
 };
