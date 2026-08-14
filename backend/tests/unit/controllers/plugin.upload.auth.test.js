@@ -129,6 +129,31 @@ describe('Plugin upload authorization (PR #614 / issue #719, CWE-862)', () => {
     expect(pluginService.upsertPluginBySlug).not.toHaveBeenCalled();
   });
 
+  it('removes the multer temp upload even on the 403 authorization path', async () => {
+    // Regression: the temp-file cleanup must run on the 403 path (which throws
+    // before the extraction try block), otherwise an authenticated user could
+    // disk-exhaust by repeatedly uploading to a slug owned by someone else.
+    const tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'pr614-403-'));
+    const tmpFile = path.join(tmpDir, 'upload.zip');
+    await fsp.writeFile(tmpFile, 'fake-zip-bytes');
+    try {
+      pluginService.getPluginBySlug.mockResolvedValue({ created_by: 'other-user-id' });
+      pluginService.isAdminUser.mockResolvedValue(false);
+
+      const { nextErr } = await runHandler({
+        params: { slug },
+        user: { id: 'me-user-id', roles: ['user'] },
+        file: { path: tmpFile },
+      });
+
+      expect(nextErr.statusCode).toBe(httpStatus.FORBIDDEN);
+      // The temp upload must be removed even though auth rejected the request.
+      expect(fs.existsSync(tmpFile)).toBe(false);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
   it('allows the owner through the ownership gate (no 403 at the gate)', async () => {
     pluginService.getPluginBySlug.mockResolvedValue({ created_by: 'me-user-id' });
     pluginService.isAdminUser.mockResolvedValue(false);

@@ -280,70 +280,102 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
   const { slug } = req.params;
   if (!req.file) throw new ApiError(httpStatus.BAD_REQUEST, 'No file uploaded');
 
-  const actor = {
-    id: req.user.id,
-    isAdmin:
-      (Array.isArray(req.user.roles) && req.user.roles.includes('admin')) || (await pluginService.isAdminUser(req.user.id)),
-  };
-
-  // Authorization: if a plugin with this slug already exists, verify
-  // ownership BEFORE extracting any files (CWE-862).
-  const existing = await pluginService.getPluginBySlug(slug);
-  if (existing) {
-    const isOwner = String(existing.created_by) === String(actor.id);
-    if (!isOwner && !actor.isAdmin) {
-      throw new ApiError(
-        httpStatus.FORBIDDEN,
-        'This plugin name is already used by another account. Please choose a different name and upload again.',
-      );
-    }
-  }
-
-  // Ensure base plugin directory exists
-  await ensureDir(PLUGIN_DIR);
-  const pluginPath = path.join(PLUGIN_DIR, slug);
-
-  // Defense-in-depth: verify resolved path stays within PLUGIN_DIR (CWE-22)
-  const resolvedPluginPath = path.resolve(pluginPath);
-  if (resolvedPluginPath !== PLUGIN_DIR && !resolvedPluginPath.startsWith(PLUGIN_DIR + path.sep)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid plugin slug');
-  }
-
-  // Extract into a fresh temp directory, then atomically swap it into
-  // pluginPath on success. This keeps the currently-serving plugin intact if
-  // extraction fails (a failed re-upload no longer wipes the live plugin)
-  // and avoids partial overwrites of an existing plugin.
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
-  const tmpExtract = await fsp.mkdtemp(path.join(PLUGIN_DIR, `${slug}.tmp-`));
+  // Wrap the entire handler so the multer temp upload is always removed —
+  // including on the 403 authorization path and other pre-extraction throws,
+  // which would otherwise leak files under static/uploads (disk-exhaustion DoS).
   try {
-    await safeExtractZip(req.file.path, tmpExtract);
-    // Success: move the current plugin dir aside, rename the extracted dir
-    // into place, then remove the old one. If the swap fails, restore the
-    // old dir so the live plugin is never left missing.
-    const oldDir = `${pluginPath}.old`;
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
-    await fsp.rm(oldDir, { recursive: true, force: true }).catch(() => {});
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
-    await fsp.rename(pluginPath, oldDir).catch(() => {}); // no-op if first upload
-    try {
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
-      await fsp.rename(tmpExtract, pluginPath);
-    } catch (swapErr) {
-      // Swap failed: restore the previous plugin, then rethrow.
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
-      await fsp.rename(oldDir, pluginPath).catch(() => {});
-      throw swapErr;
+    const actor = {
+      id: req.user.id,
+      isAdmin:
+        (Array.isArray(req.user.roles) && req.user.roles.includes('admin')) ||
+        (await pluginService.isAdminUser(req.user.id)),
+    };
+
+    // Authorization: if a plugin with this slug already exists, verify
+    // ownership BEFORE extracting any files (CWE-862).
+    const existing = await pluginService.getPluginBySlug(slug);
+    if (existing) {
+      const isOwner = String(existing.created_by) === String(actor.id);
+      if (!isOwner && !actor.isAdmin) {
+        throw new ApiError(
+          httpStatus.FORBIDDEN,
+          'This plugin name is already used by another account. Please choose a different name and upload again.',
+        );
+      }
     }
+
+    // Ensure base plugin directory exists
+    await ensureDir(PLUGIN_DIR);
+    const pluginPath = path.join(PLUGIN_DIR, slug);
+
+    // Defense-in-depth: verify resolved path stays within PLUGIN_DIR (CWE-22)
+    const resolvedPluginPath = path.resolve(pluginPath);
+    if (resolvedPluginPath !== PLUGIN_DIR && !resolvedPluginPath.startsWith(PLUGIN_DIR + path.sep)) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid plugin slug');
+    }
+
+    // Extract into a fresh temp directory, then atomically swap it into
+    // pluginPath on success. This keeps the currently-serving plugin intact if
+    // extraction fails (a failed re-upload no longer wipes the live plugin)
+    // and avoids partial overwrites of an existing plugin.
     // eslint-disable-next-line security/detect-non-literal-fs-filename
-    await fsp.rm(oldDir, { recursive: true, force: true }).catch(() => {});
-  } catch (err) {
-    // Extraction failed: safeExtractZip already removed tmpExtract; ensure it
-    // is gone. The live pluginPath is untouched.
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
-    await fsp.rm(tmpExtract, { recursive: true, force: true }).catch(() => {});
-    throw err;
+    const tmpExtract = await fsp.mkdtemp(path.join(PLUGIN_DIR, `${slug}.tmp-`));
+    try {
+      await safeExtractZip(req.file.path, tmpExtract);
+      // Success: move the current plugin dir aside, rename the extracted dir
+      // into place, then remove the old one. If the swap fails, restore the
+      // old dir so the live plugin is never left missing.
+      const oldDir = `${pluginPath}.old`;
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
+      await fsp.rm(oldDir, { recursive: true, force: true }).catch(() => {});
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
+      await fsp.rename(pluginPath, oldDir).catch(() => {}); // no-op if first upload
+      try {
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
+        await fsp.rename(tmpExtract, pluginPath);
+      } catch (swapErr) {
+        // Swap failed: restore the previous plugin, then rethrow.
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
+        await fsp.rename(oldDir, pluginPath).catch(() => {});
+        throw swapErr;
+      }
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
+      await fsp.rm(oldDir, { recursive: true, force: true }).catch(() => {});
+    } catch (err) {
+      // Extraction failed: safeExtractZip already removed tmpExtract; ensure it
+      // is gone. The live pluginPath is untouched.
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
+      await fsp.rm(tmpExtract, { recursive: true, force: true }).catch(() => {});
+      throw err;
+    }
+
+    // Try to detect entry file (index.js preferred, fallback index.html)
+    let entryRel = await findEntryFile(pluginPath, ['index.js', 'index.html']);
+    if (!entryRel) {
+      // If not found, fallback to index.js at root
+      entryRel = 'index.js';
+    }
+    const safeRel = entryRel.replace(/^\/+/, '');
+    const pluginUrl = `/plugin/${slug}/${safeRel}`.replace(/\\/g, '/');
+
+    if (existing) {
+      // Plugin already exists — update its URL in place
+      const plugin = await pluginService.upsertPluginBySlug(slug, {
+        is_internal: true,
+        url: pluginUrl,
+        updated_by: req.user.id,
+      });
+      return res.status(httpStatus.OK).send({ plugin, url: pluginUrl });
+    }
+
+    // Plugin does not exist yet (create flow) — return the URL only so the
+    // caller can include it in the subsequent createPlugin call.  Creating a
+    // stub record here would produce an incomplete document (missing name,
+    // description, image, created_by, …).
+    res.status(httpStatus.OK).send({ plugin: null, url: pluginUrl });
   } finally {
-    // Always remove the uploaded temp file (success or failure) so multer
+    // Always remove the uploaded temp file on every exit path (403 authorization,
+    // validation, extraction failure, swap failure, and success) so multer
     // uploads don't accumulate under static/uploads over time.
     try {
       // Temp upload path is provided by the trusted multer middleware.
@@ -354,31 +386,6 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
       console.error(e);
     }
   }
-
-  // Try to detect entry file (index.js preferred, fallback index.html)
-  let entryRel = await findEntryFile(pluginPath, ['index.js', 'index.html']);
-  if (!entryRel) {
-    // If not found, fallback to index.js at root
-    entryRel = 'index.js';
-  }
-  const safeRel = entryRel.replace(/^\/+/, '');
-  const pluginUrl = `/plugin/${slug}/${safeRel}`.replace(/\\/g, '/');
-
-  if (existing) {
-    // Plugin already exists — update its URL in place
-    const plugin = await pluginService.upsertPluginBySlug(slug, {
-      is_internal: true,
-      url: pluginUrl,
-      updated_by: req.user.id,
-    });
-    return res.status(httpStatus.OK).send({ plugin, url: pluginUrl });
-  }
-
-  // Plugin does not exist yet (create flow) — return the URL only so the
-  // caller can include it in the subsequent createPlugin call.  Creating a
-  // stub record here would produce an incomplete document (missing name,
-  // description, image, created_by, …).
-  res.status(httpStatus.OK).send({ plugin: null, url: pluginUrl });
 });
 
 const removePlugin = catchAsync(async (req, res) => {
