@@ -187,6 +187,102 @@ if (config.services.kitServer.url) {
   );
 }
 
+// Runtime proxy — resolve RUNTIME_NAME → docker/K8s service via RUNTIME_SERVICE_MAPPINGS
+const { getServiceNameForRuntime } = require('./config/runtimeConfig');
+
+/**
+ * Get the hostname for a runtime from the mapping
+ * Strips RUNTIME_PREFIX if present (e.g., "Runtime-PUBLIC-01-..." → "PUBLIC-01-...")
+ * @param {string} runtimeName - The RUNTIME_NAME from the request
+ * @returns {string|null} - The service hostname or null
+ */
+function resolveRuntimeHost(runtimeName) {
+  const prefix = process.env.RUNTIME_PREFIX || '';
+  let normalizedName = runtimeName;
+
+  if (prefix && runtimeName.startsWith(prefix)) {
+    normalizedName = runtimeName.substring(prefix.length);
+    console.log(`[Proxy] Stripped prefix: "${runtimeName}" → "${normalizedName}"`);
+  }
+
+  const serviceName = getServiceNameForRuntime(normalizedName);
+
+  if (serviceName) {
+    console.log(`[Proxy] Resolved "${normalizedName}" → "${serviceName}"`);
+    return serviceName;
+  }
+
+  console.warn(`[Proxy] No mapping found for "${normalizedName}" (original: "${runtimeName}")`);
+  return null;
+}
+
+// Proxy to runtime containers' HTTP servers (port 8080)
+// Usage: /runtime-preview/PUBLIC-01-49aa7a20cb8aaf10 → http://runtime-09:8080/
+app.use('/runtime-preview/:runtimeName', (req, res, next) => {
+  const runtimeName = req.params.runtimeName;
+
+  if (!/^[a-zA-Z0-9-]+$/.test(runtimeName)) {
+    return res.status(400).json({
+      message: 'Invalid runtime name format',
+      code: 'INVALID_RUNTIME_NAME',
+    });
+  }
+
+  const serviceName = resolveRuntimeHost(runtimeName);
+
+  if (!serviceName) {
+    console.warn(`[Proxy] No mapping found for runtime: ${runtimeName}`);
+    return res.status(502).json({
+      message: 'Runtime not found in configuration',
+      code: 'RUNTIME_NOT_CONFIGURED',
+      runtimeName,
+      hint: 'Check RUNTIME_SERVICE_MAPPINGS environment variable',
+    });
+  }
+
+  createProxyMiddleware({
+    target: `http://${serviceName}:8080`,
+    changeOrigin: true,
+    pathRewrite: (proxyPath) =>
+      proxyPath.replace(new RegExp(`^/runtime-preview/${runtimeName}`), '') || '/',
+    on: {
+      error: (err, _req, proxyRes) => {
+        console.error(
+          `[Proxy] Error: ${runtimeName} → ${serviceName}:8080 - ${err.code}: ${err.message}`
+        );
+
+        if (err.code === 'ECONNREFUSED') {
+          proxyRes.status(502).json({
+            message: 'Runtime not responding',
+            code: 'RUNTIME_NOT_RESPONDING',
+            runtimeName,
+            serviceName,
+            hint: 'Check if the runtime pod is running and healthy',
+            details: err.message,
+          });
+        } else if (err.code === 'ENOTFOUND') {
+          proxyRes.status(502).json({
+            message: 'Runtime service not found in cluster',
+            code: 'RUNTIME_NOT_FOUND',
+            runtimeName,
+            serviceName,
+            hint: 'Verify the Kubernetes service name is correct',
+            details: err.message,
+          });
+        } else {
+          proxyRes.status(502).json({
+            message: `Runtime connection error: ${err.message}`,
+            code: err.code,
+            runtimeName,
+            serviceName,
+            details: err.message,
+          });
+        }
+      },
+    },
+  })(req, res, next);
+});
+
 // Development proxy to frontend
 if (config.env === 'development') {
   // Only proxy the root route to frontend, let Vite handle all assets
@@ -209,6 +305,7 @@ if (config.env === 'development') {
         req.path.startsWith('/images') || 
         req.path.startsWith('/d') ||
         req.path.startsWith('/builtin-widgets') ||
+        req.path.startsWith('/runtime-preview') ||
         req.path.startsWith('/api') ||
         req.path.startsWith('/vss')) {
       return next();
@@ -251,6 +348,7 @@ if (config.env === 'development') {
         req.path.startsWith('/images') ||
         req.path.startsWith('/d') ||
         req.path.startsWith('/builtin-widgets') ||
+        req.path.startsWith('/runtime-preview') ||
         req.path.startsWith('/api') ||
         req.path.startsWith('/vss') ||
         req.path.startsWith('/assets/')) {
