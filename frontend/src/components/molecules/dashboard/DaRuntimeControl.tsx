@@ -22,6 +22,7 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import DaRuntimeConnector from '../DaRuntimeConnector'
+import useRuntimeStore from '@/stores/runtimeStore'
 import { useSiteConfig } from '@/utils/siteConfig'
 import DaApisWatch from './DaApisWatch'
 import {
@@ -82,6 +83,7 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   }, [runtimeServerConfigRaw])
   const { showPrototypeDashboardFullScreen } = useSystemUI()
 
+  const setActiveRuntimeName = useRuntimeStore((state) => state.setActiveRuntimeName)
   const [isExpand, setIsExpand] = useState(false)
   const [isRunning, setIsRunning] = useState(false)
   const [activeRtId, setActiveRtId] = useState<string | undefined>('')
@@ -412,9 +414,10 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
                 ref={runTimeRef}
                 usedAPIs={usedApis}
                 hideLabel={true}
-                onActiveRtChanged={(rtId: string | undefined) =>
+                onActiveRtChanged={(rtId: string | undefined) => {
                   setActiveRtId(rtId)
-                }
+                  setActiveRuntimeName(rtId)
+                }}
                 onLoadedMockSignals={setMockSignals}
                 onNewLog={appendLog}
                 onAppRunningStateChanged={(state: boolean) => {
@@ -430,9 +433,10 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
                 ref={runTimeRef1}
                 usedAPIs={usedApis}
                 hideLabel={true}
-                onActiveRtChanged={(rtId: string | undefined) =>
+                onActiveRtChanged={(rtId: string | undefined) => {
                   setActiveRtId(rtId)
-                }
+                  setActiveRuntimeName(rtId)
+                }}
                 onLoadedMockSignals={setMockSignals}
                 onNewLog={appendLog}
                 onAppRunningStateChanged={(state: boolean) => {
