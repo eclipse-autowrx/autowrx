@@ -31,12 +31,22 @@ jest.mock('../../../src/services', () => ({
 
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
+const fsp = require('fs/promises');
+const { execFileSync } = require('child_process');
 const httpStatus = require('http-status');
 const { uploadInternalPlugin } = require('../../../src/controllers/plugin.controller');
 const { pluginService } = require('../../../src/services');
 
 // PLUGIN_DIR as resolved inside the controller (backend/static/plugin)
 const PLUGIN_DIR = path.join(__dirname, '../../../static/plugin');
+const BUILD_ZIP = path.join(__dirname, '../../fixtures/build_zip.py');
+
+// Build a zip from a spec array using the python helper.
+function buildZip(zipPath, entries) {
+  execFileSync('python3', [BUILD_ZIP, zipPath, JSON.stringify(entries)], { stdio: 'pipe' });
+  return zipPath;
+}
 
 // catchAsync does not return its inner promise, so we wait on next()/res.send()
 // (whichever fires first) to know the handler has settled.
@@ -139,6 +149,44 @@ describe('Plugin upload authorization (PR #614 / issue #719, CWE-862)', () => {
     const slugDir = path.join(PLUGIN_DIR, slug);
     if (fs.existsSync(slugDir)) {
       fs.rmSync(slugDir, { recursive: true, force: true });
+    }
+  });
+
+  it('preserves the currently-serving plugin when a re-upload extraction fails (M1)', async () => {
+    const m1Slug = 'pr614-m1-slug';
+    const pluginPath = path.join(PLUGIN_DIR, m1Slug);
+    // Pre-create the live plugin dir with a serving index.js.
+    await fsp.mkdir(pluginPath, { recursive: true });
+    await fsp.writeFile(path.join(pluginPath, 'index.js'), 'console.log("live");');
+    try {
+      // Existing plugin owned by the requesting user -> auth passes (re-upload).
+      pluginService.getPluginBySlug.mockResolvedValue({ created_by: 'me-user-id' });
+      pluginService.isAdminUser.mockResolvedValue(false);
+
+      // Malicious zip (traversal entry) -> extraction fails.
+      const badZip = path.join(os.tmpdir(), `pr614-m1-${m1Slug}.zip`);
+      buildZip(badZip, [{ name: '../evil.txt', content: 'bad' }]);
+
+      const { nextErr } = await runHandler({
+        params: { slug: m1Slug },
+        user: { id: 'me-user-id', roles: ['user'] },
+        file: { path: badZip },
+      });
+
+      expect(nextErr).toBeDefined();
+      // The live plugin must be intact (a failed re-upload must not wipe it).
+      expect(fs.existsSync(path.join(pluginPath, 'index.js'))).toBe(true);
+      expect(fs.readFileSync(path.join(pluginPath, 'index.js'), 'utf8')).toBe('console.log("live");');
+      // The traversal entry must not have escaped into PLUGIN_DIR.
+      expect(fs.existsSync(path.join(PLUGIN_DIR, 'evil.txt'))).toBe(false);
+      // No leftover .old or swap-in-progress artifacts.
+      expect(fs.existsSync(`${pluginPath}.old`)).toBe(false);
+    } finally {
+      fs.rmSync(pluginPath, { recursive: true, force: true });
+      fs.rmSync(`${pluginPath}.old`, { recursive: true, force: true });
+      fs.readdirSync(PLUGIN_DIR)
+        .filter((n) => n.startsWith(`${m1Slug}.tmp-`))
+        .forEach((n) => fs.rmSync(path.join(PLUGIN_DIR, n), { recursive: true, force: true }));
     }
   });
 });

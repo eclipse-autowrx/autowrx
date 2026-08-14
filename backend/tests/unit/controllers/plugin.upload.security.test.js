@@ -230,5 +230,25 @@ describe('Plugin upload security (PR #614 / issue #719)', () => {
       expect(fs.existsSync(target)).toBe(false);
       expect(fs.existsSync(path.join(target, 'orphan'))).toBe(false);
     });
+
+    it('rejects a zip entry whose declared size exceeds the per-entry limit', async () => {
+      const { target, zipPath } = await nextDirs('entry-size');
+      buildZip(zipPath, [{ name: 'big.txt', content: 'x'.repeat(4096) }]);
+
+      await expect(safeExtractZip(zipPath, target, { maxEntryBytes: 1024 })).rejects.toThrow(/too large|size limit/i);
+      expect(fs.existsSync(target)).toBe(false);
+    });
+
+    it('rejects a zip when total decompressed size exceeds the total limit (zip-bomb guard)', async () => {
+      const { target, zipPath } = await nextDirs('total-size');
+      buildZip(zipPath, [
+        { name: 'a.txt', content: 'x'.repeat(2048) },
+        { name: 'b.txt', content: 'y'.repeat(2048) },
+      ]);
+
+      // Total 4096 bytes; cap total at 3000 so the second entry trips the cap.
+      await expect(safeExtractZip(zipPath, target, { maxTotalBytes: 3000 })).rejects.toThrow(/size limit/i);
+      expect(fs.existsSync(target)).toBe(false);
+    });
   });
 });
