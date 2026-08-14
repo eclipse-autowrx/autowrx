@@ -179,6 +179,13 @@ async function safeExtractZip(zipPath, targetDir) {
 
       zipfile.readEntry();
       zipfile.on('entry', (entry) => {
+        // Ignore any entry emitted after a failure. When fail() destroys an
+        // in-flight write stream, that stream's lingering 'close' handler can
+        // still call readEntry() and emit one more entry (yauzl's fd close is
+        // asynchronous). Processing it could create orphan directories racing
+        // with the cleanup rm(), so drop it once we have settled.
+        if (settled) return;
+
         // Reject absolute paths and path traversal in entry names
         if (path.isAbsolute(entry.fileName) || entry.fileName.includes('..')) {
           return fail(new ApiError(httpStatus.BAD_REQUEST, `Unsafe zip entry: ${entry.fileName}`));

@@ -208,5 +208,27 @@ describe('Plugin upload security (PR #614 / issue #719)', () => {
       expect(fs.existsSync(target)).toBe(true);
       expect(fs.existsSync(path.join(target, 'index.js'))).toBe(true);
     });
+
+    it('ignores entries emitted after a stream-error failure (no orphan dirs)', async () => {
+      // Reproduces the close-race: a file entry whose write errors mid-stream
+      // (writing to a path that is already a directory -> EISDIR) triggers
+      // fail(), which destroys the write stream. That stream's lingering
+      // 'close' handler can call readEntry() and emit one more entry. A
+      // later directory entry must be ignored (not mkdir'd) so it cannot race
+      // with the cleanup rm() and leave orphan empty subdirectories behind.
+      const { target, zipPath } = await nextDirs('close-race');
+      buildZip(zipPath, [
+        { name: 'd/', type: 'dir' }, // creates target/d as a directory
+        { name: 'd', content: 'x' }, // file at target/d -> write errors (EISDIR)
+        { name: 'orphan/', type: 'dir' }, // emitted after the stream error
+      ]);
+
+      await expect(safeExtractZip(zipPath, target)).rejects.toThrow();
+
+      // With the post-failure guard, no orphan dir is created, so the whole
+      // target dir is removed and nothing is left behind.
+      expect(fs.existsSync(target)).toBe(false);
+      expect(fs.existsSync(path.join(target, 'orphan'))).toBe(false);
+    });
   });
 });
