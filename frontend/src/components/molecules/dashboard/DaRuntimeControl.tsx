@@ -39,6 +39,7 @@ import DaMockManager from './DaMockManager'
 import PrototypeVarsWatch from './PrototypeVarsWatch'
 import DaRemoteCompileRust from '../remote-compiler/DaRemoteCompileRust'
 import { useSystemUI } from '@/hooks/useSystemUI'
+import { useUsedVehicleApis } from '@/hooks/useUsedVehicleApis'
 
 const AlwaysScrollToBottom = () => {
   const elementRef = useRef<HTMLDivElement>(null)
@@ -51,10 +52,14 @@ const AlwaysScrollToBottom = () => {
   return <div ref={elementRef} />
 }
 
-const DaRuntimeControl: FC = () => {
+interface DaRuntimeControlProps {
+  className?: string
+}
+
+const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   const { data: currentUser } = useSelfProfileQuery()
-  const [prototype, activeModelApis] = useModelStore(
-    (state) => [state.prototype as Prototype, state.activeModelApis],
+  const [prototype] = useModelStore(
+    (state) => [state.prototype as Prototype],
     shallow,
   )
   const { data: model } = useCurrentModel()
@@ -97,7 +102,11 @@ const DaRuntimeControl: FC = () => {
   const [mockSignals, setMockSignals] = useState<any[]>([])
   const [curRuntimeInfo, setCurRuntimeInfo] = useState<any>(null)
   const [code, setCode] = useState<string>('')
-  const [usedApis, setUsedApis] = useState<any[]>([])
+  const usedApiObjects = useUsedVehicleApis(code)
+  const usedApis = useMemo(
+    () => usedApiObjects.map((api) => api.name),
+    [usedApiObjects],
+  )
   const [requestContent, setRequestContent] = useState<string>('')
   const [requestMode, setRequestMode] = useState<string>('')
   const [showRtDialog, setShowRtDialog] = useState<boolean>(false)
@@ -105,6 +114,7 @@ const DaRuntimeControl: FC = () => {
   const [listenerOnRt, setListenerOnRt] = useState<any[]>([])
   const [isAdvantageMode, setIsAdvantageMode] = useState<number>(-5)
   const rustCompilerRef = useRef<any>()
+  
 
   useEffect(() => {
     localStorage.setItem('customKitServer', customKitServer.trim())
@@ -143,26 +153,6 @@ const DaRuntimeControl: FC = () => {
       setCode('')
     }
   }, [prototype?.code, prototype?.id])
-
-  useEffect(() => {
-    if (!code || !activeModelApis || activeModelApis.length === 0) {
-      setUsedApis([])
-      return
-    }
-    let dashboardCfg = prototype?.widget_config || ''
-    let apis: any[] = []
-    activeModelApis.forEach((item: any) => {
-      if (item.shortName) {
-        if (
-          code.includes(item.shortName) ||
-          dashboardCfg.includes(item.shortName)
-        ) {
-          apis.push(item.name)
-        }
-      }
-    })
-    setUsedApis(apis)
-  }, [code, activeModelApis, prototype?.widget_config])
 
   const handleRun = () => {
     setIsRunning(true)
@@ -322,6 +312,9 @@ const DaRuntimeControl: FC = () => {
     return 'just now'
   }
 
+  const hasRuntimeSelected = Boolean(activeRtId)
+  const canRun = hasRuntimeSelected && !isRunning
+
   return (
     <div
       data-id="runtime-control-panel"
@@ -331,6 +324,7 @@ const DaRuntimeControl: FC = () => {
           ? 'fixed top-[58px] bottom-[22.55px]'
           : 'absolute top-0 bottom-0',
         isExpand ? 'w-[500px]' : 'w-14',
+        className,
       )}
       style={{
         backgroundColor: 'hsl(217, 33%, 17%)',
@@ -491,72 +485,71 @@ const DaRuntimeControl: FC = () => {
 
       {/* Play/Stop Controls */}
       <div className={cn('flex px-1', !isExpand && 'flex-col')}>
-        {activeRtId && (
-          <>
-            <button
-              data-id="btn-run-prototype"
-              disabled={isRunning}
-              onClick={handleRun}
-              className="mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm"
-              style={{
-                color: isRunning ? 'hsl(215, 16%, 47%)' : 'hsl(0, 0%, 100%)',
-                borderColor: 'hsl(215, 16%, 47%)',
-              }}
-              onMouseEnter={(e) => {
-                if (!isRunning) {
-                  e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              <TbPlayerPlayFilled className="w-4 h-4" />
-            </button>
-            <button
-              data-id="btn-stop-prototype"
-              disabled={!isRunning}
-              onClick={handleStop}
-              className={cn(
-                'mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm',
-                isExpand && 'mx-2',
-              )}
-              style={{
-                color: !isRunning ? 'hsl(215, 16%, 47%)' : 'hsl(0, 0%, 100%)',
-                borderColor: 'hsl(215, 16%, 47%)',
-              }}
-              onMouseEnter={(e) => {
-                if (isRunning) {
-                  e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              <TbPlayerStopFilled className="w-4 h-4" />
-            </button>
+        <>
+          <button
+            data-id="btn-run-prototype"
+            disabled={!canRun}
+            title={!hasRuntimeSelected ? 'Select a runtime to run' : undefined}
+            onClick={handleRun}
+            className="mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm"
+            style={{
+              color: canRun ? 'hsl(0, 0%, 100%)' : 'hsl(215, 16%, 47%)',
+              borderColor: 'hsl(215, 16%, 47%)',
+            }}
+            onMouseEnter={(e) => {
+              if (canRun) {
+                e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+            }}
+          >
+            <TbPlayerPlayFilled className="w-4 h-4" />
+          </button>
+          <button
+            data-id="btn-stop-prototype"
+            disabled={!isRunning || !activeRtId}
+            onClick={handleStop}
+            className={cn(
+              'mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm',
+              isExpand && 'mx-2',
+            )}
+            style={{
+              color: !isRunning ? 'hsl(215, 16%, 47%)' : 'hsl(0, 0%, 100%)',
+              borderColor: 'hsl(215, 16%, 47%)',
+            }}
+            onMouseEnter={(e) => {
+              if (isRunning && hasRuntimeSelected) {
+                e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+            }}
+          >
+            <TbPlayerStopFilled className="w-4 h-4" />
+          </button>
 
-            {prototype?.language === 'rust' && (
-              <DaRemoteCompileRust
-                ref={rustCompilerRef}
-                onResponse={(log, isDone, status, appName) => {
-                  appendLog(log)
-                  if (isDone) {
-                    if (status === 'compile-done' && appName) {
-                      if (runTimeRef.current) {
-                        runTimeRef.current?.runBinApp(appName)
-                      }
-                      if (runTimeRef1.current) {
-                        runTimeRef1.current?.runBinApp(appName)
-                      }
+          {prototype?.language === 'rust' && (
+            <DaRemoteCompileRust
+              ref={rustCompilerRef}
+              onResponse={(log, isDone, status, appName) => {
+                appendLog(log)
+                if (isDone) {
+                  if (status === 'compile-done' && appName) {
+                    if (runTimeRef.current) {
+                      runTimeRef.current?.runBinApp(appName)
+                    }
+                    if (runTimeRef1.current) {
+                      runTimeRef1.current?.runBinApp(appName)
                     }
                   }
-                }}
-              />
-            )}
-          </>
-        )}
+                }
+              }}
+            />
+          )}
+        </>
         {isExpand && (
           <>
             <div className="grow" />
@@ -725,6 +718,7 @@ const DaRuntimeControl: FC = () => {
 
             {activeTab === 'apis' && (
               <DaApisWatch
+                usedAPIs={usedApis}
                 requestWriteSignalValue={(obj: any) => {
                   writeSignalValue(obj)
                 }}

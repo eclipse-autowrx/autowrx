@@ -11,9 +11,9 @@ import DaDashboardGrid from './DaDashboardGrid'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import PrototypeTabCodeDashboardCfg from '@/components/organisms/PrototypeTabCodeDashboardCfg'
+import useCanEditPrototype from '@/hooks/useCanEditPrototype'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/const/permission'
-import useCurrentModel from '@/hooks/useCurrentModel'
 import {
   TbArrowsMaximize,
   TbArrowsMinimize,
@@ -49,28 +49,43 @@ import {
 } from '@/components/atoms/dropdown-menu'
 import DaDialog from '@/components/molecules/DaDialog'
 import { useSiteConfig } from '@/utils/siteConfig'
+import { getUsedVehicleApiNames, applySyncWithCodeToOptions } from '@/hooks/useUsedVehicleApisFromCode'
+
+const processWidgetItems = (widgetItems: any[], usedApiNames: string[]) => {
+  if (!widgetItems) return
+  widgetItems.forEach((widget) => {
+    if (!widget?.url) {
+      if (widget.options?.url) {
+        widget.url = widget.options.url
+      } else if (widget.path) {
+        widget.url = widget.path
+      }
+    }
+    if (widget.options) {
+      applySyncWithCodeToOptions(widget.options, usedApiNames)
+    }
+  })
+}
 
 const DaDashboard = () => {
-  const { data: model } = useCurrentModel()
   const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
-  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
   const [
     prototype,
     setActivePrototype,
     prototypeHasUnsavedChanges,
     setPrototypeHasUnsavedChanges,
+    activeModelApis,
   ] = useModelStore((state) => [
     state.prototype as Prototype,
     state.setActivePrototype,
     state.prototypeHasUnsavedChanges,
     state.setPrototypeHasUnsavedChanges,
+    state.activeModelApis,
   ])
   const [widgetItems, setWidgetItems] = useState<any>([])
   const [mode, setMode] = useState<string>(MODE_RUN)
-  const [isAuthorized, isAdmin] = usePermissionHook(
-    [PERMISSIONS.READ_MODEL, model?.id],
-    [PERMISSIONS.MANAGE_USERS],
-  )
+  const isAuthorized = useCanEditPrototype(prototype)
+  const [isAdmin] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
   const {
     showPrototypeDashboardFullScreen,
     setShowPrototypeDashboardFullScreen,
@@ -235,28 +250,14 @@ const DaDashboard = () => {
         console.error('Error parsing widget config', err)
       }
     }
-    //
-    processWidgetItems(widgetItems)
-    setWidgetItems(widgetItems)
-  }, [prototype?.widget_config, prototype?.extend?.selected_signals])
+    const usedApiNames = getUsedVehicleApiNames(
+      prototype?.code,
+      activeModelApis,
+    )
 
-  const processWidgetItems = (widgetItems: any[]) => {
-    if (!widgetItems) return
-    const selectedSignals = prototype?.extend?.selected_signals as string[] | undefined
-    widgetItems.forEach((widget) => {
-      if (!widget?.url) {
-        if (widget.options?.url) {
-          widget.url = widget.options.url
-        } else if (widget.path) {
-          widget.url = widget.path
-        }
-      }
-      if (selectedSignals?.length && (!widget.options?.apis || widget.options.apis.length === 0)) {
-        if (!widget.options) widget.options = {}
-        widget.options.apis = [...selectedSignals]
-      }
-    })
-  }
+    processWidgetItems(widgetItems, usedApiNames)
+    setWidgetItems(widgetItems)
+  }, [prototype?.widget_config, prototype?.code, activeModelApis])
 
   const handleEnterEditMode = () => {
     originalWidgetConfigRef.current = prototype?.widget_config || ''
@@ -319,28 +320,16 @@ const DaDashboard = () => {
     <div className="w-full h-full relative border bg-white">
       <div
         className={cn(
-          'absolute z-10 left-0 px-2 top-0 flex gap-1 w-full py-1 shadow-xl items-center',
-          showPrototypeDashboardFullScreen && 'h-[56px]',
-          showPrototypeDashboardFullScreen && gradientHeader ? '' : 'bg-white',
+          'da-dashboard-toolbar absolute z-10 left-0 px-2 top-0 flex gap-1 w-full py-1 shadow-xl items-center bg-white',
+          showPrototypeDashboardFullScreen && 'da-dashboard-fullscreen-toolbar h-[56px]',
         )}
-        style={
-          showPrototypeDashboardFullScreen && gradientHeader
-            ? {
-                background: 'linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)',
-                color: 'var(--primary-foreground)',
-              }
-            : undefined
-        }
       >
         {showPrototypeDashboardFullScreen && (
           <Link to="/" className="w-fit h-[56px] flex items-center px-2">
             <DaImage
               src={logoUrl}
-              className="object-contain"
-              style={{
-                height: '28px',
-                filter: gradientHeader ? 'brightness(0) invert(1)' : undefined,
-              }}
+              className="da-dashboard-fullscreen-logo object-contain"
+              style={{ height: '28px' }}
             />
           </Link>
         )}

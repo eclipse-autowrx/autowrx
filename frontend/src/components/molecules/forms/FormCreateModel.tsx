@@ -7,7 +7,6 @@
 // SPDX-License-Identifier: MIT
 
 import { Button } from '@/components/atoms/button'
-import { cn } from '@/lib/utils'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import {
@@ -34,7 +33,8 @@ import useListVSSVersions from '@/hooks/useListVSSVersions'
 import DaFileUploadButton from '@/components/atoms/DaFileUploadButton'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { listModelTemplates } from '@/services/modelTemplate.service'
-import { getConfig, useSiteConfig } from '@/utils/siteConfig'
+import { getConfig } from '@/utils/siteConfig'
+import { visibilityFromModelTemplate } from '@/utils/modelVisibility'
 
 const getCreatedById = (createdBy: any): string =>
   typeof createdBy === 'object' ? createdBy?.id ?? '' : createdBy ?? ''
@@ -67,7 +67,6 @@ const FormCreateModel = () => {
   const { toast } = useToast()
 
   const { data: currentUser } = useSelfProfileQuery()
-  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
 
   const ownedModelNames = useMemo(
     () =>
@@ -92,7 +91,7 @@ const FormCreateModel = () => {
   })
 
   const defaultTemplate = useMemo(
-    () => templatesData?.results?.find((t) => t.visibility === 'default'),
+    () => templatesData?.results?.find((t) => t.is_default),
     [templatesData],
   )
 
@@ -128,11 +127,17 @@ const FormCreateModel = () => {
         undefined,
         '/imgs/default-model-image.png',
       )
+      const selectedTemplate = templatesData?.results?.find(
+        (t) => t.id === selectedTemplateId,
+      )
       const body: ModelCreate = {
         main_api: data.mainApi,
         name: data.name,
         api_version: data.api_version,
         model_template_id: selectedTemplateId || null,
+      }
+      if (selectedTemplate) {
+        body.visibility = visibilityFromModelTemplate(selectedTemplate)
       }
       if (data.api_data_url) {
         body.api_data_url = data.api_data_url
@@ -318,7 +323,7 @@ const FormCreateModel = () => {
       <Button
         disabled={loading || uploading || !data.name.trim() || isDuplicateName}
         type="submit"
-        className={cn('mt-8 w-full', gradientHeader && 'bg-gradient-to-r from-primary to-secondary border-0')}
+        className="mt-8 w-full da-form-create-model-submit"
         data-id="form-create-model-btn-submit"
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}

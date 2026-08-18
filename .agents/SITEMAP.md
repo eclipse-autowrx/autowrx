@@ -17,8 +17,9 @@
 | Wrong password error | Shows error toast | ✅ `auth.spec.ts` |
 | Logout | Avatar menu → Logout | ✅ `auth.spec.ts` |
 | Popular prototypes | Showcase of popular items | ✅ `home-sections.spec.ts` |
+| Popular prototype eligibility | Shown when public model + Released; hidden otherwise | ✅ `home-prototypes.spec.ts` |
 | Recent prototypes | Showcase of recent items | ✅ `home-sections.spec.ts` |
-| Feature list section | Platform feature highlights | ❌ |
+| Feature list section | Platform feature highlights | ✅ `home-sections.spec.ts` |
 | Layout (logged out) | Navbar, footer, responsive | ✅ `layout.spec.ts` |
 | Layout (logged in) | Navbar with admin tools | ✅ `layout.spec.ts` |
 | Full HD (1920×1080) | Responsive at large viewport | ✅ `layout.spec.ts` |
@@ -35,7 +36,7 @@
 | Layout check | No broken elements | ✅ `layout.spec.ts` |
 | Create new model | Opens "Create New Model" dialog | ✅ `vehicle-models.spec.ts` |
 | Create model submit | Fills form and creates model | ✅ `vehicle-models.spec.ts` |
-| Search / filter | Filter models by name | ❌ |
+| Search / filter | Filter models by name | ✅ `vehicle-models.spec.ts` (guest) |
 
 ---
 
@@ -48,9 +49,9 @@
 | Tab | Route | Description | Test Status |
 |-----|-------|-------------|-------------|
 | Overview | `/model/:id/` | Model info, description | ✅ `vehicle-models.spec.ts` |
-| Vehicle API | `/model/:id/api` | Browse vehicle signal APIs | ❌ |
+| Vehicle API | `/model/:id/api` | Browse vehicle signal APIs | ✅ `vehicle-api.spec.ts` |
 | Prototype Library | `/model/:id/library/list` | List of prototypes for this model | ✅ `vehicle-models.spec.ts` |
-| Plugin | `/model/:id/plugin` | Model-level plugins | ❌ |
+| Plugin | `/model/:id/plugin` | Model-level plugins | ✅ `plugin-management.spec.ts` |
 
 ### Features
 
@@ -62,6 +63,8 @@
 | Delete model | Confirm dialog → delete | ✅ `vehicle-models.spec.ts` |
 | Model image | Thumbnail / cover image | ❌ |
 | Model description | Edit model description | ❌ |
+| Add plugin tab to model | Attach admin plugin via + button | ✅ `plugin-management.spec.ts` |
+| Model plugin detail page | Plugin renders on `/model/:id/plugin` | ✅ `plugin-management.spec.ts` |
 
 ---
 
@@ -78,7 +81,9 @@
 | Rename prototype | Via API (context menu requires site config) | ✅ `prototype.spec.ts` |
 | Delete prototype | Via API, card removed from UI | ✅ `prototype.spec.ts` |
 | Search / filter | Filter prototypes by name | ✅ `prototype-extended.spec.ts` |
-| Sort prototypes | Sort by date/name | ❌ |
+| Sort prototypes | Sort by date/name | ✅ `prototype-extended.spec.ts` |
+| Library paging (CAP-PROTO-09) | Page-number buttons (max 7 + ellipsis) when more than 50 prototypes | ❌ |
+| Tab prototype count | Model tab badge matches API `totalResults` | ❌ |
 | Prototype image cover | Thumbnail display | ❌ |
 
 ---
@@ -95,7 +100,7 @@
 | Customer Journey | `/journey` | Journey mapping / use case flow | ✅ `prototype-tabs.spec.ts` |
 | SDV Code | `/code` | Code editor for vehicle app logic | ✅ `prototype-tabs.spec.ts` |
 | Dashboard | `/dashboard` | Widget-based dashboard builder | ✅ `prototype-tabs.spec.ts` |
-| Custom tabs | (plugin-based) | Added by model template / plugins | ❌ |
+| Custom tabs | (plugin-based) | Added by model template / plugins | ✅ `plugin-management.spec.ts` |
 
 ### Features
 
@@ -106,25 +111,28 @@
 | SDV Code tab layout | Editor loads | ✅ `prototype-tabs.spec.ts` |
 | Dashboard tab layout | Dashboard area renders | ⚠️ `prototype-tabs.spec.ts` — "Add Runtime" button zero-size bug detected |
 | Journey tab layout | Journey content renders | ✅ `prototype-tabs.spec.ts` |
+| Journey edit matrix | Add row and save via UI | ✅ `prototype-journey.spec.ts` |
 | Sequential tab navigation | Navigate all tabs in order | ✅ `prototype-tabs.spec.ts` |
-| Run prototype | Execute SDV code | ❌ |
-| Add widget to dashboard | Drag/drop or add widget | ❌ |
+| Change prototype status | Overview → Edit → Status Released | ✅ `prototype-extended.spec.ts` |
+| Run prototype | Execute SDV code | ✅ `prototype-runtime.spec.ts` |
+| Add widget to dashboard | Drag/drop or add widget | ✅ `prototype-dashboard.spec.ts` |
 | Share prototype | Share link / permissions | ✅ `prototype-extended.spec.ts` (no share btn visible for admin) |
 | Deploy prototype | Deploy to staging | ❌ |
 | Feedback tab | Submit / view feedback | ✅ `prototype-extended.spec.ts` |
-| Prototype plugins | Custom plugin tabs | ❌ |
+| Prototype plugins | Custom plugin tabs | ✅ `plugin-management.spec.ts` |
+| Prototype plugin detail page | Plugin renders on `/plug?plugid=` | ✅ `plugin-management.spec.ts` |
 
 ---
 
 ## ✨ New Prototype `/new-prototype`
-**Page:** `PageNewPrototypeDetail.tsx`
+**Page:** `NewPrototypeLayout.tsx` → navigates to `PagePrototypeDetail.tsx` after create
 **Description:** Quick-start page to create a prototype without a model context.
 
 | Feature | Description | Test Status |
 |---------|-------------|-------------|
 | Page loads | Form renders | ✅ `prototype.spec.ts` |
 | Name input visible | Prototype name field | ✅ `prototype.spec.ts` |
-| Create flow | Fill form and submit | ❌ |
+| Create flow | Fill form, submit, and open prototype detail | ✅ `prototype.spec.ts` |
 
 ---
 
@@ -149,6 +157,7 @@
 |---------|-------------|-------------|
 | Page loads | Assets list renders | ✅ `my-assets.spec.ts` |
 | Filter by type | Model / prototype filter | ✅ `my-assets.spec.ts` (no filter tabs found) |
+| Create runtime asset | Create and delete via UI | ✅ `my-assets.spec.ts` |
 
 ---
 
@@ -173,11 +182,16 @@
 | Admin access (logged in) | Admin can access `/admin` | ✅ `admin.spec.ts` |
 | Unauthenticated access blocked | Redirect / deny for guests | ✅ `admin.spec.ts` |
 | Site config form | Settings form renders | ✅ `admin.spec.ts` |
+| Restore default (public config) | Factory reset reverts modified public configs | ✅ `site-config-restore-default.spec.ts` |
+| Navigation bar actions editor | Configure left/right navbar links and search | ✅ `nav-bar-actions.spec.ts` |
+| Navigation bar actions render | Custom links/search appear from NAV_BAR_ACTIONS | ✅ `nav-bar-actions.spec.ts` |
+| Global search navigate | Search prototype and open detail page | ✅ `global-search.spec.ts` |
 | User list loads | Shows users table | ✅ `admin.spec.ts` |
 | Create new user | Add user form | ✅ `admin-extended.spec.ts` (fill + cancel) |
-| Edit user role | Change user permissions | ❌ |
+| Edit user role | Change user permissions | ✅ `admin-features.spec.ts` |
 | Plugin list | Shows installed plugins | ✅ `admin.spec.ts` |
-| Install plugin | Add new plugin | ❌ |
+| Install plugin (external URL) | Add plugin via admin UI with external URL | ✅ `plugin-management.spec.ts` |
+| Install plugin (ZIP upload) | Add plugin via admin UI with ZIP upload | ✅ `plugin-management.spec.ts` |
 
 ---
 
@@ -187,8 +201,8 @@
 
 | Feature | Description | Test Status |
 |---------|-------------|-------------|
-| Plugin list loads | Shows user's plugins | ❌ |
-| Create plugin | Create new plugin | ❌ |
+| Plugin list loads | Shows user's plugins | ✅ `my-plugins.spec.ts` |
+| Create plugin | Create new plugin | ✅ `my-plugins.spec.ts` |
 | Edit plugin | Edit plugin config | ❌ |
 
 ---
@@ -199,8 +213,8 @@
 
 | Feature | Description | Test Status |
 |---------|-------------|-------------|
-| API list loads | Signal tree renders | ❌ |
-| Search signal | Filter by name | ❌ |
+| API list loads | Signal tree renders | ✅ `vehicle-api.spec.ts` |
+| Search signal | Filter by name | ✅ `vehicle-api.spec.ts` |
 | Signal detail | View signal metadata | ❌ |
 
 ---
@@ -222,7 +236,7 @@
 | New Prototype | 2 | 3 | ~67% |
 | Home Sections | 2 | 3 | ~67% |
 
-**Overall: ~49 test cases. New coverage added: home sections, profile, my-assets, admin templates/features/create-user, prototype search/feedback/share. Key gaps: runtime execution, dashboard widgets, plugin management, vehicle API.**
+**Overall: ~77 test cases. New coverage added: vehicle API, global search, dashboard widgets, my plugins, guest model search, customer journey edit, feature role assignment, my assets CRUD, home feature list.**
 
 ---
 

@@ -133,8 +133,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       }
     })
 
-    const [apisValue, setActiveApis, setTraceVars, setAppLog] = useRuntimeStore(
-      (state) => [state.apisValue, state.setActiveApis, state.setTraceVars, state.setAppLog],
+    const [apisValue, setActiveApis, setTraceVars, setAppLog, setIsAppRunning] = useRuntimeStore(
+      (state) => [state.apisValue, state.setActiveApis, state.setTraceVars, state.setAppLog, state.setIsAppRunning],
       shallow,
     )
 
@@ -324,7 +324,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
 
     const readFile = (filePath: string) => {
       socketio?.emit('messageToKit', {
-        cmd: 'read_file',
+        cmd: 'read-file',
         to_kit_id: activeRtId,
         data: filePath,
       })
@@ -332,7 +332,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
 
     const writeFile = (filePath: string, fileContent: string) => {
       socketio?.emit('messageToKit', {
-        cmd: 'write_file',
+        cmd: 'write-file',
         to_kit_id: activeRtId,
         data: { path: filePath, content: fileContent },
       })
@@ -556,6 +556,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           if (onNewLog) {
             onNewLog(`Exit code ${payload.code}\r\n`)
           }
+          setIsAppRunning(false)
           if (onAppRunningStateChanged) {
             onAppRunningStateChanged(false)
           }
@@ -615,7 +616,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         onRuntimeStateResponse(payload)
       }
 
-      if (payload.cmd === 'read_file' && onReadFileResponse) {
+      if (payload.cmd === 'read-file' && onReadFileResponse) {
         onReadFileResponse(payload.data?.path || '', payload.data?.content || '')
       }
     }
@@ -701,6 +702,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         }
       }
 
+      setIsAppRunning(newRunningState)
       if (onAppRunningStateChanged) {
         onAppRunningStateChanged(newRunningState)
       }

@@ -15,56 +15,13 @@ import CodeEditor, { CodeEditorHandle } from '@/components/molecules/CodeEditor'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
+import { reloadSoon, restoreConfigsFromSnapshot } from '@/utils/siteConfigAdmin'
 import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
 import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
-import { HomePartners } from '@/components/organisms/HomePartners'
-import HomeHeroSection from '@/components/organisms/HomeHeroSection'
-import HomeFeatureList from '@/components/organisms/HomeFeatureList'
-import HomeButtonList from '@/components/organisms/HomeButtonList'
-import HomePrototypeRecent from '@/components/organisms/HomePrototypeRecent'
-import HomePrototypePopular from '@/components/organisms/HomePrototypePopular'
-import HomeNews from '@/components/organisms/HomeNews'
-import HomeFooterSection from '@/components/organisms/HomeFooterSection'
+import { getHomeComponent, getBlockTypeLabel } from '@/utils/homeComponentMap'
 import { TbGripVertical, TbPencil, TbX, TbCheck, TbTrash } from 'react-icons/tb'
 
 type HomeSubTab = 'raw' | 'edit' | 'preview' | 'history'
-
-function getBlockTypeLabel(type: string): string {
-  const labels: Record<string, string> = {
-    hero: 'Hero',
-    'feature-list': 'Feature list',
-    'button-list': 'Button list',
-    news: 'News',
-    recent: 'Recent prototypes',
-    popular: 'Popular prototypes',
-    'partner-list': 'Partners',
-    'home-footer': 'Footer',
-  }
-  return labels[type] ?? type
-}
-
-function getHomeComponent(elementType: string) {
-  switch (elementType) {
-    case 'hero':
-      return HomeHeroSection
-    case 'feature-list':
-      return HomeFeatureList
-    case 'button-list':
-      return HomeButtonList
-    case 'news':
-      return HomeNews
-    case 'recent':
-      return HomePrototypeRecent
-    case 'popular':
-      return HomePrototypePopular
-    case 'partner-list':
-      return HomePartners
-    case 'home-footer':
-      return HomeFooterSection
-    default:
-      return null
-  }
-}
 
 const ScaledBlock: React.FC<{ scale: number; pageWidth: number; children: React.ReactNode }> = ({
   scale,
@@ -214,6 +171,33 @@ const HomeConfigSection: React.FC = () => {
   const handlePreviewEditStart = () => {
     setPreviewEditOrder([...previewElements])
     setHomeSubTab('edit')
+  }
+
+  const handleFactoryReset = async () => {
+    if (
+      !window.confirm(
+        'Restore home configuration to the deployment snapshot? This will overwrite your current home layout.',
+      )
+    ) {
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      await restoreConfigsFromSnapshot({ keys: ['CFG_HOME_CONTENT'] })
+      toast({
+        title: 'Restored',
+        description: 'Home configuration restored from deployment snapshot. Reloading page...',
+      })
+      reloadSoon()
+    } catch (err) {
+      toast({
+        title: 'Reset failed',
+        description: err instanceof Error ? err.message : 'Failed to reset home configuration',
+        variant: 'destructive',
+      })
+      setIsLoading(false)
+    }
   }
 
   const handlePreviewEditSave = async () => {
@@ -383,6 +367,14 @@ const HomeConfigSection: React.FC = () => {
             </>
           )}
           <Button
+            onClick={handleFactoryReset}
+            variant="outline"
+            size="sm"
+            disabled={isLoading || savingHome}
+          >
+            Restore default
+          </Button>
+          <Button
             size="sm"
             onClick={() => (homeSubTab === 'edit' ? handlePreviewEditSave() : handleSave())}
             disabled={savingHome}
@@ -496,7 +488,7 @@ const HomeConfigSection: React.FC = () => {
                             const Component = getHomeComponent(element?.type)
                             if (!Component) return null
                             const blockId = `block-${index}-${element?.type ?? 'unknown'}`
-                            const isPlaceholderBlock = element?.type === 'recent' || element?.type === 'popular'
+                            const isPlaceholderBlock = element?.type === 'recent' || element?.type === 'popular' || element?.type === 'prototype-list' || element?.type === 'model-list'
                             return (
                               <Draggable key={blockId} draggableId={blockId} index={index}>
                                 {(provided, snapshot) => (

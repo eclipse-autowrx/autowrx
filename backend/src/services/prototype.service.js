@@ -16,6 +16,7 @@ const config = require('../config/config');
 const logger = require('../config/logger');
 const modelService = require('./model.service');
 const _ = require('lodash');
+const { publiclyVisibleVisibilities } = require('../config/enums');
 
 /**
  * Strip trailing number suffix from a prototype name.
@@ -132,12 +133,31 @@ const bulkCreatePrototypes = async (userId, prototypes) => {
  * @returns {Promise<QueryResult>}
  */
 const queryPrototypes = async (filter, options) => {
+  const defaultSort = 'editors_choice:desc,createdAt:asc';
+  const requestedSort = options?.sortBy;
+  const requestedParts = requestedSort
+    ? requestedSort
+        .split(',')
+        .map((part) => part.trim())
+        .filter(Boolean)
+    : [];
+  const nameSort = requestedParts.find((part) => part.startsWith('name:'));
+
+  const resolvedSort = nameSort
+    ? [
+        nameSort,
+        ...defaultSort.split(','),
+        ...requestedParts.filter((part) => part !== nameSort),
+      ].join(',')
+    : requestedSort
+      ? [defaultSort, requestedSort].join(',')
+      : defaultSort;
+
   const prototypes = await Prototype.paginate(filter, {
     ...options,
-    // Default sort by editors_choice and createdAt
-    sortBy: options?.sortBy
-      ? ['editors_choice:desc,createdAt:asc', options.sortBy].join(',')
-      : 'editors_choice:desc,createdAt:asc',
+    // Default sort by editors_choice and createdAt, except name sort is promoted
+    // to primary to support correct alphabetical paging.
+    sortBy: resolvedSort,
   });
   return prototypes;
 };
@@ -265,7 +285,7 @@ const listRecentPrototypes = async (userId) => {
   });
 
   const prototypes = await Prototype.find({ _id: { $in: Array.from(prototypeMap.keys()) } })
-    .select('name model_id description image_file executed_turns')
+    .select('name model_id description image_file executed_turns code')
     .populate('model', 'name visibility')
     .populate('created_by', 'name image_file');
 
@@ -302,7 +322,7 @@ const executeCode = async (id, _) => {
 const listPopularPrototypes = async () => {
   const publicModelIds = (
     await modelService.getModels({
-      visibility: 'public',
+      visibility: { $in: publiclyVisibleVisibilities },
     })
   ).map((model) => String(model._id));
   return Prototype.find({
@@ -311,7 +331,7 @@ const listPopularPrototypes = async () => {
   })
     .sort({ executed_turns: -1 })
     .limit(8)
-    .select('name model_id description image_file executed_turns')
+    .select('name model_id description image_file executed_turns code')
     .populate('model', 'name visibility')
     .populate('created_by', 'name image_file');
 };

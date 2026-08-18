@@ -21,6 +21,7 @@ import {
   TbList,
   TbDownload,
   TbReplace,
+  TbFileImport,
   TbLoader,
 } from 'react-icons/tb'
 import useCurrentModel from '@/hooks/useCurrentModel'
@@ -34,6 +35,14 @@ import { Button } from '@/components/atoms/button'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { Spinner } from '@/components/atoms/spinner'
+import PluginPageRender from '@/components/organisms/PluginPageRender'
+import { getPluginBySlug } from '@/services/plugin.service'
+import { useSiteConfig } from '@/utils/siteConfig'
+
+interface VssPluginConfig {
+  label: string
+  plugin: string
+}
 
 const ViewApiCovesa = () => {
   const { model_id, api: apiParam } = useParams<{ model_id: string; api?: string }>()
@@ -42,6 +51,7 @@ const ViewApiCovesa = () => {
   const [activeTab, setActiveTab] = useState<
     'list' | 'tree' | 'compare' | 'hierarchical'
   >('list')
+  const [openPluginIndex, setOpenPluginIndex] = useState<number | null>(null)
   const [activeModelApis, refreshModel] = useModelStore((state) => [
     state.activeModelApis,
     state.refreshModel,
@@ -56,6 +66,47 @@ const ViewApiCovesa = () => {
   const [loading, setLoading] = useState(false)
   const [url, setUrl] = useState('')
   const [showUpload, setShowUpload] = useState(false)
+
+  const vssPluginsConfig = useSiteConfig('VSS_PLUGINS')
+  const [availablePlugins, setAvailablePlugins] = useState<VssPluginConfig[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    const configs: VssPluginConfig[] = Array.isArray(vssPluginsConfig)
+      ? vssPluginsConfig
+      : []
+
+    const valid = configs.filter(
+      (entry) =>
+        entry &&
+        typeof entry.label === 'string' &&
+        typeof entry.plugin === 'string' &&
+        entry.label.trim() &&
+        entry.plugin.trim(),
+    )
+
+    if (valid.length === 0) {
+      setAvailablePlugins([])
+      return
+    }
+
+    const uniqueSlugs = [...new Set(valid.map((p) => p.plugin))]
+    Promise.allSettled(
+      uniqueSlugs.map((slug) => getPluginBySlug(slug).then(() => slug)),
+    ).then((results) => {
+      if (cancelled) return
+      const installedSlugs = new Set(
+        results
+          .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled')
+          .map((r) => r.value),
+      )
+      setAvailablePlugins(valid.filter((p) => installedSlugs.has(p.plugin)))
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [JSON.stringify(vssPluginsConfig)])
 
   useEffect(() => {
     // Set selected API from route param or default to first API
@@ -199,6 +250,20 @@ const ViewApiCovesa = () => {
               Replace Vehicle API
             </DaTabItem>
           )}
+          {availablePlugins.map((p, i) => (
+            <DaTabItem
+              key={`${p.plugin}-${i}`}
+              active={false}
+              to="#"
+              onClick={(e) => {
+                e.preventDefault()
+                setOpenPluginIndex(i)
+              }}
+            >
+              <TbFileImport className="w-5 h-5 mr-2" />
+              {p.label}
+            </DaTabItem>
+          ))}
         </div>
         <div className="text-sm font-medium text-primary pr-4">
           {model?.api_version && `COVESA VSS ${model.api_version}`}
@@ -237,6 +302,31 @@ const ViewApiCovesa = () => {
         <div className="flex w-full grow overflow-auto justify-center">
           <VssComparator />
         </div>
+      )}
+
+      {openPluginIndex !== null && availablePlugins[openPluginIndex] && (
+        <Dialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setOpenPluginIndex(null)
+          }}
+        >
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto flex flex-col">
+            <DialogHeader>
+              <DialogTitle>
+                {availablePlugins[openPluginIndex].label}
+              </DialogTitle>
+            </DialogHeader>
+            <PluginPageRender
+              key={`plugin-${openPluginIndex}`}
+              plugin_id={availablePlugins[openPluginIndex].plugin}
+              data={{
+                model: model || null,
+                prototype: null,
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       )}
 
       {hasWritePermission && (

@@ -145,7 +145,7 @@ ADMIN_EMAILS=admin@example.com
 ADMIN_PASSWORD=your-password
 
 # CORS (for development, default is usually fine)
-CORS_ORIGINS=localhost:\\d+,127\\.0\\.0\\.1:\\d+
+CORS_ORIGINS=localhost:\d+,127.0.0.1:\d+
 ```
 
 **Important Notes:**
@@ -238,7 +238,7 @@ In development, the backend and frontend run as separate services with a proxy c
                                            │
         ┌──────────────────────────────────┘
         │
-        │ Proxies /v2/*, /static/*, /imgs/*, /d/*
+        │ Proxies /v2, /static, /images, /d, /plugin, /builtin-widgets, /vss
         │ to Backend
         │
         │ Proxies all other requests to Frontend
@@ -248,7 +248,7 @@ In development, the backend and frontend run as separate services with a proxy c
 
 ### Request Flow
 
-1. **API Requests** (`/v2/*`, `/static/*`, `/imgs/*`, `/d/*`):
+1. **API Requests** (`/v2`, `/static`, `/images`, `/d`, `/plugin`, `/builtin-widgets`, `/vss`):
    - Frontend proxies these to Backend (port 3200)
    - Backend handles the request and returns the response
 
@@ -283,8 +283,7 @@ Once both services are running, you can access:
   - Direct API access
   - Useful for testing API endpoints
 
-- **API Documentation**: http://localhost:3200/api-docs
-  - Swagger/OpenAPI documentation (if enabled)
+- **API Documentation**: Swagger (`swagger-jsdoc` + `swagger-ui-express`) is listed as a backend dependency but is **not currently mounted** on any route, so `http://localhost:3200/api-docs` is not available.
 
 ## Troubleshooting
 
@@ -322,7 +321,7 @@ Once both services are running, you can access:
    ```bash
    lsof -i :3210
    ```
-2. Stop the conflicting process, or change the port in `frontend/vite.config.ts`
+2. Stop the conflicting process, or change the port in the `dev` script in `frontend/package.json` (the dev port `3210` is set there via `vite --port 3210`, not in `vite.config.ts`)
 
 **Issue:** `Cannot connect to backend API`
 
@@ -373,7 +372,7 @@ Once both services are running, you can access:
 
 **Solutions:**
 1. Check `CORS_ORIGINS` in `backend/.env` includes your frontend URL
-2. For development, use: `CORS_ORIGINS=localhost:\\d+,127\\.0\\.0\\.1:\\d+`
+2. For development, use: `CORS_ORIGINS=localhost:\d+,127\.0\.0\.1:\d+`
 3. Restart the backend after changing `.env`
 
 ## Next Steps

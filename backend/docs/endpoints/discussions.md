@@ -3,7 +3,7 @@
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | POST | / | Required | Create a discussion. |
-| GET | / | Optional (strictAuth=false) | List discussions. |
+| GET | / | Optional (when PUBLIC_VIEWING enabled) | List discussions. |
 | PATCH | /:id | Required | Update discussion. |
 | DELETE | /:id | Required | Delete discussion. |
 
@@ -39,12 +39,35 @@ Discussion:
 ```yaml
 /v2/discussions:
   get:
-    summary: List discussions
+    summary: List discussions (top-level, requires ref)
     security:
       - bearerAuth: []
+    parameters:
+      - in: query
+        name: ref
+        required: true
+        schema:
+          type: string
+        description: Resource ID the discussions are attached to.
+      - in: query
+        name: ref_type
+        schema:
+          type: string
+      - in: query
+        name: sortBy
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: page
+        schema:
+          type: integer
     responses:
       '200':
-        description: Discussions list
+        description: Discussions list (top-level only)
   post:
     summary: Create discussion
     security:

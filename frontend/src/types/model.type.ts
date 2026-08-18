@@ -14,16 +14,18 @@ export type Tag = {
   tagCategoryName?: string
 }
 
+export type ModelVisibility = 'public' | 'private' | 'editable'
+
 export type ModelLite = {
   name: string
-  visibility: string
+  visibility: ModelVisibility | string
   model_home_image_file: string
   id: string
   created_at?: Date
   created_by: string
   tags?: Tag[]
   state?: 'draft' | 'released' | 'blocked'
-  api_version?: string
+  api_version?: string | null
   stats?: {
     apis: {
       total: { count: number }
@@ -45,14 +47,14 @@ export type ModelLite = {
 export type Model = {
   id: string
   custom_apis?: any[]
-  api_version?: string
+  api_version?: string | null
   main_api: string
   model_home_image_file?: string
   detail_image_file?: string
   model_files?: Record<string, unknown>
   name: string
   cvi?: string
-  visibility: 'public' | 'private'
+  visibility: ModelVisibility
   vehicle_category: string
   property: string
   created_by?: {
@@ -160,14 +162,15 @@ export type ModelCreate = {
   name: string
   cvi?: string
   main_api: string
-  api_version?: string
+  api_version?: string | null
   custom_apis?: string
   model_home_image_file?: string
   model_files?: object
-  visibility?: 'public' | 'private'
+  visibility?: ModelVisibility
   extended_apis?: any[]
   api_data_url?: string
   model_template_id?: string | null
+  custom_template?: any
 }
 
 export type VehicleApi = {

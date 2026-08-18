@@ -10,8 +10,6 @@ For a detailed explanation of how this is achieved technically, please see the [
 
 ### Plugin Integration Methods
 
-Plugins can be integrated into the Autowrx platform in two primary ways, offering flexibility for different development and deployment scenarios:
+Plugins integrate into the platform through **Dynamic URL Loading**: the host fetches a JavaScript bundle from a URL (an external CDN or an internal zip served by the backend) and executes it, and the bundle registers its component on `window.DAPlugins['page-plugin']`. This is the only integration path implemented today and works without rebuilding the core application (suitable for production as well as development). See the [Plugin Development guide](../guides/plugin/README.md) and [Plugin System architecture](../architecture/plugin-system.md).
 
-1.  **NPM Package Installation:** This is the standard and recommended approach for production environments. A plugin is packaged as a standard npm module and installed into the core application's dependencies. This allows for robust version management and build-time optimizations.
-
-2.  **Dynamic URL Loading:** For rapid development, testing, or scenarios where the core application cannot be rebuilt (e.g., a SaaS environment), plugins can also be loaded from a URL. The platform can be configured to fetch a JavaScript bundle from a specified URL, which would then execute and register its components with the system.
+> **Roadmap, not implemented:** installing plugins as npm packages (build-time bundling into the core) is a documented aspiration, not a supported integration path. Treat any reference to an npm-install method as future work.

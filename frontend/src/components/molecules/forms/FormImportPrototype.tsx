@@ -6,219 +6,285 @@
 //
 // SPDX-License-Identifier: MIT
 
+import { useMemo, useState } from 'react'
+import { TbCircleCheckFilled, TbFileImport } from 'react-icons/tb'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
-import { Label } from '@/components/atoms/label'
-import { FormEvent, useEffect, useState } from 'react'
-import { TbLoader, TbCircleCheckFilled } from 'react-icons/tb'
-import { createPrototypeService } from '@/services/prototype.service'
-import { addLog } from '@/services/log.service'
-import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import { useNavigate, useLocation } from 'react-router-dom'
-import useListModelContribution from '@/hooks/useListModelContribution'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/atoms/select'
-import { zipToPrototype } from '@/lib/zipUtils'
-import { Prototype } from '@/types/model.type'
-import { ModelLite } from '@/types/model.type'
-import DaImportFile from '@/components/atoms/DaImportFile'
 import { Spinner } from '@/components/atoms/spinner'
-import { CVI } from '@/data/CVI'
-import { ModelCreate } from '@/types/model.type'
-import { createModelService } from '@/services/model.service'
+import DaImportFile from '@/components/atoms/DaImportFile'
+import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import CustomDialog from '@/components/molecules/CustomDialog'
 import { useToast } from '../toaster/use-toast'
-
-const initialState = {
-  modelName: '',
-  cvi: JSON.stringify(CVI),
-  mainApi: 'Vehicle',
-}
+import useCurrentModel from '@/hooks/useCurrentModel'
+import {
+  invalidatePrototypeListQueries,
+  useListModelPrototypes,
+} from '@/hooks/usePrototypeQueries'
+import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { buildPrototypeImportPayload, zipToPrototype } from '@/lib/zipUtils'
+import { addLog } from '@/services/log.service'
+import { createPrototypeService } from '@/services/prototype.service'
+import { Prototype } from '@/types/model.type'
+import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 
 const FormImportPrototype = () => {
-  const [isLoading, setIsLoading] = useState(false)
-  const [data, setData] = useState(initialState)
-  const navigate = useNavigate()
-  const [error, setError] = useState<string>('')
-  const {
-    data: contributionModels,
-    isLoading: isFetchingModelContribution,
-    refetch,
-  } = useListModelContribution()
+  const { data: model } = useCurrentModel()
+  const { data: modelPrototypes } = useListModelPrototypes(
+    model ? model.id : '',
+  )
   const { data: currentUser } = useSelfProfileQuery()
-  const [localModel, setLocalModel] = useState<ModelLite>()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { toast } = useToast()
 
-  const handleChange = (name: keyof typeof data, value: string | number) => {
-    setData((prev) => ({ ...prev, [name]: value }))
-  }
+  const [isOpenImportDialog, setIsOpenImportDialog] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [prototypeName, setPrototypeName] = useState<string>('')
+  const [extractedPrototype, setExtractedPrototype] =
+    useState<Partial<Prototype> | null>(null)
+  const [importError, setImportError] = useState<string | null>(null)
+  const [isImporting, setIsImporting] = useState(false)
+  const [isParsingImport, setIsParsingImport] = useState(false)
 
-  const handleImportPrototypeZip = async (file: File) => {
-    if (!file) return
-    if (!data.modelName) return
+  const existingPrototypeNames = useMemo(
+    () => modelPrototypes?.map((p) => p.name) ?? [],
+    [modelPrototypes],
+  )
 
-    let modelId: string
+  const {
+    isDuplicate: isDuplicatePrototypeName,
+    suggestedName: suggestedPrototypeName,
+  } = useDuplicateNameCheck(prototypeName, existingPrototypeNames)
 
+  const isDuplicateImportError = Boolean(
+    importError?.includes('already in use for model'),
+  )
+
+  const apiSuggestedPrototypeName = useMemo(() => {
+    if (!importError) return null
+    const match = importError.match(/like:\s*([^.,]+)/)
+    return match?.[1]?.trim() ?? null
+  }, [importError])
+
+  const handleFileChange = async (file: File) => {
+    setSelectedFile(file)
+    setImportError(null)
     try {
-      // Determine the model ID based on whether a local model exists or a new one needs to be created
-      if (localModel) {
-        // Scenario 1: `localModel` exists, use its ID
-        modelId = localModel.id
-      } else if (data.modelName) {
-        // Scenario 2: `localModel` does not exist, create a new model
-        const modelBody: ModelCreate = {
-          cvi: data.cvi,
-          main_api: data.mainApi,
-          name: data.modelName,
-          api_version: 'v4.1',
-        }
-
-        const newModelId = await createModelService(modelBody)
-        modelId = newModelId
+      const prototype = await zipToPrototype(model?.id || '', file)
+      if (prototype && prototype.name) {
+        setExtractedPrototype(prototype)
+        setPrototypeName(prototype.name)
       } else {
-        throw new Error('Model data is missing')
-      }
-
-      setIsLoading(true)
-
-      // Import the prototype from the ZIP file
-      const prototype = await zipToPrototype(modelId, file)
-
-      if (prototype) {
-        const prototypePayload: Partial<Prototype> = {
-          state: prototype.state || 'development',
-          apis: {
-            VSS: [],
-            VSC: [],
-          },
-          code: prototype.code || '',
-          widget_config: prototype.widget_config || '{}',
-          description: prototype.description,
-          tags: prototype.tags || [],
-          image_file: prototype.image_file,
-          model_id: modelId,
-          name: prototype.name,
-          complexity_level: prototype.complexity_level || '3',
-          customer_journey: prototype.customer_journey || '{}',
-          portfolio: prototype.portfolio || {},
-        }
-
-        const response = await createPrototypeService(prototypePayload)
-
-        // Log the prototype creation
-        await addLog({
-          name: `New prototype '${response.name}' under model '${localModel?.name || data.modelName}'`,
-          description: `Prototype '${response.name}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
-          type: 'new-prototype',
-          create_by: currentUser?.id!,
-          ref_id: response.id,
-          ref_type: 'prototype',
-          parent_id: modelId,
-        })
-
-        toast({
-          title: ``,
-          description: (
-            <p className="flex items-center text-sm">
-              <TbCircleCheckFilled className="text-green-500 w-4 h-4 mr-2" />
-              Import prototype successfully
-            </p>
-          ),
-          duration: 3000,
-        })
-
-        // Refetch data and navigate to the new prototype's page
-        await refetch()
-        navigate(`/model/${modelId}/library/list/${response.id}`)
-      } else {
-        throw new Error('Failed to extract prototype from the ZIP file')
+        setImportError('Invalid zip file. Could not extract prototype data.')
+        setExtractedPrototype(null)
+        setPrototypeName('')
       }
     } catch (error) {
-      setError('Failed to import prototype')
-      console.error('Failed to import prototype:', error)
-    } finally {
-      setIsLoading(false)
+      setImportError('Error processing the zip file.')
+      setExtractedPrototype(null)
+      setPrototypeName('')
     }
   }
 
-  useEffect(() => {
-    if (
-      contributionModels &&
-      !isFetchingModelContribution &&
-      contributionModels.results.length > 0
-    ) {
-      setLocalModel(contributionModels.results[0])
+  const handleImportFileSelected = async (file: File) => {
+    setImportError(null)
+    setSelectedFile(null)
+    setExtractedPrototype(null)
+    setPrototypeName('')
+
+    const maxFileSize = 10 * 1024 * 1024
+    if (!file.name.endsWith('.zip')) {
+      setImportError('Only .zip files are allowed.')
+      setIsOpenImportDialog(true)
+      return
     }
-  }, [contributionModels, isFetchingModelContribution])
+    if (file.size > maxFileSize) {
+      setImportError('File size must be less than 10 MB.')
+      setIsOpenImportDialog(true)
+      return
+    }
+
+    setIsParsingImport(true)
+    try {
+      await handleFileChange(file)
+    } finally {
+      setIsParsingImport(false)
+    }
+    setIsOpenImportDialog(true)
+  }
+
+  const handleConfirmImport = async () => {
+    if (
+      !selectedFile ||
+      !model ||
+      !prototypeName.trim() ||
+      !extractedPrototype
+    ) {
+      setImportError('Please select a valid file and provide a prototype name.')
+      return
+    }
+
+    if (isDuplicatePrototypeName) {
+      return
+    }
+
+    setIsImporting(true)
+    setImportError(null)
+
+    try {
+      const prototypePayload = buildPrototypeImportPayload(
+        extractedPrototype,
+        model.id,
+        prototypeName,
+      )
+
+      const response = await createPrototypeService(prototypePayload)
+
+      await addLog({
+        name: `New prototype '${prototypeName}' under model '${model.name}'`,
+        description: `Prototype '${prototypeName}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
+        type: 'new-prototype',
+        create_by: currentUser?.id!,
+        ref_id: response.id,
+        ref_type: 'prototype',
+        parent_id: model.id,
+      })
+
+      toast({
+        title: ``,
+        description: (
+          <p className="flex items-center text-sm">
+            <TbCircleCheckFilled className="mr-2 h-4 w-4 text-green-500" />
+            Prototype "{prototypeName}" imported successfully
+          </p>
+        ),
+        duration: 3000,
+      })
+
+      await navigate(`/model/${model.id}/library/prototype/${response.id}`)
+
+      setIsOpenImportDialog(false)
+      setSelectedFile(null)
+      setExtractedPrototype(null)
+      setPrototypeName('')
+
+      await invalidatePrototypeListQueries(queryClient)
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        setImportError(error.response.data.message)
+      } else {
+        setImportError('Failed to import prototype')
+      }
+      console.error('Import error:', error)
+    } finally {
+      setIsImporting(false)
+    }
+  }
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsOpenImportDialog(open)
+    if (!open) {
+      setSelectedFile(null)
+      setExtractedPrototype(null)
+      setPrototypeName('')
+      setImportError(null)
+    }
+  }
 
   return (
-    <div className="flex flex-col bg-background">
-      <h2 className="text-lg font-semibold text-primary">Import Prototype</h2>
-
-      {contributionModels && !isFetchingModelContribution && localModel ? (
-        <div className="flex flex-col mt-4">
-          <Label className="mb-2">Model name *</Label>
-          <Select
-            defaultValue={localModel.id}
-            onValueChange={(e: string) => {
-              const selectedModel = contributionModels.results.find(
-                (model: ModelLite) => model.id === e,
-              )
-              selectedModel && setLocalModel(selectedModel)
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {contributionModels.results.map(
-                (model: ModelLite, index: number) => (
-                  <SelectItem key={index} value={model.id}>
-                    {model.name}
-                  </SelectItem>
-                ),
-              )}
-            </SelectContent>
-          </Select>
-        </div>
-      ) : isFetchingModelContribution ? (
-        <p className="mt-4 flex items-center text-base text-muted-foreground">
-          <Spinner className="w-4 h-4 mr-1" />
-          Loading vehicle model...
-        </p>
-      ) : (
-        <div className="flex flex-col mt-4">
-          <Label className="mb-2">Model Name *</Label>
-          <Input
-            name="name"
-            value={data.modelName}
-            onChange={(e) => handleChange('modelName', e.target.value)}
-            placeholder="Model name"
-          />
-        </div>
-      )}
-
-      {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
-
+    <>
       <DaImportFile
         accept=".zip"
-        onFileChange={handleImportPrototypeZip}
-        className="flex w-full"
+        disabled={isParsingImport || isImporting}
+        onFileChange={(file) => void handleImportFileSelected(file)}
       >
         <Button
-          disabled={isLoading || (!localModel && !data.modelName)}
-          type="submit"
-          className="w-full mt-8"
+          variant="outline"
+          size="sm"
+          className="flex"
+          disabled={isParsingImport || isImporting}
         >
-          {isLoading && <TbLoader className="animate-spin text-lg mr-2" />}
-          Select file and import
+          {isParsingImport ? (
+            <Spinner className="w-5 h-5" />
+          ) : (
+            <TbFileImport className="w-5 h-5" />
+          )}
+          Import Prototype
         </Button>
       </DaImportFile>
-    </div>
+
+      <CustomDialog
+        open={isOpenImportDialog}
+        onOpenChange={handleDialogOpenChange}
+        dialogTitle="Import Prototype"
+        description="Confirm the prototype name before importing."
+        className="h-fit xl:h-fit overflow-hidden"
+      >
+        <div className="flex flex-col space-y-4">
+          {selectedFile && (
+            <p className="text-sm text-muted-foreground">{selectedFile.name}</p>
+          )}
+          {extractedPrototype && (
+            <div className="flex flex-col">
+              <Input
+                value={prototypeName}
+                onChange={(e) => {
+                  setPrototypeName(e.target.value)
+                  setImportError(null)
+                }}
+                placeholder={
+                  extractedPrototype ? extractedPrototype.name : 'Prototype Name'
+                }
+                className="w-full"
+              />
+              {(isDuplicatePrototypeName || isDuplicateImportError) && (
+                <DaDuplicateNameHint
+                  message={
+                    isDuplicatePrototypeName
+                      ? `The prototype name '${prototypeName}' is already in use for model '${model?.name}'`
+                      : importError || 'This prototype name is already in use'
+                  }
+                  suggestedName={
+                    suggestedPrototypeName ?? apiSuggestedPrototypeName
+                  }
+                  onApplySuggestion={(name) => {
+                    setPrototypeName(name)
+                    setImportError(null)
+                  }}
+                  className="mt-2"
+                />
+              )}
+            </div>
+          )}
+          {importError && !isDuplicatePrototypeName && !isDuplicateImportError && (
+            <div className="text-red-500 text-sm">{importError}</div>
+          )}
+          <Button
+            variant="default"
+            size="sm"
+            disabled={
+              !selectedFile ||
+              !prototypeName.trim() ||
+              isImporting ||
+              !extractedPrototype ||
+              isDuplicatePrototypeName
+            }
+            onClick={handleConfirmImport}
+          >
+            {isImporting ? (
+              <div className="flex items-center">
+                <Spinner className="mr-2 size-4" />
+                Importing...
+              </div>
+            ) : (
+              'Import'
+            )}
+          </Button>
+        </div>
+      </CustomDialog>
+    </>
   )
 }
 

@@ -123,8 +123,8 @@ app.use('/v2', routesV2);
 app.use('/static', express.static(path.join(__dirname, '../static')));
 app.use('/builtin-widgets', express.static(path.join(__dirname, '../static/builtin-widgets')));
 app.use('/images', express.static(path.join(__dirname, '../static/images')));
-app.use('/static/plugin', express.static(path.join(__dirname, '../static/plugin')));
-app.use('/plugin', express.static(path.join(__dirname, '../static/plugin')));
+app.use('/static/plugin', express.static(path.join(__dirname, '../static/plugin'), { dotfiles: 'ignore' }));
+app.use('/plugin', express.static(path.join(__dirname, '../static/plugin'), { dotfiles: 'ignore' }));
 // Serve uploaded files with date-based directory structure
 app.use('/d', express.static(path.join(__dirname, '../static/uploads'), {
   setHeaders: (res, path) => {

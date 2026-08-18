@@ -12,9 +12,13 @@ const { PERMISSIONS } = require('../../../config/roles');
 const router = express.Router();
 
 // Public read endpoints (anyone can list/get public templates)
-router.route('/').get(validate(projectTemplateValidation.list), projectTemplateController.list);
+router
+  .route('/')
+  .get(auth({ optional: true }), validate(projectTemplateValidation.list), projectTemplateController.list);
 
-router.route('/:id').get(validate(projectTemplateValidation.get), projectTemplateController.getById);
+router
+  .route('/:id')
+  .get(auth({ optional: true }), validate(projectTemplateValidation.get), projectTemplateController.getById);
 
 // Admin-only write endpoints
 router.use(auth(), checkPermission(PERMISSIONS.ADMIN));

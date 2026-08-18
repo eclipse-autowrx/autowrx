@@ -60,15 +60,10 @@ The philosophy and conventions behind the code.
 
 How-to material for building on the platform.
 
-- [**Plugin Development**](./guides/plugin/README.md) — the full 6-part plugin author guide
-  - [Getting Started](./guides/plugin/01-getting-started.md) ·
-    [Architecture](./guides/plugin/02-architecture.md) ·
-    [Creating a Plugin](./guides/plugin/03-creating-plugin.md) ·
-    [API Reference](./guides/plugin/04-api-reference.md) ·
-    [Advanced](./guides/plugin/05-advanced.md) ·
-    [Deployment](./guides/plugin/06-deployment.md)
+- [**Plugin Development**](./guides/plugin/README.md) — build, register, and deploy a plugin
+  - [API Reference](./guides/plugin/api-reference.md) ·
+    [Deployment](./guides/plugin/deployment.md)
 - [Custom API System](./guides/custom-api-system.md) — model-specific API catalogs
-- [Plugin API Possibilities](./guides/plugin-api-possibilities.md) — what the plugin API can do
 - [Deployment](./guides/deployment/README.md) — production deployment (instance-setup)
 
 ---
@@ -83,6 +78,10 @@ Configuration and technical reference.
 - [CORS Configuration](./reference/cors.md)
 - [CSP Configuration](./reference/csp.md)
 - [Feature Breakdown](./reference/feature-breakdown.md)
+
+### Capability Catalog
+- [**Capability Catalog**](./capabilities/README.md) — code-grounded catalog of all platform capabilities (clustered, with description / who-uses / acceptance / QC / security / data-protection per capability)
+  - [Identity & Access](./capabilities/identity-access.md) · [Models](./capabilities/models.md) · [Vehicle APIs](./capabilities/vehicle-apis.md) · [Prototypes & Code](./capabilities/prototypes-code.md) · [Dashboards & Widgets](./capabilities/dashboards-widgets.md) · [Runtime & Hardware Kits](./capabilities/runtime-hardware-kits.md) · [Assets & Sharing](./capabilities/assets-sharing.md) · [Plugins](./capabilities/plugins.md) · [Site Config & Theming](./capabilities/site-config-theming.md) · [Integrations & Platform](./capabilities/integrations-platform.md)
 
 ---
 

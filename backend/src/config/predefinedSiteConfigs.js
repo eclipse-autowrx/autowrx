@@ -191,12 +191,13 @@ const PREDEFINED_SITE_CONFIGS = [
     category: 'genai',
   },
   {
-    key: 'PROTOTYPE_ITEM_MENU_CONTEXT',
+    key: 'ENABLE_NEW_PROTOTYPE_PAGE',
     scope: 'site',
     value: false,
     secret: false,
     valueType: 'boolean',
-    description: 'Enable or disable the context menu on prototype items.',
+    description:
+      'When enabled, the "Create New Prototype" button in the prototype library navigates to the /new-prototype page instead of opening the inline create dialog.',
     category: 'model_prototype',
   },
   {
@@ -209,12 +210,14 @@ const PREDEFINED_SITE_CONFIGS = [
     category: 'model_prototype',
   },
   {
-    key: 'GRADIENT_HEADER',
+    key: 'DISABLE_CUSTOM_API_SETS',
     scope: 'site',
     value: false,
     secret: false,
     valueType: 'boolean',
-    description: 'Apply a primary-to-secondary gradient to the main header.',
+    description:
+      'When enabled, hides Custom API Schema / API Set management and all model/prototype UI for custom API sets.',
+    category: 'model_prototype',
   },
   {
     key: 'PUBLIC_VIEWING',

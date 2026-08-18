@@ -6,13 +6,31 @@
 //
 // SPDX-License-Identifier: MIT
 
-const { SiteConfig } = require('../models');
+const { SiteConfig, SiteConfigSnapshot, SiteConfigSnapshotMeta } = require('../models');
+const mongoose = require('mongoose');
 const ApiError = require('../utils/ApiError');
 const httpStatus = require('http-status');
 const fs = require('fs');
 const path = require('path');
 const ssoService = require('./sso.service');
 const { encrypt, decrypt } = require('../utils/encryption');
+const PREDEFINED_SITE_CONFIGS = require('../config/predefinedSiteConfigs');
+const PREDEFINED_AUTH_CONFIGS = require('../config/predefinedAuthConfigs');
+const PREDEFINED_HOME_CONFIGS = require('../config/predefinedHomeConfigs');
+
+const ALL_PREDEFINED_RESTORE_DEFAULTS = (() => {
+  const byKey = new Map();
+  for (const config of PREDEFINED_SITE_CONFIGS) {
+    byKey.set(config.key, config);
+  }
+  for (const config of PREDEFINED_AUTH_CONFIGS) {
+    byKey.set(config.key, config);
+  }
+  for (const config of PREDEFINED_HOME_CONFIGS) {
+    byKey.set(config.key, config);
+  }
+  return Array.from(byKey.values());
+})();
 
 /**
  * Encrypt sensitive fields in EMAIL_CONFIG value before storage.
@@ -874,6 +892,191 @@ const seedPredefinedSiteConfigs = async (predefinedConfigs, systemUserId) => {
   }
 };
 
+const SNAPSHOT_META_ID = 'meta';
+const SEED_META_ID = 'seeder_has_run';
+
+/**
+ * Sync site config snapshots from live configs when deploy seeder has run.
+ * Uses _seed_meta.lastRunAt written by etas-instance-config seed.js.
+ * @returns {Promise<boolean>} true if a sync was performed
+ */
+const syncSiteConfigSnapshotsIfNeeded = async () => {
+  const seedMetaCol = mongoose.connection.db.collection('_seed_meta');
+  const seedMeta = await seedMetaCol.findOne({ _id: SEED_META_ID });
+  const seedRunAt = seedMeta?.lastRunAt;
+
+  if (!seedRunAt) {
+    return false;
+  }
+
+  const meta = await SiteConfigSnapshotMeta.findById(SNAPSHOT_META_ID);
+  if (meta?.lastSyncedSeedRunAt && new Date(seedRunAt) <= new Date(meta.lastSyncedSeedRunAt)) {
+    return false;
+  }
+
+  const liveConfigs = await SiteConfig.find({ scope: 'site' }).lean();
+  await SiteConfigSnapshot.deleteMany({});
+  if (liveConfigs.length > 0) {
+    const snapshots = liveConfigs.map((config) => ({
+      key: config.key,
+      scope: config.scope,
+      value: config.value,
+      valueType: config.valueType,
+      secret: config.secret,
+      description: config.description,
+      category: config.category,
+    }));
+    await SiteConfigSnapshot.insertMany(snapshots);
+  }
+
+  await SiteConfigSnapshotMeta.findByIdAndUpdate(
+    SNAPSHOT_META_ID,
+    { lastSyncedSeedRunAt: new Date(seedRunAt) },
+    { upsert: true, new: true }
+  );
+
+  console.log(
+    `[SiteConfig] Snapshot synced ${liveConfigs.length} config(s) from seed run at ${new Date(seedRunAt).toISOString()}`
+  );
+  return true;
+};
+
+/**
+ * Build MongoDB filter for snapshot restore (union of keys, categories, secret).
+ * @param {{ keys?: string[], categories?: string[], secret?: boolean }} filter
+ * @returns {Object|null}
+ */
+const buildSnapshotRestoreFilter = (filter) => {
+  const orClauses = [];
+
+  if (filter.keys?.length) {
+    orClauses.push({ key: { $in: filter.keys } });
+  }
+  if (filter.categories?.length) {
+    orClauses.push({ category: { $in: filter.categories } });
+  }
+  if (filter.secret === true) {
+    orClauses.push({ secret: true });
+  }
+
+  if (orClauses.length === 0) {
+    return null;
+  }
+
+  return orClauses.length === 1 ? orClauses[0] : { $or: orClauses };
+};
+
+/**
+ * Check if a config matches the restore filter (union semantics).
+ * @param {{ key: string, category?: string, secret?: boolean }} config
+ * @param {{ keys?: string[], categories?: string[], secret?: boolean }} filter
+ * @returns {boolean}
+ */
+const matchesRestoreFilter = (config, filter) => {
+  if (filter.keys?.length && filter.keys.includes(config.key)) {
+    return true;
+  }
+  if (filter.categories?.length && filter.categories.includes(config.category || 'general')) {
+    return true;
+  }
+  if (filter.secret === true && config.secret === true) {
+    return true;
+  }
+  return false;
+};
+
+const snapshotToRestoreConfig = (snapshot) => ({
+  key: snapshot.key,
+  scope: snapshot.scope,
+  value: snapshot.value,
+  valueType: snapshot.valueType,
+  secret: snapshot.secret,
+  description: snapshot.description,
+  category: snapshot.category,
+});
+
+/**
+ * Merge deployment snapshots with predefined defaults (snapshot wins per key).
+ * @param {{ keys?: string[], categories?: string[], secret?: boolean }} filter
+ * @param {Array} snapshots
+ * @returns {{ configs: Array, source: 'snapshot' | 'predefined' | 'mixed' | 'none' }}
+ */
+const resolveRestoreConfigs = (filter, snapshots) => {
+  const predefined = ALL_PREDEFINED_RESTORE_DEFAULTS.filter((config) =>
+    matchesRestoreFilter(config, filter)
+  );
+  const predefinedByKey = new Map(predefined.map((config) => [config.key, config]));
+  const snapshotByKey = new Map(snapshots.map((snapshot) => [snapshot.key, snapshot]));
+
+  const keysToRestore = new Set([
+    ...snapshots.map((snapshot) => snapshot.key),
+    ...predefined.map((config) => config.key),
+    ...(filter.keys || []),
+  ]);
+
+  const configs = [];
+  let fromSnapshot = 0;
+  let fromPredefined = 0;
+
+  for (const key of keysToRestore) {
+    if (snapshotByKey.has(key)) {
+      configs.push(snapshotToRestoreConfig(snapshotByKey.get(key)));
+      fromSnapshot += 1;
+    } else if (predefinedByKey.has(key)) {
+      configs.push(predefinedByKey.get(key));
+      fromPredefined += 1;
+    }
+  }
+
+  let source = 'none';
+  if (fromSnapshot > 0 && fromPredefined > 0) {
+    source = 'mixed';
+  } else if (fromSnapshot > 0) {
+    source = 'snapshot';
+  } else if (fromPredefined > 0) {
+    source = 'predefined';
+  }
+
+  return { configs, source };
+};
+
+/**
+ * Restore site configs from deployment snapshot.
+ * @param {{ keys?: string[], categories?: string[], secret?: boolean }} filter
+ * @param {string} userId
+ * @returns {Promise<{ restored: number, keys: string[], source: string }>}
+ */
+const restoreSiteConfigFromSnapshot = async (filter, userId) => {
+  await syncSiteConfigSnapshotsIfNeeded();
+
+  const snapshotFilter = buildSnapshotRestoreFilter(filter);
+  if (!snapshotFilter) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      'At least one filter is required: keys, categories, or secret'
+    );
+  }
+
+  const snapshots = await SiteConfigSnapshot.find({
+    scope: 'site',
+    ...snapshotFilter,
+  }).lean();
+
+  const { configs, source } = resolveRestoreConfigs(filter, snapshots);
+
+  if (!configs.length) {
+    return { restored: 0, keys: [], source: 'none' };
+  }
+
+  await bulkUpsertSiteConfigs(configs, userId);
+
+  return {
+    restored: configs.length,
+    keys: configs.map((c) => c.key),
+    source,
+  };
+};
+
 module.exports = {
   createSiteConfig,
   querySiteConfigs,
@@ -892,4 +1095,6 @@ module.exports = {
   deleteSiteConfigByKey,
   bulkUpsertSiteConfigs,
   seedPredefinedSiteConfigs,
+  syncSiteConfigSnapshotsIfNeeded,
+  restoreSiteConfigFromSnapshot,
 };

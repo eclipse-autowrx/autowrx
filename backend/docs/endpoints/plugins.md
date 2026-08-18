@@ -7,6 +7,7 @@
 | GET | /slug/:slug | Public | Get plugin by slug. |
 | POST | / | Required + Admin | Create a plugin (remote or internal). |
 | PUT | /:id | Required + Admin | Update a plugin by ID (slug immutable). |
+| DELETE | /:id | Required + Admin | Delete a plugin by ID. |
 | POST | /upload/:slug | Required + Admin | Upload a ZIP for an internal plugin and extract to static dir. |
 
 ### Data Model
@@ -136,6 +137,19 @@ Plugin:
     responses:
       '200':
         description: Updated
+  delete:
+    summary: Delete plugin (admin)
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+    responses:
+      '204':
+        description: Deleted
 
 /v2/system/plugin/upload/{slug}:
   post:
@@ -168,14 +182,14 @@ Plugin:
 ```yaml
 CreatePluginRequest:
   type: object
-  required: [name, slug, type]
+  required: [name, is_internal]   # slug is auto-generated from name; type is optional
   properties:
     name: { type: string }
-    slug: { type: string }
     is_internal: { type: boolean }
+    type: { type: string, enum: [prototype_function, deploy] }   # optional, default prototype_function
     image: { type: string }
     description: { type: string }
-    url: { type: string }
+    url: { type: string, description: "Required when is_internal is false (external URL)" }
     config: { type: object }
 
 UpdatePluginRequest:
@@ -185,6 +199,7 @@ UpdatePluginRequest:
     image: { type: string }
     description: { type: string }
     is_internal: { type: boolean }
+    type: { type: string, enum: [prototype_function, deploy] }
     url: { type: string }
     config: { type: object }
 ```

@@ -34,8 +34,6 @@ router.delete('/:id', pluginController.removePlugin);
 // Upload and extract internal plugin zip
 router.post(
   '/upload/:slug',
-  auth(),
-  // checkPermission(PERMISSIONS.ADMIN),
   validate(pluginValidation.uploadInternal),
   upload.single('file'),
   pluginController.uploadInternalPlugin,

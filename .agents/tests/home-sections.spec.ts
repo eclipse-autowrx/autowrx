@@ -1,7 +1,32 @@
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, saveScreenshot, checkLayoutAnomalies } from './helpers';
+import {
+  loginAsAdmin,
+  saveScreenshot,
+  checkLayoutAnomalies,
+  getSiteConfigJson,
+  setSiteConfigJson,
+} from './helpers';
+
+test.describe.configure({ mode: 'serial' });
 
 test.describe('Home Page Sections', () => {
+  let originalHomeContent: unknown = null;
+
+  test.beforeAll(async ({ browser }) => {
+    const page = await browser.newPage();
+    await loginAsAdmin(page);
+    originalHomeContent = await getSiteConfigJson(page, 'CFG_HOME_CONTENT');
+    await page.close();
+  });
+
+  test.afterAll(async ({ browser }) => {
+    const page = await browser.newPage();
+    await loginAsAdmin(page);
+    if (originalHomeContent !== null) {
+      await setSiteConfigJson(page, 'CFG_HOME_CONTENT', originalHomeContent);
+    }
+    await page.close();
+  });
 
   test('popular prototypes section is visible', async ({ page }) => {
     await page.goto('/');
@@ -74,6 +99,52 @@ test.describe('Home Page Sections', () => {
 
     const hasError = await page.locator('text=Error, text=404').count();
     expect(hasError).toBe(0);
+  });
+
+  test('10: feature list section renders configured links', async ({ page }) => {
+    await loginAsAdmin(page);
+
+    const internalTitle = `E2E_Feature_Internal_${Date.now()}`;
+    const externalTitle = `E2E_Feature_External_${Date.now()}`;
+
+    await setSiteConfigJson(page, 'CFG_HOME_CONTENT', [
+      {
+        type: 'feature-list',
+        items: [
+          {
+            title: internalTitle,
+            description: 'Internal link test card',
+            buttons: [{ title: 'Go Models', url: '/model' }],
+          },
+          {
+            title: externalTitle,
+            description: 'External link test card',
+            buttons: [{ title: 'Example Docs', url: 'https://example.com' }],
+          },
+        ],
+      },
+    ]);
+
+    await page.goto('/');
+    await page.waitForTimeout(4000);
+
+    await expect(page.getByText(internalTitle)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(externalTitle)).toBeVisible({ timeout: 15000 });
+
+    await page.getByRole('button', { name: 'Go Models' }).click();
+    await page.waitForTimeout(2000);
+    expect(page.url()).toContain('/model');
+
+    await page.goto('/');
+    await page.waitForTimeout(3000);
+
+    const popupPromise = page.waitForEvent('popup');
+    await page.getByRole('button', { name: 'Example Docs' }).click();
+    const popup = await popupPromise;
+    expect(popup.url()).toContain('example.com');
+    await popup.close();
+
+    await saveScreenshot(page, 'home-feature-list');
   });
 
 });

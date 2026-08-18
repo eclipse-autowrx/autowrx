@@ -8,18 +8,11 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { HomePartners } from '@/components/organisms/HomePartners'
-import HomeHeroSection from '@/components/organisms/HomeHeroSection'
-import HomeFeatureList from '@/components/organisms/HomeFeatureList'
-import HomeButtonList from '@/components/organisms/HomeButtonList'
-import HomePrototypeRecent from '@/components/organisms/HomePrototypeRecent'
-import HomePrototypePopular from '@/components/organisms/HomePrototypePopular'
-import HomeNews from '@/components/organisms/HomeNews'
 import { configManagementService } from '@/services/configManagement.service'
 import { Spinner } from '@/components/atoms/spinner'
-import HomeFooterSection from '@/components/organisms/HomeFooterSection'
 import DaDialog from '@/components/molecules/DaDialog'
 import FormCreateModel from '@/components/molecules/forms/FormCreateModel'
+import { getHomeComponent } from '@/utils/homeComponentMap'
 
 const PageHome = () => {
   const [homeElements, setHomeElements] = useState<any[]>([])
@@ -55,29 +48,6 @@ const PageHome = () => {
     loadHomeConfig()
   }, [])
 
-  const getComponent = (elementType: string) => {
-    switch (elementType) {
-      case 'hero':
-        return HomeHeroSection
-      case 'feature-list':
-        return HomeFeatureList
-      case 'button-list':
-        return HomeButtonList
-      case 'news':
-        return HomeNews
-      case 'recent':
-        return HomePrototypeRecent
-      case 'popular':
-        return HomePrototypePopular
-      case 'partner-list':
-        return HomePartners
-      case 'home-footer':
-        return HomeFooterSection
-      default:
-        return null
-    }
-  }
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
@@ -87,9 +57,9 @@ const PageHome = () => {
   }
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-12 pb-12 pt-4 lg:pt-0 [@media(max-height:720px)]:!pt-4 da-page-home">
       {homeElements.map((element, index) => {
-        const Component = getComponent(element.type) as any
+        const Component = getHomeComponent(element.type) as any
         if (!Component) return null
         return <Component key={index} {...element} />
       })}

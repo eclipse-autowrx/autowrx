@@ -15,7 +15,7 @@ const logger = require('./config/logger');
 const initializeRoles = require('./scripts/initializeRoles');
 const { init } = require('./config/socket');
 const { setupScheduledCheck, assignAdmins, convertLogsCap } = require('./scripts');
-const { seedPredefinedSiteConfigs } = require('./services/siteConfig.service');
+const { seedPredefinedSiteConfigs, syncSiteConfigSnapshotsIfNeeded } = require('./services/siteConfig.service');
 const { seedProjectTemplates } = require('./services/projectTemplate.service');
 const PREDEFINED_SITE_CONFIGS = require('./config/predefinedSiteConfigs');
 const PREDEFINED_PROJECT_TEMPLATES = require('./config/predefinedProjectTemplates');
@@ -36,6 +36,9 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
     .then((adminUserId) => {
       seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS, adminUserId);
       seedProjectTemplates(PREDEFINED_PROJECT_TEMPLATES, adminUserId);
+      syncSiteConfigSnapshotsIfNeeded().catch((err) => {
+        logger.warn(`Site config snapshot sync skipped: ${err.message}`);
+      });
     });
   // config.port is loaded from the PORT environment variable, defaulting to 8080 (see backend/src/config/config.js).
   server = app.listen(config.port, () => {

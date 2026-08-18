@@ -21,7 +21,7 @@ type AuthState = {
 
 type Actions = {
   setAccess: (_: Token) => void
-  setUser: (user: any, access: any) => void
+  setUser: (user: any, access: Token | null) => void
   logOut: () => void
   setOpenLoginDialog: (isOpen: boolean) => void
   setAuthBootstrapped: (bootstrapped: boolean) => void

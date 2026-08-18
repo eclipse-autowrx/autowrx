@@ -43,7 +43,10 @@ const envVarsSchema = Joi.object()
     // Cache service URL
     CACHE_URL: Joi.string().description('Cache base url'),
     // Auth service
-    AUTH_URL: Joi.string().description('Auth service url'),
+    AUTH_URL: Joi.string().description('Auth service url (deprecated; use AUTH_PROVIDER=platform)'),
+    AUTH_PROVIDER: Joi.string().valid('jwt', 'platform').default('jwt').description('Authentication provider'),
+    AUTH_PLATFORM_NAME: Joi.string().default('Platform').description('Provider name stored on user.provider'),
+    AUTH_PLATFORM_HEADERS: Joi.string().description('JSON map of identity field to request header name'),
     // Email URL
     EMAIL_URL: Joi.string().description('URL to your custom email service'),
     EMAIL_API_KEY: Joi.string().description('API key for default email service (Brevo)'),
@@ -75,10 +78,35 @@ if (error) {
   throw new Error(`Config validation error: ${error.message}`);
 }
 
+let platformHeaders = {};
+if (envVars.AUTH_PLATFORM_HEADERS) {
+  try {
+    platformHeaders = JSON.parse(envVars.AUTH_PLATFORM_HEADERS);
+  } catch (e) {
+    throw new Error('Config validation error: AUTH_PLATFORM_HEADERS must be valid JSON');
+  }
+  if (typeof platformHeaders !== 'object' || platformHeaders === null || Array.isArray(platformHeaders)) {
+    throw new Error('Config validation error: AUTH_PLATFORM_HEADERS must be a JSON object');
+  }
+}
+
+if (envVars.AUTH_PROVIDER === 'platform' && !platformHeaders.email) {
+  throw new Error(
+    'Config validation error: AUTH_PLATFORM_HEADERS must include an "email" key when AUTH_PROVIDER is platform'
+  );
+}
+
 const config = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
   strictAuth: envVars.STRICT_AUTH,
+  auth: {
+    provider: envVars.AUTH_PROVIDER,
+    platform: {
+      name: envVars.AUTH_PLATFORM_NAME,
+      headers: platformHeaders,
+    },
+  },
   mongoose: {
     url: envVars.MONGODB_URL + (envVars.NODE_ENV === 'test' ? '-test' : ''),
     options: {},

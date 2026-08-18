@@ -9,12 +9,14 @@
 const httpStatus = require('http-status');
 const { userService } = require('.');
 const prototypeService = require('./prototype.service');
+const extendedApiService = require('./extendedApi.service');
 const apiService = require('./api.service');
 const permissionService = require('./permission.service');
 const fileService = require('./file.service');
-const { Model, Role, UserRole, Prototype, CustomApiSchema, CustomApiSet } = require('../models');
+const { Model, Role, UserRole, Prototype, ModelTemplate, CustomApiSet } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { PERMISSIONS } = require('../config/roles');
+const { publiclyVisibleVisibilities, visibilityTypes } = require('../config/enums');
 const mongoose = require('mongoose');
 const logger = require('../config/logger');
 const _ = require('lodash');
@@ -49,6 +51,13 @@ const createModel = async (userId, modelBody) => {
   });
   if (existingModel) {
     throw new ApiError(httpStatus.CONFLICT, 'A model with this name already exists');
+  }
+
+  if (modelBody.model_template_id) {
+    const template = await ModelTemplate.findById(modelBody.model_template_id).select('visibility');
+    if (template?.visibility && Object.values(visibilityTypes).includes(template.visibility)) {
+      modelBody.visibility = template.visibility;
+    }
   }
 
   if (modelBody.extend && typeof modelBody.extend === 'string') {
@@ -364,7 +373,7 @@ const queryModels = async (filter, options, advanced, userId) => {
   };
 
   if (!advanced.is_contributor) {
-    permissionFilter.$or.push({ visibility: 'public' });
+    permissionFilter.$or.push({ visibility: { $in: publiclyVisibleVisibilities } });
   }
 
   // List based on permissions
@@ -573,6 +582,7 @@ const deleteModelById = async (id, actionOwner) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Model not found');
   }
 
+  await extendedApiService.deleteExtendedApisByModelId(id);
   model.action_owner = actionOwner;
   await model.deleteOne();
   await prototypeService.deleteMany({ model_id: id }, actionOwner);
@@ -630,7 +640,7 @@ const getAccessibleModels = async (userId) => {
 
   const visibleModels = await Model.find({
     $or: [
-      { visibility: 'public' },
+      { visibility: { $in: publiclyVisibleVisibilities } },
       { created_by: userId },
       {
         $expr: {

@@ -62,10 +62,11 @@ const RootLayout = () => {
   // }, [isChatShowed])
 
   const bootstrappingRef = useRef(false)
-  const [authBootstrapped, setAuthBootstrapped, setAccess] = useAuthStore((state) => [
+  const [authBootstrapped, setAuthBootstrapped, setAccess, setUser] = useAuthStore((state) => [
     state.authBootstrapped,
     state.setAuthBootstrapped,
     state.setAccess,
+    state.setUser,
   ])
 
   useEffect(() => {
@@ -84,8 +85,11 @@ const RootLayout = () => {
       .post('/auth/refresh-tokens', {})
       .then((res) => {
         const access = res?.data?.access
+        const user = res?.data?.user
         if (access?.token) {
           setAccess(access)
+        } else if (user) {
+          setUser(user, null)
         }
       })
       .catch(() => {
@@ -95,8 +99,7 @@ const RootLayout = () => {
         setAuthBootstrapped(true)
         bootstrappingRef.current = false
       })
-  }, [authBootstrapped, setAccess, setAuthBootstrapped])
-  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
+  }, [authBootstrapped, setAccess, setAuthBootstrapped, setUser])
   const privacyPolicyUrl = useSiteConfig('PRIVACY_POLICY_URL', '')
 
   const pathsWithoutBreadcrumb = useMemo(
@@ -106,31 +109,25 @@ const RootLayout = () => {
 
   return <>
 
-    <div className={`flex h-screen flex-col ${isChatShowed && 'pr-[430px]'}`}>
+    <div className={`flex h-screen flex-col da-root-layout ${isChatShowed && 'pr-[430px]'}`}>
       <Suspense>
         <ActiveObjectManagement />
       </Suspense>
       <Suspense>
         <NavigationBar />
         {!pathsWithoutBreadcrumb.has(location.pathname) && (
-          <div
-            className="flex items-center justify-between bg-primary h-[52px] px-4 da-secondary-nav-bar"
-            style={gradientHeader ? {
-              background: 'linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)',
-              color: 'var(--primary-foreground)',
-            } : undefined}
-          >
+          <div className="flex items-center justify-between bg-primary h-[52px] px-4 da-secondary-nav-bar">
             <DaBreadcrumbBar />
           </div>
         )}
       </Suspense>
 
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto da-root-layout-main">
         <Outlet />
       </div>
 
       {config && config.instance !== 'digitalauto' && (
-        <div className="flex w-full justify-center sticky bottom-0 right-0 z-10 bg-gray-100 px-4 py-1 text-xs border-t gap-5">
+        <div className="flex w-full justify-center sticky bottom-0 right-0 z-10 bg-gray-100 da-root-layout-footer px-4 py-1 text-xs border-t gap-5">
           <a
             href="https://www.digital.auto/"
             target="_blank"

@@ -13,7 +13,7 @@ import { Model } from '@/types/model.type'
 import { matchRoutes, Outlet, useLocation } from 'react-router-dom'
 import { Skeleton } from '@/components/atoms/skeleton'
 import { Spinner } from '@/components/atoms/spinner'
-import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import { useModelPrototypeTotal } from '@/hooks/usePrototypeQueries'
 import useLastAccessedModel from '@/hooks/useLastAccessedModel'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { Button } from '@/components/atoms/button'
@@ -44,6 +44,7 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { useSiteConfig } from '@/utils/siteConfig'
+import { recordModelView } from '@/utils/modelLastViewed'
 
 const ModelDetailLayout = () => {
   const { data: fetchedModel, isLoading: isModelLoading } = useCurrentModel()
@@ -53,9 +54,10 @@ const ModelDetailLayout = () => {
     state.setActiveModel,
   ])
   const location = useLocation()
-  const { data: fetchedPrototypes } = useListModelPrototypes(
+  const { data: prototypeCount } = useModelPrototypeTotal(
     model ? model.id : '',
   )
+  const [activeModelApis] = useModelStore((state) => [state.activeModelApis])
 
   const { setLastAccessedModel } = useLastAccessedModel()
 
@@ -82,6 +84,10 @@ const ModelDetailLayout = () => {
     'ALLOW_NON_ADMIN_ADDON_CONFIG',
     true,
   )
+  const disableCustomApiSets = useSiteConfig(
+    'DISABLE_CUSTOM_API_SETS',
+    false,
+  )
 
   // Update store when model is fetched
   useEffect(() => {
@@ -92,6 +98,7 @@ const ModelDetailLayout = () => {
 
   useEffect(() => {
     if (model) {
+      recordModelView(model.id)
       setLastAccessedModel(model.id)
     }
   }, [model])
@@ -177,13 +184,19 @@ const ModelDetailLayout = () => {
   const isLoading = isModelLoading || !model
   const canManageModelUI = (isModelOwner || hasWritePermission) && !!allowNonAdminAddonConfig
 
-  const numberOfPrototypes = fetchedPrototypes?.length || 0
+  const numberOfPrototypes = prototypeCount ?? 0
+  const numberOfApis = activeModelApis?.length || 0
 
   // Count API sets: 1 for COVESA + number of custom_api_sets
   const customApiSetCount = (model?.custom_api_sets || []).length
-  const totalApiSetCount = 1 + customApiSetCount // 1 for COVESA
-  // Hide count if 0 or 1
-  const vehicleApiCount = totalApiSetCount > 1 ? totalApiSetCount : null
+  const totalApiSetCount = 1 + customApiSetCount
+  const vehicleApiCount = disableCustomApiSets
+    ? numberOfApis > 0
+      ? numberOfApis
+      : null
+    : totalApiSetCount > 1
+      ? totalApiSetCount
+      : null
 
   const tabCounts = { vehicleApiCount, numberOfPrototypes }
 
@@ -237,9 +250,9 @@ const ModelDetailLayout = () => {
   }
 
   return (
-    <div className="flex flex-col w-full h-full rounded-md bg-muted">
+    <div className="flex flex-col w-full h-full rounded-md bg-muted da-model-detail-layout">
       <div
-        className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background"
+        className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background da-model-detail-tab-bar"
       >
         <div className="flex w-fit">
           {model ? (
@@ -315,9 +328,9 @@ const ModelDetailLayout = () => {
         )}
       </div>
 
-      <div className="p-2 h-[calc(100%-52px)] flex flex-col">
+      <div className="p-2 h-[calc(100%-52px)] flex flex-col da-model-detail-content-frame">
         {isLoading ? (
-          <div className="flex w-full h-full bg-background rounded-lg items-center justify-center">
+          <div className="flex w-full h-full bg-background da-model-detail-content rounded-lg items-center justify-center">
             <div className="flex flex-col items-center gap-4">
               <Spinner size={32} />
               <p className="text-base text-muted-foreground">
@@ -326,7 +339,7 @@ const ModelDetailLayout = () => {
             </div>
           </div>
         ) : (
-          <div className="w-full h-full bg-background rounded-lg">
+          <div className="w-full h-full bg-background da-model-detail-content rounded-lg">
             <Outlet />
           </div>
         )}

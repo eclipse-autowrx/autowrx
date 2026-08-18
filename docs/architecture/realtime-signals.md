@@ -47,8 +47,9 @@ flowchart LR
   (`https://kit.digitalauto.tech`), overridable by a user's `customKitServer`
   (localStorage). Extra options come from `RUNTIME_SERVER_CONFIG`.
 - **Connect / register** — on connect it emits `register_client` `{ username,
-  user_id, domain }` (and `unregister_client` on cleanup), then
-  `messageToKit { cmd: 'list-all-kits' }` to discover kits.
+  user_id, domain }` (currently with placeholder values `'test'`/`'test'`/
+  `'domain'` in the code, not live user data; and `unregister_client` on
+  cleanup), then `messageToKit { cmd: 'list-all-kits' }` to discover kits.
 
 ### Protocol (all multiplexed over `messageToKit` / `messageToKit-kitReply`)
 
@@ -59,7 +60,7 @@ flowchart LR
 | C→S | `subscribe_apis` / `unsubscribe_apis` | subscribe only to the APIs a prototype uses (`usedAPIs`) |
 | C→S | `run_python_app` / `run_rust_app` / `run_cpp_app`, `stop_python_app`, `deploy_request` | run / stop / deploy prototype code |
 | C→S | `write_signals_value`, `set_vars_value` | write a signal/variable value to the kit |
-| C→S | `generate_vehicle_model`, `list_mock_signal`, `read_file`, `write_file` | manage the kit's VSS vehicle model, mocks, files |
+| C→S | `generate_vehicle_model`, `list_mock_signal`, `read-file`, `write-file` | manage the kit's VSS vehicle model, mocks, files |
 | S→C | `list-all-kits-result` | the kit list (filtered by `targetPrefix`, default `runtime-`) |
 | S→C | `messageToKit-kitReply` → `apis-value` | **the live signal stream** |
 | S→C | `messageToKit-kitReply` → `trace_vars`, run/deploy logs, exit codes | execution feedback |

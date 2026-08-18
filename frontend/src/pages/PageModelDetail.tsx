@@ -55,13 +55,16 @@ import { listModelsLite } from '@/services/model.service'
 import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
 import { useDefaultModelImage } from '@/utils/siteConfig'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
+import { useToast } from '@/components/molecules/toaster/use-toast'
+import { ModelVisibility } from '@/types/model.type'
+import { MODEL_VISIBILITY_OPTIONS } from '@/utils/modelVisibility'
 
 const getCreatedById = (createdBy: any): string =>
   typeof createdBy === 'object' ? createdBy?.id ?? '' : createdBy ?? ''
 
 interface VisibilityControlProps {
-  initialVisibility: 'public' | 'private' | undefined
-  onVisibilityChange: (newVisibility: 'public' | 'private') => void
+  initialVisibility: ModelVisibility | undefined
+  onVisibilityChange: (newVisibility: ModelVisibility) => void
   canEdit: boolean
 }
 
@@ -70,15 +73,19 @@ const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
   onVisibilityChange,
   canEdit,
 }) => {
-  const [visibility, setVisibility] = useState(initialVisibility)
+  const [visibility, setVisibility] = useState<ModelVisibility>(
+    initialVisibility || 'private',
+  )
 
   useEffect(() => {
-    setVisibility(initialVisibility)
+    setVisibility(initialVisibility || 'private')
   }, [initialVisibility])
 
-  const toggleVisibility = () => {
-    if (!canEdit) return
-    const newVisibility = visibility === 'public' ? 'private' : 'public'
+  const selectedOption = MODEL_VISIBILITY_OPTIONS.find(
+    (option) => option.value === visibility,
+  )
+
+  const handleUpdate = (newVisibility: ModelVisibility) => () => {
     setVisibility(newVisibility)
     onVisibilityChange(newVisibility)
   }
@@ -87,19 +94,42 @@ const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
     <div className="flex justify-between items-center border p-2 mt-3 rounded-lg">
       <p className="text-base font-medium text-muted-foreground">
         Visibility:{' '}
-        <span className="text-secondary capitalize font-medium">
-          {visibility}
+        <span
+          className={cn(
+            'capitalize font-medium',
+            visibility === 'public' && 'text-secondary',
+            visibility === 'editable' && 'text-primary',
+          )}
+        >
+          {selectedOption?.label ?? visibility}
         </span>
       </p>
       {canEdit && (
-        <Button
-          onClick={toggleVisibility}
-          variant="outline"
-          size="sm"
-          className="text-primary"
-        >
-          Change to {visibility === 'public' ? 'private' : 'public'}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="text-primary">
+              Change visibility
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {MODEL_VISIBILITY_OPTIONS.map((option) => (
+              <DropdownMenuItem
+                key={option.value}
+                onClick={handleUpdate(option.value)}
+              >
+                <span
+                  className={cn(
+                    'text-sm font-normal',
+                    option.value === 'public' && 'text-secondary',
+                    option.value === 'editable' && 'text-primary',
+                  )}
+                >
+                  {option.label}
+                </span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
     </div>
   )
@@ -144,13 +174,13 @@ const DaStateControl: React.FC<{
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem onClick={handleUpdate('draft')}>
-              Draft
+              <span className="text-sm font-normal">Draft</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleUpdate('released')}>
-              <span className="text-secondary">Released</span>
+              <span className="text-sm font-normal text-secondary">Released</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleUpdate('blocked')}>
-              <span className="text-destructive">Blocked</span>
+              <span className="text-sm font-normal text-destructive">Blocked</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -161,6 +191,7 @@ const DaStateControl: React.FC<{
 
 const PageModelDetail = () => {
   const [model] = useModelStore((state) => [state.model as Model])
+  const { toast } = useToast()
   const [imageError, setImageError] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -256,7 +287,7 @@ const PageModelDetail = () => {
 
   if (!model || !model.id) {
     return (
-      <div className="h-full w-full p-4 bg-background rounded-lg flex items-center justify-center">
+      <div className="h-full w-full p-4 bg-background da-page-model-detail rounded-lg flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Spinner size={32} />
           <p className="text-base text-muted-foreground">Loading model...</p>
@@ -266,7 +297,7 @@ const PageModelDetail = () => {
   }
 
   return (
-    <div className="flex flex-col bg-background p-4 h-full rounded-md overflow-auto">
+    <div className="flex flex-col bg-background da-page-model-detail p-4 h-full rounded-md overflow-auto">
       <div className="flex h-fit pb-3">
         <div className="flex w-full justify-between items-center">
           <div className="flex items-center">
@@ -348,6 +379,12 @@ const PageModelDetail = () => {
                   await downloadModelZip(model)
                 } catch (e) {
                   console.error(e)
+                  toast({
+                    title: 'Export failed',
+                    description:
+                      'Could not export this model. Please try again.',
+                    variant: 'destructive',
+                  })
                 }
                 setIsExporting(false)
               }}

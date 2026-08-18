@@ -20,6 +20,7 @@ export interface CodeEditorProps {
   // onFocus: () => void,
   onBlur: () => void
   fontSize?: number
+  alwaysConsumeMouseWheel?: boolean
 }
 
 export interface CodeEditorHandle {
@@ -35,6 +36,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function CodeEd
     language,
     onBlur,
     fontSize,
+    alwaysConsumeMouseWheel = true,
   },
   ref
 ) {
@@ -113,6 +115,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function CodeEd
             wordWrap: 'on',
             'semanticHighlighting.enabled': true,
             fontSize,
+            alwaysConsumeMouseWheel,
             // lineNumbers: (num) => (num + 5).toString(),
           }}
           loading={

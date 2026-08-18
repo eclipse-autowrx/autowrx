@@ -273,7 +273,6 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
           <label className="text-sm w-20">Type *</label>
           <div className="grow">
             <Select
-              defaultValue="CLOUD_RUNTIME"
               value={type}
               onValueChange={(value: string) => setType(value)}
             >
@@ -484,7 +483,7 @@ const PageMyAssets = () => {
             <DaDialog
               open={editDialogState[0]}
               onOpenChange={editDialogState[1]}
-              dialogTitle="Edit Asset"
+              dialogTitle={activeAsset?.id ? 'Edit Asset' : 'Create New Asset'}
             >
               <EditAssetDialog
                 asset={activeAsset}

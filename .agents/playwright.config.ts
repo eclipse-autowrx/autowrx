@@ -8,6 +8,7 @@ export default defineConfig({
   timeout: 60000,
   expect: { timeout: 8000 },
   fullyParallel: false,
+  workers: 1,
   retries: 1,
   reporter: [['line'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
   use: {
@@ -20,6 +21,14 @@ export default defineConfig({
     },
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        ...(process.env.PLAYWRIGHT_CHANNEL
+          ? { channel: process.env.PLAYWRIGHT_CHANNEL as 'chrome' | 'msedge' }
+          : {}),
+      },
+    },
   ],
 });

@@ -22,9 +22,7 @@ import { shallow } from 'zustand/shallow'
 import { BsStars } from 'react-icons/bs'
 import { DiffEditor } from '@monaco-editor/react'
 import DaDialog from '@/components/molecules/DaDialog'
-import usePermissionHook from '@/hooks/usePermissionHook'
-import useCurrentModel from '@/hooks/useCurrentModel'
-import { PERMISSIONS } from '@/data/permission'
+import useCanEditPrototype from '@/hooks/useCanEditPrototype'
 import { updatePrototypeService } from '@/services/prototype.service'
 import { useSiteConfig } from '@/utils/siteConfig'
 import { PiArrowsLeftRight, PiCode } from 'react-icons/pi'
@@ -113,9 +111,7 @@ const PrototypeTabCode: FC = () => {
   const [ticker, setTicker] = useState(0)
   const [activeTab, setActiveTab] = useState('api')
   const [isOpenGenAI, setIsOpenGenAI] = useState(false)
-  const { data: model } = useCurrentModel()
-  // Editing prototype code requires write permission on the parent model
-  const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
+  const editable = useCanEditPrototype(prototype)
   const showCodeApiPanel = useSiteConfig('SHOW_CODE_API_PANEL', true)
   const showCodeDiff = useSiteConfig('SHOW_CODE_DIFF', true)
   const showSdvProtoPilotButton = useSiteConfig(
@@ -213,11 +209,10 @@ const PrototypeTabCode: FC = () => {
     let dataToSave: string | undefined
     if (codeToSave !== undefined) {
       // Explicit save from editor (Save All or Ctrl+S) — always persist, do not skip
-      if (!codeToSave) return
       dataToSave = codeToSave
     } else {
       // Periodic auto-save — skip if unchanged
-      if (!code || code === savedCode) return
+      if (code === undefined || code === savedCode) return
       dataToSave = code
     }
 
@@ -318,7 +313,7 @@ const PrototypeTabCode: FC = () => {
     <div ref={containerRef} className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100">
       <div className="flex h-full flex-1 min-w-0 flex-col border-r bg-white rounded-md">
         <div className="flex min-h-12 w-full items-center justify-between">
-          {isAuthorized && showSdvProtoPilotButton ? (
+          {editable && showSdvProtoPilotButton ? (
             <div className="flex mx-2 space-x-4">
               <DaDialog
                 open={isOpenGenAI}
@@ -442,7 +437,7 @@ const PrototypeTabCode: FC = () => {
             <CodeEditor
               code={code || ''}
               setCode={setCode}
-              editable={isAuthorized}
+              editable={editable}
               language={prototype.language || 'python'}
               onBlur={saveCodeToDb}
             />

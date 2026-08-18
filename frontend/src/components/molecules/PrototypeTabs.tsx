@@ -18,6 +18,7 @@ import {
 } from 'react-icons/tb'
 import { TabConfig, TabsBorderRadius } from '@/components/organisms/CustomTabEditor'
 import { renderTabIcon, tabItemClasses } from '@/lib/tabUtils'
+import { cn } from '@/lib/utils'
 
 interface PrototypeTabsProps {
   tabs?: TabConfig[]
@@ -134,7 +135,10 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRa
                 key={`builtin-${key}`}
                 to={route}
                 data-id={dataId}
-                className={tabItemClasses(variant, isActive, false, borderRadius)}
+                className={cn(
+                  tabItemClasses(variant, isActive, false, borderRadius),
+                  'da-prototype-tab',
+                )}
               >
                 {icon}{label}
               </Link>
@@ -142,7 +146,13 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRa
           }
 
           return (
-            <DaTabItem key={`builtin-${key}`} active={isActive} to={route} dataId={dataId}>
+            <DaTabItem
+              key={`builtin-${key}`}
+              active={isActive}
+              to={route}
+              dataId={dataId}
+              className="da-prototype-tab"
+            >
               {icon}{label}
             </DaTabItem>
           )
@@ -157,7 +167,10 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRa
               <Link
                 key={`custom-${plugin}-${index}`}
                 to={to}
-                className={tabItemClasses(variant, isActive, false, borderRadius)}
+                className={cn(
+                  tabItemClasses(variant, isActive, false, borderRadius),
+                  'da-prototype-tab',
+                )}
               >
                 {icon}{label}
               </Link>
@@ -165,7 +178,12 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRa
           }
 
           return (
-            <DaTabItem key={`custom-${plugin}-${index}`} active={isActive} to={to}>
+            <DaTabItem
+              key={`custom-${plugin}-${index}`}
+              active={isActive}
+              to={to}
+              className="da-prototype-tab"
+            >
               {icon}{label}
             </DaTabItem>
           )

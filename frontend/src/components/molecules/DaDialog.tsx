@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState, useEffect, useRef } from 'react'
+import { DismissableLayerBranch } from '@radix-ui/react-dismissable-layer'
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,7 @@ interface DaDialogProps {
   onClose?: () => void
   preventOutsideClose?: boolean
   disabled?: boolean
+  hideHeaderDivider?: boolean
 }
 
 const DaDialog = ({
@@ -45,13 +47,13 @@ const DaDialog = ({
   onClose,
   preventOutsideClose = false,
   disabled = false,
+  hideHeaderDivider = false,
 }: DaDialogProps) => {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const isOpen = controlledOpen ?? uncontrolledOpen
 
   const handleOpenChange = (newOpenState: boolean) => {
     if (disabled && newOpenState) return
-    if (isOpen && !newOpenState && preventOutsideClose) return
     if (onOpenChange) {
       onOpenChange(newOpenState)
     } else {
@@ -67,7 +69,38 @@ const DaDialog = ({
     wasOpenRef.current = isOpen
   }, [isOpen, onClose])
 
-  const canClose = !preventOutsideClose && showCloseButton
+  const canClose = showCloseButton
+
+  const isSelectOpen = () =>
+    !!document.querySelector('[data-radix-select-content][data-state="open"]')
+
+  const dismissOpenSelects = () => {
+    if (!isSelectOpen()) return
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    )
+  }
+
+  const closeDialog = () => {
+    dismissOpenSelects()
+    handleOpenChange(false)
+  }
+
+  const closeButtonClassName =
+    'pointer-events-auto text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:outline-none'
+
+  const renderCloseButton = (className: string) => (
+    <DismissableLayerBranch>
+      <button
+        className={cn(closeButtonClassName, className)}
+        onClick={closeDialog}
+        aria-label="Close"
+        type="button"
+      >
+        <TbX className="w-5 h-5" />
+      </button>
+    </DismissableLayerBranch>
+  )
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -82,13 +115,34 @@ const DaDialog = ({
         className={cn('p-0 flex flex-col gap-0 overflow-hidden', className)}
         showCloseButton={false}
         onOpenAutoFocus={(e) => e.preventDefault()}
-        onPointerDownOutside={(e) => { if (preventOutsideClose) e.preventDefault() }}
-        onEscapeKeyDown={(e) => { if (preventOutsideClose) e.preventDefault() }}
+        onPointerDownOutside={(e) => {
+          const target = e.target as HTMLElement | null
+          const selectStillOpen = !!document.querySelector(
+            '[data-radix-select-content][data-state="open"]',
+          )
+          const isSelectSurface = !!target?.closest(
+            '[data-radix-select-content], [data-radix-select-viewport]',
+          )
+          if (selectStillOpen || isSelectSurface) {
+            e.preventDefault()
+            return
+          }
+          if (preventOutsideClose) e.preventDefault()
+        }}
+        onEscapeKeyDown={(e) => {
+          if (isSelectOpen()) return
+          if (preventOutsideClose) e.preventDefault()
+        }}
         aria-describedby={undefined}
       >
         {dialogTitle || description ? (
           // Titled dialog: full header zone with inline close button.
-          <div className="flex items-center justify-between gap-2 px-6 py-3 border-b border-border shrink-0">
+          <div
+            className={cn(
+              'flex items-center justify-between gap-2 px-6 pt-3 shrink-0',
+              !hideHeaderDivider && 'border-b border-border pb-3',
+            )}
+          >
             <div className="flex flex-col gap-0.5 min-w-0">
               {dialogTitle && (
                 <h2 className="text-base font-semibold text-primary leading-tight">{dialogTitle}</h2>
@@ -97,30 +151,14 @@ const DaDialog = ({
                 <p className="text-sm text-muted-foreground leading-snug">{description}</p>
               )}
             </div>
-            {canClose && (
-              <button
-                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:outline-none"
-                onClick={() => handleOpenChange(false)}
-                aria-label="Close"
-                type="button"
-              >
-                <TbX className="w-5 h-5" />
-              </button>
-            )}
+            {canClose &&
+              renderCloseButton('relative z-[60] shrink-0')}
           </div>
         ) : (
           // Untitled dialog (e.g. self-titled forms): float the close button in the
           // corner with no header bar so it doesn't add an empty title row.
-          canClose && (
-            <button
-              className="absolute right-4 top-4 z-10 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:outline-none"
-              onClick={() => handleOpenChange(false)}
-              aria-label="Close"
-              type="button"
-            >
-              <TbX className="w-5 h-5" />
-            </button>
-          )
+          canClose &&
+          renderCloseButton('absolute right-4 top-4 z-[60]')
         )}
 
         <div

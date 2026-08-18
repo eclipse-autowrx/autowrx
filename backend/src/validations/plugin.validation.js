@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -72,7 +72,7 @@ const updatePlugin = {
 
 const uploadInternal = {
   params: Joi.object().keys({
-    slug: Joi.string().required(),
+    slug: Joi.string().required().custom(slug),
   }),
 };
 
@@ -84,5 +84,3 @@ module.exports = {
   updatePlugin,
   uploadInternal,
 };
-
-

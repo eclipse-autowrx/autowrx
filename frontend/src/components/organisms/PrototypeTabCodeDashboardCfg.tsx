@@ -11,9 +11,7 @@ import { shallow } from 'zustand/shallow'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import DaDashboardEditor from '../molecules/dashboard/DaDashboardEditor'
-import usePermissionHook from '@/hooks/usePermissionHook'
-import useCurrentModel from '@/hooks/useCurrentModel'
-import { PERMISSIONS } from '@/data/permission'
+import useCanEditPrototype from '@/hooks/useCanEditPrototype'
 import { updatePrototypeService } from '@/services/prototype.service'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 
@@ -22,15 +20,9 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
     (state) => [state.prototype as Prototype, state.setActivePrototype],
     shallow,
   )
-  const { refetch } = useCurrentPrototype()
   const [dashboardCfg, setDashboardCfg] = useState<string>('')
-  const [isEditing, setIsEditing] = useState<boolean>(true)
-  const [isExpanded, setIsExpanded] = useState(false)
   const [ticker, setTicker] = useState(0)
-  const [isOpenGenAI, setIsOpenGenAI] = useState(false)
-  const { data: model } = useCurrentModel()
-  // Editing prototype dashboard config requires write permission on the parent model
-  const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
+  const editable = useCanEditPrototype(prototype)
 
   useEffect(() => {
     let timer = setInterval(() => {
@@ -94,7 +86,7 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
     <>
       <DaDashboardEditor
         entireWidgetConfig={prototype.widget_config}
-        editable={isAuthorized}
+        editable={editable}
         onDashboardConfigChanged={saveDashboardCfgToDb}
       />
     </>

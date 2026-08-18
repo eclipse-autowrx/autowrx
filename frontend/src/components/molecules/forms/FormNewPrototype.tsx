@@ -23,21 +23,27 @@ import {
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import default_journey from '@/data/default_journey'
 import { listProjectTemplates } from '@/services/projectTemplate.service'
-import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import { useListModelPrototypes, invalidatePrototypeListQueries } from '@/hooks/usePrototypeQueries'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import {
+    getDefaultDashboardCfg,
+    parseProjectTemplates,
+} from '@/utils/projectTemplate'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
 import { addLog } from '@/services/log.service'
-import { createModelService, listModelsLite } from '@/services/model.service'
+import { createModelService, listModelsLite, listModelsPage } from '@/services/model.service'
 import { listModelTemplates } from '@/services/modelTemplate.service'
+import { visibilityFromModelTemplate } from '@/utils/modelVisibility'
 import { createPrototypeService } from '@/services/prototype.service'
 import { ModelLite, Prototype } from '@/types/model.type'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { TbLoader } from 'react-icons/tb'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 
 interface FormNewPrototypeProps {
@@ -47,8 +53,14 @@ interface FormNewPrototypeProps {
     title?: string
     buttonText?: string
     onModelChange?: (modelId: string | null) => void
+    /** Fired when creating a new model so the parent can preview the selected template layout. */
+    onTemplatePreviewChange?: (config: Record<string, any> | null) => void
     onSuccess?: (modelId: string, prototypeId: string, prototypeName: string) => void
 }
+
+type ModelSelection =
+    | { type: 'existing'; modelId: string }
+    | { type: 'new' }
 
 
 const FormNewPrototype = ({
@@ -58,25 +70,34 @@ const FormNewPrototype = ({
     title,
     buttonText,
     onModelChange,
+    onTemplatePreviewChange,
     onSuccess,
 }: FormNewPrototypeProps) => {
     const navigate = useNavigate()
+    const queryClient = useQueryClient()
+    const [searchParams] = useSearchParams()
     const { toast } = useToast()
     const { data: currentUser, isLoading: isCurrentUserLoading } = useSelfProfileQuery()
+    const { data: urlModel, isLoading: isUrlModelLoading } = useCurrentModel()
+    const urlParamModelId = searchParams.get('model_id')
 
     const { data: projectTemplatesData, isLoading: isLoadingTemplates } = useQuery({
         queryKey: ['project-templates-list'],
-        queryFn: () => listProjectTemplates({ limit: 100, page: 1 }),
+        queryFn: () => listProjectTemplates({ limit: 100, page: 1, visibility: 'public' }),
     })
 
-    const firstTemplate = useMemo(() => {
-        const t = projectTemplatesData?.results?.[0]
-        if (!t) return { language: 'python', code: '' }
-        try {
-            const parsed = JSON.parse(t.data)
-            return { language: parsed.language || 'python', code: parsed.code || '' }
-        } catch { return { language: 'python', code: '' } }
-    }, [projectTemplatesData])
+    const templateOptions = useMemo(
+        () => parseProjectTemplates(projectTemplatesData?.results ?? []),
+        [projectTemplatesData],
+    )
+
+    const [selectedTemplateId, setSelectedTemplateId] = useState<string>('')
+
+    useEffect(() => {
+        if (templateOptions.length && !selectedTemplateId) {
+            setSelectedTemplateId(templateOptions[0].id)
+        }
+    }, [templateOptions, selectedTemplateId])
 
     const { data: ownedModelsData, isLoading: isFetchingOwnedModels } = useQuery({
         queryKey: ['listModelLiteOwned', currentUser?.id],
@@ -90,20 +111,62 @@ const FormNewPrototype = ({
         enabled: !!currentUser?.id,
     })
 
+    const { data: editableModelsData, isLoading: isFetchingEditableModels } = useQuery({
+        queryKey: ['listModelLiteEditable', currentUser?.id],
+        queryFn: () => listModelsPage({ visibility: 'editable', state: 'released' }),
+        enabled: !!currentUser?.id,
+    })
+
     const allModels = useMemo(() => {
         const owned = ownedModelsData?.results ?? []
         const contributed = contributedModelsData?.results ?? []
+        const editable = editableModelsData?.results ?? []
         const byId = new Map<string, ModelLite>()
-            ;[...owned, ...contributed].forEach((model) => byId.set(model.id, model))
+        ;[...owned, ...contributed, ...editable].forEach((model) => byId.set(model.id, model))
         return { results: Array.from(byId.values()) }
-    }, [ownedModelsData?.results, contributedModelsData?.results])
+    }, [ownedModelsData?.results, contributedModelsData?.results, editableModelsData?.results])
 
     const isFetchingModels =
-        isCurrentUserLoading || isFetchingOwnedModels || isFetchingContributedModels
+        isCurrentUserLoading ||
+        isFetchingOwnedModels ||
+        isFetchingContributedModels ||
+        isFetchingEditableModels
+
+    const resolvedDefaultSelection = useMemo((): ModelSelection | null => {
+        if (isFetchingModels) return null
+
+        const models = allModels.results
+
+        if (urlParamModelId) {
+            const urlMatch = models.find((m) => m.id === urlParamModelId)
+            if (urlMatch) return { type: 'existing', modelId: urlMatch.id }
+            if (isUrlModelLoading) return null
+            if (urlModel) return { type: 'existing', modelId: urlModel.id }
+        }
+
+        if (models.length > 0) {
+            return { type: 'existing', modelId: models[models.length - 1].id }
+        }
+
+        if (!urlParamModelId) return { type: 'new' }
+
+        return null
+    }, [
+        isFetchingModels,
+        allModels.results,
+        urlParamModelId,
+        isUrlModelLoading,
+        urlModel,
+    ])
+
+    const [userSelection, setUserSelection] = useState<ModelSelection | null>(null)
+    const activeSelection = userSelection ?? resolvedDefaultSelection
+    const isModelSelectorReady = activeSelection !== null
+    const isCreatingNewModel = activeSelection?.type === 'new'
+    const selectedModelId =
+        activeSelection?.type === 'existing' ? activeSelection.modelId : ''
 
     const [prototypeName, setPrototypeName] = useState('')
-    const [selectedModelId, setSelectedModelId] = useState<string>('')
-    const [isCreatingNewModel, setIsCreatingNewModel] = useState(false)
     const [newModelName, setNewModelName] = useState('')
     const [newModelApiVersion, setNewModelApiVersion] = useState('v4.1')
     const [newModelApiDataUrl, setNewModelApiDataUrl] = useState<string | undefined>(undefined)
@@ -113,10 +176,12 @@ const FormNewPrototype = ({
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
-    // Keep a stable ref to onModelChange so the initialization effect below
-    // doesn't re-run just because the parent passed a new inline function reference.
+    // Keep stable refs so initialization effects don't re-run on parent re-renders.
     const onModelChangeRef = useRef(onModelChange)
     useEffect(() => { onModelChangeRef.current = onModelChange })
+    const onTemplatePreviewChangeRef = useRef(onTemplatePreviewChange)
+    useEffect(() => { onTemplatePreviewChangeRef.current = onTemplatePreviewChange })
+    const hasInitialized = useRef(false)
 
     const { data: vssVersions } = useListVSSVersions()
     const { data: templatesData } = useQuery({
@@ -126,7 +191,7 @@ const FormNewPrototype = ({
     })
 
     const defaultTemplate = useMemo(
-        () => templatesData?.results?.find((t) => t.visibility === 'default'),
+        () => templatesData?.results?.find((t) => t.is_default),
         [templatesData],
     )
 
@@ -137,24 +202,37 @@ const FormNewPrototype = ({
         }
     }, [defaultTemplate]) // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Preview the selected (or default) template layout while creating a new model.
+    useEffect(() => {
+        if (!isCreatingNewModel) {
+            onTemplatePreviewChangeRef.current?.(null)
+            return
+        }
+        const selected =
+            templatesData?.results?.find((t) => t.id === newModelTemplateId) ??
+            defaultTemplate ??
+            null
+        onTemplatePreviewChangeRef.current?.(selected?.config ?? null)
+    }, [isCreatingNewModel, newModelTemplateId, templatesData, defaultTemplate])
+
     const { data: fetchedPrototypes } = useListModelPrototypes(
         isCreatingNewModel ? '' : selectedModelId,
     )
 
-    // Set default to last model once models are loaded.
-    // Use onModelChangeRef so this effect doesn't re-run when the parent re-renders
-    // with a new inline function reference (which would reset the user's selection).
+    // Sync URL when defaulting to last model or create-new (skip when URL already has model_id).
     useEffect(() => {
-        if (allModels && !isFetchingModels && allModels.results.length > 0) {
-            const last = allModels.results[allModels.results.length - 1]
-            setSelectedModelId(last.id)
-            onModelChangeRef.current?.(last.id)
-        } else if (allModels && !isFetchingModels && allModels.results.length === 0) {
-            setIsCreatingNewModel(true)
-            setSelectedModelId('new')
-            onModelChangeRef.current?.(null)
+        if (hasInitialized.current || !resolvedDefaultSelection) return
+
+        if (!urlParamModelId) {
+            if (resolvedDefaultSelection.type === 'new') {
+                onModelChangeRef.current?.(null)
+            } else {
+                onModelChangeRef.current?.(resolvedDefaultSelection.modelId)
+                onTemplatePreviewChangeRef.current?.(null)
+            }
         }
-    }, [allModels, isFetchingModels]) // eslint-disable-line react-hooks/exhaustive-deps
+        hasInitialized.current = true
+    }, [resolvedDefaultSelection, urlParamModelId])
 
     const existingPrototypeNames = useMemo(
         () => (!isCreatingNewModel && selectedModelId ? fetchedPrototypes?.map((p: Prototype) => p.name) ?? [] : []),
@@ -182,6 +260,7 @@ const FormNewPrototype = ({
         loading ||
         uploading ||
         isLoadingTemplates ||
+        (templateOptions.length > 0 && !selectedTemplateId) ||
         !prototypeName.trim() ||
         (isCreatingNewModel ? !newModelName.trim() || isDuplicateModelName : !selectedModelId) ||
         isDuplicatePrototypeName
@@ -196,11 +275,17 @@ const FormNewPrototype = ({
 
             if (isCreatingNewModel) {
                 if (!newModelName.trim()) throw new Error('Please enter a model name')
+                const selectedModelTemplate = templatesData?.results?.find(
+                    (t) => t.id === newModelTemplateId,
+                )
                 const newModelBody: any = {
                     main_api: 'Vehicle',
                     name: newModelName.trim(),
                     api_version: newModelApiVersion,
                     model_template_id: newModelTemplateId || null,
+                }
+                if (selectedModelTemplate) {
+                    newModelBody.visibility = visibilityFromModelTemplate(selectedModelTemplate)
                 }
                 if (newModelApiDataUrl) newModelBody.api_data_url = newModelApiDataUrl
                 modelId = await createModelService(newModelBody)
@@ -209,20 +294,27 @@ const FormNewPrototype = ({
                 modelId = selectedModelId
             }
 
+            const selectedTemplate = templateOptions.find((t) => t.id === selectedTemplateId)
+
             const body = {
                 model_id: modelId,
                 name: prototypeName.trim(),
-                language: firstTemplate.language,
+                language: selectedTemplate?.language ?? 'python',
                 state: 'development',
                 apis: { VSC: [], VSS: [] },
-                code: code ?? firstTemplate.code,
+                code: code ?? selectedTemplate?.code ?? '',
                 complexity_level: 3,
-                customer_journey: default_journey,
+                customer_journey: selectedTemplate?.customer_journey?.trim()
+                    ? selectedTemplate.customer_journey
+                    : default_journey,
                 description: { problem: '', says_who: '', solution: '', status: '' },
                 image_file: '/imgs/default_prototype_cover.jpg',
                 skeleton: '{}',
                 tags: [],
-                widget_config: widget_config ?? '[]',
+                widget_config: widget_config
+                    ?? selectedTemplate?.widget_config
+                    ?? getDefaultDashboardCfg(selectedTemplate?.language ?? 'python')
+                    ?? '[]',
                 autorun: true,
                 extend: { signal_exploration: signalExploration },
             }
@@ -244,11 +336,12 @@ const FormNewPrototype = ({
                 duration: 3000,
             })
 
+            await invalidatePrototypeListQueries(queryClient)
+
             if (onSuccess) {
                 onSuccess(modelId, response.id, prototypeName.trim())
             } else {
-                if (onClose) onClose()
-                await navigate(`/model/${modelId}/library/prototype/${response.id}`)
+                navigate(`/model/${modelId}/library/prototype/${response.id}`)
             }
         } catch (err) {
             if (isAxiosError(err)) {
@@ -263,7 +356,23 @@ const FormNewPrototype = ({
         }
     }
 
-    const modelList = allModels.results
+    const modelList = useMemo(() => {
+        const models = allModels.results
+        if (urlModel && !models.some((m) => m.id === urlModel.id)) {
+            return [
+                ...models,
+                {
+                    id: urlModel.id,
+                    name: urlModel.name,
+                    visibility: urlModel.visibility,
+                    model_home_image_file: urlModel.model_home_image_file || '',
+                    created_by: urlModel.created_by?.id || '',
+                    tags: urlModel.tags,
+                },
+            ]
+        }
+        return models
+    }, [allModels.results, urlModel])
 
     return (
         <form
@@ -275,7 +384,7 @@ const FormNewPrototype = ({
             </DaText>
 
             {/* Model selector */}
-            {isFetchingModels ? (
+            {!isModelSelectorReady ? (
                 <div className="mt-4">
                     <DaText variant="regular-medium">Model</DaText>
                     <div className="flex h-10 border px-2 rounded-md shadow-sm mt-2 items-center">
@@ -290,13 +399,13 @@ const FormNewPrototype = ({
                     onValueChange={(value) => {
                         setError('')
                         if (value === 'new') {
-                            setIsCreatingNewModel(true)
-                            setSelectedModelId('new')
+                            setUserSelection({ type: 'new' })
                             onModelChange?.(null)
+                            // Template preview is applied by the create-mode effect once templates load.
                         } else {
-                            setIsCreatingNewModel(false)
-                            setSelectedModelId(value)
+                            setUserSelection({ type: 'existing', modelId: value })
                             onModelChange?.(value)
+                            onTemplatePreviewChange?.(null)
                         }
                     }}
                 >
@@ -458,6 +567,7 @@ const FormNewPrototype = ({
                 label="Prototype Name"
                 className="mt-4"
                 data-id="prototype-name-input"
+                labelClassName="font-medium"
             />
             {isDuplicatePrototypeName && (
                 <DaDuplicateNameHint
@@ -469,6 +579,32 @@ const FormNewPrototype = ({
                     }}
                 />
             )}
+
+            {(isLoadingTemplates || templateOptions.length > 0) &&
+                (isLoadingTemplates ? (
+                    <div className="mt-4">
+                        <DaText variant="regular-medium">Prototype Template *</DaText>
+                        <div className="flex h-10 border px-2 rounded-md shadow-sm mt-2 items-center">
+                            <TbLoader className="size-4 animate-spin mr-2" /> Loading
+                            templates...
+                        </div>
+                    </div>
+                ) : (
+                    <DaSelect
+                        value={selectedTemplateId}
+                        onValueChange={setSelectedTemplateId}
+                        label="Prototype Template *"
+                        wrapperClassName="mt-4"
+                        dataId="project-template-select"
+                        className="w-full"
+                    >
+                        {templateOptions.map((t) => (
+                            <DaSelectItem key={t.id} value={t.id}>
+                                {t.name}
+                            </DaSelectItem>
+                        ))}
+                    </DaSelect>
+                ))}
 
             <div className="mt-4 select-none">
                 <DaCheckbox

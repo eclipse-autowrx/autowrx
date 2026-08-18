@@ -17,6 +17,8 @@ const ModelTemplate = require('../models/modelTemplate.model');
 const { Model, ExtendedApi } = require('../models');
 const config = require('../config/config');
 const syncService = require('../sync');
+const { maskUserEmail } = require('../utils/maskEmail');
+const { publiclyVisibleVisibilities } = require('../config/enums');
 
 const listAllModels = catchAsync(async (req, res) => {
   const options = pick(req.query, ['fields']);
@@ -40,7 +42,7 @@ const listAllModels = catchAsync(async (req, res) => {
     : { results: [] };
 
   const publicReleasedModels = await modelService.queryModels(
-    { visibility: 'public', state: 'released' },
+    { visibility: { $in: publiclyVisibleVisibilities }, state: 'released' },
     { ...options, limit: config.constraints.defaultPageSize, page: 1 },
     {},
     req.user?.id,
@@ -190,6 +192,9 @@ const listModels = catchAsync(async (req, res) => {
     'id',
     'created_by',
   ]);
+  if (Array.isArray(filter.visibility)) {
+    filter.visibility = { $in: filter.visibility };
+  }
   const options = pick(req.query, ['sortBy', 'limit', 'page', 'fields']);
   const includeStats = req.query.include_stats;
   if (typeof options.limit === 'undefined') {
@@ -222,7 +227,10 @@ const listModelStatsByIds = catchAsync(async (req, res) => {
 
   // Fast path for anonymous/public-only.
   if (!userId) {
-    const publicModels = await Model.find({ _id: { $in: requestedIds }, visibility: 'public' }).select('_id');
+    const publicModels = await Model.find({
+      _id: { $in: requestedIds },
+      visibility: { $in: publiclyVisibleVisibilities },
+    }).select('_id');
     const publicIds = new Set(publicModels.map((m) => String(m._id)));
     allowedIds = requestedIds.filter((id) => publicIds.has(String(id)));
   } else {
@@ -275,8 +283,12 @@ const getModel = catchAsync(async (req, res) => {
       role: 'model_member',
       ref: req.params.id,
     });
-    finalResult.contributors = contributors;
-    finalResult.members = members;
+    finalResult.contributors = contributors.map(maskUserEmail);
+    finalResult.members = members.map(maskUserEmail);
+
+    if (finalResult.created_by) {
+      finalResult.created_by = maskUserEmail(finalResult.created_by);
+    }
   }
   res.send(finalResult);
 });

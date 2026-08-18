@@ -12,18 +12,54 @@ import { saveAs } from 'file-saver'
 import { Model, Prototype } from '@/types/model.type'
 // import { getPlugins }
 import { listModelPrototypes } from '@/services/prototype.service'
-import { CVI_v4_1 } from '@/data/CVI_v4.1'
+import { getComputedAPIs } from '@/services/model.service'
 import {
   getExtendedApi,
-  listExtendedApis,
+  listAllExtendedApis,
 } from '@/services/extendedApis.service'
 
 import { convertCode } from '@/services/convert_code.service'
+import { uploadFileService } from '@/services/upload.service'
 import { FileSystemItem } from '@/components/molecules/project_editor/types'
 import { base64ToArrayBuffer } from '@/lib/utils'
 
 const removeSpecialCharacters = (str: string) => {
   return str.replace(/[^a-zA-Z0-9 ]/g, '')
+}
+
+const readImageFileFromZip = async (
+  zipFile: JSZip,
+  path: string,
+): Promise<File | undefined> => {
+  const entry = zipFile.file(path)
+  if (!entry) return undefined
+  const blob = await entry.async('blob')
+  const filename = path.split('/').pop() || 'image_file.png'
+  return new File([blob], filename, { type: blob.type || 'image/png' })
+}
+
+const resolvePrototypeImageUrl = async (
+  zipFile: JSZip,
+  imagePath: string,
+  metadataUrl?: string,
+): Promise<string | undefined> => {
+  try {
+    const imageFile = await readImageFileFromZip(zipFile, imagePath)
+    if (imageFile) {
+      const { url } = await uploadFileService(imageFile)
+      return url
+    }
+  } catch (err) {
+    console.error('Failed to upload prototype image from zip:', err)
+  }
+  if (
+    typeof metadataUrl === 'string' &&
+    metadataUrl.trim() &&
+    !metadataUrl.startsWith('/ref/')
+  ) {
+    return metadataUrl
+  }
+  return undefined
 }
 
 const getImgFile = (zip: JSZip, imageUrl: string, filename: string) => {
@@ -133,6 +169,8 @@ const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
           // analysis_image_file: prototype.analysis_image_file,
           customer_journey: prototype.customer_journey,
           // partner_logo: prototype.partner_logo,
+          ...(prototype.extend != null && { extend: prototype.extend }),
+          ...(prototype.portfolio != null && { portfolio: prototype.portfolio }),
         })),
         null,
         4,
@@ -159,6 +197,8 @@ const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
             // analysis_image_file: prototype.analysis_image_file,
             customer_journey: prototype.customer_journey,
             // partner_logo: prototype.partner_logo,
+            ...(prototype.extend != null && { extend: prototype.extend }),
+            ...(prototype.portfolio != null && { portfolio: prototype.portfolio }),
           },
           null,
           4,
@@ -178,44 +218,48 @@ const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
 export const downloadModelZip = async (model: Model) => {
   if (!model) return
 
-  try {
-    const extended_apis = (await listExtendedApis(model.id))?.results || []
+  const extended_apis = await listAllExtendedApis(model.id)
+  const computedApis = await getComputedAPIs(model.id)
 
-    const zip = new JSZip()
-    const zipFilename = `model_${removeSpecialCharacters(model.name)}.zip`
-    // Deprecated
-    zip.file('vss.json', JSON.stringify(JSON.parse(CVI_v4_1), null, 4)) // Using default CVI while waiting for new CVI api
-    zip.file('custom_api.json', JSON.stringify(model.custom_apis, null, 4))
+  const zip = new JSZip()
+  const zipFilename = `model_${removeSpecialCharacters(model.name)}.zip`
+  zip.file('vss.json', JSON.stringify(computedApis, null, 4))
+  zip.file('custom_api.json', JSON.stringify(model.custom_apis, null, 4))
 
-    zip.file('extended_apis.json', JSON.stringify(extended_apis, null, 4))
-    zip.file(
-      'metadata.json',
-      JSON.stringify(
-        {
-          name: model.name,
-          model_files: JSON.stringify(model.model_files, null, 4),
-          main_api: model.main_api,
-          model_home_image_file: model.model_home_image_file,
-          visibility: model.visibility,
-          api_version: model.api_version,
-        },
-        null,
-        4,
-      ),
+  zip.file('extended_apis.json', JSON.stringify(extended_apis, null, 4))
+  zip.file(
+    'metadata.json',
+    JSON.stringify(
+      {
+        name: model.name,
+        model_files: JSON.stringify(model.model_files, null, 4),
+        main_api: model.main_api,
+        model_home_image_file: model.model_home_image_file,
+        visibility: model.visibility,
+        api_version:
+          typeof model.api_version === 'string' && model.api_version.trim()
+            ? model.api_version.trim()
+            : null,
+        ...(model.custom_template != null && {
+          custom_template: model.custom_template,
+        }),
+      },
+      null,
+      4,
+    ),
+  )
+  if (model.model_home_image_file) {
+    await getImgFile(
+      zip,
+      model.model_home_image_file,
+      'model_home_image_file.png',
     )
-    if (model.model_home_image_file) {
-      await getImgFile(
-        zip,
-        model.model_home_image_file,
-        'model_home_image_file.png',
-      )
-    }
-    // await downloadAllPluginInModel(model, zip)
-    await downloadAllPrototypeInModel(model, zip)
+  }
+  // await downloadAllPluginInModel(model, zip)
+  await downloadAllPrototypeInModel(model, zip)
 
-    const content = await zip.generateAsync({ type: 'blob' })
-    saveAs(content, zipFilename)
-  } catch (err) { }
+  const content = await zip.generateAsync({ type: 'blob' })
+  saveAs(content, zipFilename)
 }
 
 export const zipToModel = async (file: File) => {
@@ -229,10 +273,10 @@ export const zipToModel = async (file: File) => {
     model_home_image_file: '',
     visibility: '',
     extended_apis: [],
-    api_version: 'v4.1',
   }
   let plugins: any[] = []
   let prototypes: any[] = []
+  let modelHomeImageFile: File | undefined
 
   try {
     const zipFile = await zip.loadAsync(file)
@@ -241,6 +285,15 @@ export const zipToModel = async (file: File) => {
       (await zipFile.file('metadata.json')?.async('string')) || '{}',
     )
     Object.assign(model, metadata)
+    // Preserve explicit null (custom models); only default for legacy ZIPs missing the field
+    if (!('api_version' in metadata)) {
+      model.api_version = 'v4.1'
+    } else if (
+      model.api_version == null ||
+      (typeof model.api_version === 'string' && !model.api_version.trim())
+    ) {
+      model.api_version = null
+    }
     model.model_files = JSON.parse(metadata.model_files || '{}')
 
     model.cvi = (await zipFile.file('vss.json')?.async('string')) || '{}'
@@ -250,6 +303,14 @@ export const zipToModel = async (file: File) => {
     model.extended_apis = JSON.parse(
       (await zipFile.file('extended_apis.json')?.async('string')) || '[]',
     )
+
+    const homeImageEntry = zipFile.file('model_home_image_file.png')
+    if (homeImageEntry) {
+      const blob = await homeImageEntry.async('blob')
+      modelHomeImageFile = new File([blob], 'model_home_image_file.png', {
+        type: 'image/png',
+      })
+    }
 
     const prototypesStr =
       (await zipFile.file('prototypes.json')?.async('string')) || '[]'
@@ -263,6 +324,14 @@ export const zipToModel = async (file: File) => {
         (await zipFile
           .file(`prototypes/${prototype.name}/dashboard.json`)
           ?.async('string')) || '[]'
+      const imageUrl = await resolvePrototypeImageUrl(
+        zipFile,
+        `prototypes/${prototype.name}/image_file.png`,
+        prototype.image_file,
+      )
+      if (imageUrl) {
+        prototype.image_file = imageUrl
+      }
     }
 
     const pluginsStr =
@@ -271,7 +340,7 @@ export const zipToModel = async (file: File) => {
   } catch (err) {
     return null
   }
-  return { model, plugins, prototypes }
+  return { model, plugins, prototypes, modelHomeImageFile }
 }
 
 export const downloadPrototypeZip = async (prototype: Prototype) => {
@@ -314,6 +383,8 @@ export const downloadPrototypeZip = async (prototype: Prototype) => {
           // analysis_image_file: prototype.analysis_image_file,
           customer_journey: prototype.customer_journey,
           // partner_logo: prototype.partner_logo,
+          ...(prototype.extend != null && { extend: prototype.extend }),
+          ...(prototype.portfolio != null && { portfolio: prototype.portfolio }),
         },
         null,
         4,
@@ -327,6 +398,26 @@ export const downloadPrototypeZip = async (prototype: Prototype) => {
     saveAs(content, zipFilename)
   } catch (err) { }
 }
+
+export const buildPrototypeImportPayload = (
+  proto: Partial<Prototype>,
+  modelId: string,
+  name?: string,
+): Partial<Prototype> => ({
+  state: proto.state || 'development',
+  apis: proto.apis ?? { VSS: [], VSC: [] },
+  code: proto.code || '',
+  widget_config: proto.widget_config || '{}',
+  description: proto.description,
+  tags: proto.tags || [],
+  image_file: proto.image_file,
+  model_id: modelId,
+  name: name ?? proto.name,
+  complexity_level: proto.complexity_level || '3',
+  customer_journey: proto.customer_journey || '{}',
+  portfolio: proto.portfolio || {},
+  ...(proto.extend != null && { extend: proto.extend }),
+})
 
 export const zipToPrototype = async (
   model_id: string,
@@ -407,6 +498,15 @@ export const zipToPrototype = async (
     let newDashboard = { widgets: newWidgets }
 
     Object.assign(prototype, metadata, { code, widget_config: JSON.stringify(newDashboard) })
+
+    const imageUrl = await resolvePrototypeImageUrl(
+      zipFile,
+      'image_file.png',
+      metadata.image_file,
+    )
+    if (imageUrl) {
+      prototype.image_file = imageUrl
+    }
 
     // Ensure the model_id is correctly set to the new model_id
     prototype.model_id = model_id

@@ -14,7 +14,7 @@ Runs on **`:3200`** in development (`yarn dev`, nodemon). See
 ## 1. Bootstrap & global middleware
 
 `src/index.js` connects Mongoose, runs startup scripts
-(`convertLogsCap → initializeRoles → assignAdmins → seedPredefinedSiteConfigs / seedProjectTemplates`),
+(`convertLogsCap → initializeRoles → assignAdmins → seedPredefinedSiteConfigs / seedProjectTemplates → syncSiteConfigSnapshotsIfNeeded`),
 starts the HTTP server, initializes Socket.IO, and registers global
 `uncaughtException` / `unhandledRejection` handlers.
 
@@ -23,7 +23,7 @@ starts the HTTP server, initializes Socket.IO, and registers global
 ```
 morgan (Winston access logs)
 → cookie-parser
-→ helmet  (env-specific CSP: permissive in dev, restrictive in prod)
+→ helmet  (env-specific CSP: effectively wildcard-open in both dev and prod — only `objectSrc` is restrictive; see [auth-security.md](./auth-security.md) §6)
 → express.json  ({ limit: '50mb', strict: false })
 → express.urlencoded
 → express-mongo-sanitize
