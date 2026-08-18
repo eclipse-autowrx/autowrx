@@ -270,7 +270,9 @@ export const useSiteConfigs = (
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to fetch configs')
+          setError(
+            err instanceof Error ? err.message : 'Failed to fetch configs',
+          )
         }
       } finally {
         if (!cancelled) {
@@ -301,7 +303,10 @@ export const useSiteConfig = (
 ) => {
   const defaultVal = fallback ?? DEFAULT_SITE_CONFIGS[key]
   const [value, setValue] = useState<any>(() =>
-    parseConfigValue(getConfigSync(key, defaultVal, scope, target_id), defaultVal),
+    parseConfigValue(
+      getConfigSync(key, defaultVal, scope, target_id),
+      defaultVal,
+    ),
   )
 
   useEffect(() => {
