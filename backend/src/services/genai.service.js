@@ -8,6 +8,7 @@
 
 const httpStatus = require('http-status');
 const config = require('../config/config');
+const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
 const apiService = require('./api.service');
 const { createForwarder } = require('./externalForward.service');
@@ -149,6 +150,13 @@ const resolveProfilePayload = async (profileId, body) => {
  */
 const handle = async (req, res) => {
   const resolved = resolveGenAIRequest(req);
+  logger.info(
+    '[genai] resolved method=%s path=%s upstream=%s environment=%s',
+    resolved.method,
+    req.path || req.url,
+    resolved.upstreamPath,
+    resolved.environment || 'default'
+  );
 
   if (resolved.isGeneration) {
     if (resolved.method !== 'POST') {

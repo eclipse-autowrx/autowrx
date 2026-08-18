@@ -14,11 +14,28 @@ const { proxyHandler } = require('../../../config/proxyHandler');
 const auth = require('../../../middlewares/auth');
 const logger = require('../../../config/logger');
 const catchAsync = require('../../../utils/catchAsync');
+const validate = require('../../../middlewares/validate');
 const genaiService = require('../../../services/genai.service');
+const serviceTokenService = require('../../../services/serviceToken.service');
+const genaiValidation = require('../../../validations/genai.validation');
 
 const router = express.Router();
 
 router.use(auth());
+
+router.use((req, res, next) => {
+  logger.info('[genai] %s %s configured=%s', req.method, req.originalUrl, genaiService.isConfigured());
+  next();
+});
+
+router.get(
+  '/token',
+  validate(genaiValidation.getServiceToken),
+  catchAsync(async (req, res) => {
+    const result = await serviceTokenService.issueServiceToken(req.query.service);
+    res.send(result);
+  })
+);
 
 let genaiUrlDeprecationWarned = false;
 

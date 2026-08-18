@@ -6,14 +6,15 @@ This replaces the former **genai-proxy** sidecar. The Prototype tab SDV Copilot 
 
 ## Architecture
 
-Two backend modules handle all GenAI traffic:
+Backend modules for GenAI traffic:
 
 | Module | Role |
 |---|---|
 | [`src/services/externalForward.service.js`](../src/services/externalForward.service.js) | Generic authenticated HTTP forwarder (JSON + SSE streaming, base URL map, error mapping) |
 | [`src/services/genai.service.js`](../src/services/genai.service.js) | Thin GenAI adapter: path/environment parsing, profile VSS fallback, delegates to the forwarder |
+| [`src/services/serviceToken.service.js`](../src/services/serviceToken.service.js) | Issues short-lived service keys (issuers can be added to the map) |
 
-[`src/routes/v2/system/genai.route.js`](../src/routes/v2/system/genai.route.js) uses a single catch-all handler after `auth()` — no per-endpoint controllers.
+[`src/routes/v2/system/genai.route.js`](../src/routes/v2/system/genai.route.js) authenticates all callers, serves `GET /token` locally, then uses a catch-all for upstream GenAI forwarding.
 
 ```mermaid
 sequenceDiagram
@@ -40,27 +41,56 @@ sequenceDiagram
 
 | Variable | Required | Description |
 |---|---|---|
-| `EXTERNAL_GENAI_URL` | Yes (for GenAI features) | Default upstream GenAI base URL |
+| `EXTERNAL_GENAI_URL` | Yes (for GenAI features) | Upstream GenAI base URL |
 | `EXTERNAL_GENAI_DEVICE_TOKEN` | Yes (for GenAI features) | Upstream device token (`Authorization: Token …`) |
-| `EXTERNAL_GENAI_URL_DEV` | No | Upstream URL when path includes `/dev` environment segment |
-| `EXTERNAL_GENAI_URL_PROD` | No | Upstream URL when path includes `/prod` environment segment |
-| `EXTERNAL_GENAI_URL_STAGING` | No | Upstream URL when path includes `/staging` environment segment |
 | `GENAI_URL` | No (deprecated) | Legacy sidecar proxy target; used only when `EXTERNAL_GENAI_*` is unset |
 
-When neither built-in external config nor `GENAI_URL` is set, GenAI routes return `503` with `{ message: 'GenAI service is not implemented' }`.
+When neither built-in external config nor `GENAI_URL` is set, forwarded GenAI routes return `503` with `{ message: 'GenAI service is not implemented' }`. `GET /v2/genai/token` does not require GenAI upstream config. Issuer credentials are injected by the platform environment and are not operator-configured.
+
+## Service tokens
+
+`GET /v2/genai/token?service=azure-speech` (JWT required) mints a short-lived key for a configured third-party service. Long-lived secrets come from the platform environment; the backend returns only what the client needs to call that service.
+
+This path is handled **before** the GenAI catch-all and is never forwarded to the external GenAI API.
+
+| Query | Description |
+|---|---|
+| `service` | Issuer id. Currently `azure-speech`. |
+
+| Condition | Status |
+|---|---|
+| Missing or unknown `service` | 400 |
+| Issuer credentials not provided by the platform | 503 |
+| Upstream mint fails | 200 with `auth: "subscription"` (falls back to the original key) instead of 502 |
+| Success | 200 |
+
+Example success:
+
+```json
+{
+  "service": "azure-speech",
+  "token": "<sts-token-or-subscription-key>",
+  "region": "eastus",
+  "auth": "authorization"
+}
+```
+
+`auth` is `authorization` when Azure STS succeeds, or `subscription` when STS is unreachable and the backend falls back to the original subscription key. The client must use Speech SDK `fromAuthorizationToken` vs `fromSubscription` accordingly.
+
+Add another issuer by registering a function on the `ISSUERS` map in `serviceToken.service.js` and including the id in `SUPPORTED_SERVICES`.
 
 ## Path handling
 
-The GenAI adapter parses optional environment segments from the request path and forwards to the matching upstream base URL:
+The GenAI adapter strips optional `/dev`, `/prod`, or `/staging` path segments and always forwards to `EXTERNAL_GENAI_URL`:
 
-| Incoming path | Upstream path | Base URL |
-|---|---|---|
-| `/generation` | `/generation` | default |
-| `/generation/dev` | `/generation` | dev |
-| `/profiles/model-1` | `/profiles/model-1` | default |
-| `/profiles/model-1/prod` | `/profiles/model-1` | prod |
-| `/conversations/{id}/history` | same | default |
-| `/actuator/info` | same | default |
+| Incoming path | Upstream path |
+|---|---|
+| `/generation` | `/generation` |
+| `/generation/dev` | `/generation` |
+| `/profiles/model-1` | `/profiles/model-1` |
+| `/profiles/model-1/prod` | `/profiles/model-1` |
+| `/conversations/{id}/history` | same |
+| `/actuator/info` | same |
 
 ## Profile upsert without body
 

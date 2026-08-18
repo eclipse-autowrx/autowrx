@@ -43,8 +43,14 @@ const createForwarder = ({ name, urls, getAuthHeaders, notConfiguredMessage = 'S
    * @param {unknown} error
    * @returns {never}
    */
-  const handleAxiosError = (error) => {
-    logger.debug('%s Upstream request failed: %s', logPrefix, error?.message || error);
+  const handleAxiosError = (error, url) => {
+    logger.warn(
+      '%s Upstream request failed: url=%s code=%s message=%s',
+      logPrefix,
+      url || 'unknown',
+      error?.code || 'n/a',
+      error?.message || error
+    );
 
     if (axios.isAxiosError(error) && error.response) {
       throw new ApiError(error.response.status, error.response.data);
@@ -101,7 +107,7 @@ const createForwarder = ({ name, urls, getAuthHeaders, notConfiguredMessage = 'S
     const baseUrl = getBaseUrl(environment);
     const url = `${baseUrl}${upstreamPath.startsWith('/') ? upstreamPath : `/${upstreamPath}`}`;
 
-    logger.debug('%s Forwarding %s %s environment=%s', logPrefix, method, url, environment || 'default');
+    logger.info('%s Forwarding %s %s environment=%s', logPrefix, method, url, environment || 'default');
 
     try {
       const response = await axios({
@@ -111,6 +117,7 @@ const createForwarder = ({ name, urls, getAuthHeaders, notConfiguredMessage = 'S
         headers: getAuthHeaders(),
         responseType: 'json',
         validateStatus: () => true,
+        proxy: false,
       });
 
       if (response.status >= 400) {
@@ -122,7 +129,7 @@ const createForwarder = ({ name, urls, getAuthHeaders, notConfiguredMessage = 'S
       if (error instanceof ApiError) {
         throw error;
       }
-      return handleAxiosError(error);
+      return handleAxiosError(error, url);
     }
   };
 
@@ -173,11 +180,12 @@ const createForwarder = ({ name, urls, getAuthHeaders, notConfiguredMessage = 'S
       abortController.abort();
     });
 
+    let url = 'unknown';
     try {
       const baseUrl = getBaseUrl(environment);
-      const url = `${baseUrl}${upstreamPath.startsWith('/') ? upstreamPath : `/${upstreamPath}`}`;
+      url = `${baseUrl}${upstreamPath.startsWith('/') ? upstreamPath : `/${upstreamPath}`}`;
 
-      logger.debug('%s Starting stream: %s %s environment=%s', logPrefix, method, url, environment || 'default');
+      logger.info('%s Starting stream: %s %s environment=%s', logPrefix, method, url, environment || 'default');
 
       const response = await axios({
         method,
@@ -187,6 +195,7 @@ const createForwarder = ({ name, urls, getAuthHeaders, notConfiguredMessage = 'S
         responseType: 'stream',
         signal: abortController.signal,
         validateStatus: () => true,
+        proxy: false,
       });
 
       if (response.status >= 400) {
@@ -236,6 +245,13 @@ const createForwarder = ({ name, urls, getAuthHeaders, notConfiguredMessage = 'S
         }
       });
     } catch (error) {
+      logger.warn(
+        '%s Stream upstream failed: url=%s code=%s message=%s',
+        logPrefix,
+        url,
+        error?.code || 'n/a',
+        error?.message || error
+      );
       writeSseError(res, error, onError);
     }
   };
