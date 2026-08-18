@@ -58,6 +58,7 @@ Stop with `./down.sh`.
 | `MONGODB_DATABASE` | Database name | `autowrx` |
 | `GENAI_URL` | Optional external GenAI service | unset |
 | `KIT_SERVER_URL` | Optional kit/runtime server override (also settable at runtime via the `RUNTIME_SERVER_URL` site config) | unset |
+| `RUNTIME_SERVICE_MAPPINGS` | Optional `RUNTIME_NAME:service` whitelist for `/runtime-preview/:runtimeName` (compose: `PUBLIC-01-…:runtime-09`; implied HTTP port **8080**, not kit-manager 3090). Host-run may use `name:127.0.0.1:8889`. Without it, preview requests 502 to a blank page. | unset |
 | `UPLOAD_PATH_HOST` / `PLUGIN_PATH_HOST` / `GLOBAL_CSS_PATH_HOST` | Host paths for persisted uploads, internal plugins, and the admin-editable global CSS | `./data/…` |
 
 MongoDB is reachable only on the internal Docker network by default (the host

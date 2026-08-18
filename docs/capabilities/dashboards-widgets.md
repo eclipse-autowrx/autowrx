@@ -284,7 +284,7 @@ Widget URLs/options stored in widget config.
 
 ### Description
 
-As an author, I can add ready-made widget bundles (3d-car, chart-signals, image-by-api-value, signal-list-settable, simple-fan, simple-wiper, single-api, terminal) to my dashboard from the Built-in library, so that I get instant visualizations without building my own. They are hosted and served for me automatically.
+As an author, I can add ready-made widget bundles (3d-car, chart-signals, image-by-api-value, runtime-preview, signal-list-settable, simple-fan, simple-wiper, single-api, terminal) to my dashboard from the Built-in library, so that I get instant visualizations without building my own. They are hosted and served for me automatically.
 
 ### Who uses it / value
 
@@ -298,6 +298,8 @@ Authors (ready-made widgets); end users (visualizations).
 ### API contract
 
 No HTTP surface — static hosting. Builtin widget bundles and shared libs (chart.min.js, tailwind/font-awesome, syncer.js) are served from `GET /builtin-widgets/...` (public, no auth); `signal-list-settable` ships with `vss.json`.
+
+Runtime Preview (`/builtin-widgets/runtime-preview/index.html`) iframes the selected kit HTTP UI at `/runtime-preview/{name}` (see CAP-RUNTIME-07). Widget `options.runtimeMappings` defaults to `[]`: the path is `/runtime-preview/` plus the runtime name with a leading `Runtime-` stripped. Optional entries `{ suffix, path }` override that derivation when the selected name equals or ends with `suffix`.
 
 ### Quality control
 

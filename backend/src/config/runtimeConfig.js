@@ -69,18 +69,6 @@ function getRuntimeTarget(runtimeName) {
   return runtimeMappings[runtimeName] || null;
 }
 
-/** @deprecated use getRuntimeTarget */
-function getServiceNameForRuntime(runtimeName) {
-  const target = getRuntimeTarget(runtimeName);
-  if (!target) return null;
-  try {
-    return new URL(target).hostname;
-  } catch {
-    return null;
-  }
-}
-
 module.exports = {
   getRuntimeTarget,
-  getServiceNameForRuntime,
 };

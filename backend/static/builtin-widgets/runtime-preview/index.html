@@ -167,42 +167,14 @@
       document.getElementById('error-state').style.display = 'none'
     }
 
-    /**
-     * Try to read the iframe body text and detect a JSON error payload.
-     * Returns true if the content looks like a runtime error response.
-     */
-    function iframeHasErrorPayload(frame) {
-      try {
-        const doc = frame.contentDocument || frame.contentWindow.document
-        if (!doc) return false
-        const text = (doc.body && doc.body.innerText) || ''
-        const trimmed = text.trim()
-        if (!trimmed.startsWith('{')) return false
-        const json = JSON.parse(trimmed)
-        // Matches payloads like {"message":"Runtime connection error: ...","code":"ECONNRESET",...}
-        return !!(json.code || json.message?.toLowerCase().includes('error'))
-      } catch {
-        return false
-      }
-    }
-
-    function bindFrameHandlers(frame) {
-      frame.onload = function () {
-        if (iframeHasErrorPayload(frame)) {
-          showError(currentRuntimeName)
-        }
-      }
-      frame.onerror = function () {
-        showError(currentRuntimeName)
-      }
-    }
-
     function reloadPreview() {
       if (!lastPreviewUrl) return
       const frame = document.getElementById('preview-frame')
       const placeholder = document.getElementById('placeholder')
       hideError()
-      bindFrameHandlers(frame)
+      frame.onerror = function () {
+        showError(currentRuntimeName)
+      }
       if (frame.src === lastPreviewUrl) {
         frame.src = 'about:blank'
       }
@@ -237,7 +209,9 @@
       const previewPath = match ? match.path : '/runtime-preview/' + name.replace(/runtime-/i, '')
       lastPreviewUrl = window.location.origin + previewPath
 
-      bindFrameHandlers(frame)
+      frame.onerror = function () {
+        showError(currentRuntimeName)
+      }
 
       if (frame.src !== lastPreviewUrl) {
         frame.src = lastPreviewUrl

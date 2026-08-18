@@ -2,7 +2,7 @@
 
 Run your prototype's Python/C++/Rust code on cloud or hardware runtimes, watch live signals and trace variables, and manage the runtime/kit assets you connect to.
 
-**Implementation:** `frontend/src/components/molecules/{DaRuntimeControl,DaRuntimeConnector}.tsx`, `frontend/src/stores/runtimeStore.ts`, `backend/src/app.js` (kit proxy), `backend/src/controllers/asset.controller.js` (generateToken).
+**Implementation:** `frontend/src/components/molecules/{DaRuntimeControl,DaRuntimeConnector}.tsx`, `frontend/src/stores/runtimeStore.ts`, `backend/src/app.js` (kit proxy + runtime-preview proxy), `backend/src/config/runtimeConfig.js`, `backend/src/controllers/asset.controller.js` (generateToken).
 
 ```mermaid
 flowchart TD
@@ -14,6 +14,7 @@ flowchart TD
     subgraph Backend
         T["POST /v2/assets/:id/generate-token<br/>(asset-scoped JWT)"] --> A
         P["/kit-server/* proxy<br/>(KIT_SERVER_URL)"] -.->|same-origin| RT
+        PV["/runtime-preview/* proxy<br/>(RUNTIME_SERVICE_MAPPINGS)"] -.->|same-origin| KITUI["Runtime HTTP UI"]
         S["Site config<br/>RUNTIME_SERVER_URL<br/>RUNTIME_SERVER_CONFIG"] --> A
     end
     RT["Runtime / Kit server"] -->|run_python_app / run_rust_app| OUT["Terminal · signals · vars"]
@@ -34,6 +35,7 @@ flowchart TD
 | [CAP-RUNTIME-04](#cap-runtime-04--asset-access-tokens) | Asset access tokens |
 | [CAP-RUNTIME-05](#cap-runtime-05--kit-server-proxy) | Kit server proxy |
 | [CAP-RUNTIME-06](#cap-runtime-06--runtime-server-config) | Runtime server config |
+| [CAP-RUNTIME-07](#cap-runtime-07--runtime-http-preview-proxy) | Runtime HTTP preview proxy |
 
 
 ## CAP-RUNTIME-01 — Runtime control panel
@@ -514,6 +516,106 @@ URL + Socket.IO options only; `RUNTIME_SERVER_CONFIG` should not hold secrets.
 - **Retention:** Indefinite until admin-updated (no TTL).
 - **Encryption:** No app-level at-rest encryption; the public-read endpoint exposes config to anonymous users.
 - **Logging:** Standard logger; config values are not specially logged.
+
+**Risks:**
+- **Secret leakage into config:** if `RUNTIME_SERVER_CONFIG` is mistakenly used to hold credentials (despite the guidance), the public-read site config would expose them to anonymous users.
+
+### Test coverage
+- **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
+- **Unit (Jest):** none
+
+## CAP-RUNTIME-07 — Runtime HTTP preview proxy
+
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| operator | Operator config (`.env`) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
+### Description
+
+As a prototype author, I can see the selected runtime's HTTP UI inside the Runtime Preview dashboard widget, so that I watch the app's own page without leaving the dashboard. As an operator, I map runtime names to kit HTTP hosts at deploy time so that preview works on the instance.
+
+### Who uses it / value
+
+Authors and demo audiences (see the runtime UI in the dashboard); DevOps (wire kit HTTP services into the AutoWRX origin).
+
+### Acceptance criteria
+
+- When an **operator** configures runtime-name-to-service mappings at **Operator config (`.env`)** and a **user** adds Runtime Preview and selects a mapped kit at **Dashboard (runtime) (`/model/:id/prototype/:id?tab=dashboard`)**, the widget shows that kit's HTTP UI.
+- When an **operator** has not configured those mappings at **Operator config (`.env`)**, a **user** opening Runtime Preview at **Dashboard (runtime) (`/model/:id/prototype/:id?tab=dashboard`)** sees an empty/unavailable preview instead of the kit UI.
+- When a **user** starts the prototype at **Dashboard (runtime) (`/model/:id/prototype/:id?tab=dashboard`)**, the preview reloads; when they stop it, the widget shows that no application is running.
+- A **user** never types the preview proxy path at **Dashboard (runtime) (`/model/:id/prototype/:id?tab=dashboard`)** — the widget builds it from the selected runtime name.
+
+### API contract
+
+No HTTP surface for users — the backend proxies kit HTTP UIs transparently. Operator config and proxy behavior:
+
+- `GET|WS /runtime-preview/:runtimeName/…` (public, no auth) → proxied to the mapped target; websocket upgrades enabled (`ws: true`).
+- `:runtimeName` must match `^[a-zA-Z0-9-]+$`; otherwise **400** blank HTML (`INVALID_RUNTIME_NAME`).
+- Target from env `RUNTIME_SERVICE_MAPPINGS` (`RUNTIME_NAME:service` → `http://service:8080`; `RUNTIME_NAME:host:port` or absolute URL also accepted). Unmapped name → **502** blank HTML (`RUNTIME_NOT_CONFIGURED`).
+- Connection errors → **502** blank HTML (not JSON). Proxy `timeout` / `proxyTimeout` 3000 ms.
+- Optional `RUNTIME_PREFIX` stripped from the path name before lookup.
+- Default port **8080** is the kit HTTP UI on the playground compose network (kit-manager is 3090).
+- Passthrough — the backend does not authenticate.
+
+**Implementation:** `backend/src/app.js` (`/runtime-preview` proxy), `backend/src/config/runtimeConfig.js` (`getRuntimeTarget`).
+
+### Quality control
+
+With `RUNTIME_SERVICE_MAPPINGS` set, open a dashboard that includes Runtime Preview, select a mapped kit, press Run, and confirm the kit HTTP UI appears (including websocket UIs). Without the env var, confirm the preview stays blank/unavailable.
+
+```mermaid
+sequenceDiagram
+    participant W as Runtime Preview widget
+    participant B as AutoWRX backend
+    participant K as Kit HTTP UI
+    W->>B: GET /runtime-preview/PUBLIC-01-.../
+    B->>B: whitelist RUNTIME_SERVICE_MAPPINGS
+    B->>K: http://runtime-09:8080/
+    K-->>W: HTML / WS
+```
+
+### Security
+
+Passthrough — anyone who can reach the backend can request a whitelisted runtime's HTTP UI under the AutoWRX origin. CSP `frame-src` / `connect-src` must allow the preview path.
+
+**Coverage:**
+- **Auth:** Passthrough — the backend does not authenticate this route.
+- **Authorization:** None at the proxy — any caller can fetch a mapped runtime name.
+- **Input validation:** Path segment `^[a-zA-Z0-9-]+$`; targets only from `RUNTIME_SERVICE_MAPPINGS` (env whitelist).
+- **Rate limiting:** Not applied — the proxy has no limiter; `authLimiter` is not wired.
+- **Secrets:** No secrets handled by the proxy; kit responses pass through in transit only.
+
+**Risks:**
+- **Same-origin preview of user-controlled HTML:** kit HTML is re-served under the AutoWRX origin, so a prototype page can read that origin's storage unless the inner iframe is sandboxed. *Mitigation:* none currently — add `sandbox` without `allow-same-origin` on the preview iframe.
+- **SSRF via path param:** a caller could try to make the proxy fetch an arbitrary URL. *Mitigation:* targets come only from the env whitelist; the name regex blocks traversal and `pathRewrite` injection.
+- **SSRF via misconfigured `RUNTIME_SERVICE_MAPPINGS`:** an operator mapping to an internal host turns the backend into a proxy to that host. *Mitigation:* none currently — keep mappings to kit HTTP services only.
+
+### Personal data processing
+
+❌ No — this capability does not process personal data. The proxy does not inspect or store payload.
+
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
+
+Proxies kit HTTP traffic; no storage on the backend.
+
+**Coverage:**
+- **Stored data:** None — mappings live in process env (`RUNTIME_SERVICE_MAPPINGS`); the proxy relays traffic.
+- **Retention:** N/A — no storage.
+- **Encryption:** In transit TLS deployment-dependent; websockets are upgraded.
+- **Logging:** Proxy warns on invalid name, missing mapping, and connection errors; no payload logging.
+
+**Risks:**
+- **Traffic interception:** the proxy relays kit HTTP/WS traffic in transit; a mapping pointed at an attacker host would exfiltrate preview requests.
+
+### Test coverage
+- **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
+- **Unit (Jest):** none
+
 
 **Risks:**
 - **Secret leakage into config:** if `RUNTIME_SERVER_CONFIG` is mistakenly used to hold credentials (despite the guidance), the public-read site config would expose them to anonymous users.

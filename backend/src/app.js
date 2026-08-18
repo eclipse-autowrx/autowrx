@@ -216,57 +216,86 @@ function resolveRuntimeTarget(runtimeName) {
   return null;
 }
 
-// Proxy to runtime HTTP servers
-// Compose: /runtime-preview/PUBLIC-01-... → http://runtime-09:8080/
-// Host-run: /runtime-preview/PUBLIC-01-... → http://127.0.0.1:8889/
+const RUNTIME_NAME_RE = /^[a-zA-Z0-9-]+$/;
+
+function runtimeNameFromReq(req) {
+  const raw = (req.originalUrl || req.url || '').split('?')[0];
+  const full = raw.match(/^\/runtime-preview\/([^/]+)/);
+  if (full) return full[1];
+  // After Express mount at /runtime-preview, remaining path is /:name/...
+  const mounted = raw.match(/^\/([^/]+)/);
+  return mounted ? mounted[1] : null;
+}
+
+const sendPreviewUnavailable = (res, status, payload) => {
+  console.warn('[Proxy]', payload);
+  if (!res || res.headersSent || typeof res.status !== 'function') return;
+  res.status(status);
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send('<!DOCTYPE html><html><head></head><body></body></html>');
+};
+
+// HTTP gate: reject bad names / missing mappings before the proxy.
+// WS upgrades skip this handler; router() below re-parses the path.
 app.use('/runtime-preview/:runtimeName', (req, res, next) => {
   const runtimeName = req.params.runtimeName;
 
-  const sendPreviewUnavailable = (res, status, payload) => {
-    console.warn('[Proxy]', payload)
-    if (!res || res.headersSent) return
-    res.status(status)
-    res.setHeader('Content-Type', 'text/html; charset=utf-8')
-    res.send('<!DOCTYPE html><html><head></head><body></body></html>')
-  }
-
-  if (!/^[a-zA-Z0-9-]+$/.test(runtimeName)) {
+  if (!RUNTIME_NAME_RE.test(runtimeName)) {
     return sendPreviewUnavailable(res, 400, {
       message: 'Invalid runtime name format',
       code: 'INVALID_RUNTIME_NAME',
       runtimeName,
-    })
+    });
   }
 
   const targetUrl = resolveRuntimeTarget(runtimeName);
-
   if (!targetUrl) {
     return sendPreviewUnavailable(res, 502, {
       message: 'Runtime not found in configuration',
       code: 'RUNTIME_NOT_CONFIGURED',
       runtimeName,
-    })
+    });
   }
 
+  next();
+});
+
+// Single middleware so ws: true can attach to the HTTP upgrade event.
+// Compose: /runtime-preview/PUBLIC-01-... → http://runtime-09:8080/
+// Host-run: /runtime-preview/PUBLIC-01-... → http://127.0.0.1:8889/
+app.use(
+  '/runtime-preview',
   createProxyMiddleware({
-    target: targetUrl,
+    target: 'http://127.0.0.1',
     changeOrigin: true,
+    ws: true,
     timeout: 3000,
     proxyTimeout: 3000,
-    pathRewrite: (proxyPath) =>
-      proxyPath.replace(new RegExp(`^/runtime-preview/${runtimeName}`), '') || '/',
+    router: (req) => {
+      const runtimeName = runtimeNameFromReq(req);
+      if (!runtimeName || !RUNTIME_NAME_RE.test(runtimeName)) return undefined;
+      return resolveRuntimeTarget(runtimeName) || undefined;
+    },
+    pathRewrite: (_proxyPath, req) => {
+      const runtimeName = runtimeNameFromReq(req);
+      if (!runtimeName) return '/';
+      const full = (req.originalUrl || req.url || '').split('?')[0];
+      if (full.startsWith('/runtime-preview/')) {
+        return full.replace(new RegExp(`^/runtime-preview/${runtimeName}`), '') || '/';
+      }
+      return full.replace(new RegExp(`^/${runtimeName}`), '') || '/';
+    },
     on: {
-      error: (err, _req, proxyRes) => {
+      error: (err, req, proxyRes) => {
         sendPreviewUnavailable(proxyRes, 502, {
           message: `Runtime connection error: ${err.message}`,
           code: err.code,
-          runtimeName,
-          targetUrl,
-        })
+          runtimeName: runtimeNameFromReq(req),
+        });
       },
     },
-  })(req, res, next);
-});
+  })
+);
 
 // Development proxy to frontend
 if (config.env === 'development') {
