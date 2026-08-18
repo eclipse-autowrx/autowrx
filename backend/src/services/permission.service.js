@@ -11,6 +11,7 @@ const { UserRole, Model, Prototype, Role, Asset } = require('../models');
 const ApiError = require('../utils/ApiError');
 const roleModel = require('../models/role.model');
 const { PERMISSIONS, ROLES } = require('../config/roles');
+const { visibilityTypes, publiclyVisibleVisibilities } = require('../config/enums');
 const { getRolesClient } = require('../config/rolesV2');
 
 /**
@@ -232,9 +233,11 @@ const getPermissions = () => {
  * @returns {Promise<string[] | '*'>}
  */
 const listReadableModelIds = async (userId) => {
-  // If user is not logged in return public models
+  // If user is not logged in return publicly visible models
   if (!userId) {
-    return (await Model.find({ visibility: 'public' }).select('_id')).map((model) => String(model._id));
+    return (await Model.find({ visibility: { $in: publiclyVisibleVisibilities } }).select('_id')).map((model) =>
+      String(model._id),
+    );
   }
 
   const userRoles = await getUserRoles(userId);
@@ -258,8 +261,8 @@ const listReadableModelIds = async (userId) => {
   ownModels.forEach((model) => {
     results.add(String(model._id));
   });
-  // Add public models
-  const publicModels = await Model.find({ visibility: 'public' }).select('_id');
+  // Add publicly visible models
+  const publicModels = await Model.find({ visibility: { $in: publiclyVisibleVisibilities } }).select('_id');
   publicModels.forEach((model) => {
     results.add(String(model._id));
   });
@@ -278,8 +281,33 @@ const canAccessModel = async (userId, modelId) => {
   if (!model) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Model not found');
   }
-  if (model.visibility === 'public') return true;
+  if (publiclyVisibleVisibilities.includes(model.visibility)) return true;
   return hasPermission(userId, PERMISSIONS.READ_MODEL, modelId);
+};
+
+/**
+ * Whether an authenticated user may create a prototype on the given model.
+ * Owners/contributors with WRITE_MODEL always pass; non-owners pass only when visibility is editable.
+ *
+ * @param {string} userId
+ * @param {string} modelId
+ * @returns {Promise<boolean>}
+ */
+const canCreatePrototypeOnModel = async (userId, modelId) => {
+  if (!userId) {
+    return false;
+  }
+
+  if (await hasPermission(userId, PERMISSIONS.WRITE_MODEL, modelId)) {
+    return true;
+  }
+
+  const model = await Model.findById(modelId).select('visibility');
+  if (!model) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Model not found');
+  }
+
+  return model.visibility === visibilityTypes.EDITABLE;
 };
 
 // V2 services logic
@@ -333,6 +361,7 @@ module.exports.getRoles = getRoles;
 module.exports.getPermissions = getPermissions;
 module.exports.listReadableModelIds = listReadableModelIds;
 module.exports.canAccessModel = canAccessModel;
+module.exports.canCreatePrototypeOnModel = canCreatePrototypeOnModel;
 
 // V2 services
 module.exports.hasPermissionV2 = hasPermissionV2;

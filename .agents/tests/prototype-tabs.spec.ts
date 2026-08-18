@@ -1,5 +1,14 @@
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, saveScreenshot, checkLayoutAnomalies, prepareRuntimePanelForLayoutCheck } from './helpers';
+import {
+  loginAsAdmin,
+  saveScreenshot,
+  checkLayoutAnomalies,
+  prepareRuntimePanelForLayoutCheck,
+  waitForPrototypeTabs,
+  createTestModelViaApi,
+  createTestPrototype,
+  goToPrototypeOverview,
+} from './helpers';
 
 // Helper: get first available prototype URL
 async function getFirstPrototypeUrl(page: any): Promise<{ modelId: string; protoId: string } | null> {
@@ -140,12 +149,10 @@ test.describe('Prototype Tabs - Layout Check', () => {
 
   test('Tabs are all visible in the tab bar', async ({ page }) => {
     await loginAsAdmin(page);
-    const ids = await getFirstPrototypeUrl(page);
-    if (!ids) return;
-    const { modelId, protoId } = ids;
+    const modelId = await createTestModelViaApi(page, `E2E_Tabs_Model_${Date.now()}`, 'public');
+    const { prototypeId } = await createTestPrototype(page, `E2E_Tabs_${Date.now()}`, modelId);
 
-    await page.goto(`/model/${modelId}/library/prototype/${protoId}/view`);
-    await page.waitForTimeout(5000);
+    await goToPrototypeOverview(page, modelId, prototypeId);
     await saveScreenshot(page, 'tab-bar-overview');
 
     // Check tab bar has at least the main tabs

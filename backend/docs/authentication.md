@@ -34,9 +34,54 @@ In short: **access token = short‑lived bearer in response body; refresh token 
 
 - File: `src/middlewares/auth.js`
 - Behavior:
-  - If `AUTH_URL` is configured, the middleware forwards the request to that URL to validate and returns a sanitized `user` on success.
+  - If `AUTH_PROVIDER=platform`, reads identity from configured request headers via `platformAuth.service`, upserts the user in MongoDB, and sets a sanitized `req.user`.
+  - Else if `AUTH_URL` is configured (deprecated), forwards the request to that URL to validate and returns a sanitized `user` on success.
   - Otherwise uses Passport JWT strategy to validate `Authorization: Bearer ...` and sets `req.user`.
   - Supports `auth({ optional: true })` for public routes; otherwise throws 401.
+
+### Platform auth (header-based)
+
+When deploying behind a platform that injects authenticated user identity via HTTP headers (e.g. Calponia), set `AUTH_PROVIDER=platform` instead of running a separate auth microservice.
+
+- File: `src/services/platformAuth.service.js`
+- User upsert: `src/services/user.service.js` → `upsertPlatformUser()`
+- On each protected request, the middleware:
+  1. Reads configured headers from the incoming request.
+  2. Requires an `email` header (401 if missing).
+  3. Computes display name from `firstname`/`lastname`, else `name`, else `"Anonymous"`.
+  4. Upserts the user by email and sets `req.user`.
+
+**Configuration**
+
+| Variable | Description | Example |
+|---|---|---|
+| `AUTH_PROVIDER` | `jwt` (default) or `platform` | `platform` |
+| `AUTH_PLATFORM_NAME` | Stored on `user.provider` | `Calponia` |
+| `AUTH_PLATFORM_HEADERS` | JSON map of identity field → header name | see below |
+
+```json
+{
+  "id": "x-calponia-user-id",
+  "email": "x-calponia-user-email",
+  "firstname": "x-calponia-user-firstname",
+  "lastname": "x-calponia-user-lastname"
+}
+```
+
+Optional key: `name` (single full-name header, used when first/last are absent).
+
+**Migration from `AUTH_URL`**
+
+Replace the external auth sidecar with:
+
+```env
+AUTH_PROVIDER=platform
+AUTH_PLATFORM_NAME=Calponia
+AUTH_PLATFORM_HEADERS={"id":"x-calponia-user-id","email":"x-calponia-user-email","firstname":"x-calponia-user-firstname","lastname":"x-calponia-user-lastname"}
+# Remove AUTH_URL
+```
+
+**Security:** Only enable platform auth when the backend runs behind a trusted reverse proxy that strips client-supplied identity headers and injects trusted ones. Direct public exposure allows header spoofing.
 
 ### Passport JWT
 
@@ -82,7 +127,9 @@ In short: **access token = short‑lived bearer in response body; refresh token 
   - `JWT_SECRET`, `JWT_ACCESS_EXPIRATION_MINUTES`, `JWT_REFRESH_EXPIRATION_DAYS`
   - `JWT_RESET_PASSWORD_EXPIRATION_MINUTES` (default 10), `JWT_VERIFY_EMAIL_EXPIRATION_MINUTES` (default 10)
   - `JWT_COOKIE_NAME`, `JWT_COOKIE_DOMAIN`
-  - `AUTH_URL` — optional external auth service used by `auth` middleware.
+  - `AUTH_PROVIDER` — `jwt` (default) or `platform` for header-based platform auth.
+  - `AUTH_PLATFORM_NAME`, `AUTH_PLATFORM_HEADERS` — platform auth provider name and header map (required when `AUTH_PROVIDER=platform`).
+  - `AUTH_URL` — deprecated external auth service; prefer built-in platform auth.
 - Authentication settings (self-registration, public viewing, etc.) are configured via Site Configuration in the database, not environment variables.
 
 ### Request Lifecycle (Typical)
@@ -208,7 +255,8 @@ Client
   | GET /v2/...  Authorization: Bearer <access>
   v
 auth() middleware (/src/middlewares/auth.js)
-  |-- if AUTH_URL: POST to external auth -> returns user
+  |-- if AUTH_PROVIDER=platform: read headers, upsert user
+  |-- else if AUTH_URL (deprecated): POST to external auth -> returns user
   |-- else: passport-jwt verifies token, loads User/Asset
   v
 req.user attached

@@ -19,11 +19,47 @@ import {
 } from '@/services/extendedApis.service'
 
 import { convertCode } from '@/services/convert_code.service'
+import { uploadFileService } from '@/services/upload.service'
 import { FileSystemItem } from '@/components/molecules/project_editor/types'
 import { base64ToArrayBuffer } from '@/lib/utils'
 
 const removeSpecialCharacters = (str: string) => {
   return str.replace(/[^a-zA-Z0-9 ]/g, '')
+}
+
+const readImageFileFromZip = async (
+  zipFile: JSZip,
+  path: string,
+): Promise<File | undefined> => {
+  const entry = zipFile.file(path)
+  if (!entry) return undefined
+  const blob = await entry.async('blob')
+  const filename = path.split('/').pop() || 'image_file.png'
+  return new File([blob], filename, { type: blob.type || 'image/png' })
+}
+
+const resolvePrototypeImageUrl = async (
+  zipFile: JSZip,
+  imagePath: string,
+  metadataUrl?: string,
+): Promise<string | undefined> => {
+  try {
+    const imageFile = await readImageFileFromZip(zipFile, imagePath)
+    if (imageFile) {
+      const { url } = await uploadFileService(imageFile)
+      return url
+    }
+  } catch (err) {
+    console.error('Failed to upload prototype image from zip:', err)
+  }
+  if (
+    typeof metadataUrl === 'string' &&
+    metadataUrl.trim() &&
+    !metadataUrl.startsWith('/ref/')
+  ) {
+    return metadataUrl
+  }
+  return undefined
 }
 
 const getImgFile = (zip: JSZip, imageUrl: string, filename: string) => {
@@ -133,6 +169,8 @@ const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
           // analysis_image_file: prototype.analysis_image_file,
           customer_journey: prototype.customer_journey,
           // partner_logo: prototype.partner_logo,
+          ...(prototype.extend != null && { extend: prototype.extend }),
+          ...(prototype.portfolio != null && { portfolio: prototype.portfolio }),
         })),
         null,
         4,
@@ -159,6 +197,8 @@ const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
             // analysis_image_file: prototype.analysis_image_file,
             customer_journey: prototype.customer_journey,
             // partner_logo: prototype.partner_logo,
+            ...(prototype.extend != null && { extend: prototype.extend }),
+            ...(prototype.portfolio != null && { portfolio: prototype.portfolio }),
           },
           null,
           4,
@@ -200,6 +240,9 @@ export const downloadModelZip = async (model: Model) => {
           typeof model.api_version === 'string' && model.api_version.trim()
             ? model.api_version.trim()
             : null,
+        ...(model.custom_template != null && {
+          custom_template: model.custom_template,
+        }),
       },
       null,
       4,
@@ -281,6 +324,14 @@ export const zipToModel = async (file: File) => {
         (await zipFile
           .file(`prototypes/${prototype.name}/dashboard.json`)
           ?.async('string')) || '[]'
+      const imageUrl = await resolvePrototypeImageUrl(
+        zipFile,
+        `prototypes/${prototype.name}/image_file.png`,
+        prototype.image_file,
+      )
+      if (imageUrl) {
+        prototype.image_file = imageUrl
+      }
     }
 
     const pluginsStr =
@@ -332,6 +383,8 @@ export const downloadPrototypeZip = async (prototype: Prototype) => {
           // analysis_image_file: prototype.analysis_image_file,
           customer_journey: prototype.customer_journey,
           // partner_logo: prototype.partner_logo,
+          ...(prototype.extend != null && { extend: prototype.extend }),
+          ...(prototype.portfolio != null && { portfolio: prototype.portfolio }),
         },
         null,
         4,
@@ -345,6 +398,26 @@ export const downloadPrototypeZip = async (prototype: Prototype) => {
     saveAs(content, zipFilename)
   } catch (err) { }
 }
+
+export const buildPrototypeImportPayload = (
+  proto: Partial<Prototype>,
+  modelId: string,
+  name?: string,
+): Partial<Prototype> => ({
+  state: proto.state || 'development',
+  apis: proto.apis ?? { VSS: [], VSC: [] },
+  code: proto.code || '',
+  widget_config: proto.widget_config || '{}',
+  description: proto.description,
+  tags: proto.tags || [],
+  image_file: proto.image_file,
+  model_id: modelId,
+  name: name ?? proto.name,
+  complexity_level: proto.complexity_level || '3',
+  customer_journey: proto.customer_journey || '{}',
+  portfolio: proto.portfolio || {},
+  ...(proto.extend != null && { extend: proto.extend }),
+})
 
 export const zipToPrototype = async (
   model_id: string,
@@ -425,6 +498,15 @@ export const zipToPrototype = async (
     let newDashboard = { widgets: newWidgets }
 
     Object.assign(prototype, metadata, { code, widget_config: JSON.stringify(newDashboard) })
+
+    const imageUrl = await resolvePrototypeImageUrl(
+      zipFile,
+      'image_file.png',
+      metadata.image_file,
+    )
+    if (imageUrl) {
+      prototype.image_file = imageUrl
+    }
 
     // Ensure the model_id is correctly set to the new model_id
     prototype.model_id = model_id

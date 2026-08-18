@@ -165,6 +165,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         hideIcon: _stagingNavItem.hideIcon,
         variant: _stagingNavItem.variant,
         corners: _stagingNavItem.corners,
+        renderPlugin: _stagingNavItem.renderPlugin,
       }
     : {}
 
@@ -277,7 +278,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         data,
       })
       invalidateProjectTemplateQueries(queryClient)
-      toast.success('Project template saved')
+      toast.success('Prototype template saved')
       setOpenSaveProjectTemplate(false)
       setProjectTemplateName('')
       setProjectTemplateDescription('')
@@ -422,7 +423,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
               variant="ghost"
               size="icon"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="h-[52px] w-12 rounded-none hover:bg-accent shrink-0"
+              className="da-prototype-sidebar-toggle h-[52px] w-12 !rounded-none shrink-0"
               title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               <TbLayoutSidebar className="w-5 h-5" />
@@ -506,7 +507,10 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             {tab == 'dashboard' && <PrototypeTabDashboard />}
             {tab == 'feedback' && <PrototypeTabFeedback />}
             {tab == 'staging' && hasPrototypeCode(prototype?.code) && (
-              <PrototypeTabStaging prototype={prototype} />
+              <PrototypeTabStaging
+                prototype={prototype}
+                renderPlugin={_stagingNavItem?.renderPlugin}
+              />
             )}
 
             {/* Render ALL plugin components unconditionally - they stay mounted and cached */}

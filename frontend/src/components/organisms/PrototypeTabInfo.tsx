@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState, useEffect, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Prototype } from '../../types/model.type'
 import { DaImage } from '../atoms/DaImage'
 import { Button } from '../atoms/button'
@@ -36,8 +37,12 @@ import { updatePrototypeService, deletePrototypeService } from '@/services/proto
 import { uploadFileService } from '@/services/upload.service'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { useNavigate } from 'react-router-dom'
-import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
+import {
+  invalidatePrototypeListQueries,
+  useListModelPrototypes,
+} from '@/hooks/usePrototypeQueries'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
+import useCanEditPrototype from '@/hooks/useCanEditPrototype'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { cn } from '@/lib/utils'
@@ -63,6 +68,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
   const [isEditing, setIsEditing] = useState(false)
   const [localPrototype, setLocalPrototype] = useState(prototype)
   const defaultPrototypeImage = useDefaultPrototypeImage()
+  const queryClient = useQueryClient()
   const { data: model } = useCurrentModel()
   const { data: modelPrototypes, refetch: refetchModelPrototypes } = useListModelPrototypes(
     model?.id || '',
@@ -77,10 +83,8 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
     useDuplicateNameCheck(localPrototype.name, existingPrototypeNames)
   const { refetch: refetchCurrentPrototype } = useCurrentPrototype()
   const navigate = useNavigate()
-  const [isAuthorized, isAdmin] = usePermissionHook(
-    [PERMISSIONS.READ_MODEL, model?.id],
-    [PERMISSIONS.MANAGE_USERS],
-  )
+  const editable = useCanEditPrototype(prototype)
+  const [isAdmin] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
   const [isDeleting, setIsDeleting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -201,7 +205,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
     try {
       setIsDeleting(true)
       await deletePrototypeService(prototype.id)
-      await refetchModelPrototypes()
+      await invalidatePrototypeListQueries(queryClient)
       navigate(`/model/${model?.id}/library`)
     } catch (error) {
       console.error('Failed to delete prototype:', error)
@@ -255,7 +259,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                   {localPrototype.name}
                 </h2>
                 <div className="grow" />
-                {isAuthorized && (
+                {editable && (
                   <div className="flex items-center gap-2">
                     {isAdmin && (
                       <Button
@@ -275,6 +279,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                       onClick={() => setIsEditing(true)}
                       variant="outline"
                       size="sm"
+                      data-id="btn-edit-prototype-info"
                     >
                       <TbEdit className="w-4 h-4" /> Edit
                     </Button>
@@ -347,7 +352,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                   alt={localPrototype.name}
                 />
               </div>
-              {isAuthorized && (
+              {editable && (
                 <DaImportFile
                   onFileChange={handlePrototypeImageChange}
                   accept=".png, .jpg, .jpeg, .gif, .webp"
@@ -458,7 +463,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                       value={localPrototype.state || 'development'}
                       onValueChange={(value) => handleChange('state', value)}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full" data-id="prototype-status-select">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

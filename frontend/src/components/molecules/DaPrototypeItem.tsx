@@ -14,44 +14,18 @@ import { DaImage } from '../atoms/DaImage'
 import { cn } from '@/lib/utils'
 import { Prototype } from '@/types/model.type'
 import { HiStar } from 'react-icons/hi'
-import {
-  TbCloudDown,
-  TbCode,
-  TbDownload,
-  TbEdit,
-  TbGauge,
-  TbLoader,
-  TbPhotoEdit,
-  TbTerminal2,
-  TbTrashX,
-} from 'react-icons/tb'
+import { TbCode, TbEdit, TbGauge, TbLoader, TbTerminal2 } from 'react-icons/tb'
 import { Avatar, AvatarFallback, AvatarImage } from '../atoms/avatar'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import DaTooltip from './DaTooltip'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import { useSiteConfig, useDefaultPrototypeImage } from '@/utils/siteConfig'
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
-} from '../atoms/context-menu'
-import {
-  updatePrototypeService,
-  deletePrototypeService,
-} from '@/services/prototype.service'
-import { uploadFileService } from '@/services/upload.service'
-import { downloadPrototypeZip } from '@/lib/zipUtils'
-import DaImportFile from '../atoms/DaImportFile'
-import DaConfirmPopup from './DaConfirmPopup'
+import { useDefaultPrototypeImage } from '@/utils/siteConfig'
+import { updatePrototypeService } from '@/services/prototype.service'
 import DaDialog from './DaDialog'
 import { Button } from '../atoms/button'
 import { Input } from '../atoms/input'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
-import PrototypeTabStaging from '@/components/organisms/PrototypeTabStaging'
-import { useToast } from '@/components/molecules/toaster/use-toast'
 
 interface DaPrototypeItemProps {
   prototype?: Prototype
@@ -60,35 +34,20 @@ interface DaPrototypeItemProps {
 
 const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
   const { data: user } = useSelfProfileQuery()
-  const enableContextMenu = useSiteConfig('PROTOTYPE_ITEM_MENU_CONTEXT', false)
   const defaultPrototypeImage = useDefaultPrototypeImage()
   const { data: model } = useCurrentModel()
   const { data: existingPrototypes, refetch: refetchModelPrototypes } =
     useListModelPrototypes(model?.id || '')
-  const navigate = useNavigate()
-  const { toast } = useToast()
 
   const isOwner =
     !!user &&
     (user.id === prototype?.created_by?.id ||
       user.id === model?.created_by?.id)
 
-  // Rename state
   const [renameOpen, setRenameOpen] = useState(false)
   const [newName, setNewName] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 
-  // Delete state
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-
-  // Image upload state
-  const [isUploading, setIsUploading] = useState(false)
-
-  // Deploy/staging dialog state
-  const [deployOpen, setDeployOpen] = useState(false)
-
-  // Track when any dialog was recently closed to suppress navigation clicks
   const suppressClickRef = useRef(false)
   const suppressTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
 
@@ -98,8 +57,6 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
         const resolvedValue = typeof value === 'function' ? value(false) : value
         setter(value)
         if (!resolvedValue) {
-          // Dialog is closing — suppress clicks briefly so the overlay dismiss
-          // doesn't trigger navigation on the parent wrapper.
           suppressClickRef.current = true
           clearTimeout(suppressTimeoutRef.current)
           suppressTimeoutRef.current = setTimeout(() => {
@@ -135,47 +92,6 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
     }
   }
 
-  const handleImageFileChange = async (file: File) => {
-    if (!prototype) return
-    // Close the context menu
-    document.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
-    )
-    setIsUploading(true)
-    try {
-      const { url } = await uploadFileService(file)
-      await updatePrototypeService(prototype.id, { image_file: url })
-      await refetchModelPrototypes()
-    } catch (error) {
-      console.error('Failed to update prototype image:', error)
-    } finally {
-      setIsUploading(false)
-    }
-  }
-
-  const handleDelete = async () => {
-    if (!prototype) return
-    setIsDeleting(true)
-    try {
-      await deletePrototypeService(prototype.id)
-      await refetchModelPrototypes()
-      navigate(`/model/${model?.id}/library`)
-    } catch (error) {
-      console.error('Failed to delete prototype:', error)
-    } finally {
-      setIsDeleting(false)
-    }
-  }
-
-  const runAfterMenuClose = useCallback((action: () => void) => {
-    // Force-close the context menu first to avoid a stuck modal layer.
-    document.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
-    )
-    // Delay the next layer opening until the context menu has fully closed.
-    window.setTimeout(action, 0)
-  }, [])
-
   const cardContent = (
     <div
       className={cn(
@@ -188,11 +104,6 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
     >
       <div className="flex flex-col items-center space-y-1 text-muted-foreground overflow-hidden">
         <div className="relative w-full aspect-video overflow-hidden rounded-lg shadow border bg-muted">
-          {(isUploading || isDeleting) && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-black/40">
-              <TbLoader className="size-6 animate-spin text-white" />
-            </div>
-          )}
           <DaImage
             src={prototype?.image_file}
             fallbackSrc={defaultPrototypeImage}
@@ -293,8 +204,6 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
     </div>
   )
 
-  const isAnyDialogOpen = renameOpen || deleteOpen || deployOpen
-
   if (!user) {
     return cardContent
   }
@@ -302,94 +211,14 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
   return (
     <div
       onClick={(e) => {
-        if (isAnyDialogOpen || suppressClickRef.current) {
+        if (renameOpen || suppressClickRef.current) {
           e.stopPropagation()
         }
       }}
-      className='size-full'
+      className="size-full"
     >
-      {enableContextMenu && isOwner ? (
-        <ContextMenu>
-          <ContextMenuTrigger asChild>{cardContent}</ContextMenuTrigger>
+      {cardContent}
 
-          <ContextMenuContent
-            className="w-52"
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            <ContextMenuItem
-              className="cursor-pointer"
-              onSelect={() => {
-                runAfterMenuClose(() => {
-                  setNewName(prototype?.name ?? '')
-                  setRenameOpen(true)
-                })
-              }}
-            >
-              <TbEdit className="mr-2 size-4" />
-              Rename
-            </ContextMenuItem>
-            <ContextMenuItem
-              className="cursor-pointer p-0!"
-              onSelect={(e) => e.preventDefault()}
-            >
-              <DaImportFile
-                onFileChange={handleImageFileChange}
-                accept=".png,.jpg,.jpeg,.gif,.webp"
-                className="flex w-full items-center px-2 py-1.5 text-sm cursor-pointer"
-              >
-                <TbPhotoEdit className="mr-2 size-4" />
-                Update Image
-              </DaImportFile>
-            </ContextMenuItem>
-            <ContextMenuSeparator />
-            <ContextMenuItem
-              className="cursor-pointer"
-              onSelect={() => runAfterMenuClose(() => setDeployOpen(true))}
-            >
-              <TbCloudDown className="mr-2 size-4" />
-              Deploy
-            </ContextMenuItem>
-            <ContextMenuItem
-              className="cursor-pointer"
-              onSelect={() =>
-                runAfterMenuClose(() => {
-                  if (prototype) {
-                    downloadPrototypeZip(prototype)
-                  }
-                })
-              }
-            >
-              <TbDownload className="mr-2 size-4" />
-              Export Prototype
-            </ContextMenuItem>
-            <ContextMenuItem
-              className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-              onSelect={() => runAfterMenuClose(() => setDeleteOpen(true))}
-            >
-              <TbTrashX className="mr-2 size-4" />
-              Delete Prototype
-            </ContextMenuItem>
-          </ContextMenuContent>
-        </ContextMenu>
-      ) : enableContextMenu ? (
-        <div
-          onContextMenu={(e) => {
-            e.preventDefault()
-            toast({
-              title: 'Permission denied',
-              description: `You do not have permission to edit "${prototype?.name ?? 'this prototype'}".`,
-              duration: 3000,
-            })
-          }}
-        >
-          {cardContent}
-        </div>
-      ) : (
-        cardContent
-      )}
-
-      {/* Rename dialog — available via both pencil icon and context menu */}
       <DaDialog
         open={renameOpen}
         onOpenChange={withClickSuppression(setRenameOpen)}
@@ -432,33 +261,6 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
           </div>
         </div>
       </DaDialog>
-
-      {enableContextMenu && isOwner && (
-        <>
-          {/* Deploy / Staging dialog */}
-          <DaDialog
-            open={deployOpen}
-            onOpenChange={withClickSuppression(setDeployOpen)}
-            dialogTitle={`Deploy - ${prototype?.name ?? 'Prototype'}`}
-            className="max-w-[95vw] w-[1200px]"
-          >
-            <div className="flex overflow-y-auto max-h-[80vh]">
-              {prototype && <PrototypeTabStaging prototype={prototype} />}
-            </div>
-          </DaDialog>
-
-          {/* Delete confirm dialog */}
-          <DaConfirmPopup
-            onConfirm={handleDelete}
-            title="Delete Prototype"
-            label="This action cannot be undone and will delete all prototype data. Please proceed with caution."
-            confirmText={prototype?.name}
-            state={[deleteOpen, withClickSuppression(setDeleteOpen)]}
-          >
-            <span />
-          </DaConfirmPopup>
-        </>
-      )}
     </div>
   )
 }

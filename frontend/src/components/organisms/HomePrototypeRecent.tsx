@@ -12,7 +12,7 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useRecentPrototypes } from '@/hooks/usePrototypeQueries'
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb'
 import { Button } from '../atoms/button'
-import { DaPrototypeItem } from '../molecules/DaPrototypeItem'
+import { DaPrototypeCard } from '../molecules/DaPrototypeCard'
 import DaSkeletonGrid from '../molecules/DaSkeletonGrid'
 
 type HomePrototypeRecentProps = {
@@ -68,7 +68,7 @@ const HomePrototypeRecent = ({ title }: HomePrototypeRecentProps) => {
                   to={`/model/${prototype.model_id}/library/prototype/${prototype.id}/view`}
                   key={prototype.id}
                 >
-                  <DaPrototypeItem prototype={prototype} />
+                  <DaPrototypeCard prototype={prototype} variant="home" />
                 </Link>
               ))}
           </div>

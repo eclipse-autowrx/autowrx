@@ -1,0 +1,26 @@
+name: license-headers-check
+
+# Verifies that .js/.ts/.tsx source files CHANGED in a PR carry the repo's
+# Eclipse/MIT SPDX header. Checks only changed files so pre-existing header
+# debt doesn't block PRs.
+
+on:
+  pull_request:
+    paths:
+      - "backend/**/*.js"
+      - "frontend/**/*.ts"
+      - "frontend/**/*.tsx"
+      - "scripts/check-license-headers.sh"
+      - ".github/workflows/license-headers-check.yml"
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify changed source files carry the MIT SPDX header
+        run: bash scripts/check-license-headers.sh "${{ github.event.pull_request.base.sha || 'origin/main' }}"

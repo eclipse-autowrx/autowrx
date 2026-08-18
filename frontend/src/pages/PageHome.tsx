@@ -57,7 +57,7 @@ const PageHome = () => {
   }
 
   return (
-    <div className="space-y-12 da-page-home">
+    <div className="space-y-12 pb-12 pt-4 lg:pt-0 [@media(max-height:720px)]:!pt-4 da-page-home">
       {homeElements.map((element, index) => {
         const Component = getHomeComponent(element.type) as any
         if (!Component) return null

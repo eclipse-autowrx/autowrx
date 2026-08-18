@@ -204,16 +204,6 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     category: 'genai',
   },
   {
-    key: 'PROTOTYPE_ITEM_MENU_CONTEXT',
-    scope: 'site',
-    value: false,
-    secret: false,
-    valueType: 'boolean',
-    description:
-      'Enable or disable the context menu on prototype items in the prototype list. When enabled, right-clicking on a prototype will show a menu context.',
-    category: 'model_prototype',
-  },
-  {
     key: 'ENABLE_NEW_PROTOTYPE_PAGE',
     scope: 'site',
     value: false,
@@ -241,6 +231,16 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     valueType: 'boolean',
     description:
       'When enabled, hides Custom API Schema / API Set management and all model/prototype UI for custom API sets.',
+    category: 'model_prototype',
+  },
+  {
+    key: 'VSS_PLUGINS',
+    scope: 'site',
+    value: [{ label: 'A2L Importer', plugin: 'a2l-importer' }],
+    secret: false,
+    valueType: 'array',
+    description:
+      'Plugin tabs to show on the Vehicle API (COVESA VSS) page. Each entry needs a "label" (tab display name) and "plugin" (plugin slug). Example: [{"label":"A2L Importer","plugin":"a2l-importer"}]. Only plugins that are installed will appear.',
     category: 'model_prototype',
   },
 ]

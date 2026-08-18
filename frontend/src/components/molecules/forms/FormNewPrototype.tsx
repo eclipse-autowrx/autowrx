@@ -13,7 +13,6 @@ import { DaInput } from '@/components/atoms/DaInput'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import { DaText } from '@/components/atoms/DaText'
 import { Label } from '@/components/atoms/label'
-import { Spinner } from '@/components/atoms/spinner'
 import {
     Select,
     SelectContent,
@@ -24,7 +23,7 @@ import {
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import default_journey from '@/data/default_journey'
 import { listProjectTemplates } from '@/services/projectTemplate.service'
-import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
+import { useListModelPrototypes, invalidatePrototypeListQueries } from '@/hooks/usePrototypeQueries'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import {
     getDefaultDashboardCfg,
@@ -35,11 +34,12 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
 import { addLog } from '@/services/log.service'
-import { createModelService, listModelsLite } from '@/services/model.service'
+import { createModelService, listModelsLite, listModelsPage } from '@/services/model.service'
 import { listModelTemplates } from '@/services/modelTemplate.service'
+import { visibilityFromModelTemplate } from '@/utils/modelVisibility'
 import { createPrototypeService } from '@/services/prototype.service'
 import { ModelLite, Prototype } from '@/types/model.type'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { TbLoader } from 'react-icons/tb'
@@ -74,6 +74,7 @@ const FormNewPrototype = ({
     onSuccess,
 }: FormNewPrototypeProps) => {
     const navigate = useNavigate()
+    const queryClient = useQueryClient()
     const [searchParams] = useSearchParams()
     const { toast } = useToast()
     const { data: currentUser, isLoading: isCurrentUserLoading } = useSelfProfileQuery()
@@ -110,16 +111,26 @@ const FormNewPrototype = ({
         enabled: !!currentUser?.id,
     })
 
+    const { data: editableModelsData, isLoading: isFetchingEditableModels } = useQuery({
+        queryKey: ['listModelLiteEditable', currentUser?.id],
+        queryFn: () => listModelsPage({ visibility: 'editable', state: 'released' }),
+        enabled: !!currentUser?.id,
+    })
+
     const allModels = useMemo(() => {
         const owned = ownedModelsData?.results ?? []
         const contributed = contributedModelsData?.results ?? []
+        const editable = editableModelsData?.results ?? []
         const byId = new Map<string, ModelLite>()
-            ;[...owned, ...contributed].forEach((model) => byId.set(model.id, model))
+        ;[...owned, ...contributed, ...editable].forEach((model) => byId.set(model.id, model))
         return { results: Array.from(byId.values()) }
-    }, [ownedModelsData?.results, contributedModelsData?.results])
+    }, [ownedModelsData?.results, contributedModelsData?.results, editableModelsData?.results])
 
     const isFetchingModels =
-        isCurrentUserLoading || isFetchingOwnedModels || isFetchingContributedModels
+        isCurrentUserLoading ||
+        isFetchingOwnedModels ||
+        isFetchingContributedModels ||
+        isFetchingEditableModels
 
     const resolvedDefaultSelection = useMemo((): ModelSelection | null => {
         if (isFetchingModels) return null
@@ -180,7 +191,7 @@ const FormNewPrototype = ({
     })
 
     const defaultTemplate = useMemo(
-        () => templatesData?.results?.find((t) => t.visibility === 'default'),
+        () => templatesData?.results?.find((t) => t.is_default),
         [templatesData],
     )
 
@@ -264,11 +275,17 @@ const FormNewPrototype = ({
 
             if (isCreatingNewModel) {
                 if (!newModelName.trim()) throw new Error('Please enter a model name')
+                const selectedModelTemplate = templatesData?.results?.find(
+                    (t) => t.id === newModelTemplateId,
+                )
                 const newModelBody: any = {
                     main_api: 'Vehicle',
                     name: newModelName.trim(),
                     api_version: newModelApiVersion,
                     model_template_id: newModelTemplateId || null,
+                }
+                if (selectedModelTemplate) {
+                    newModelBody.visibility = visibilityFromModelTemplate(selectedModelTemplate)
                 }
                 if (newModelApiDataUrl) newModelBody.api_data_url = newModelApiDataUrl
                 modelId = await createModelService(newModelBody)
@@ -318,6 +335,8 @@ const FormNewPrototype = ({
                 description: `Prototype "${prototypeName}" created successfully`,
                 duration: 3000,
             })
+
+            await invalidatePrototypeListQueries(queryClient)
 
             if (onSuccess) {
                 onSuccess(modelId, response.id, prototypeName.trim())
@@ -548,6 +567,7 @@ const FormNewPrototype = ({
                 label="Prototype Name"
                 className="mt-4"
                 data-id="prototype-name-input"
+                labelClassName="font-medium"
             />
             {isDuplicatePrototypeName && (
                 <DaDuplicateNameHint
@@ -560,33 +580,31 @@ const FormNewPrototype = ({
                 />
             )}
 
-            {(isLoadingTemplates || templateOptions.length > 0) && (
-                <div className="flex flex-col mt-4">
-                    <Label className="mb-2">Project Template *</Label>
-                    {isLoadingTemplates ? (
-                        <p className="flex items-center text-sm text-muted-foreground h-9">
-                            <Spinner className="mr-1 h-4 w-4" />
-                            Loading templates...
-                        </p>
-                    ) : (
-                        <Select
-                            value={selectedTemplateId}
-                            onValueChange={setSelectedTemplateId}
-                        >
-                            <SelectTrigger data-id="project-template-select" className="w-full">
-                                <SelectValue placeholder="Select a template" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {templateOptions.map((t) => (
-                                    <SelectItem key={t.id} value={t.id}>
-                                        {t.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    )}
-                </div>
-            )}
+            {(isLoadingTemplates || templateOptions.length > 0) &&
+                (isLoadingTemplates ? (
+                    <div className="mt-4">
+                        <DaText variant="regular-medium">Prototype Template *</DaText>
+                        <div className="flex h-10 border px-2 rounded-md shadow-sm mt-2 items-center">
+                            <TbLoader className="size-4 animate-spin mr-2" /> Loading
+                            templates...
+                        </div>
+                    </div>
+                ) : (
+                    <DaSelect
+                        value={selectedTemplateId}
+                        onValueChange={setSelectedTemplateId}
+                        label="Prototype Template *"
+                        wrapperClassName="mt-4"
+                        dataId="project-template-select"
+                        className="w-full"
+                    >
+                        {templateOptions.map((t) => (
+                            <DaSelectItem key={t.id} value={t.id}>
+                                {t.name}
+                            </DaSelectItem>
+                        ))}
+                    </DaSelect>
+                ))}
 
             <div className="mt-4 select-none">
                 <DaCheckbox

@@ -17,8 +17,7 @@ import DaTableEditor from '../molecules/DaCustomerJourneyTable'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
-import usePermissionHook from '@/hooks/usePermissionHook'
-import { PERMISSIONS } from '@/data/permission'
+import useCanEditPrototype from '@/hooks/useCanEditPrototype'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { addLog } from '@/services/log.service'
 import { Button } from '@/components/atoms/button'
@@ -37,9 +36,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
     model?.id || '',
   )
   const { refetch: refetchCurrentPrototype } = useCurrentPrototype()
-  const [isAuthorized] = usePermissionHook(
-    [PERMISSIONS.READ_MODEL, model?.id],
-  )
+  const editable = useCanEditPrototype(prototype)
   const [isSaving, setIsSaving] = useState(false)
 
   const { data: currentUser } = useSelfProfileQuery()
@@ -129,7 +126,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                   {localPrototype.name}
                 </h2>
                 <div className="grow" />
-                {isAuthorized && (
+                {editable && (
                   <>
                     <Button
                       onClick={() => setIsEditing(true)}

@@ -69,6 +69,10 @@ type HomeHeroSectionProps = {
     | 'left' | 'center' | 'right'
     | 'top-left' | 'top-right'
     | 'bottom-left' | 'bottom-right'
+  /** CSS max-width of the image column in grouped layout. Example: "684px" */
+  imageMaxWidth?: string
+  /** CSS max-width of the centered content row. Example: "1368px" */
+  contentMaxWidth?: string
   /** Gradient overlay configuration */
   overlay?: OverlayConfig
   /**
@@ -79,6 +83,8 @@ type HomeHeroSectionProps = {
   textPosition?: 'left' | 'right' | 'center'
   /** CSS color for title and description text. Default: "white" */
   textColor?: string
+  /** CSS max-width of the text block. Example: "684px" */
+  textMaxWidth?: string
   children?: React.ReactNode
 }
 
@@ -99,6 +105,49 @@ function withOpacity(color: string, opacity: number): string {
   return `color-mix(in srgb, ${color} ${opacity}%, transparent)`
 }
 
+const IMAGE_ALIGN_STYLE: Record<string, React.CSSProperties> = {
+  'center':        { top: '50%', left: '50%',  transform: 'translate(-50%, -50%)' },
+  'left':          { top: '50%', left: 0,      transform: 'translateY(-50%)' },
+  'right':         { top: '50%', right: 0,     transform: 'translateY(-50%)' },
+  'top-left':      { top: 0,      left: 0 },
+  'top-right':     { top: 0,      right: 0 },
+  'bottom-left':   { bottom: 0,   left: 0 },
+  'bottom-right':  { bottom: 0,   right: 0 },
+}
+
+function getImageWrapperStyle(
+  imageWidth: string,
+  imageHeight: string,
+  imageAlign: string,
+): React.CSSProperties {
+  const isFullBleed = imageWidth === '100%' && imageHeight === '100%'
+  if (isFullBleed) {
+    return { inset: 0 }
+  }
+
+  const style: React.CSSProperties = { width: imageWidth }
+
+  if (imageHeight === '100%') {
+    style.top = 0
+    style.bottom = 0
+    style.height = '100%'
+
+    if (imageAlign === 'left' || imageAlign === 'top-left' || imageAlign === 'bottom-left') {
+      style.left = 0
+    } else if (imageAlign === 'right' || imageAlign === 'top-right' || imageAlign === 'bottom-right') {
+      style.right = 0
+    } else {
+      style.left = '50%'
+      style.transform = 'translateX(-50%)'
+    }
+  } else {
+    style.height = imageHeight
+    Object.assign(style, IMAGE_ALIGN_STYLE[imageAlign] ?? IMAGE_ALIGN_STYLE['center'])
+  }
+
+  return style
+}
+
 const HomeHeroSection = ({
   title,
   description,
@@ -110,9 +159,12 @@ const HomeHeroSection = ({
   imageWidth = '100%',
   imageHeight = '100%',
   imageAlign = 'center',
+  imageMaxWidth,
+  contentMaxWidth,
   overlay,
   textPosition = 'right',
   textColor = 'white',
+  textMaxWidth,
   children,
 }: HomeHeroSectionProps) => {
   // Admin-controlled hero image (Site Config -> HOME_HERO_IMAGE).
@@ -120,18 +172,6 @@ const HomeHeroSection = ({
   // Falls back to the JSON `image` if the config is empty.
   const adminImage = useSiteConfig('HOME_HERO_IMAGE', '')
   const effectiveImage = adminImage || image
-
-  // Map imageAlign -> CSS positioning for the image wrapper (when not 100% wide/tall)
-  const IMAGE_ALIGN_STYLE: Record<string, React.CSSProperties> = {
-    'center':        { top: '50%', left: '50%',  transform: 'translate(-50%, -50%)' },
-    'left':          { top: '50%', left: 0,      transform: 'translateY(-50%)' },
-    'right':         { top: '50%', right: 0,     transform: 'translateY(-50%)' },
-    'top-left':      { top: 0,      left: 0 },
-    'top-right':     { top: 0,      right: 0 },
-    'bottom-left':   { bottom: 0,   left: 0 },
-    'bottom-right':  { bottom: 0,   right: 0 },
-  }
-  const imageWrapperPosition = IMAGE_ALIGN_STYLE[imageAlign] ?? IMAGE_ALIGN_STYLE['center']
 
   const overlayEnabled  = overlay?.enabled  ?? true
   const direction       = overlay?.direction ?? 'to-r'
@@ -152,11 +192,58 @@ const HomeHeroSection = ({
     textPosition === 'center' ? 'justify-center' :
                                 'justify-end'
 
+  const isFullBleed = imageWidth === '100%' && imageHeight === '100%'
+  const useGroupedLayout = !isFullBleed && !!effectiveImage
+  const overlayIsTint = fromOpacity < 100 || toOpacity < 100
+  const imageZIndex = isFullBleed && overlayIsTint ? 0 : 20
+  const imageWrapperStyle = getImageWrapperStyle(imageWidth, imageHeight, imageAlign)
+
+  const textContent = (title || description) ? (
+    <div className="flex flex-col sm:text-xs">
+      {title && (
+        <div
+          className="text-2xl lg:text-4xl font-semibold"
+          style={{ color: textColor }}
+          dangerouslySetInnerHTML={{ __html: title }}
+        />
+      )}
+      {description && (
+        <div
+          className="pt-2 text-base lg:text-normal"
+          style={{ color: textColor }}
+          dangerouslySetInnerHTML={{ __html: description }}
+        />
+      )}
+    </div>
+  ) : null
+
+  const groupedTextColumn = (title || description) ? (
+    <div
+      className={`min-w-0 z-30 ${textMaxWidth ? 'w-full' : 'flex-1'} ${textPosition === 'center' ? 'mx-auto text-center' : ''}`}
+      style={textMaxWidth ? { maxWidth: textMaxWidth } : undefined}
+    >
+      {textContent}
+      {children}
+    </div>
+  ) : null
+
+  const fullBleedTextColumn = (title || description) ? (
+    <div className={`px-4 absolute flex h-full items-center ${textJustify} w-full`}>
+      <div
+        className={`xl:px-24 lg:px-12 z-30 ${textMaxWidth ? 'w-full' : 'lg:w-[50%]'}`}
+        style={textMaxWidth ? { maxWidth: textMaxWidth } : undefined}
+      >
+        {textContent}
+        {children}
+      </div>
+    </div>
+  ) : null
+
   return (
     <>
       <div
         className="flex col-span-12 relative w-full justify-between z-10 overflow-hidden"
-        style={{ minHeight, maxHeight }}
+        style={{ minHeight, maxHeight, height: maxHeight }}
       >
         {/* Gradient overlay */}
         {overlayEnabled && (
@@ -166,42 +253,49 @@ const HomeHeroSection = ({
           />
         )}
 
-        {effectiveImage && (
-          <div
-            className="absolute z-0 overflow-hidden"
-            style={{ width: imageWidth, height: imageHeight, ...imageWrapperPosition }}
-          >
-            <img
-              className="w-full h-full"
-              style={{ objectFit: imageObjectFit, objectPosition: imagePosition }}
-              src={effectiveImage}
-              alt="home-cover"
-            />
-          </div>
-        )}
-
-        {(title || description) && (
-          <div className={`px-4 absolute flex h-full items-center ${textJustify} w-full`}>
-            <div className="lg:w-[50%] xl:px-24 lg:px-12 z-30">
-              <div className="flex flex-col sm:text-xs">
-                {title && (
-                  <div
-                    className="text-2xl lg:text-4xl font-semibold"
-                    style={{ color: textColor }}
-                    dangerouslySetInnerHTML={{ __html: title }}
-                  />
-                )}
-                {description && (
-                  <div
-                    className="pt-2 text-sm lg:text-normal"
-                    style={{ color: textColor }}
-                    dangerouslySetInnerHTML={{ __html: description }}
-                  />
-                )}
+        {useGroupedLayout ? (
+          <div className="absolute inset-0 z-20 flex items-center justify-center px-4">
+            <div
+              className="flex items-center h-full w-full"
+              style={contentMaxWidth ? { maxWidth: contentMaxWidth } : undefined}
+            >
+              {textPosition === 'left' && groupedTextColumn}
+              <div
+                className="overflow-hidden flex-shrink-0 self-stretch"
+                style={{
+                  width: imageWidth,
+                  maxWidth: imageMaxWidth,
+                  height: imageHeight === '100%' ? '100%' : imageHeight,
+                }}
+              >
+                <img
+                  className="w-full h-full"
+                  style={{ objectFit: imageObjectFit, objectPosition: imagePosition }}
+                  src={effectiveImage}
+                  alt="home-cover"
+                />
               </div>
-              {children}
+              {textPosition !== 'left' && groupedTextColumn}
             </div>
           </div>
+        ) : (
+          <>
+            {effectiveImage && (
+              <div
+                className="absolute overflow-hidden"
+                style={{ ...imageWrapperStyle, zIndex: imageZIndex }}
+              >
+                <img
+                  className="w-full h-full"
+                  style={{ objectFit: imageObjectFit, objectPosition: imagePosition }}
+                  src={effectiveImage}
+                  alt="home-cover"
+                />
+              </div>
+            )}
+
+            {fullBleedTextColumn}
+          </>
         )}
       </div>
     </>

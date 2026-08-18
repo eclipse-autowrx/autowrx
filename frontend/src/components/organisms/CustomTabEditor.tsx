@@ -75,6 +75,8 @@ export interface TabConfig {
   openMode?: 'dialog' | 'page'
   hideIcon?: boolean
   corners?: 'none' | 'round' | 'full'
+  /** For builtin staging: plugin slug to render as the full staging page instead of the default table */
+  renderPlugin?: string
 }
 
 export interface StagingConfig {
@@ -84,6 +86,8 @@ export interface StagingConfig {
   iconSvg?: string
   variant?: 'tab' | 'primary' | 'outline' | 'ghost'
   corners?: 'none' | 'round' | 'full'
+  /** Plugin slug to render as the full staging page instead of the default table */
+  renderPlugin?: string
 }
 
 export interface RightNavPluginButton {
@@ -96,6 +100,8 @@ export interface RightNavPluginButton {
   openMode?: 'dialog' | 'page'
   hidden?: boolean
   corners?: 'none' | 'round' | 'full'
+  /** For builtin staging: plugin slug to render as the full staging page instead of the default table */
+  renderPlugin?: string
 }
 
 export const DEFAULT_STAGING_RIGHT_NAV_BUTTON: RightNavPluginButton = {
@@ -117,6 +123,7 @@ export function ensureStagingRightNavButton(
       variant: stagingConfig?.variant,
       corners: stagingConfig?.corners,
       hidden: stagingConfig?.hidden,
+      renderPlugin: stagingConfig?.renderPlugin,
     },
     ...buttons,
   ]

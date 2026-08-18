@@ -16,6 +16,7 @@ const config = require('../config/config');
 const logger = require('../config/logger');
 const modelService = require('./model.service');
 const _ = require('lodash');
+const { publiclyVisibleVisibilities } = require('../config/enums');
 
 /**
  * Strip trailing number suffix from a prototype name.
@@ -284,7 +285,7 @@ const listRecentPrototypes = async (userId) => {
   });
 
   const prototypes = await Prototype.find({ _id: { $in: Array.from(prototypeMap.keys()) } })
-    .select('name model_id description image_file executed_turns')
+    .select('name model_id description image_file executed_turns code')
     .populate('model', 'name visibility')
     .populate('created_by', 'name image_file');
 
@@ -321,7 +322,7 @@ const executeCode = async (id, _) => {
 const listPopularPrototypes = async () => {
   const publicModelIds = (
     await modelService.getModels({
-      visibility: 'public',
+      visibility: { $in: publiclyVisibleVisibilities },
     })
   ).map((model) => String(model._id));
   return Prototype.find({
@@ -330,7 +331,7 @@ const listPopularPrototypes = async () => {
   })
     .sort({ executed_turns: -1 })
     .limit(8)
-    .select('name model_id description image_file executed_turns')
+    .select('name model_id description image_file executed_turns code')
     .populate('model', 'name visibility')
     .populate('created_by', 'name image_file');
 };

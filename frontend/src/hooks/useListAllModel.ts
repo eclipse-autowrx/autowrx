@@ -56,7 +56,7 @@ const useListAllModels = () => {
     initialPageParam: 1,
     queryFn: async ({ pageParam }) => {
       return listModelsPage(
-        { visibility: 'public', state: 'released' },
+        { visibility: 'public,editable', state: 'released' },
         { page: pageParam },
       )
     },

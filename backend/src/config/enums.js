@@ -9,11 +9,14 @@
 const visibilityTypes = {
   PUBLIC: 'public',
   PRIVATE: 'private',
+  EDITABLE: 'editable',
 };
+
+const publiclyVisibleVisibilities = [visibilityTypes.PUBLIC, visibilityTypes.EDITABLE];
 
 const stateTypes = {
   DEVELOPMENT: 'development',
   RELEASED: 'released',
 };
 
-module.exports = { visibilityTypes, stateTypes };
+module.exports = { visibilityTypes, publiclyVisibleVisibilities, stateTypes };
