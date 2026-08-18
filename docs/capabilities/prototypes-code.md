@@ -790,11 +790,12 @@ Template data (code/widget_config/journey) is stored; no secrets.
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
 - **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none
+
 ## CAP-PROTO-09 — Page-number buttons
 
 | Actor | Where | Personal data | E2E coverage |
 |---|---|---|---|
-| owner / user / guest | Prototype library (`/model/:id/library`) | ❌ No | ✅ 3 UI + helper cases, ≈85% (est.) |
+| owner / user / guest | Prototype library (`/model/:id/library`) | ❌ No | ❌ 0 — not covered |
 
 **Complexity:** medium
 
@@ -816,9 +817,12 @@ Model owners/contributors and end users browsing large libraries (50+ prototypes
 
 ### API contract
 
-- No dedicated HTTP surface — UI paging over the full model prototype list already loaded for CAP-PROTO-01 (`GET /v2/prototypes?model_id=…` walked page-by-page client-side).
+- Server paging: `GET /v2/prototypes?model_id=…&page=&limit=&sortBy=` for Newest / Oldest / Name A-Z / Name Z-A with an empty search box. Each page click fetches that page only.
+- Hybrid client fallback: Last view, First view, Rating, and substring search still walk all API pages, then filter/sort/slice in the browser (those modes cannot be expressed as server `sortBy` / exact `name` today).
 - Page size is fixed at 50 cards per page in the library list UI.
 - Visible page-number buttons are capped at 7 (sliding window with ellipsis) via `getVisiblePageItems`.
+- Current page is persisted as `?page=N` on the library URL (omitted when page is 1).
+- Tab badge count is `totalResults` from a `limit=1` paged query for the model (not a second full-list walk).
 
 ### Quality control
 
@@ -826,26 +830,29 @@ Open a model with more than 50 prototypes at `/model/:id/library/list`, confirm 
 
 ```mermaid
 flowchart LR
-    U([User]) --> L["Library list<br/>filtered + sorted"]
-    L --> P{filtered count > 50?}
+    U([User]) --> L["Library list"]
+    L --> M{Client-only sort or search?}
+    M -->|no| S["GET /prototypes page+limit+sortBy"]
+    M -->|yes| C["Walk all pages, filter, slice"]
+    S --> P{total > 50?}
+    C --> P
     P -->|no| G["Show all cards<br/>no pager"]
-    P -->|yes| N["Previous · 1 … 4 5 6 … N · Next"]
-    N -->|click page N| S["Slice cards<br/>(N-1)*50 .. N*50"]
+    P -->|yes| N["Previous · 1 … N · Next"]
 ```
 
 ### Security
 
-Same read gating as CAP-PROTO-01 (library browse). Page-number buttons only change client-side slicing of already-authorized results.
+Same read gating as CAP-PROTO-01 (library browse). Server-paged clicks reuse `GET /v2/prototypes` with the same `READ_MODEL` / `PUBLIC_VIEWING` checks; client fallback only slices already-authorized results.
 
 **Coverage:**
 - **Auth:** Optional via `PUBLIC_VIEWING` for library reads (same as CAP-PROTO-01).
 - **Authorization:** private-model reads gated by `READ_MODEL`; pager does not widen access.
-- **Input validation:** page index clamped to `1..totalPages` in the UI; no server input.
-- **Rate limiting:** N/A (no extra HTTP calls for page clicks).
+- **Input validation:** page index clamped to `1..totalPages` in the UI; server paginate plugin also rejects non-positive `page`/`limit`.
+- **Rate limiting:** page clicks issue `GET /v2/prototypes` (same list endpoint as CAP-PROTO-01).
 - **Secrets:** none.
 
 **Risks:**
-- **Stale full-list cache:** if the client holds an outdated full prototype list, page-number navigation could show deleted or omit newly created prototypes until refetch. *Mitigation:* invalidate/refetch model prototype queries after create/import/delete (same cache keys as CAP-PROTO-01).
+- **Stale page cache:** a cached paged or full-list query could show deleted or omit newly created prototypes until refetch. *Mitigation:* invalidate `listModelPrototypes` query keys after create/import/delete (same prefix as CAP-PROTO-01).
 
 ### Personal data processing
 
@@ -856,10 +863,10 @@ Same read gating as CAP-PROTO-01 (library browse). Page-number buttons only chan
 
 ### AutoWRX data
 
-None beyond the prototype list already loaded for CAP-PROTO-01; page selection is ephemeral UI state.
+None beyond the prototype list already loaded for CAP-PROTO-01; page selection is a URL search param (`?page=N`) plus React Query cache.
 
 **Coverage:**
-- **Stored data:** none (page index is client state only).
+- **Stored data:** none (page index is URL state only).
 - **Retention:** N/A.
 - **Encryption:** N/A.
 - **Logging:** none.
@@ -868,8 +875,8 @@ None beyond the prototype list already loaded for CAP-PROTO-01; page selection i
 - none — no additional operational data stored.
 
 ### Test coverage
-- **E2E (Playwright):** 3 UI case(s) in `prototype-extended.spec.ts` + helper cases in `pagination-utils.spec.ts` — SITEMAP: ✅
-- **Estimated coverage:** ≈85% (est.) — pager visibility, page-2 navigation, ellipsis truncation; search/sort reset-to-page-1 lightly covered via existing search/sort cases.
-- **Unit (Jest):** none (frontend has no Jest runner; helper covered via Playwright `pagination-utils.spec.ts`)
+- **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no paging E2E spec.
+- **Unit (Jest):** none
 
-**Implementation:** `frontend/src/utils/pagination.ts` (`getVisiblePageItems`); `frontend/src/components/organisms/PrototypeLibraryList.tsx` (`DaPaging` / page-number buttons / `DaPaginationEllipsis`, `PAGE_SIZE = 50`).
+**Implementation:** `frontend/src/utils/pagination.ts` (`getVisiblePageItems`); `frontend/src/components/organisms/PrototypeLibraryList.tsx` (`DaPaging` / page-number buttons / `DaPaginationEllipsis`, `PAGE_SIZE = 50`); `listModelPrototypesPaged` / `useModelPrototypesPaged` / `useModelPrototypeTotal`.
