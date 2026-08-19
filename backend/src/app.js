@@ -25,6 +25,7 @@ const { init: initSocketIO } = require('./config/socket');
 const path = require('path');
 const fs = require('fs');
 const { createProxyMiddleware } = require('http-proxy-middleware');
+const auth = require('./middlewares/auth');
 
 const app = express();
 
@@ -235,9 +236,11 @@ const sendPreviewUnavailable = (res, status, payload) => {
   res.send('<!DOCTYPE html><html><head></head><body></body></html>');
 };
 
-// HTTP gate: reject bad names / missing mappings before the proxy.
+// HTTP gate: auth + reject bad names / missing mappings before the proxy.
 // WS upgrades skip this handler; router() below re-parses the path.
-app.use('/runtime-preview/:runtimeName', (req, res, next) => {
+app.use('/runtime-preview/:runtimeName',
+  auth({ optional: (req) => req.authConfig.PUBLIC_VIEWING }),
+  (req, res, next) => {
   const runtimeName = req.params.runtimeName;
 
   if (!RUNTIME_NAME_RE.test(runtimeName)) {

@@ -550,7 +550,7 @@ Authors and demo audiences (see the runtime UI in the dashboard); DevOps (wire k
 
 No HTTP surface for users — the backend proxies kit HTTP UIs transparently. Operator config and proxy behavior:
 
-- `GET|WS /runtime-preview/:runtimeName/…` (public, no auth) → proxied to the mapped target; websocket upgrades enabled (`ws: true`).
+- `GET|WS /runtime-preview/:runtimeName/…` (optional auth — same `PUBLIC_VIEWING` policy as prototype routes) → proxied to the mapped target; websocket upgrades enabled (`ws: true`). Unauthenticated access is blocked unless `PUBLIC_VIEWING` is enabled; WS upgrades bypass the HTTP gate and rely on the proxy `router()` for name/mapping validation only.
 - `:runtimeName` must match `^[a-zA-Z0-9-]+$`; otherwise **400** blank HTML (`INVALID_RUNTIME_NAME`).
 - Target from env `RUNTIME_SERVICE_MAPPINGS` (`RUNTIME_NAME:service` → `http://service:8080`; `RUNTIME_NAME:host:port` or absolute URL also accepted). Unmapped name → **502** blank HTML (`RUNTIME_NOT_CONFIGURED`).
 - Connection errors → **502** blank HTML (not JSON). Proxy `timeout` / `proxyTimeout` 3000 ms.
@@ -580,14 +580,14 @@ sequenceDiagram
 Passthrough — anyone who can reach the backend can request a whitelisted runtime's HTTP UI under the AutoWRX origin. CSP `frame-src` / `connect-src` must allow the preview path.
 
 **Coverage:**
-- **Auth:** Passthrough — the backend does not authenticate this route.
+- **Auth:** `auth({ optional: (req) => req.authConfig.PUBLIC_VIEWING })` — same policy as prototype/model read routes. On instances with `PUBLIC_VIEWING=false` (default), unauthenticated HTTP requests receive 401. WS upgrade events skip the Express gate; the proxy `router()` enforces name/mapping validation but not session auth.
 - **Authorization:** None at the proxy — any caller can fetch a mapped runtime name.
 - **Input validation:** Path segment `^[a-zA-Z0-9-]+$`; targets only from `RUNTIME_SERVICE_MAPPINGS` (env whitelist).
 - **Rate limiting:** Not applied — the proxy has no limiter; `authLimiter` is not wired.
 - **Secrets:** No secrets handled by the proxy; kit responses pass through in transit only.
 
 **Risks:**
-- **Same-origin preview of user-controlled HTML:** kit HTML is re-served under the AutoWRX origin, so a prototype page can read that origin's storage unless the inner iframe is sandboxed. *Mitigation:* none currently — add `sandbox` without `allow-same-origin` on the preview iframe.
+- **Same-origin preview of user-controlled HTML:** kit HTML is re-served under the AutoWRX origin, so a prototype page could read that origin's storage. *Mitigation:* applied — the preview iframe carries `sandbox="allow-scripts allow-forms"` with `allow-same-origin` omitted, giving the iframe a distinct opaque origin and blocking access to AutoWRX `localStorage`/cookies. Note: kit UIs that make credentialed same-origin requests may need `allow-same-origin` re-added, at which point the sandbox isolation is reduced.
 - **SSRF via path param:** a caller could try to make the proxy fetch an arbitrary URL. *Mitigation:* targets come only from the env whitelist; the name regex blocks traversal and `pathRewrite` injection.
 - **SSRF via misconfigured `RUNTIME_SERVICE_MAPPINGS`:** an operator mapping to an internal host turns the backend into a proxy to that host. *Mitigation:* none currently — keep mappings to kit HTTP services only.
 
