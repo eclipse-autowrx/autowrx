@@ -61,7 +61,7 @@ This path is handled **before** the GenAI catch-all and is never forwarded to th
 |---|---|
 | Missing or unknown `service` | 400 |
 | Issuer credentials not provided by the platform | 503 |
-| Upstream mint fails | 200 with `auth: "subscription"` (falls back to the original key) instead of 502 |
+| Azure STS mint fails | 502 |
 | Success | 200 |
 
 Example success:
@@ -69,13 +69,12 @@ Example success:
 ```json
 {
   "service": "azure-speech",
-  "token": "<sts-token-or-subscription-key>",
-  "region": "eastus",
-  "auth": "authorization"
+  "token": "<sts-token>",
+  "region": "eastus"
 }
 ```
 
-`auth` is `authorization` when Azure STS succeeds, or `subscription` when STS is unreachable and the backend falls back to the original subscription key. The client must use Speech SDK `fromAuthorizationToken` vs `fromSubscription` accordingly.
+The long-lived subscription key never leaves the server. Clients must use Speech SDK `fromAuthorizationToken` with the returned STS token.
 
 Add another issuer by registering a function on the `ISSUERS` map in `serviceToken.service.js` and including the id in `SUPPORTED_SERVICES`.
 
@@ -91,6 +90,16 @@ The GenAI adapter strips optional `/dev`, `/prod`, or `/staging` path segments a
 | `/profiles/model-1/prod` | `/profiles/model-1` |
 | `/conversations/{id}/history` | same |
 | `/actuator/info` | same |
+
+## Upstream URL construction
+
+`upstreamPath` is derived from the client request path and is appended to a **fixed** operator host. That is the same contract as a reverse proxy with a hard-coded upstream: the client cannot change the host.
+
+1. [`resolveGenAIPath`](../src/services/genai.service.js) strips the query string first, then handles three shapes: `/generation[/env]`, `/profiles[/id[/env]]`, and a literal passthrough for everything else (for example `/actuator/info`, `/conversations/…`).
+2. The base URL is `EXTERNAL_GENAI_URL`, loaded at process startup. The client cannot influence it.
+3. The combined URL is always `<fixed-operator-host><sanitized-or-passthrough-path>`. The worst a caller can do is request an arbitrary path on the already-trusted GenAI service, which is intended.
+
+Host SSRF is not possible because the host is not client-controlled.
 
 ## Profile upsert without body
 

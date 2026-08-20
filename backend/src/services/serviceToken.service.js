@@ -15,9 +15,9 @@ const AZURE_SPEECH = 'azure-speech';
 
 /**
  * Mint a short-lived Azure Speech authorization token.
- * If STS is unreachable, fall back to returning the subscription key.
- * @returns {Promise<{service: string, token: string, region: string, auth: 'authorization' | 'subscription'}>}
- * @throws {ApiError} 503 if key/region not configured
+ * The subscription key stays on the server; clients receive only the STS token + region.
+ * @returns {Promise<{service: string, token: string, region: string}>}
+ * @throws {ApiError} 503 if key/region not configured, 502 on Azure STS failure
  */
 const issueAzureSpeechToken = async () => {
   const azureKey = process.env.AZURE_SPEECH_SDK_KEY || process.env.AZURE_SPEECH_KEY;
@@ -32,13 +32,6 @@ const issueAzureSpeechToken = async () => {
     throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, 'Azure Speech Services not configured');
   }
 
-  const subscriptionResult = {
-    service: AZURE_SPEECH,
-    token: azureKey,
-    region: azureRegion,
-    auth: 'subscription',
-  };
-
   try {
     const tokenUrl = `https://${azureRegion}.api.cognitive.microsoft.com/sts/v1.0/issueToken`;
     const response = await axios.post(tokenUrl, null, {
@@ -49,23 +42,25 @@ const issueAzureSpeechToken = async () => {
     });
 
     if (!response.data) {
-      logger.warn('[serviceToken] Empty STS response, falling back to subscription key');
-      return subscriptionResult;
+      logger.warn('[serviceToken] Empty STS response');
+      throw new ApiError(httpStatus.BAD_GATEWAY, 'Failed to fetch Azure Speech token');
     }
 
     return {
       service: AZURE_SPEECH,
       token: response.data,
       region: azureRegion,
-      auth: 'authorization',
     };
   } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
     logger.warn(
-      '[serviceToken] STS issueToken failed (code=%s message=%s); falling back to subscription key',
+      '[serviceToken] STS issueToken failed: code=%s message=%s',
       error?.code || 'n/a',
       error.message
     );
-    return subscriptionResult;
+    throw new ApiError(httpStatus.BAD_GATEWAY, 'Failed to fetch Azure Speech token');
   }
 };
 
@@ -88,12 +83,7 @@ const issueServiceToken = async (service) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Unknown service');
   }
   const result = await issuer();
-  logger.info(
-    '[serviceToken] Issued token for service=%s region=%s auth=%s',
-    result.service,
-    result.region || 'n/a',
-    result.auth || 'n/a'
-  );
+  logger.info('[serviceToken] Issued token for service=%s region=%s', result.service, result.region || 'n/a');
   return result;
 };
 

@@ -53,6 +53,9 @@ const hasProfilePayload = (body) => {
 };
 
 /**
+ * Map an inbound `/v2/genai` path to an upstream path on EXTERNAL_GENAI_URL.
+ * Query strings are stripped; the host is never taken from the client
+ * (see backend/docs/genai-service.md#upstream-url-construction).
  * @param {string} path
  * @returns {{ upstreamPath: string, environment?: string, isGeneration: boolean, profileId?: string }}
  */
