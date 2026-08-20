@@ -10,9 +10,23 @@
  * External data sync — single module.
  *
  * - Registers a global Mongoose plugin on Model / ExtendedApi / Api schemas
- * - Binds per-request context (JWT passthrough) via AsyncLocalStorage
+ * - Binds per-request context via AsyncLocalStorage
  * - Attaches X-Sync-Warning response header on sync failure (frontend shows toast)
- * - Single outbound attempt per change — failed syncs are not retried
+ *
+ * Request-path (awaited) sync:
+ * - Sync is awaited in Mongoose post-hooks and in controller calls to triggerSync
+ *   so X-Sync-Warning can be set on the same mutating HTTP response before it is sent.
+ * - Save/create/delete latency may include one outbound handler call (timeout SYNC_TIMEOUT_MS).
+ *
+ * Single attempt — no retry/queue:
+ * - Each change triggers at most one outbound call. Failures are not retried.
+ * - The local DB write still succeeds; the frontend shows a toast when the warning header is set.
+ * - Known limitation: a failed sync means the external system can miss that change until a
+ *   later successful write triggers another sync.
+ *
+ * Outbound HTTP:
+ * - Uses EXTERNAL_SYNC_DEVICE_TOKEN as Authorization when set.
+ * - Respects process HTTP_PROXY / HTTPS_PROXY when set (no proxy bypass).
  *
  * Client integration: replace sync-handlers/default.handler.js with your own handler.
  */
@@ -29,6 +43,8 @@ const SYNC_WARNING_HEADER = 'X-Sync-Warning';
 const SYNC_TIMEOUT_MS = 30000;
 const HANDLER_PATH = path.join(__dirname, '../../sync-handlers/default.handler.js');
 const SUPPORTED_MODELS = new Set(['Model', 'ExtendedApi', 'Api']);
+const EXTERNAL_SYNC_DEVICE_TOKEN = config.services?.sync?.external?.deviceToken;
+const EXTERNAL_SYNC_MODEL_URL = config.services?.sync?.external?.modelUrl;
 
 /**
  * @param {Object} event
@@ -87,6 +103,84 @@ const buildSyncWarning = (event, error) => ({
   message: extractSyncErrorDetail(error),
 });
 
+/** Base URL handlers typically use (example handler default if env unset). */
+const getSyncTargetBaseUrl = () => EXTERNAL_SYNC_MODEL_URL || 'http://localhost:5050';
+
+/**
+ * @param {import('axios').AxiosError | Error} error
+ * @returns {string | null}
+ */
+const extractSyncRequestUrl = (error) => {
+  const cfg = error?.config;
+  if (!cfg) return null;
+  if (cfg.url && /^https?:\/\//i.test(cfg.url)) return cfg.url;
+  const base = cfg.baseURL ? String(cfg.baseURL).replace(/\/$/, '') : '';
+  const path = cfg.url ? String(cfg.url).replace(/^\//, '') : '';
+  if (base && path) return `${base}/${path}`;
+  return base || path || null;
+};
+
+/**
+ * Actionable hints for operators (never includes secrets).
+ * @param {boolean} hasDeviceToken
+ * @returns {string[]}
+ */
+const buildSyncSetupHints = (hasDeviceToken) => {
+  const hints = [];
+  if (!hasDeviceToken) {
+    hints.push(
+      'EXTERNAL_SYNC_DEVICE_TOKEN is not set — outbound sync sends no Authorization header; set it in backend .env if the external API requires auth',
+    );
+  }
+  const baseUrl = getSyncTargetBaseUrl();
+  if (!EXTERNAL_SYNC_MODEL_URL) {
+    hints.push(
+      `EXTERNAL_SYNC_MODEL_URL is not set — handlers that follow the example default to ${baseUrl}`,
+    );
+  } else {
+    hints.push(`EXTERNAL_SYNC_MODEL_URL=${baseUrl}`);
+  }
+  return hints;
+};
+
+/**
+ * @param {import('axios').AxiosError | Error} error
+ * @param {boolean} hasDeviceToken
+ * @returns {string[]}
+ */
+const buildSyncFailureReasons = (error, hasDeviceToken) => {
+  const reasons = [];
+  const target = extractSyncRequestUrl(error);
+
+  if (error.code === 'ECONNREFUSED') {
+    reasons.push(
+      target
+        ? `Nothing is listening at ${target} (connection refused)`
+        : `Nothing is listening at the configured sync endpoint (connection refused; check ${getSyncTargetBaseUrl()})`,
+    );
+    reasons.push('Start the external sync server or correct EXTERNAL_SYNC_MODEL_URL in backend .env');
+  } else if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
+    reasons.push(
+      `Sync request timed out after ${SYNC_TIMEOUT_MS / 1000}s${target ? ` (${target})` : ''}`,
+    );
+  }
+
+  const status = error.response?.status;
+  if (status === 401 || status === 403) {
+    if (!hasDeviceToken) {
+      reasons.push('HTTP 401/403 — EXTERNAL_SYNC_DEVICE_TOKEN may be missing or invalid for the external API');
+    } else {
+      reasons.push('HTTP 401/403 — EXTERNAL_SYNC_DEVICE_TOKEN may be invalid for the external API');
+    }
+  }
+
+  if (!hasDeviceToken && !reasons.some((r) => r.includes('EXTERNAL_SYNC_DEVICE_TOKEN'))) {
+    reasons.push('EXTERNAL_SYNC_DEVICE_TOKEN is not set — external API may require it');
+  }
+
+  return reasons;
+};
+
 /** @type {AsyncLocalStorage<{ req: import('express').Request, warnings: string[], skipSync: boolean }>} */
 const storage = new AsyncLocalStorage();
 
@@ -98,7 +192,6 @@ const getContext = () => {
   const store = storage.getStore();
   if (!store) return { warnings: [], skipSync: false };
   return {
-    authorization: store.req?.headers?.authorization,
     userId: store.req?.user?.id,
     warnings: store.warnings,
     skipSync: store.skipSync,
@@ -132,41 +225,97 @@ const shouldAttachSyncWarning = () => {
 };
 
 /**
+ * Compact identity fields for sync tracing (never logs secrets).
+ * @param {Object} event
+ * @param {Object} [context]
+ * @returns {string}
+ */
+const formatSyncTrace = (event, context = {}) => {
+  const parts = [
+    event.action,
+    formatResourceLabel(event),
+    event.resourceId ? `resourceId=${event.resourceId}` : null,
+    event.modelId ? `modelId=${event.modelId}` : null,
+    (event.userId || context.userId) ? `userId=${event.userId || context.userId}` : null,
+  ].filter(Boolean);
+  return parts.join(' | ');
+};
+
+/**
  * @param {Object} event
  * @returns {Promise<{ success: boolean, message?: string }>}
  */
 const triggerSync = async (event) => {
   const context = event.context || getContext();
-  if (context.skipSync) return { success: true };
+  const trace = formatSyncTrace(event, context);
 
-  const handler = loadHandler().sync;
-  if (typeof handler !== 'function') return { success: true };
+  if (context.skipSync) {
+    logger.info('Data sync skipped (skipSync): %s', trace);
+    return { success: true };
+  }
+
+  const loaded = loadHandler();
+  const handler = loaded?.sync;
+  if (typeof handler !== 'function') {
+    logger.info('Data sync skipped (handler.sync missing): %s | handler=%s', trace, loaded?.name || 'unknown');
+    return { success: true };
+  }
+
+  const hasDeviceToken = Boolean(EXTERNAL_SYNC_DEVICE_TOKEN);
+  const setupHints = buildSyncSetupHints(hasDeviceToken);
+  const startedAt = Date.now();
 
   try {
+    const headers = hasDeviceToken
+      ? { Authorization: `Bearer ${EXTERNAL_SYNC_DEVICE_TOKEN}` }
+      : {};
     const http = axios.create({
       timeout: SYNC_TIMEOUT_MS,
-      // Bypass corporate HTTP_PROXY/HTTPS_PROXY for local external sync endpoints.
-      proxy: false,
-      headers: context.authorization ? { Authorization: context.authorization } : {},
+      // Honor HTTP_PROXY / HTTPS_PROXY when set (corporate egress).
+      headers,
     });
-    logger.info('Data sync: %s %s → handler', event.action, event.resourceType);
+    logger.info(
+      'Data sync start: %s | handler=%s | authToken=%s | timeoutMs=%s | setup=%s',
+      trace,
+      loaded?.name || 'default',
+      hasDeviceToken ? 'set' : 'unset',
+      SYNC_TIMEOUT_MS,
+      setupHints.join('; '),
+    );
     await handler({ ...event, context }, http);
-    logger.info('Data sync: %s %s OK', event.action, event.resourceType);
+    logger.info('Data sync OK: %s | durationMs=%s', trace, Date.now() - startedAt);
     return { success: true };
   } catch (error) {
     const warning = buildSyncWarning(event, error);
     const store = storage.getStore();
+    const durationMs = Date.now() - startedAt;
+    const requestUrl = extractSyncRequestUrl(error);
+    const failureReasons = buildSyncFailureReasons(error, hasDeviceToken);
     logger.warn(
-      'External sync failed: %s %s — %s%s',
-      warning.action,
-      warning.resourceLabel,
+      'Data sync failed: %s | %s%s | durationMs=%s | axiosCode=%s | requestUrl=%s | reasons=%s',
+      trace,
       warning.message,
-      warning.status ? ` [HTTP ${warning.status}]` : '',
+      warning.status ? ` | HTTP ${warning.status}` : '',
+      durationMs,
+      error.code || 'none',
+      requestUrl || 'unknown',
+      failureReasons.join('; '),
     );
     if (store && shouldAttachSyncWarning()) {
       store.warnings.push(warning);
+      logger.info(
+        'Data sync warning attached to response: %s | warningCount=%s',
+        trace,
+        store.warnings.length,
+      );
     } else if (!store) {
-      logger.warn('Sync warning dropped — no active request context');
+      logger.warn('Data sync warning dropped — no active request context: %s', trace);
+    } else {
+      logger.info(
+        'Data sync warning not attached (non-mutating request): %s | method=%s',
+        trace,
+        store.req?.method || 'unknown',
+      );
     }
     return { success: false, message: warning.message };
   }
@@ -177,10 +326,21 @@ const resolveModelId = (doc) =>
 
 const triggerSyncForDocument = async (doc, action) => {
   const resourceType = doc.constructor.modelName;
-  if (!SUPPORTED_MODELS.has(resourceType)) return;
+  if (!SUPPORTED_MODELS.has(resourceType)) {
+    logger.info('Data sync hook ignored unsupported model: %s %s', action, resourceType);
+    return;
+  }
   const context = getContext();
-  if (context.skipSync) return;
-  logger.debug('Data sync hook: %s %s %s', action, resourceType, doc._id);
+  if (context.skipSync) {
+    logger.info(
+      'Data sync hook skipped (skipSync): %s %s %s',
+      action,
+      resourceType,
+      doc._id,
+    );
+    return;
+  }
+  logger.info('Data sync hook: %s %s %s', action, resourceType, doc._id);
   await triggerSync({
     action,
     resourceType,
@@ -217,7 +377,13 @@ const applySyncHooks = (schema) => {
     try {
       await triggerSyncForDocument(doc, action);
     } catch (err) {
-      logger.warn('Data sync save hook error: %s', err.message);
+      logger.warn(
+        'Data sync save hook error: %s %s %s — %s',
+        action,
+        doc.constructor?.modelName,
+        doc._id,
+        err.message,
+      );
     }
   });
 
@@ -225,7 +391,12 @@ const applySyncHooks = (schema) => {
     try {
       await triggerSyncForDocument(doc, 'DELETE');
     } catch (err) {
-      logger.warn('Data sync delete hook error: %s', err.message);
+      logger.warn(
+        'Data sync delete hook error: DELETE %s %s — %s',
+        doc.constructor?.modelName,
+        doc._id,
+        err.message,
+      );
     }
   });
 };
@@ -249,14 +420,17 @@ const init = () => {
 const runWithSkipSync = async (fn) => {
   const store = storage.getStore();
   if (!store) {
+    logger.info('Data sync runWithSkipSync: no request context; running without skip flag');
     return fn();
   }
   const previous = store.skipSync;
   store.skipSync = true;
+  logger.info('Data sync runWithSkipSync: hooks disabled for nested writes');
   try {
     return await fn();
   } finally {
     store.skipSync = previous;
+    logger.info('Data sync runWithSkipSync: hooks restored (skipSync=%s)', previous);
   }
 };
 

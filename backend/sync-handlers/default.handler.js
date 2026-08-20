@@ -13,11 +13,16 @@
  * Model / ExtendedApi / Api data changes. Copy from default.handler.example.js
  * as a starting point.
  *
- * The backend forwards the user's JWT via the axios `http` instance
- * (Authorization header).
+ * When EXTERNAL_SYNC_DEVICE_TOKEN is configured on the backend, the axios
+ * `http` instance includes Authorization: Bearer <token> for outbound sync
+ * requests. Outbound calls respect HTTP_PROXY / HTTPS_PROXY when set.
  *
- * Each change triggers one outbound call. Failures are not retried by the
- * backend — the local DB write still succeeds and the frontend shows a warning.
+ * Sync is awaited on the request path so failures can surface as X-Sync-Warning
+ * on the same mutating response (save/create/delete may wait on one outbound call).
+ *
+ * Single attempt — no retry/queue. Failures are not retried; the local DB write
+ * still succeeds and the frontend shows a warning toast. A failed sync means the
+ * external system can miss that change until a later successful write.
  *
  * @param {Object} event — { action, resourceType, modelId, document, changes, userId }
  * @param {import('axios').AxiosInstance} http

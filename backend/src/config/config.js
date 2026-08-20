@@ -62,6 +62,8 @@ const envVarsSchema = Joi.object()
     GENAI_URL: Joi.string().description('Deprecated GenAI proxy sidecar URL; use EXTERNAL_GENAI_* instead'),
     EXTERNAL_GENAI_URL: Joi.string().uri().description('External GenAI service base URL'),
     EXTERNAL_GENAI_DEVICE_TOKEN: Joi.string().description('Device token for external GenAI service authentication'),
+    EXTERNAL_SYNC_DEVICE_TOKEN: Joi.string().description('Device token for external data sync authentication'),
+    EXTERNAL_SYNC_MODEL_URL: Joi.string().uri().description('Base URL for external model/data sync API'),
     // Kit server
     KIT_SERVER_URL: Joi.string().description('Kit server url'),
     // Admin emails
@@ -208,6 +210,12 @@ const config = {
           default: envVars.EXTERNAL_GENAI_URL,
         },
         deviceToken: envVars.EXTERNAL_GENAI_DEVICE_TOKEN,
+      },
+    },
+    sync: {
+      external: {
+        deviceToken: envVars.EXTERNAL_SYNC_DEVICE_TOKEN,
+        modelUrl: envVars.EXTERNAL_SYNC_MODEL_URL,
       },
     },
     kitServer: {
