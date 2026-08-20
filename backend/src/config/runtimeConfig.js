@@ -66,7 +66,7 @@ const runtimeMappings = parseRuntimeMappings();
  * @returns {string|null} - e.g. http://runtime-09:8080 or http://127.0.0.1:8889
  */
 function getRuntimeTarget(runtimeName) {
-  return runtimeMappings[runtimeName] || null;
+  return Object.hasOwn(runtimeMappings, runtimeName) ? runtimeMappings[runtimeName] : null;
 }
 
 module.exports = {

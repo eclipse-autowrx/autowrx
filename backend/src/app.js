@@ -183,8 +183,12 @@ if (config.services.kitServer.url) {
       target: config.services.kitServer.url,
       changeOrigin: true,
       ws: true,
+      pathFilter: (pathname, req) => {
+        const raw = String(req.originalUrl || req.url || pathname || '').split('?')[0];
+        return raw === '/kit-server' || raw.startsWith('/kit-server/');
+      },
       pathRewrite: { '^/kit-server': '' },
-    })
+    }),
   );
 }
 
@@ -220,12 +224,16 @@ function resolveRuntimeTarget(runtimeName) {
 const RUNTIME_NAME_RE = /^[a-zA-Z0-9-]+$/;
 
 function runtimeNameFromReq(req) {
-  const raw = (req.originalUrl || req.url || '').split('?')[0];
-  const full = raw.match(/^\/runtime-preview\/([^/]+)/);
-  if (full) return full[1];
-  // After Express mount at /runtime-preview, remaining path is /:name/...
-  const mounted = raw.match(/^\/([^/]+)/);
-  return mounted ? mounted[1] : null;
+  const original = String(req.originalUrl || '').split('?')[0];
+  const fromOriginal = original.match(/^\/runtime-preview\/([^/]+)/);
+  if (fromOriginal) return fromOriginal[1];
+  // After Express strip, url is /:name/...; only trust when originalUrl is under the mount
+  if (original === '/runtime-preview' || original.startsWith('/runtime-preview/')) {
+    const stripped = String(req.url || '').split('?')[0];
+    const match = stripped.match(/^\/([^/]+)/);
+    return match ? match[1] : null;
+  }
+  return null;
 }
 
 const sendPreviewUnavailable = (res, status, payload) => {
@@ -236,42 +244,43 @@ const sendPreviewUnavailable = (res, status, payload) => {
   res.send('<!DOCTYPE html><html><head></head><body></body></html>');
 };
 
-// HTTP gate: auth + reject bad names / missing mappings before the proxy.
-// WS upgrades skip this handler; router() below re-parses the path.
-app.use('/runtime-preview/:runtimeName',
-  auth(),
-  (req, res, next) => {
-  const runtimeName = req.params.runtimeName;
-
-  if (!RUNTIME_NAME_RE.test(runtimeName)) {
-    return sendPreviewUnavailable(res, 400, {
-      message: 'Invalid runtime name format',
-      code: 'INVALID_RUNTIME_NAME',
-      runtimeName,
-    });
-  }
-
-  const targetUrl = resolveRuntimeTarget(runtimeName);
-  if (!targetUrl) {
-    return sendPreviewUnavailable(res, 502, {
-      message: 'Runtime not found in configuration',
-      code: 'RUNTIME_NOT_CONFIGURED',
-      runtimeName,
-    });
-  }
-
-  next();
-});
-
-// Single middleware so ws: true can attach to the HTTP upgrade event.
+// Auth + gate + proxy on one mount so nameless paths cannot skip auth.
+// pathFilter confines ws:true upgrades to /runtime-preview/* (Express mount alone does not).
 // Compose: /runtime-preview/PUBLIC-01-... → http://runtime-09:8080/
 // Host-run: /runtime-preview/PUBLIC-01-... → http://127.0.0.1:8889/
 app.use(
   '/runtime-preview',
+  auth(),
+  (req, res, next) => {
+    const runtimeName = runtimeNameFromReq(req);
+
+    if (!runtimeName || !RUNTIME_NAME_RE.test(runtimeName)) {
+      return sendPreviewUnavailable(res, 400, {
+        message: 'Invalid runtime name format',
+        code: 'INVALID_RUNTIME_NAME',
+        runtimeName,
+      });
+    }
+
+    const targetUrl = resolveRuntimeTarget(runtimeName);
+    if (!targetUrl) {
+      return sendPreviewUnavailable(res, 502, {
+        message: 'Runtime not found in configuration',
+        code: 'RUNTIME_NOT_CONFIGURED',
+        runtimeName,
+      });
+    }
+
+    return next();
+  },
   createProxyMiddleware({
     target: 'http://127.0.0.1',
     changeOrigin: true,
     ws: true,
+    pathFilter: (pathname, req) => {
+      const raw = String(req.originalUrl || req.url || pathname || '').split('?')[0];
+      return raw === '/runtime-preview' || raw.startsWith('/runtime-preview/');
+    },
     timeout: 3000,
     proxyTimeout: 3000,
     router: (req) => {
@@ -297,7 +306,7 @@ app.use(
         });
       },
     },
-  })
+  }),
 );
 
 // Development proxy to frontend

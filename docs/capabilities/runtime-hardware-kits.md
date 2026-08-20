@@ -407,7 +407,7 @@ No HTTP surface for users — the backend proxies the kit server transparently. 
 
 - `app.use('/kit-server', createProxyMiddleware({ target: KIT_SERVER_URL, changeOrigin: true, ws: true, pathRewrite: { '^/kit-server': '' } }))` — proxies `/kit-server/*` to `KIT_SERVER_URL` (`config.services.kitServer.url`, env `KIT_SERVER_URL`) and upgrades websockets.
 - Active only when `KIT_SERVER_URL` is configured.
-- Passthrough — the backend does not authenticate; the kit server enforces its own auth (asset token). CSP `connect-src` must allow the kit server.
+- Passthrough — the backend does not authenticate; the kit server enforces its own auth (asset token). CSP `connect-src` must allow the kit server. `pathFilter` confines `ws: true` upgrades to `/kit-server/*`.
 
 ### Quality control
 
@@ -550,12 +550,13 @@ Authors and demo audiences (see the runtime UI in the dashboard); DevOps (wire k
 
 No HTTP surface for users — the backend proxies kit HTTP UIs transparently. Operator config and proxy behavior:
 
-- `GET|WS /runtime-preview/:runtimeName/…` (auth required) → proxied to the mapped target; websocket upgrades enabled (`ws: true`). Unauthenticated HTTP requests receive **401** regardless of `PUBLIC_VIEWING`. WS upgrades bypass the HTTP gate and rely on the proxy `router()` for name/mapping validation only.
-- `:runtimeName` must match `^[a-zA-Z0-9-]+$`; otherwise **400** blank HTML (`INVALID_RUNTIME_NAME`).
-- Target from env `RUNTIME_SERVICE_MAPPINGS` (`RUNTIME_NAME:service` → `http://service:8080`; `RUNTIME_NAME:host:port` or absolute URL also accepted). Unmapped name → **502** blank HTML (`RUNTIME_NOT_CONFIGURED`).
+- `GET|WS /runtime-preview/:runtimeName/…` (auth required on **all** `/runtime-preview` paths, including nameless) → proxied to the mapped target; websocket upgrades enabled (`ws: true`) with `pathFilter` confined to `/runtime-preview/*`. Unauthenticated HTTP requests receive **401** regardless of `PUBLIC_VIEWING`. WS upgrades bypass the Express `auth()` gate and rely on `pathFilter` + `router()` for path/name/mapping validation only (no longer process-wide).
+- `:runtimeName` must match `^[a-zA-Z0-9-]+$`; missing or invalid name (including `/runtime-preview`, `/runtime-preview/`, `/runtime-preview//…`) → **400** blank HTML (`INVALID_RUNTIME_NAME`).
+- Target from env `RUNTIME_SERVICE_MAPPINGS` (`RUNTIME_NAME:service` → `http://service:8080`; `RUNTIME_NAME:host:port` or absolute URL also accepted). Lookup uses `Object.hasOwn` (prototype keys are not treated as mappings). Unmapped name → **502** blank HTML (`RUNTIME_NOT_CONFIGURED`).
 - Connection errors → **502** blank HTML (not JSON). Proxy `timeout` / `proxyTimeout` 3000 ms.
 - Optional `RUNTIME_PREFIX` stripped from the path name before lookup.
 - Default port **8080** is the kit HTTP UI on the playground compose network (kit-manager is 3090).
+- Mount shape: single `app.use('/runtime-preview', auth(), gate, proxy)` so auth cannot be skipped by omitting the name segment.
 
 **Implementation:** `backend/src/app.js` (`/runtime-preview` proxy), `backend/src/config/runtimeConfig.js` (`getRuntimeTarget`).
 
@@ -576,12 +577,12 @@ sequenceDiagram
 
 ### Security
 
-Authenticated users only on HTTP — unauthenticated requests receive 401. WS upgrade events bypass the Express gate; the proxy `router()` enforces name/mapping validation but not session auth. CSP `frame-src` / `connect-src` must allow the preview path.
+Authenticated users only on HTTP — unauthenticated requests to any `/runtime-preview` path receive 401. `pathFilter` confines `ws: true` upgrades to `/runtime-preview/*` (Express mount alone does not scope the server upgrade listener). WS upgrades still skip Express `auth()`; the proxy `router()` enforces name/mapping validation but not session auth. CSP `frame-src` / `connect-src` must allow the preview path.
 
 **Coverage:**
-- **Auth:** Required — `auth()` on the HTTP gate; unauthenticated requests receive 401 on all deployments (not tied to `PUBLIC_VIEWING`). WS upgrade events skip the Express gate; the proxy `router()` enforces name/mapping validation but not session auth.
+- **Auth:** Required — `auth()` on the single `/runtime-preview` mount (covers nameless paths); unauthenticated HTTP requests receive 401 on all deployments (not tied to `PUBLIC_VIEWING`). WS upgrade events skip Express `auth()` but are limited by `pathFilter` to `/runtime-preview/*`; the proxy `router()` enforces name/mapping validation but not session auth.
 - **Authorization:** None at the proxy — any authenticated caller can fetch a mapped runtime name.
-- **Input validation:** Path segment `^[a-zA-Z0-9-]+$`; targets only from `RUNTIME_SERVICE_MAPPINGS` (env whitelist).
+- **Input validation:** Path segment `^[a-zA-Z0-9-]+$`; targets only from `RUNTIME_SERVICE_MAPPINGS` via `Object.hasOwn` (env whitelist; prototype keys ignored).
 - **Rate limiting:** Not applied — the proxy has no limiter; `authLimiter` is not wired.
 - **Secrets:** No secrets handled by the proxy; kit responses pass through in transit only.
 
