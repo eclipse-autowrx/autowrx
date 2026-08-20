@@ -25,6 +25,7 @@ const { init: initSocketIO } = require('./config/socket');
 const path = require('path');
 const fs = require('fs');
 const { createProxyMiddleware } = require('http-proxy-middleware');
+const auth = require('./middlewares/auth');
 
 const app = express();
 
@@ -182,10 +183,131 @@ if (config.services.kitServer.url) {
       target: config.services.kitServer.url,
       changeOrigin: true,
       ws: true,
+      pathFilter: (pathname, req) => {
+        const raw = String(req.originalUrl || req.url || pathname || '').split('?')[0];
+        return raw === '/kit-server' || raw.startsWith('/kit-server/');
+      },
       pathRewrite: { '^/kit-server': '' },
-    })
+    }),
   );
 }
+
+// Runtime proxy — resolve RUNTIME_NAME → docker/K8s service via RUNTIME_SERVICE_MAPPINGS
+const { getRuntimeTarget } = require('./config/runtimeConfig');
+
+/**
+ * Resolve proxy target for a runtime from RUNTIME_SERVICE_MAPPINGS
+ * Strips RUNTIME_PREFIX if present (e.g., "Runtime-PUBLIC-01-..." → "PUBLIC-01-...")
+ * @param {string} runtimeName
+ * @returns {string|null} target URL
+ */
+function resolveRuntimeTarget(runtimeName) {
+  const prefix = process.env.RUNTIME_PREFIX || '';
+  let normalizedName = runtimeName;
+
+  if (prefix && runtimeName.startsWith(prefix)) {
+    normalizedName = runtimeName.substring(prefix.length);
+    console.log(`[Proxy] Stripped prefix: "${runtimeName}" → "${normalizedName}"`);
+  }
+
+  const targetUrl = getRuntimeTarget(normalizedName);
+
+  if (targetUrl) {
+    console.log(`[Proxy] Resolved "${normalizedName}" → "${targetUrl}"`);
+    return targetUrl;
+  }
+
+  console.warn(`[Proxy] No mapping found for "${normalizedName}" (original: "${runtimeName}")`);
+  return null;
+}
+
+const RUNTIME_NAME_RE = /^[a-zA-Z0-9-]+$/;
+
+function runtimeNameFromReq(req) {
+  const original = String(req.originalUrl || '').split('?')[0];
+  const fromOriginal = original.match(/^\/runtime-preview\/([^/]+)/);
+  if (fromOriginal) return fromOriginal[1];
+  // After Express strip, url is /:name/...; only trust when originalUrl is under the mount
+  if (original === '/runtime-preview' || original.startsWith('/runtime-preview/')) {
+    const stripped = String(req.url || '').split('?')[0];
+    const match = stripped.match(/^\/([^/]+)/);
+    return match ? match[1] : null;
+  }
+  return null;
+}
+
+const sendPreviewUnavailable = (res, status, payload) => {
+  console.warn('[Proxy]', payload);
+  if (!res || res.headersSent || typeof res.status !== 'function') return;
+  res.status(status);
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send('<!DOCTYPE html><html><head></head><body></body></html>');
+};
+
+// Auth + gate + proxy on one mount so nameless paths cannot skip auth.
+// pathFilter confines ws:true upgrades to /runtime-preview/* (Express mount alone does not).
+// Compose: /runtime-preview/PUBLIC-01-... → http://runtime-09:8080/
+// Host-run: /runtime-preview/PUBLIC-01-... → http://127.0.0.1:8889/
+app.use(
+  '/runtime-preview',
+  auth(),
+  (req, res, next) => {
+    const runtimeName = runtimeNameFromReq(req);
+
+    if (!runtimeName || !RUNTIME_NAME_RE.test(runtimeName)) {
+      return sendPreviewUnavailable(res, 400, {
+        message: 'Invalid runtime name format',
+        code: 'INVALID_RUNTIME_NAME',
+        runtimeName,
+      });
+    }
+
+    const targetUrl = resolveRuntimeTarget(runtimeName);
+    if (!targetUrl) {
+      return sendPreviewUnavailable(res, 502, {
+        message: 'Runtime not found in configuration',
+        code: 'RUNTIME_NOT_CONFIGURED',
+        runtimeName,
+      });
+    }
+
+    return next();
+  },
+  createProxyMiddleware({
+    target: 'http://127.0.0.1',
+    changeOrigin: true,
+    ws: true,
+    pathFilter: (pathname, req) => {
+      const raw = String(req.originalUrl || req.url || pathname || '').split('?')[0];
+      return raw === '/runtime-preview' || raw.startsWith('/runtime-preview/');
+    },
+    timeout: 3000,
+    proxyTimeout: 3000,
+    router: (req) => {
+      const runtimeName = runtimeNameFromReq(req);
+      if (!runtimeName || !RUNTIME_NAME_RE.test(runtimeName)) return undefined;
+      return resolveRuntimeTarget(runtimeName) || undefined;
+    },
+    pathRewrite: (_proxyPath, req) => {
+      const runtimeName = runtimeNameFromReq(req);
+      if (!runtimeName) return '/';
+      const full = (req.originalUrl || req.url || '').split('?')[0];
+      if (full.startsWith('/runtime-preview/')) {
+        return full.replace(new RegExp(`^/runtime-preview/${runtimeName}`), '') || '/';
+      }
+      return full.replace(new RegExp(`^/${runtimeName}`), '') || '/';
+    },
+    on: {
+      error: (err, req, proxyRes) => {
+        sendPreviewUnavailable(proxyRes, 502, {
+          message: `Runtime connection error: ${err.message}`,
+          code: err.code,
+          runtimeName: runtimeNameFromReq(req),
+        });
+      },
+    },
+  }),
+);
 
 // Development proxy to frontend
 if (config.env === 'development') {
@@ -209,6 +331,7 @@ if (config.env === 'development') {
         req.path.startsWith('/images') || 
         req.path.startsWith('/d') ||
         req.path.startsWith('/builtin-widgets') ||
+        req.path.startsWith('/runtime-preview') ||
         req.path.startsWith('/api') ||
         req.path.startsWith('/vss')) {
       return next();
@@ -251,6 +374,7 @@ if (config.env === 'development') {
         req.path.startsWith('/images') ||
         req.path.startsWith('/d') ||
         req.path.startsWith('/builtin-widgets') ||
+        req.path.startsWith('/runtime-preview') ||
         req.path.startsWith('/api') ||
         req.path.startsWith('/vss') ||
         req.path.startsWith('/assets/')) {

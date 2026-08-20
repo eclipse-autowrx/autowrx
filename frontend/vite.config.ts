@@ -66,6 +66,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/runtime-preview': {
+        target: 'http://localhost:3200',
+        changeOrigin: true,
+        ws: true,
+        secure: false,
+      },
     },
   },
 })

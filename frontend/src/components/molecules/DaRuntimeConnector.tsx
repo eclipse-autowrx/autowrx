@@ -702,9 +702,11 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         }
       }
 
-      setIsAppRunning(newRunningState)
-      if (onAppRunningStateChanged) {
-        onAppRunningStateChanged(newRunningState)
+      if (newRunningState) {
+        setIsAppRunning(true)
+        if (onAppRunningStateChanged) {
+          onAppRunningStateChanged(true)
+        }
       }
       if (onRuntimeInfoReceived) {
         onRuntimeInfoReceived(payload.data)
