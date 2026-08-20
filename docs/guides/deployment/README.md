@@ -56,7 +56,9 @@ Stop with `./down.sh`.
 | `CORS_ORIGINS` | Comma-separated **regex** allowlist (see [CORS reference](../../reference/cors.md)) | — |
 | `ADMIN_EMAILS` / `ADMIN_PASSWORD` | Admin user(s) bootstrapped on first run | — |
 | `MONGODB_DATABASE` | Database name | `autowrx` |
-| `GENAI_URL` | Optional external GenAI service | unset |
+| `GENAI_URL` | Deprecated GenAI proxy sidecar URL | unset |
+| `EXTERNAL_GENAI_URL` | External GenAI API base URL for plugin `/v2/genai/*` routes | unset |
+| `EXTERNAL_GENAI_DEVICE_TOKEN` | Device token for external GenAI API | unset |
 | `KIT_SERVER_URL` | Optional kit/runtime server override (also settable at runtime via the `RUNTIME_SERVER_URL` site config) | unset |
 | `UPLOAD_PATH_HOST` / `PLUGIN_PATH_HOST` / `GLOBAL_CSS_PATH_HOST` | Host paths for persisted uploads, internal plugins, and the admin-editable global CSS | `./data/…` |
 

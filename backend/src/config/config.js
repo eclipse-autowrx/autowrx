@@ -58,8 +58,10 @@ const envVarsSchema = Joi.object()
     OPENAI_API_KEY: Joi.string().description('OpenAI API key'),
     OPENAI_ENDPOINT_URL: Joi.string().description('OpenAI endpoint url'),
     STRICT_AUTH: Joi.boolean().description('Strict auth'),
-    // GenAI service
-    GENAI_URL: Joi.string().description('GenAI service url'),
+    // GenAI service (deprecated sidecar proxy target)
+    GENAI_URL: Joi.string().description('Deprecated GenAI proxy sidecar URL; use EXTERNAL_GENAI_* instead'),
+    EXTERNAL_GENAI_URL: Joi.string().uri().description('External GenAI service base URL'),
+    EXTERNAL_GENAI_DEVICE_TOKEN: Joi.string().description('Device token for external GenAI service authentication'),
     // Kit server
     KIT_SERVER_URL: Joi.string().description('Kit server url'),
     // Admin emails
@@ -201,6 +203,12 @@ const config = {
     },
     genAI: {
       url: envVars.GENAI_URL,
+      external: {
+        urls: {
+          default: envVars.EXTERNAL_GENAI_URL,
+        },
+        deviceToken: envVars.EXTERNAL_GENAI_DEVICE_TOKEN,
+      },
     },
     kitServer: {
       url: envVars.KIT_SERVER_URL,
