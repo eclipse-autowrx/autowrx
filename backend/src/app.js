@@ -239,7 +239,7 @@ const sendPreviewUnavailable = (res, status, payload) => {
 // HTTP gate: auth + reject bad names / missing mappings before the proxy.
 // WS upgrades skip this handler; router() below re-parses the path.
 app.use('/runtime-preview/:runtimeName',
-  auth({ optional: (req) => req.authConfig.PUBLIC_VIEWING }),
+  auth(),
   (req, res, next) => {
   const runtimeName = req.params.runtimeName;
 

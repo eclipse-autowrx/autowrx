@@ -550,13 +550,12 @@ Authors and demo audiences (see the runtime UI in the dashboard); DevOps (wire k
 
 No HTTP surface for users — the backend proxies kit HTTP UIs transparently. Operator config and proxy behavior:
 
-- `GET|WS /runtime-preview/:runtimeName/…` (optional auth — same `PUBLIC_VIEWING` policy as prototype routes) → proxied to the mapped target; websocket upgrades enabled (`ws: true`). Unauthenticated access is blocked unless `PUBLIC_VIEWING` is enabled; WS upgrades bypass the HTTP gate and rely on the proxy `router()` for name/mapping validation only.
+- `GET|WS /runtime-preview/:runtimeName/…` (auth required) → proxied to the mapped target; websocket upgrades enabled (`ws: true`). Unauthenticated HTTP requests receive **401** regardless of `PUBLIC_VIEWING`. WS upgrades bypass the HTTP gate and rely on the proxy `router()` for name/mapping validation only.
 - `:runtimeName` must match `^[a-zA-Z0-9-]+$`; otherwise **400** blank HTML (`INVALID_RUNTIME_NAME`).
 - Target from env `RUNTIME_SERVICE_MAPPINGS` (`RUNTIME_NAME:service` → `http://service:8080`; `RUNTIME_NAME:host:port` or absolute URL also accepted). Unmapped name → **502** blank HTML (`RUNTIME_NOT_CONFIGURED`).
 - Connection errors → **502** blank HTML (not JSON). Proxy `timeout` / `proxyTimeout` 3000 ms.
 - Optional `RUNTIME_PREFIX` stripped from the path name before lookup.
 - Default port **8080** is the kit HTTP UI on the playground compose network (kit-manager is 3090).
-- Passthrough — the backend does not authenticate.
 
 **Implementation:** `backend/src/app.js` (`/runtime-preview` proxy), `backend/src/config/runtimeConfig.js` (`getRuntimeTarget`).
 
@@ -577,11 +576,11 @@ sequenceDiagram
 
 ### Security
 
-Passthrough — anyone who can reach the backend can request a whitelisted runtime's HTTP UI under the AutoWRX origin. CSP `frame-src` / `connect-src` must allow the preview path.
+Authenticated users only on HTTP — unauthenticated requests receive 401. WS upgrade events bypass the Express gate; the proxy `router()` enforces name/mapping validation but not session auth. CSP `frame-src` / `connect-src` must allow the preview path.
 
 **Coverage:**
-- **Auth:** `auth({ optional: (req) => req.authConfig.PUBLIC_VIEWING })` — same policy as prototype/model read routes. On instances with `PUBLIC_VIEWING=false` (default), unauthenticated HTTP requests receive 401. WS upgrade events skip the Express gate; the proxy `router()` enforces name/mapping validation but not session auth.
-- **Authorization:** None at the proxy — any caller can fetch a mapped runtime name.
+- **Auth:** Required — `auth()` on the HTTP gate; unauthenticated requests receive 401 on all deployments (not tied to `PUBLIC_VIEWING`). WS upgrade events skip the Express gate; the proxy `router()` enforces name/mapping validation but not session auth.
+- **Authorization:** None at the proxy — any authenticated caller can fetch a mapped runtime name.
 - **Input validation:** Path segment `^[a-zA-Z0-9-]+$`; targets only from `RUNTIME_SERVICE_MAPPINGS` (env whitelist).
 - **Rate limiting:** Not applied — the proxy has no limiter; `authLimiter` is not wired.
 - **Secrets:** No secrets handled by the proxy; kit responses pass through in transit only.
