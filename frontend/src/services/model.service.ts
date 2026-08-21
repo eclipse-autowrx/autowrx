@@ -138,8 +138,9 @@ export const getModel = async (model_id: string) => {
   return (await serverAxios.get<Model>(`/models/${model_id}`)).data
 }
 
-export const createModelService = async (model: ModelCreate) => {
-  return (await serverAxios.post('/models', model)).data
+export const createModelService = async (model: ModelCreate): Promise<string> => {
+  const { data } = await serverAxios.post<Model>('/models', model)
+  return data.id
 }
 
 export const updateModelPermissionService = async (

@@ -67,13 +67,13 @@ const useImportModel = (options?: UseImportModelOptions) => {
             console.warn('Could not fetch default model template:', err)
           }
         }
-        const createdModel = await createModelService(newModel)
+        const createdModelId = await createModelService(newModel)
         addLog({
-          name: `New model '${createdModel.name}' with visibility: ${createdModel.visibility}`,
-          description: `New model '${createdModel.name}' was created by ${user?.email || user?.name || user?.id}`,
+          name: `New model '${newModel.name}' with visibility: ${newModel.visibility}`,
+          description: `New model '${newModel.name}' was created by ${user?.email || user?.name || user?.id}`,
           type: 'new-model',
           create_by: user?.id!,
-          ref_id: createdModel.id,
+          ref_id: createdModelId,
           ref_type: 'model',
         })
 
@@ -88,7 +88,7 @@ const useImportModel = (options?: UseImportModelOptions) => {
                 description: proto.description,
                 tags: proto.tags || [],
                 image_file: proto.image_file,
-                model_id: createdModel,
+                model_id: createdModelId,
                 name: proto.name,
                 complexity_level: proto.complexity_level || '3',
                 customer_journey: proto.customer_journey || '{}',
@@ -101,7 +101,7 @@ const useImportModel = (options?: UseImportModelOptions) => {
         }
         await options?.onSuccess?.()
         queryClient.invalidateQueries({ queryKey: ['modelsList', user?.id ?? 'anonymous'] })
-        navigate(`/model/${createdModel}`)
+        navigate(`/model/${createdModelId}`)
       } catch (err) {
         console.error('Error creating model from zip: ', err)
         const description = isAxiosError(err)
