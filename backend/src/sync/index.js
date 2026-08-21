@@ -26,7 +26,9 @@
  *
  * Outbound HTTP:
  * - Uses EXTERNAL_SYNC_DEVICE_TOKEN as Authorization when set.
- * - Respects process HTTP_PROXY / HTTPS_PROXY when set (no proxy bypass).
+ * - Default proxy:false so docker-internal targets (e.g. http://genai:8080) are not
+ *   forced through corporate HTTP_PROXY (which often fails with ENOTFOUND in-container).
+ * - Set EXTERNAL_SYNC_USE_PROXY=true to honor HTTP_PROXY / HTTPS_PROXY for egress.
  *
  * Client integration: replace sync-handlers/default.handler.js with your own handler.
  * In production the handler module is cached after first load — restart the process
@@ -50,6 +52,7 @@ const HANDLER_PATH = path.join(__dirname, '../../sync-handlers/default.handler.j
 const SUPPORTED_MODELS = new Set(['Model', 'ExtendedApi', 'Api']);
 const EXTERNAL_SYNC_DEVICE_TOKEN = config.services?.sync?.external?.deviceToken;
 const EXTERNAL_SYNC_MODEL_URL = config.services?.sync?.external?.modelUrl;
+const EXTERNAL_SYNC_USE_PROXY = Boolean(config.services?.sync?.external?.useProxy);
 /** Max encoded length for X-Sync-Warning (Node headers must be latin1-safe). */
 const SYNC_WARNING_HEADER_MAX_LEN = 2048;
 
@@ -116,6 +119,9 @@ const extractSyncErrorDetail = (error) => {
   if (error.response?.data?.message) return String(error.response.data.message);
   if (error.response?.data?.error) return String(error.response.data.error);
   if (error.code === 'ECONNREFUSED') return 'External sync endpoint is unreachable';
+  if (error.code === 'ENOTFOUND') {
+    return `DNS lookup failed (${error.hostname || error.message || 'ENOTFOUND'}) — check EXTERNAL_SYNC_MODEL_URL or HTTP_PROXY`;
+  }
   if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
     return `External sync request timed out after ${SYNC_TIMEOUT_MS / 1000}s`;
   }
@@ -171,6 +177,7 @@ const buildSyncSetupHints = (hasDeviceToken) => {
   } else {
     hints.push(`EXTERNAL_SYNC_MODEL_URL=${baseUrl}`);
   }
+  hints.push(`useProxy=${EXTERNAL_SYNC_USE_PROXY ? 'true' : 'false'}`);
   return hints;
 };
 
@@ -190,6 +197,15 @@ const buildSyncFailureReasons = (error, hasDeviceToken) => {
         : `Nothing is listening at the configured sync endpoint (connection refused; check ${getSyncTargetBaseUrl()})`,
     );
     reasons.push('Start the external sync server or correct EXTERNAL_SYNC_MODEL_URL in backend .env');
+  } else if (error.code === 'ENOTFOUND') {
+    const host = error.hostname || 'unknown-host';
+    reasons.push(`DNS lookup failed for "${host}"`);
+    if (String(host).toLowerCase().includes('proxy') || process.env.HTTP_PROXY || process.env.HTTPS_PROXY) {
+      reasons.push(
+        'Outbound sync may be using HTTP_PROXY/HTTPS_PROXY; for docker-internal GenAI set EXTERNAL_SYNC_USE_PROXY=false (default) so requests to genai bypass the corp proxy',
+      );
+    }
+    reasons.push(`Verify EXTERNAL_SYNC_MODEL_URL (${getSyncTargetBaseUrl()}) is reachable from this process`);
   } else if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
     reasons.push(`Sync request timed out after ${SYNC_TIMEOUT_MS / 1000}s${target ? ` (${target})` : ''}`);
   }
@@ -306,7 +322,9 @@ const triggerSync = async (event) => {
     const headers = hasDeviceToken ? { Authorization: `Bearer ${EXTERNAL_SYNC_DEVICE_TOKEN}` } : {};
     const http = axios.create({
       timeout: SYNC_TIMEOUT_MS,
-      // Honor HTTP_PROXY / HTTPS_PROXY when set (corporate egress).
+      // Default false: internal targets (genai) must not use corp HTTP_PROXY.
+      // Set EXTERNAL_SYNC_USE_PROXY=true to honor HTTP_PROXY/HTTPS_PROXY.
+      proxy: EXTERNAL_SYNC_USE_PROXY ? undefined : false,
       headers,
     });
     logger.info(

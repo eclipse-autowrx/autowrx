@@ -123,7 +123,7 @@ describe('sync engine', () => {
     });
   }
 
-  test('attaches EXTERNAL_SYNC_DEVICE_TOKEN and does not set proxy:false', async () => {
+  test('attaches EXTERNAL_SYNC_DEVICE_TOKEN and sets proxy:false by default', async () => {
     mockHandlerSync.mockResolvedValue(undefined);
 
     await runInMiddleware('POST', async () => {
@@ -134,7 +134,8 @@ describe('sync engine', () => {
     expect(createdAxiosConfig.headers).toEqual({
       Authorization: 'Bearer test-sync-token',
     });
-    expect(createdAxiosConfig.proxy).not.toBe(false);
+    // Default EXTERNAL_SYNC_USE_PROXY=false → bypass corp proxy for internal GenAI.
+    expect(createdAxiosConfig.proxy).toBe(false);
     expect(mockHandlerSync).toHaveBeenCalledTimes(1);
   });
 
