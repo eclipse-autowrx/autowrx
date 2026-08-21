@@ -27,12 +27,14 @@ jest.mock('../../../sync-handlers/default.handler.js', () => ({
   sync: (...args) => mockHandlerSync(...args),
 }));
 
+const http = require('http');
 const axios = require('axios');
 const {
   middleware,
   triggerSync,
   runWithSkipSync,
   SYNC_WARNING_HEADER,
+  encodeSyncWarningHeader,
 } = require('../../../src/sync');
 
 describe('sync engine', () => {
@@ -93,6 +95,34 @@ describe('sync engine', () => {
     });
   }
 
+  /** Assert Node accepts the header value (reproduces ERR_INVALID_CHAR if unsafe). */
+  function assertNodeAcceptsHeader(value) {
+    return new Promise((resolve, reject) => {
+      const server = http.createServer((req, res) => {
+        try {
+          res.setHeader(SYNC_WARNING_HEADER, value);
+          res.statusCode = 200;
+          res.end('ok');
+        } catch (err) {
+          reject(err);
+        }
+      });
+      server.listen(0, '127.0.0.1', () => {
+        const { port } = server.address();
+        http
+          .get(`http://127.0.0.1:${port}/`, (res) => {
+            res.resume();
+            res.on('end', () => {
+              server.close(() => resolve());
+            });
+          })
+          .on('error', (err) => {
+            server.close(() => reject(err));
+          });
+      });
+    });
+  }
+
   test('attaches EXTERNAL_SYNC_DEVICE_TOKEN and does not set proxy:false', async () => {
     mockHandlerSync.mockResolvedValue(undefined);
 
@@ -119,7 +149,8 @@ describe('sync engine', () => {
     });
 
     expect(responseHeaders[SYNC_WARNING_HEADER]).toBeDefined();
-    const warnings = JSON.parse(responseHeaders[SYNC_WARNING_HEADER]);
+    const decoded = decodeURIComponent(responseHeaders[SYNC_WARNING_HEADER]);
+    const warnings = JSON.parse(decoded);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toMatchObject({
       action: 'CREATE',
@@ -150,5 +181,56 @@ describe('sync engine', () => {
     });
 
     expect(responseHeaders[SYNC_WARNING_HEADER]).toBeUndefined();
+  });
+
+  test('F1: non-latin1 model name + sync failure does not throw ERR_INVALID_CHAR', async () => {
+    const err = new Error('échec synchronisation — endpoint unreachable');
+    err.code = 'ECONNREFUSED';
+    mockHandlerSync.mockRejectedValue(err);
+
+    const { responseHeaders } = await runInMiddleware('POST', async () => {
+      const result = await triggerSync({
+        ...baseEvent,
+        document: { name: 'テスト車両モデル' },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    const raw = responseHeaders[SYNC_WARNING_HEADER];
+    expect(raw).toBeDefined();
+    for (let i = 0; i < raw.length; i += 1) {
+      expect(raw.charCodeAt(i)).toBeLessThanOrEqual(255);
+    }
+    await expect(assertNodeAcceptsHeader(raw)).resolves.toBeUndefined();
+
+    const warnings = JSON.parse(decodeURIComponent(raw));
+    expect(warnings[0].resourceLabel).toContain('テスト車両モデル');
+  });
+
+  test('F1: encodeSyncWarningHeader percent-encodes and caps length', () => {
+    const encoded = encodeSyncWarningHeader([
+      {
+        action: 'CREATE',
+        resourceType: 'Model',
+        resourceId: 'x',
+        resourceLabel: 'Model "Modèle — sport 🚗"',
+        status: 500,
+        message: 'échec',
+      },
+    ]);
+    expect(encoded).toMatch(/^[%0-9A-Za-z._~-]+$/);
+    expect(encoded.length).toBeLessThanOrEqual(2048);
+    expect(() => JSON.parse(decodeURIComponent(encoded))).not.toThrow();
+  });
+
+  test('F2: triggerSync returns failure object when handler rejects (does not throw)', async () => {
+    mockHandlerSync.mockRejectedValue(new Error('handler boom'));
+
+    await expect(
+      runInMiddleware('POST', async () => {
+        const result = await triggerSync({ ...baseEvent });
+        expect(result).toEqual({ success: false, message: expect.any(String) });
+      }),
+    ).resolves.toBeDefined();
   });
 });

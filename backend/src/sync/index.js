@@ -29,6 +29,11 @@
  * - Respects process HTTP_PROXY / HTTPS_PROXY when set (no proxy bypass).
  *
  * Client integration: replace sync-handlers/default.handler.js with your own handler.
+ * In production the handler module is cached after first load — restart the process
+ * (or rebuild the image) after replacing the file. Development reloads it each sync.
+ *
+ * X-Sync-Warning values are percent-encoded JSON (latin1-safe) and length-capped so
+ * non-ASCII model names / error messages cannot break the HTTP response.
  */
 
 const { AsyncLocalStorage } = require('async_hooks');
@@ -45,6 +50,34 @@ const HANDLER_PATH = path.join(__dirname, '../../sync-handlers/default.handler.j
 const SUPPORTED_MODELS = new Set(['Model', 'ExtendedApi', 'Api']);
 const EXTERNAL_SYNC_DEVICE_TOKEN = config.services?.sync?.external?.deviceToken;
 const EXTERNAL_SYNC_MODEL_URL = config.services?.sync?.external?.modelUrl;
+/** Max encoded length for X-Sync-Warning (Node headers must be latin1-safe). */
+const SYNC_WARNING_HEADER_MAX_LEN = 2048;
+
+/**
+ * Encode warning payload for an HTTP header (latin1-safe, length-capped).
+ * Frontend only needs header presence for the toast; content may be percent-encoded JSON.
+ * @param {unknown[]} warnings
+ * @returns {string | null}
+ */
+const encodeSyncWarningHeader = (warnings) => {
+  if (!Array.isArray(warnings) || warnings.length === 0) return null;
+  let encoded = encodeURIComponent(JSON.stringify(warnings));
+  if (encoded.length > SYNC_WARNING_HEADER_MAX_LEN) {
+    const truncated = warnings.slice(0, 1).map((w) => ({
+      action: w?.action,
+      resourceType: w?.resourceType,
+      resourceId: w?.resourceId,
+      resourceLabel: 'sync',
+      status: w?.status ?? null,
+      message: 'External sync failed',
+    }));
+    encoded = encodeURIComponent(JSON.stringify(truncated));
+    if (encoded.length > SYNC_WARNING_HEADER_MAX_LEN) {
+      encoded = encodeURIComponent(JSON.stringify([{ message: 'External sync failed' }]));
+    }
+  }
+  return encoded;
+};
 
 /**
  * @param {Object} event
@@ -115,9 +148,9 @@ const extractSyncRequestUrl = (error) => {
   if (!cfg) return null;
   if (cfg.url && /^https?:\/\//i.test(cfg.url)) return cfg.url;
   const base = cfg.baseURL ? String(cfg.baseURL).replace(/\/$/, '') : '';
-  const path = cfg.url ? String(cfg.url).replace(/^\//, '') : '';
-  if (base && path) return `${base}/${path}`;
-  return base || path || null;
+  const urlPath = cfg.url ? String(cfg.url).replace(/^\//, '') : '';
+  if (base && urlPath) return `${base}/${urlPath}`;
+  return base || urlPath || null;
 };
 
 /**
@@ -134,9 +167,7 @@ const buildSyncSetupHints = (hasDeviceToken) => {
   }
   const baseUrl = getSyncTargetBaseUrl();
   if (!EXTERNAL_SYNC_MODEL_URL) {
-    hints.push(
-      `EXTERNAL_SYNC_MODEL_URL is not set — handlers that follow the example default to ${baseUrl}`,
-    );
+    hints.push(`EXTERNAL_SYNC_MODEL_URL is not set — handlers that follow the example default to ${baseUrl}`);
   } else {
     hints.push(`EXTERNAL_SYNC_MODEL_URL=${baseUrl}`);
   }
@@ -160,9 +191,7 @@ const buildSyncFailureReasons = (error, hasDeviceToken) => {
     );
     reasons.push('Start the external sync server or correct EXTERNAL_SYNC_MODEL_URL in backend .env');
   } else if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
-    reasons.push(
-      `Sync request timed out after ${SYNC_TIMEOUT_MS / 1000}s${target ? ` (${target})` : ''}`,
-    );
+    reasons.push(`Sync request timed out after ${SYNC_TIMEOUT_MS / 1000}s${target ? ` (${target})` : ''}`);
   }
 
   const status = error.response?.status;
@@ -211,10 +240,16 @@ const loadHandler = () => {
     cachedHandler = { sync: async () => {} };
     return cachedHandler;
   }
-  // eslint-disable-next-line import/no-dynamic-require, global-require
-  cachedHandler = require(HANDLER_PATH);
-  logger.info('Loaded sync handler from %s', HANDLER_PATH);
-  return cachedHandler;
+  try {
+    // eslint-disable-next-line import/no-dynamic-require, global-require
+    cachedHandler = require(HANDLER_PATH);
+    logger.info('Loaded sync handler from %s', HANDLER_PATH);
+    return cachedHandler;
+  } catch (err) {
+    logger.warn('Failed to load sync handler from %s: %s', HANDLER_PATH, err.message);
+    // Do not cache the failure — next request can retry after the file is fixed.
+    throw err;
+  }
 };
 
 const shouldAttachSyncWarning = () => {
@@ -236,7 +271,7 @@ const formatSyncTrace = (event, context = {}) => {
     formatResourceLabel(event),
     event.resourceId ? `resourceId=${event.resourceId}` : null,
     event.modelId ? `modelId=${event.modelId}` : null,
-    (event.userId || context.userId) ? `userId=${event.userId || context.userId}` : null,
+    event.userId || context.userId ? `userId=${event.userId || context.userId}` : null,
   ].filter(Boolean);
   return parts.join(' | ');
 };
@@ -254,21 +289,21 @@ const triggerSync = async (event) => {
     return { success: true };
   }
 
-  const loaded = loadHandler();
-  const handler = loaded?.sync;
-  if (typeof handler !== 'function') {
-    logger.info('Data sync skipped (handler.sync missing): %s | handler=%s', trace, loaded?.name || 'unknown');
-    return { success: true };
-  }
-
   const hasDeviceToken = Boolean(EXTERNAL_SYNC_DEVICE_TOKEN);
   const setupHints = buildSyncSetupHints(hasDeviceToken);
   const startedAt = Date.now();
 
   try {
-    const headers = hasDeviceToken
-      ? { Authorization: `Bearer ${EXTERNAL_SYNC_DEVICE_TOKEN}` }
-      : {};
+    // loadHandler can throw on a broken/custom handler file — keep it inside try so
+    // local writes never fail because of sync customization.
+    const loaded = loadHandler();
+    const handler = loaded?.sync;
+    if (typeof handler !== 'function') {
+      logger.info('Data sync skipped (handler.sync missing): %s | handler=%s', trace, loaded?.name || 'unknown');
+      return { success: true };
+    }
+
+    const headers = hasDeviceToken ? { Authorization: `Bearer ${EXTERNAL_SYNC_DEVICE_TOKEN}` } : {};
     const http = axios.create({
       timeout: SYNC_TIMEOUT_MS,
       // Honor HTTP_PROXY / HTTPS_PROXY when set (corporate egress).
@@ -303,11 +338,7 @@ const triggerSync = async (event) => {
     );
     if (store && shouldAttachSyncWarning()) {
       store.warnings.push(warning);
-      logger.info(
-        'Data sync warning attached to response: %s | warningCount=%s',
-        trace,
-        store.warnings.length,
-      );
+      logger.info('Data sync warning attached to response: %s | warningCount=%s', trace, store.warnings.length);
     } else if (!store) {
       logger.warn('Data sync warning dropped — no active request context: %s', trace);
     } else {
@@ -321,8 +352,7 @@ const triggerSync = async (event) => {
   }
 };
 
-const resolveModelId = (doc) =>
-  doc.constructor.modelName === 'Model' ? String(doc._id) : String(doc.model);
+const resolveModelId = (doc) => (doc.constructor.modelName === 'Model' ? String(doc._id) : String(doc.model));
 
 const triggerSyncForDocument = async (doc, action) => {
   const resourceType = doc.constructor.modelName;
@@ -332,12 +362,7 @@ const triggerSyncForDocument = async (doc, action) => {
   }
   const context = getContext();
   if (context.skipSync) {
-    logger.info(
-      'Data sync hook skipped (skipSync): %s %s %s',
-      action,
-      resourceType,
-      doc._id,
-    );
+    logger.info('Data sync hook skipped (skipSync): %s %s %s', action, resourceType, doc._id);
     return;
   }
   logger.info('Data sync hook: %s %s %s', action, resourceType, doc._id);
@@ -360,11 +385,7 @@ const isSyncSchema = (schema) => {
 };
 
 const applySyncHooks = (schema) => {
-  const schemaName =
-    schema.options?.collection ||
-    Object.keys(schema.paths)
-      .slice(0, 3)
-      .join(',');
+  const schemaName = schema.options?.collection || Object.keys(schema.paths).slice(0, 3).join(',');
   logger.info('Data sync hooks registered for schema (%s)', schemaName);
 
   schema.pre('save', function captureWasNew(next) {
@@ -377,13 +398,7 @@ const applySyncHooks = (schema) => {
     try {
       await triggerSyncForDocument(doc, action);
     } catch (err) {
-      logger.warn(
-        'Data sync save hook error: %s %s %s — %s',
-        action,
-        doc.constructor?.modelName,
-        doc._id,
-        err.message,
-      );
+      logger.warn('Data sync save hook error: %s %s %s — %s', action, doc.constructor?.modelName, doc._id, err.message);
     }
   });
 
@@ -391,12 +406,7 @@ const applySyncHooks = (schema) => {
     try {
       await triggerSyncForDocument(doc, 'DELETE');
     } catch (err) {
-      logger.warn(
-        'Data sync delete hook error: DELETE %s %s — %s',
-        doc.constructor?.modelName,
-        doc._id,
-        err.message,
-      );
+      logger.warn('Data sync delete hook error: DELETE %s %s — %s', doc.constructor?.modelName, doc._id, err.message);
     }
   });
 };
@@ -438,7 +448,14 @@ const runWithSkipSync = async (fn) => {
 const middleware = (req, res, next) => {
   const store = { req, warnings: [], skipSync: false };
   const attach = () => {
-    if (store.warnings.length) res.set(SYNC_WARNING_HEADER, JSON.stringify(store.warnings));
+    if (!store.warnings.length) return;
+    try {
+      const encoded = encodeSyncWarningHeader(store.warnings);
+      if (encoded) res.set(SYNC_WARNING_HEADER, encoded);
+    } catch (err) {
+      // Never let header serialization break a successful write response.
+      logger.warn('Data sync warning header skipped: %s', err.message);
+    }
   };
   const originalSend = res.send.bind(res);
   const originalJson = res.json.bind(res);
@@ -458,4 +475,4 @@ const middleware = (req, res, next) => {
   storage.run(store, () => next());
 };
 
-module.exports = { init, middleware, triggerSync, runWithSkipSync, SYNC_WARNING_HEADER };
+module.exports = { init, middleware, triggerSync, runWithSkipSync, SYNC_WARNING_HEADER, encodeSyncWarningHeader };

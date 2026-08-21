@@ -153,7 +153,24 @@ const createModel = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Model not found after create');
   }
 
-  const hasExtendedApis = Boolean(extended_apis || custom_apis);
+  const hasApiList = (value) => {
+    if (value == null) return false;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed || trimmed === 'Empty') return false;
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return parsed.length > 0;
+      } catch (_err) {
+        // Non-JSON string — treat as present payload
+      }
+      return true;
+    }
+    return Boolean(value);
+  };
+  // [] is truthy in JS — do not treat empty arrays as bulk replace.
+  const hasExtendedApis = hasApiList(extended_apis) || hasApiList(custom_apis);
   const modelSnapshot = model.toObject();
 
   if (hasExtendedApis) {
