@@ -8,14 +8,29 @@
 
 import { serverAxios } from './base'
 
+const toPermissionRef = (value: unknown): string | undefined => {
+  if (value == null || value === '') return undefined
+  if (typeof value === 'string') return value
+  if (typeof value === 'object') {
+    const obj = value as { id?: unknown; _id?: unknown }
+    if (typeof obj.id === 'string' && obj.id) return obj.id
+    if (obj._id != null) return String(obj._id)
+  }
+  return undefined
+}
+
 export const checkPermissionService = async (
   permissions: [string, string?][],
 ) => {
+  const list = Array.isArray(permissions) ? permissions : [permissions]
   return (
     await serverAxios.get<boolean[]>(`/permissions/has-permission`, {
       params: {
-        permissions: (Array.isArray(permissions) ? permissions : [permissions])
-          .map((perm) => perm.join(':'))
+        permissions: list
+          .map(([action, ref]) => {
+            const refId = toPermissionRef(ref)
+            return refId ? `${action}:${refId}` : action
+          })
           .join(','),
       },
     })

@@ -100,11 +100,13 @@ app.use(
   cors({
     origin: config.cors.origins,
     credentials: true,
+    exposedHeaders: ['X-Sync-Warning'],
   })
 );
 app.options('*', cors({
   origin: config.cors.origins,
   credentials: true,
+  exposedHeaders: ['X-Sync-Warning'],
 }));
 
 // jwt authentication
@@ -114,6 +116,9 @@ passport.use('jwt', jwtStrategy);
 // Load auth configs into req.authConfig for synchronous access
 const loadAuthConfigs = require('./middlewares/authConfig');
 app.use(loadAuthConfigs);
+
+const dataSync = require('./sync');
+app.use('/v2', dataSync.middleware);
 
 app.use('/v2', routesV2);
 app.use('/static', express.static(path.join(__dirname, '../static')));

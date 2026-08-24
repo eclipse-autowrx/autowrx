@@ -113,7 +113,7 @@ Each cluster has an ID prefix (`CAP-<CODE>-NN`).
 | `CAP-IDENTITY` | Identity & Access | login/refresh/logout, register, password reset + email verify, SSO, profile, user management, RBAC v1 + Casbin v2, manage users/features | [identity-access.md](./identity-access.md) |
 | `CAP-MODEL` | Models | model list/create/import, detail/edit, tabs & addons, contributors & permissions, stats, model templates | [models.md](./models.md) |
 | `CAP-VAPI` | Vehicle APIs | VSS versions/trees, per-model API CRUD + computed, replace APIs, vehicle API view, extended APIs, custom API schemas, custom API sets | [vehicle-apis.md](./vehicle-apis.md) |
-| `CAP-PROTO` | Prototypes & Code | prototype library, new-prototype, CRUD/recent/popular, workspace tabs, code editor, project editor, feedback, project templates | [prototypes-code.md](./prototypes-code.md) |
+| `CAP-PROTO` | Prototypes & Code | prototype library, new-prototype, CRUD/recent/popular, workspace tabs, code editor, project editor, feedback, project templates, page-number buttons | [prototypes-code.md](./prototypes-code.md) |
 | `CAP-DASHBOARD` | Dashboards & Widgets | dashboard renderer/editor, widget sources, builtin widgets, dashboard templates, Widget ProtoPilot (roadmap) | [dashboards-widgets.md](./dashboards-widgets.md) |
 | `CAP-RUNTIME` | Runtime & Hardware Kits | runtime control, runtime/asset manager, hardware kit manager, asset access tokens, kit server proxy, runtime server config, runtime HTTP preview proxy | [runtime-hardware-kits.md](./runtime-hardware-kits.md) |
 | `CAP-ASSET` | Assets & Sharing | user assets CRUD, admin all-assets, My Assets, asset sharing, model contributors, access invitation, user lookup | [assets-sharing.md](./assets-sharing.md) |

@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -120,12 +120,59 @@ export const getPrototype = async (prototype_id: string) => {
   return (await serverAxios.get<Prototype>(`/prototypes/${prototype_id}`)).data
 }
 
+/** UI sort labels that can be expressed as API `sortBy`. */
+export const PROTOTYPE_LIBRARY_SORT_BY: Record<string, string> = {
+  Newest: 'createdAt:desc',
+  Oldest: 'createdAt:asc',
+  'Name A-Z': 'name:asc',
+  'Name Z-A': 'name:desc',
+}
+
+export const listModelPrototypesPaged = async (params: {
+  model_id: string
+  page: number
+  limit: number
+  sortBy?: string
+  name?: string
+  fields?: string
+}): Promise<List<Prototype>> => {
+  const response = await serverAxios.get<List<Prototype>>('/prototypes', {
+    params: {
+      fields: params.fields ?? PROTOTYPE_LIST_CARD_FIELDS,
+      model_id: params.model_id,
+      page: params.page,
+      limit: params.limit,
+      ...(params.sortBy ? { sortBy: params.sortBy } : {}),
+      ...(params.name ? { name: params.name } : {}),
+    },
+  })
+  return response.data
+}
+
 export const listModelPrototypes = async (model_id: string) => {
-  return (
-    await serverAxios.get<List<Prototype>>(
-      `/prototypes?model_id=${model_id}&limit=50`,
-    )
-  ).data.results
+  let page = 1
+  const limit = 50
+  const allResults: Prototype[] = []
+  let totalPages = 1
+  const addedIds = new Set<string>()
+
+  do {
+    const response = await serverAxios.get<List<Prototype>>('/prototypes', {
+      params: { model_id, page, limit },
+    })
+
+    response.data.results.forEach((prototype) => {
+      if (!addedIds.has(prototype.id)) {
+        addedIds.add(prototype.id)
+        allResults.push(prototype)
+      }
+    })
+
+    totalPages = response.data.totalPages
+    page++
+  } while (page <= totalPages)
+
+  return allResults
 }
 
 export const createPrototypeService = async (prototype: any) => {
