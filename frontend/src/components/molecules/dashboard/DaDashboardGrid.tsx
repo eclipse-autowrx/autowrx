@@ -8,6 +8,7 @@
 
 import { FC, useEffect, useState, useRef, useMemo } from 'react'
 import useRuntimeStore from '@/stores/runtimeStore'
+import useAuthStore from '@/stores/authStore'
 import { WidgetConfig } from '@/types/widget.type'
 import DaDialog from '@/components/molecules/DaDialog'
 import useCurrentModelApi from '@/hooks/useCurrentModelApi'
@@ -112,17 +113,20 @@ const WidgetItem: FC<PropsWidgetItem> = ({
     sendVssTreeToWidget(vssTree)
   }, [vssTree, iframeLoaded])
 
-  // Send active runtime name to widget whenever it changes
+  const accessToken = useAuthStore((state) => state.access?.token)
+
+  // Send active runtime name + access token (for /runtime-preview iframe auth on JWT)
   useEffect(() => {
     if (!iframeLoaded) return
     frameElement?.current?.contentWindow?.postMessage(
       JSON.stringify({
         cmd: 'runtime-info',
         runtimeName: activeRuntimeName ?? null,
+        accessToken: accessToken ?? null,
       }),
       '*',
     )
-  }, [activeRuntimeName, iframeLoaded])
+  }, [activeRuntimeName, accessToken, iframeLoaded])
 
   // Send app running state to widget whenever it changes
   useEffect(() => {

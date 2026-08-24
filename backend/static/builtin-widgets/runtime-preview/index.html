@@ -136,11 +136,21 @@
     let runtimeMappings = DEFAULT_MAPPINGS
     let currentRuntimeName = null
     let lastPreviewUrl = null
+    // JWT access token from parent — iframe.src cannot set Authorization
+    let accessToken = null
 
     function onWidgetLoaded(options) {
       if (options && Array.isArray(options.runtimeMappings) && options.runtimeMappings.length > 0) {
         runtimeMappings = options.runtimeMappings
       }
+    }
+
+    function buildPreviewUrl(previewPath) {
+      let url = window.location.origin + previewPath
+      if (accessToken) {
+        url += (previewPath.indexOf('?') >= 0 ? '&' : '?') + 'access_token=' + encodeURIComponent(accessToken)
+      }
+      return url
     }
 
     function showError(runtimeName) {
@@ -207,7 +217,7 @@
       })
 
       const previewPath = match ? match.path : '/runtime-preview/' + name.replace(/runtime-/i, '')
-      lastPreviewUrl = window.location.origin + previewPath
+      lastPreviewUrl = buildPreviewUrl(previewPath)
 
       frame.onerror = function () {
         showError(currentRuntimeName)
@@ -241,6 +251,14 @@
         return
       }
       if (payload && payload.cmd === 'runtime-info') {
+        if (Object.prototype.hasOwnProperty.call(payload, 'accessToken')) {
+          const nextToken = payload.accessToken || null
+          if (nextToken !== accessToken) {
+            accessToken = nextToken
+            // Force URL rebuild when token arrives/changes after runtime was selected
+            currentRuntimeName = null
+          }
+        }
         applyRuntimeName(payload.runtimeName || null)
       }
     })

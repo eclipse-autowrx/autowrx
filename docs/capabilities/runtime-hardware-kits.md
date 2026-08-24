@@ -550,13 +550,13 @@ Authors and demo audiences (see the runtime UI in the dashboard); DevOps (wire k
 
 No HTTP surface for users — the backend proxies kit HTTP UIs transparently. Operator config and proxy behavior:
 
-- `GET|WS /runtime-preview/:runtimeName/…` (auth required on **all** `/runtime-preview` paths, including nameless) → proxied to the mapped target; websocket upgrades enabled (`ws: true`) with `pathFilter` confined to `/runtime-preview/*`. Unauthenticated HTTP requests receive **401** regardless of `PUBLIC_VIEWING`. WS upgrades bypass the Express `auth()` gate and rely on `pathFilter` + `router()` for path/name/mapping validation only (no longer process-wide).
+- `GET|WS /runtime-preview/:runtimeName/…` (auth required on **all** `/runtime-preview` paths, including nameless) → proxied to the mapped target; websocket upgrades enabled (`ws: true`) with `pathFilter` confined to `/runtime-preview/*`. Unauthenticated HTTP requests receive **401** regardless of `PUBLIC_VIEWING`. JWT iframe loads use `?access_token=` (promoted to Bearer; also stored as HttpOnly `runtime_preview_at` cookie with `Path=/runtime-preview` for relative subresources). WS upgrades bypass Express `auth()`; name is resolved from `req.url` when `originalUrl` is missing, and unresolvable upgrades **fail closed** (socket destroyed — no fallback to `http://127.0.0.1:80`).
 - `:runtimeName` must match `^[a-zA-Z0-9-]+$`; missing or invalid name (including `/runtime-preview`, `/runtime-preview/`, `/runtime-preview//…`) → **400** blank HTML (`INVALID_RUNTIME_NAME`).
 - Target from env `RUNTIME_SERVICE_MAPPINGS` (`RUNTIME_NAME:service` → `http://service:8080`; `RUNTIME_NAME:host:port` or absolute URL also accepted). Lookup uses `Object.hasOwn` (prototype keys are not treated as mappings). Unmapped name → **502** blank HTML (`RUNTIME_NOT_CONFIGURED`).
 - Connection errors → **502** blank HTML (not JSON). Proxy `timeout` / `proxyTimeout` 3000 ms.
 - Optional `RUNTIME_PREFIX` stripped from the path name before lookup.
 - Default port **8080** is the kit HTTP UI on the playground compose network (kit-manager is 3090).
-- Mount shape: single `app.use('/runtime-preview', auth(), gate, proxy)` so auth cannot be skipped by omitting the name segment.
+- Mount shape: single `app.use('/runtime-preview', promoteAccessToken, auth(), gate, proxy)` so auth cannot be skipped by omitting the name segment.
 
 **Implementation:** `backend/src/app.js` (`/runtime-preview` proxy), `backend/src/config/runtimeConfig.js` (`getRuntimeTarget`).
 
@@ -569,26 +569,27 @@ sequenceDiagram
     participant W as Runtime Preview widget
     participant B as AutoWRX backend
     participant K as Kit HTTP UI
-    W->>B: GET /runtime-preview/PUBLIC-01-.../
-    B->>B: whitelist RUNTIME_SERVICE_MAPPINGS
+    W->>B: GET /runtime-preview/PUBLIC-01-.../?access_token=…
+    B->>B: auth + whitelist RUNTIME_SERVICE_MAPPINGS
     B->>K: http://runtime-09:8080/
     K-->>W: HTML / WS
 ```
 
 ### Security
 
-Authenticated users only on HTTP — unauthenticated requests to any `/runtime-preview` path receive 401. `pathFilter` confines `ws: true` upgrades to `/runtime-preview/*` (Express mount alone does not scope the server upgrade listener). WS upgrades still skip Express `auth()`; the proxy `router()` enforces name/mapping validation but not session auth. CSP `frame-src` / `connect-src` must allow the preview path.
+Authenticated users only on HTTP — unauthenticated requests to any `/runtime-preview` path receive 401. Default JWT deployments authenticate the preview iframe via `access_token` query (posted from the parent dashboard) plus a Path-scoped HttpOnly cookie for follow-up requests; `AUTH_PROVIDER=platform` continues to use injected identity headers. `pathFilter` confines `ws: true` upgrades to `/runtime-preview/*` (Express mount alone does not scope the server upgrade listener). WS upgrades still skip Express `auth()`; the proxy resolves the runtime name from `req.url` on upgrade and **destroys the socket** when the name/mapping is missing (fail closed — no default-target tunnel). CSP `frame-src` / `connect-src` must allow the preview path.
 
 **Coverage:**
-- **Auth:** Required — `auth()` on the single `/runtime-preview` mount (covers nameless paths); unauthenticated HTTP requests receive 401 on all deployments (not tied to `PUBLIC_VIEWING`). WS upgrade events skip Express `auth()` but are limited by `pathFilter` to `/runtime-preview/*`; the proxy `router()` enforces name/mapping validation but not session auth.
+- **Auth:** Required — `promotePreviewAccessToken` + `auth()` on the single `/runtime-preview` mount (covers nameless paths); unauthenticated HTTP requests receive 401 on all deployments (not tied to `PUBLIC_VIEWING`). JWT iframe: `?access_token=` and/or `runtime_preview_at` cookie. WS upgrade events skip Express `auth()` but are limited by `pathFilter` to mapped `/runtime-preview/:name/*` only; unresolvable upgrades destroy the socket.
 - **Authorization:** None at the proxy — any authenticated caller can fetch a mapped runtime name.
 - **Input validation:** Path segment `^[a-zA-Z0-9-]+$`; targets only from `RUNTIME_SERVICE_MAPPINGS` via `Object.hasOwn` (env whitelist; prototype keys ignored).
 - **Rate limiting:** Not applied — the proxy has no limiter; `authLimiter` is not wired.
-- **Secrets:** No secrets handled by the proxy; kit responses pass through in transit only.
+- **Secrets:** Preview may carry a short-lived access JWT in the iframe URL query (stripped before kit forward) and in an HttpOnly `Path=/runtime-preview` cookie; kit responses pass through in transit only.
 
 **Risks:**
 - **Same-origin preview of user-controlled HTML:** kit HTML is re-served under the AutoWRX origin, so a prototype page could read that origin's storage. *Mitigation:* applied — the preview iframe carries `sandbox="allow-scripts allow-forms"` with `allow-same-origin` omitted, giving the iframe a distinct opaque origin and blocking access to AutoWRX `localStorage`/cookies. Note: kit UIs that make credentialed same-origin requests may need `allow-same-origin` re-added, at which point the sandbox isolation is reduced.
-- **SSRF via path param:** a caller could try to make the proxy fetch an arbitrary URL. *Mitigation:* targets come only from the env whitelist; the name regex blocks traversal and `pathRewrite` injection.
+- **Access token in preview URL:** `?access_token=` can appear in logs/Referer. *Mitigation:* token is stripped before proxying to the kit; prefer short-lived access JWTs; cookie covers subsequent relative requests so the query is only needed on the first navigation.
+- **SSRF via path param:** a caller could try to make the proxy fetch an arbitrary URL. *Mitigation:* targets come only from the env whitelist; the name regex blocks traversal and `pathRewrite` injection; unresolvable WS upgrades fail closed.
 - **SSRF via misconfigured `RUNTIME_SERVICE_MAPPINGS`:** an operator mapping to an internal host turns the backend into a proxy to that host. *Mitigation:* none currently — keep mappings to kit HTTP services only.
 
 ### Personal data processing
@@ -614,7 +615,7 @@ Proxies kit HTTP traffic; no storage on the backend.
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
 - **Estimated coverage:** ≈0% (est.) — no E2E spec
-- **Unit (Jest):** none
+- **Unit (Jest):** route-order + `access_token` promotion + upgrade name parser (`runtimePreview.routeOrder.test.js`); `getRuntimeTarget` / `Object.hasOwn` (`runtimeConfig.test.js`)
 
 
 **Risks:**

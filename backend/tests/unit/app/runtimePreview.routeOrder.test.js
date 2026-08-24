@@ -12,19 +12,36 @@ const httpStatus = require('http-status');
 
 /**
  * Mirrors the /runtime-preview mount order in backend/src/app.js:
- * auth → name/mapping gate → proxy stub.
- * Catches F1: nameless paths must still hit auth.
+ * promote access_token → auth → name/mapping gate → proxy stub.
+ * Also mirrors runtimeNameFromReq upgrade-path behavior.
  */
 function runtimeNameFromReq(req) {
   const original = String(req.originalUrl || '').split('?')[0];
   const fromOriginal = original.match(/^\/runtime-preview\/([^/]+)/);
   if (fromOriginal) return fromOriginal[1];
+
+  const urlPath = String(req.url || '').split('?')[0];
+
+  if (!original) {
+    const fromUrl = urlPath.match(/^\/runtime-preview\/([^/]+)/);
+    return fromUrl ? fromUrl[1] : null;
+  }
+
   if (original === '/runtime-preview' || original.startsWith('/runtime-preview/')) {
-    const stripped = String(req.url || '').split('?')[0];
-    const match = stripped.match(/^\/([^/]+)/);
+    const match = urlPath.match(/^\/([^/]+)/);
     return match ? match[1] : null;
   }
   return null;
+}
+
+function promotePreviewAccessToken(req, _res, next) {
+  if (!req.headers.authorization) {
+    const token = req.query && req.query.access_token;
+    if (typeof token === 'string' && token) {
+      req.headers.authorization = `Bearer ${token}`;
+    }
+  }
+  next();
 }
 
 function createPreviewApp({ mappings = { 'PUBLIC-01-test': 'http://runtime-09:8080' } } = {}) {
@@ -40,6 +57,7 @@ function createPreviewApp({ mappings = { 'PUBLIC-01-test': 'http://runtime-09:80
 
   app.use(
     '/runtime-preview',
+    promotePreviewAccessToken,
     auth(),
     (req, res, next) => {
       const runtimeName = runtimeNameFromReq(req);
@@ -102,5 +120,32 @@ describe('runtime-preview route order', () => {
     const app = createPreviewApp();
     const headers = { authorization: 'Bearer test' };
     await expect(getStatus(app, '/runtime-preview/PUBLIC-01-test', headers)).resolves.toBe(200);
+  });
+
+  test('access_token query promotes to Bearer for iframe JWT loads', async () => {
+    const app = createPreviewApp();
+    await expect(getStatus(app, '/runtime-preview/PUBLIC-01-test?access_token=test-jwt')).resolves.toBe(200);
+    await expect(getStatus(app, '/runtime-preview/PUBLIC-01-test')).resolves.toBe(httpStatus.UNAUTHORIZED);
+  });
+});
+
+describe('runtimeNameFromReq upgrade path', () => {
+  test('resolves name from req.url when originalUrl is missing', () => {
+    const req = { url: '/runtime-preview/PUBLIC-01-test/ws' };
+    expect(runtimeNameFromReq(req)).toBe('PUBLIC-01-test');
+  });
+
+  test('returns null for nameless upgrade urls', () => {
+    expect(runtimeNameFromReq({ url: '/runtime-preview' })).toBeNull();
+    expect(runtimeNameFromReq({ url: '/runtime-preview/' })).toBeNull();
+    expect(runtimeNameFromReq({ url: '/runtime-preview//' })).toBeNull();
+  });
+
+  test('still resolves Express-stripped paths via originalUrl', () => {
+    const req = {
+      originalUrl: '/runtime-preview/PUBLIC-01-test/index.html',
+      url: '/PUBLIC-01-test/index.html',
+    };
+    expect(runtimeNameFromReq(req)).toBe('PUBLIC-01-test');
   });
 });
