@@ -30,6 +30,10 @@ import {
   getComputedAPIs,
   updateModelService,
 } from '@/services/model.service'
+import {
+  hasSyncWarningHeader,
+  SYNC_WARNING_REDIRECT_DELAY_MS,
+} from '@/utils/syncWarning'
 import { uploadFileService } from '@/services/upload.service'
 import { convertJSONToProperty } from '@/lib/vehiclePropertyUtils'
 import {
@@ -261,7 +265,7 @@ const PageModelDetail = () => {
   const handleDeleteModel = async () => {
     try {
       setIsDeleting(true)
-      await deleteModelService(model.id)
+      const response = await deleteModelService(model.id)
       addLog({
         name: `User ${currentUser?.email} deleted model '${model.name}'`,
         description: `User ${currentUser?.email} deleted model '${model.name}' with id ${model.id}`,
@@ -270,6 +274,9 @@ const PageModelDetail = () => {
         ref_id: model.id,
         ref_type: 'model',
       })
+      if (hasSyncWarningHeader(response.headers)) {
+        await new Promise((resolve) => setTimeout(resolve, SYNC_WARNING_REDIRECT_DELAY_MS))
+      }
       window.location.href = '/model'
     } catch (error) {
       console.error('Failed to delete model:', error)
