@@ -243,6 +243,8 @@
     }
 
     window.addEventListener('message', function (e) {
+      // Only accept dashboard parent (same origin). Sandboxed kit posts with origin "null".
+      if (e.origin !== window.location.origin) return
       if (!e.data) return
       let payload
       try {
