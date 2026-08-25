@@ -8,6 +8,7 @@
 
 import { FC, useEffect, useState, useRef, useMemo } from 'react'
 import useRuntimeStore from '@/stores/runtimeStore'
+import useAuthStore from '@/stores/authStore'
 import { WidgetConfig } from '@/types/widget.type'
 import DaDialog from '@/components/molecules/DaDialog'
 import useCurrentModelApi from '@/hooks/useCurrentModelApi'
@@ -24,6 +25,7 @@ interface PropsWidgetItem {
   appLog?: string
   vssTree?: any
   isAppRunning?: boolean
+  activeRuntimeName?: string
 }
 
 const WidgetItem: FC<PropsWidgetItem> = ({
@@ -32,6 +34,7 @@ const WidgetItem: FC<PropsWidgetItem> = ({
   appLog,
   vssTree,
   isAppRunning,
+  activeRuntimeName,
 }) => {
   const [rSpan, setRSpan] = useState<number>(0)
   const [cSpan, setCSpan] = useState<number>(0)
@@ -110,6 +113,25 @@ const WidgetItem: FC<PropsWidgetItem> = ({
     sendVssTreeToWidget(vssTree)
   }, [vssTree, iframeLoaded])
 
+  const accessToken = useAuthStore((state) => state.access?.token)
+  const isRuntimePreviewWidget = !!widgetConfig?.url?.startsWith(
+    '/builtin-widgets/runtime-preview',
+  )
+
+  // Access token must never be postMessage'd to arbitrary/plugin/external widgets.
+  // Only the same-origin builtin runtime-preview receives runtime-info (+ token).
+  useEffect(() => {
+    if (!iframeLoaded || !isRuntimePreviewWidget) return
+    frameElement?.current?.contentWindow?.postMessage(
+      JSON.stringify({
+        cmd: 'runtime-info',
+        runtimeName: activeRuntimeName ?? null,
+        accessToken: accessToken ?? null,
+      }),
+      window.location.origin,
+    )
+  }, [activeRuntimeName, accessToken, iframeLoaded, isRuntimePreviewWidget])
+
   // Send app running state to widget whenever it changes
   useEffect(() => {
     if (!iframeLoaded) return
@@ -171,11 +193,12 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
   // Memoize VSS tree to prevent unnecessary re-renders with large data
   const memoizedVssTree = useMemo(() => cvi, [cvi])
 
-  const [apisValue, traceVars, appLog, isAppRunning] = useRuntimeStore((state) => [
+  const [apisValue, traceVars, appLog, isAppRunning, activeRuntimeName] = useRuntimeStore((state) => [
     state.apisValue,
     state.traceVars,
     state.appLog,
     state.isAppRunning,
+    state.activeRuntimeName,
   ])
 
   const [allVars, setAllVars] = useState<any>({})
@@ -262,6 +285,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
                   appLog={appLog}
                   vssTree={memoizedVssTree}
                   isAppRunning={isAppRunning}
+                  activeRuntimeName={activeRuntimeName}
                 />
               )
             } else if (widgetIndex === -1) {
