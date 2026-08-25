@@ -51,16 +51,28 @@ services:
   autowrx-db:
     # platform: linux/amd64  # Commented out for local testing on non-AMD64 machines
     container_name: ${NAME:-prod}-autowrx-db
-    image: mongo:4.4.6-bionic
+    # 4.4 is end-of-life (Feb 2024, no security patches). 7.0 is a drop-in for
+    # this stack (Mongoose 8 / Node driver 6). Upgrading an EXISTING 4.4 volume
+    # in place is not supported — dump from 4.4, wipe the volume, restore into 7.0
+    # (restoring rebuilds all indexes and needs no stepwise FCV upgrades).
+    image: mongo:7.0
     # ports:
     #   - "${MONGODB_PORT:-27010}:27017"
     volumes:
       - autowrx-dbdata:/data/db
+      # MongoDB 7 images do not bundle database tools (mongodump/mongorestore).
+      # If your backup tooling execs mongodump inside the container, download the
+      # tools once and mount them, e.g.:
+      #   curl -fsSL -o /tmp/tools.tgz https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2204-x86_64-100.9.5.tgz
+      #   mkdir -p tools && tar -xzf /tmp/tools.tgz -C tools
+      #   (then uncomment the next line)
+      # - ./tools/mongodb-database-tools-ubuntu2204-x86_64-100.9.5/bin:/opt/dbtools:ro
     networks:
       - autowrx-network
     restart: always
     healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')", "--quiet"]
+      # mongosh only — the legacy `mongo` shell was removed from images in 6.0+
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
       interval: 5s
       timeout: 5s
       retries: 10
