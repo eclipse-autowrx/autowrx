@@ -154,6 +154,20 @@ const BUILT_IN_WIDGETS = [
       iconURL: '/builtin-widgets/simple-wiper/simple-wiper.png',
     },
   },
+  {
+    id: 'Runtime-Preview-Widget',
+    plugin: 'Builtin',
+    widget: 'Runtime Preview',
+    label: 'Runtime Preview',
+    icon: '/builtin-widgets/runtime-preview/runtime-preview.png',
+    path: '/builtin-widgets/runtime-preview/index.html',
+    desc: 'Show an iframe preview for the currently selected runtime',
+    options: {
+      runtimeMappings: [],
+      showDefaultUi: false,
+      iconURL: '/builtin-widgets/runtime-preview/runtime-preview.png',
+    },
+  },
 ]
 
 export const BUILT_IN_EMBEDDED_WIDGETS = {

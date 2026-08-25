@@ -26,6 +26,7 @@ npx playwright test tests/prototype-context-menu.spec.ts
 npx playwright test tests/home-model-list.spec.ts
 npx playwright test tests/home-prototype-list.spec.ts
 npx playwright test tests/image-fallback.spec.ts
+npx playwright test tests/model-editable-visibility.spec.ts
 
 # With screenshots on failure
 npx playwright test --screenshot=only-on-failure
@@ -41,6 +42,7 @@ Playwright treats the file argument as a **regex**. Use **forward slashes** (not
 ```powershell
 cd C:\repo\autowrx\.agents
 npm run test:home-model-list
+npm run test:model-editable-visibility
 ```
 
 Or with `npx` (forward slashes work on Windows):
@@ -51,12 +53,14 @@ npx playwright test tests/import-export.spec.ts
 npx playwright test tests/prototype-context-menu.spec.ts
 npx playwright test tests/home-prototype-list.spec.ts
 npx playwright test tests/image-fallback.spec.ts
+npx playwright test tests/model-editable-visibility.spec.ts
 ```
 
 Run several suites:
 
 ```powershell
 npx playwright test tests/import-export.spec.ts tests/prototype-context-menu.spec.ts tests/home-model-list.spec.ts
+npx playwright test tests/model-editable-visibility.spec.ts
 ```
 
 ## Test Suites
@@ -73,6 +77,7 @@ npx playwright test tests/import-export.spec.ts tests/prototype-context-menu.spe
 | `tests/home-model-list.spec.ts` | Home model-list: guest visibility, logged-in UI, category filters, all 6 sort options, rename, My Contributions contributor/reader |
 | `tests/home-prototype-list.spec.ts` | Home prototype-list: guest visibility, category tabs, My Prototypes filter, all 6 sort options, navigation |
 | `tests/image-fallback.spec.ts` | Model and prototype cards fall back to default images when primary image fails to load |
+| `tests/model-editable-visibility.spec.ts` | Editable model visibility: non-owner prototype create, guest home shows editable+public, template inheritance |
 | `tests/layout.spec.ts` | Layout, responsive, visual snapshots |
 
 ## Environment

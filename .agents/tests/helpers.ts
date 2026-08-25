@@ -1,3 +1,11 @@
+// Copyright (c) 2026 Eclipse Foundation.
+//
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { copyFile, mkdir, readFile, rm } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -28,6 +36,10 @@ export const TEST_USER = {
   password: 'TestPass123!',
   name: 'Test User',
 };
+
+export type ModelVisibility = 'public' | 'private' | 'editable';
+
+export type AuthCredentials = { email: string; password: string };
 
 export const LIBRARY_SEARCH_SELECTOR = 'input[placeholder="Search prototypes"]';
 
@@ -195,8 +207,8 @@ export async function editPublicConfigValueViaUI(page: Page, key: string, value:
 export async function createTestModelViaApi(
   page: Page,
   name: string,
-  visibility: 'public' | 'private',
-  auth?: { email: string; password: string },
+  visibility: ModelVisibility,
+  auth?: AuthCredentials,
 ): Promise<string> {
   const token = auth
     ? await getTokenForUser(page, auth.email, auth.password)
@@ -226,9 +238,12 @@ export async function createTestModelViaApi(
 export async function setModelVisibilityViaApi(
   page: Page,
   modelId: string,
-  visibility: 'public' | 'private',
+  visibility: ModelVisibility,
+  auth?: AuthCredentials,
 ) {
-  const token = await getAuthToken(page);
+  const token = auth
+    ? await getTokenForUser(page, auth.email, auth.password)
+    : await getAuthToken(page);
   const res = await page.request.patch(`${API_URL}/v2/models/${modelId}`, {
     data: { visibility },
     headers: { Authorization: `Bearer ${token}` },
@@ -453,8 +468,15 @@ export async function configureRuntimeServerForTests(page: Page) {
   }
 }
 
-export async function setPrototypeCodeViaApi(page: Page, prototypeId: string, code: string) {
-  const token = await getAuthToken(page);
+export async function setPrototypeCodeViaApi(
+  page: Page,
+  prototypeId: string,
+  code: string,
+  auth?: AuthCredentials,
+) {
+  const token = auth
+    ? await getTokenForUser(page, auth.email, auth.password)
+    : await getAuthToken(page);
   const res = await page.request.patch(`${API_URL}/v2/prototypes/${prototypeId}`, {
     data: { code },
     headers: { Authorization: `Bearer ${token}` },
@@ -474,9 +496,13 @@ export async function goToPrototypeCodeTab(page: Page, modelId: string, prototyp
   );
   await page.goto(`/model/${modelId}/library/prototype/${prototypeId}/code`);
   await responsePromise;
-  await expect(page.locator('[data-id="runtime-control-panel"]').first()).toBeVisible({
-    timeout: 15000,
-  });
+  await expect(page).toHaveURL(
+    new RegExp(`/model/${modelId}/library/prototype/${prototypeId}/code`),
+  );
+  // Prefer the code editor itself; runtime panel may be collapsed or delayed.
+  const monaco = page.locator('.monaco-editor').first();
+  const runtimePanel = page.locator('[data-id="runtime-control-panel"]').first();
+  await expect(monaco.or(runtimePanel)).toBeVisible({ timeout: 30000 });
 }
 
 export async function isRuntimeServerReachable(page: Page): Promise<boolean> {
@@ -877,10 +903,23 @@ export async function setSiteConfigJson(page: Page, key: string, value: unknown)
   }
 }
 
-export async function setModelReleasedViaApi(page: Page, modelId: string) {
-  const token = await getAuthToken(page);
+export async function setModelReleasedViaApi(
+  page: Page,
+  modelId: string,
+  opts?: { visibility?: ModelVisibility },
+  auth?: AuthCredentials,
+) {
+  const token = auth
+    ? await getTokenForUser(page, auth.email, auth.password)
+    : await getAuthToken(page);
+  const data: { state: string; visibility?: ModelVisibility } = { state: 'released' };
+  if (opts?.visibility !== undefined) {
+    data.visibility = opts.visibility;
+  } else {
+    data.visibility = 'public';
+  }
   const res = await page.request.patch(`${API_URL}/v2/models/${modelId}`, {
-    data: { visibility: 'public', state: 'released' },
+    data,
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok()) {
@@ -892,6 +931,201 @@ export async function createPublicReleasedModelViaApi(page: Page, name: string):
   const modelId = await createTestModelViaApi(page, name, 'public');
   await setModelReleasedViaApi(page, modelId);
   return modelId;
+}
+
+export async function createEditableReleasedModelViaApi(
+  page: Page,
+  name: string,
+  auth?: AuthCredentials,
+): Promise<string> {
+  const modelId = await createTestModelViaApi(page, name, 'editable', auth);
+  await setModelReleasedViaApi(page, modelId, { visibility: 'editable' }, auth);
+  return modelId;
+}
+
+export async function getModelViaApi(
+  page: Page,
+  modelId: string,
+  auth?: AuthCredentials,
+): Promise<{ id: string; visibility?: string; state?: string; model_template_id?: string }> {
+  const token = auth
+    ? await getTokenForUser(page, auth.email, auth.password)
+    : await getAuthToken(page);
+  const res = await page.request.get(`${API_URL}/v2/models/${modelId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to get model: ${res.status()} ${await res.text()}`);
+  }
+  const data = await res.json();
+  return {
+    id: String(data?.id || data?._id || modelId),
+    visibility: data?.visibility,
+    state: data?.state,
+    model_template_id: data?.model_template_id,
+  };
+}
+
+export async function createModelWithTemplateViaApi(
+  page: Page,
+  name: string,
+  modelTemplateId: string,
+  auth?: AuthCredentials,
+): Promise<string> {
+  const token = auth
+    ? await getTokenForUser(page, auth.email, auth.password)
+    : await getAuthToken(page);
+  const res = await page.request.post(`${API_URL}/v2/models`, {
+    data: {
+      name,
+      main_api: 'Vehicle',
+      model_template_id: modelTemplateId,
+    },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to create model with template: ${res.status()} ${await res.text()}`);
+  }
+  const data = await res.json();
+  const modelId = typeof data === 'string' ? data : data?.id || data?._id;
+  if (!modelId) {
+    throw new Error(`Create model response missing id: ${JSON.stringify(data)}`);
+  }
+  return String(modelId);
+}
+
+export type ModelTemplatePayload = {
+  name: string;
+  visibility?: ModelVisibility;
+  is_default?: boolean;
+  description?: string;
+  config?: unknown;
+};
+
+export async function createModelTemplateViaApi(
+  page: Page,
+  payload: ModelTemplatePayload,
+): Promise<string> {
+  const token = await getAuthToken(page);
+  const res = await page.request.post(`${API_URL}/v2/system/model-template`, {
+    data: payload,
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to create model template: ${res.status()} ${await res.text()}`);
+  }
+  const data = await res.json();
+  const templateId = data?.id || data?._id;
+  if (!templateId) {
+    throw new Error(`Create model template response missing id: ${JSON.stringify(data)}`);
+  }
+  return String(templateId);
+}
+
+export async function getModelTemplateViaApi(
+  page: Page,
+  templateId: string,
+): Promise<{ id: string; visibility?: string; is_default?: boolean; name?: string }> {
+  const token = await getAuthToken(page);
+  const res = await page.request.get(`${API_URL}/v2/system/model-template/${templateId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to get model template: ${res.status()} ${await res.text()}`);
+  }
+  const data = await res.json();
+  return {
+    id: String(data?.id || data?._id || templateId),
+    visibility: data?.visibility,
+    is_default: data?.is_default,
+    name: data?.name,
+  };
+}
+
+export async function deleteModelTemplateViaApi(page: Page, templateId: string): Promise<void> {
+  const token = await getAuthToken(page);
+  const res = await page.request.delete(`${API_URL}/v2/system/model-template/${templateId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok() && res.status() !== 404) {
+    throw new Error(`Failed to delete model template: ${res.status()} ${await res.text()}`);
+  }
+}
+
+export async function createTestPrototypeViaApi(
+  page: Page,
+  opts: { name: string; modelId: string; auth?: AuthCredentials },
+): Promise<{ prototypeId: string; protoName: string }> {
+  const token = opts.auth
+    ? await getTokenForUser(page, opts.auth.email, opts.auth.password)
+    : await getAuthToken(page);
+  const res = await page.request.post(`${API_URL}/v2/prototypes`, {
+    data: {
+      name: opts.name,
+      model_id: opts.modelId,
+    },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to create prototype: ${res.status()} ${await res.text()}`);
+  }
+  const data = await res.json();
+  // createPrototype sends the full document (toJSON → id), or occasionally a bare id string.
+  const rawId =
+    typeof data === 'string'
+      ? data
+      : data?.id || data?._id || data?.prototype_id;
+  const prototypeId =
+    typeof rawId === 'object' && rawId !== null
+      ? String((rawId as { id?: string; _id?: string }).id || (rawId as { _id?: string })._id || '')
+      : String(rawId || '');
+  if (!prototypeId || prototypeId === '[object Object]') {
+    throw new Error(`Create prototype response missing id: ${JSON.stringify(data)}`);
+  }
+  return { prototypeId, protoName: opts.name };
+}
+
+export async function getPrototypeViaApi(
+  page: Page,
+  prototypeId: string,
+  auth?: AuthCredentials,
+): Promise<{ id: string; code?: string; name?: string }> {
+  const token = auth
+    ? await getTokenForUser(page, auth.email, auth.password)
+    : await getAuthToken(page);
+  const res = await page.request.get(`${API_URL}/v2/prototypes/${prototypeId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to get prototype: ${res.status()} ${await res.text()}`);
+  }
+  const data = await res.json();
+  return {
+    id: String(data?.id || data?._id || prototypeId),
+    code: data?.code,
+    name: data?.name,
+  };
+}
+
+export function getPrototypeLibraryCreateWrapper(page: Page): Locator {
+  return page
+    .locator('[data-id="btn-create-new-prototype"]')
+    .first()
+    .locator('xpath=ancestor::div[contains(@class,"h-fit")][1]');
+}
+
+export async function assertPrototypeLibraryCreateEnabled(page: Page, enabled: boolean) {
+  await expect(page.locator('[data-id="btn-create-new-prototype"]').first()).toBeVisible({
+    timeout: 15000,
+  });
+  const wrapper = getPrototypeLibraryCreateWrapper(page);
+  if (enabled) {
+    await expect(wrapper).toHaveClass(/pointer-events-auto/);
+    await expect(wrapper).not.toHaveClass(/pointer-events-none/);
+  } else {
+    await expect(wrapper).toHaveClass(/pointer-events-none/);
+    await expect(wrapper).toHaveClass(/opacity-50/);
+  }
 }
 
 export async function goToVehicleApiTab(page: Page, modelId: string) {

@@ -238,7 +238,7 @@ In development, the backend and frontend run as separate services with a proxy c
                                            │
         ┌──────────────────────────────────┘
         │
-        │ Proxies /v2, /static, /images, /d, /plugin, /builtin-widgets, /vss
+        │ Proxies /v2, /static, /images, /d, /plugin, /builtin-widgets, /vss, /runtime-preview
         │ to Backend
         │
         │ Proxies all other requests to Frontend
@@ -248,7 +248,7 @@ In development, the backend and frontend run as separate services with a proxy c
 
 ### Request Flow
 
-1. **API Requests** (`/v2`, `/static`, `/images`, `/d`, `/plugin`, `/builtin-widgets`, `/vss`):
+1. **API Requests** (`/v2`, `/static`, `/images`, `/d`, `/plugin`, `/builtin-widgets`, `/vss`, `/runtime-preview`):
    - Frontend proxies these to Backend (port 3200)
    - Backend handles the request and returns the response
 

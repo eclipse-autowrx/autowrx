@@ -34,6 +34,7 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       GENAI_URL: ${GENAI_URL:-}
       KIT_SERVER_URL: ${KIT_SERVER_URL:-}
+      RUNTIME_SERVICE_MAPPINGS: ${RUNTIME_SERVICE_MAPPINGS:-}
     volumes:
       - '${UPLOAD_PATH_HOST:-./data/upload}:/usr/src/playground-be/static/uploads'
       - '${PLUGIN_PATH_HOST:-./data/plugin}:/usr/src/playground-be/static/plugin'

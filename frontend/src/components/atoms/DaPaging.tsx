@@ -7,7 +7,11 @@
 // SPDX-License-Identifier: MIT
 
 import React from 'react'
-import { ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons'
+import {
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    DotsHorizontalIcon,
+} from '@radix-ui/react-icons'
 import { cn } from '@/lib/utils'
 import { DaText } from './DaText'
 
@@ -106,6 +110,24 @@ const DaPaginationNext = ({
 )
 DaPaginationNext.displayName = 'PaginationNext'
 
+const DaPaginationEllipsis = ({
+    className,
+    ...props
+}: React.ComponentProps<'span'>) => (
+    <span
+        aria-hidden
+        className={cn(
+            'flex items-center justify-center px-2 py-1 text-slate-500',
+            className,
+        )}
+        {...props}
+    >
+        <DotsHorizontalIcon className="h-4 w-4" />
+        <span className="sr-only">More pages</span>
+    </span>
+)
+DaPaginationEllipsis.displayName = 'PaginationEllipsis'
+
 export {
     DaPaging,
     DaPaginationContent,
@@ -113,4 +135,5 @@ export {
     DaPaginationLink,
     DaPaginationPrevious,
     DaPaginationNext,
+    DaPaginationEllipsis,
 }

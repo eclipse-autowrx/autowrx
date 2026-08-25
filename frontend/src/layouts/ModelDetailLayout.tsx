@@ -13,7 +13,7 @@ import { Model } from '@/types/model.type'
 import { matchRoutes, Outlet, useLocation } from 'react-router-dom'
 import { Skeleton } from '@/components/atoms/skeleton'
 import { Spinner } from '@/components/atoms/spinner'
-import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
+import { useModelPrototypeTotal } from '@/hooks/usePrototypeQueries'
 import useLastAccessedModel from '@/hooks/useLastAccessedModel'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { Button } from '@/components/atoms/button'
@@ -54,7 +54,7 @@ const ModelDetailLayout = () => {
     state.setActiveModel,
   ])
   const location = useLocation()
-  const { data: fetchedPrototypes } = useListModelPrototypes(
+  const { data: prototypeCount } = useModelPrototypeTotal(
     model ? model.id : '',
   )
   const [activeModelApis] = useModelStore((state) => [state.activeModelApis])
@@ -184,7 +184,7 @@ const ModelDetailLayout = () => {
   const isLoading = isModelLoading || !model
   const canManageModelUI = (isModelOwner || hasWritePermission) && !!allowNonAdminAddonConfig
 
-  const numberOfPrototypes = fetchedPrototypes?.length || 0
+  const numberOfPrototypes = prototypeCount ?? 0
   const numberOfApis = activeModelApis?.length || 0
 
   // Count API sets: 1 for COVESA + number of custom_api_sets

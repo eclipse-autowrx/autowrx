@@ -58,8 +58,15 @@ const envVarsSchema = Joi.object()
     OPENAI_API_KEY: Joi.string().description('OpenAI API key'),
     OPENAI_ENDPOINT_URL: Joi.string().description('OpenAI endpoint url'),
     STRICT_AUTH: Joi.boolean().description('Strict auth'),
-    // GenAI service
-    GENAI_URL: Joi.string().description('GenAI service url'),
+    // GenAI service (deprecated sidecar proxy target)
+    GENAI_URL: Joi.string().description('Deprecated GenAI proxy sidecar URL; use EXTERNAL_GENAI_* instead'),
+    EXTERNAL_GENAI_URL: Joi.string().uri().description('External GenAI service base URL'),
+    EXTERNAL_GENAI_DEVICE_TOKEN: Joi.string().description('Device token for external GenAI service authentication'),
+    EXTERNAL_SYNC_DEVICE_TOKEN: Joi.string().allow('').description('Device token for external data sync authentication'),
+    EXTERNAL_SYNC_MODEL_URL: Joi.string().uri().description('Base URL for external model/data sync API'),
+    EXTERNAL_SYNC_USE_PROXY: Joi.boolean()
+      .default(false)
+      .description('When true, outbound sync uses HTTP_PROXY/HTTPS_PROXY; default false for docker-internal targets like genai'),
     // Kit server
     KIT_SERVER_URL: Joi.string().description('Kit server url'),
     // Admin emails
@@ -201,6 +208,19 @@ const config = {
     },
     genAI: {
       url: envVars.GENAI_URL,
+      external: {
+        urls: {
+          default: envVars.EXTERNAL_GENAI_URL,
+        },
+        deviceToken: envVars.EXTERNAL_GENAI_DEVICE_TOKEN,
+      },
+    },
+    sync: {
+      external: {
+        deviceToken: envVars.EXTERNAL_SYNC_DEVICE_TOKEN,
+        modelUrl: envVars.EXTERNAL_SYNC_MODEL_URL,
+        useProxy: envVars.EXTERNAL_SYNC_USE_PROXY,
+      },
     },
     kitServer: {
       url: envVars.KIT_SERVER_URL,
