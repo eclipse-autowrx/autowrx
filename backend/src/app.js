@@ -371,16 +371,12 @@ app.use(
       proxyReq: (proxyReq) => {
         stripKitUpstreamCredentials(proxyReq);
       },
-      proxyReqWs: (proxyReq, req, socket) => {
+      proxyReqWs: (proxyReq) => {
+        // Only strip credentials here. Do NOT re-resolve the runtime name:
+        // pathRewrite has already rewritten req.url to the kit path (e.g. /socket.io/?…),
+        // so runtimeNameFromReq would return null and destroy every valid upgrade.
+        // Fail-closed name/mapping checks already ran in pathFilter on the original URL.
         stripKitUpstreamCredentials(proxyReq);
-        // Belt-and-suspenders: never keep an upgrade alive without a resolved kit target
-        if (!resolvePreviewProxyTarget(req)) {
-          try {
-            socket.destroy();
-          } catch {
-            // ignore
-          }
-        }
       },
       error: (err, req, proxyRes) => {
         sendPreviewUnavailable(proxyRes, 502, {
