@@ -239,32 +239,13 @@ function resolveRuntimeTarget(runtimeName) {
   return null;
 }
 
-const RUNTIME_NAME_RE = /^[a-zA-Z0-9-]+$/;
-
-/**
- * Resolve runtime name from an HTTP or WebSocket upgrade request.
- * Express sets originalUrl; raw upgrade events do not — fall back to req.url.
- */
-function runtimeNameFromReq(req) {
-  const original = String(req.originalUrl || '').split('?')[0];
-  const fromOriginal = original.match(/^\/runtime-preview\/([^/]+)/);
-  if (fromOriginal) return fromOriginal[1];
-
-  const urlPath = String(req.url || '').split('?')[0];
-
-  // Upgrade path: no Express, so originalUrl is empty — match the full prefix on req.url
-  if (!original) {
-    const fromUrl = urlPath.match(/^\/runtime-preview\/([^/]+)/);
-    return fromUrl ? fromUrl[1] : null;
-  }
-
-  // After Express strip, url is /:name/...; only trust when originalUrl is under the mount
-  if (original === '/runtime-preview' || original.startsWith('/runtime-preview/')) {
-    const match = urlPath.match(/^\/([^/]+)/);
-    return match ? match[1] : null;
-  }
-  return null;
-}
+const {
+  RUNTIME_NAME_RE,
+  PREVIEW_ACCESS_COOKIE,
+  runtimeNameFromReq,
+  rewriteRuntimePreviewPath,
+  stripKitUpstreamCredentials,
+} = require('./utils/runtimePreviewProxy');
 
 function resolvePreviewProxyTarget(req) {
   const runtimeName = runtimeNameFromReq(req);
@@ -284,14 +265,14 @@ const sendPreviewUnavailable = (res, status, payload) => {
  * iframe.src cannot set Authorization. Accept access_token query (same pattern as
  * socket.io) and/or a Path=/runtime-preview cookie set on the first preview load,
  * promote to Bearer for auth(), then strip the query so it is not forwarded to the kit.
+ * Authorization / preview cookie are also stripped on the upstream proxy request (see on.proxyReq).
  */
 function promotePreviewAccessToken(req, res, next) {
-  const cookieName = 'runtime_preview_at';
   let token;
   if (req.query && typeof req.query.access_token === 'string' && req.query.access_token) {
     token = req.query.access_token;
-  } else if (req.cookies && typeof req.cookies[cookieName] === 'string') {
-    token = req.cookies[cookieName];
+  } else if (req.cookies && typeof req.cookies[PREVIEW_ACCESS_COOKIE] === 'string') {
+    token = req.cookies[PREVIEW_ACCESS_COOKIE];
   }
 
   if (!req.headers.authorization && token) {
@@ -300,7 +281,7 @@ function promotePreviewAccessToken(req, res, next) {
 
   // Persist for relative subresource requests under /runtime-preview (iframe cannot set headers)
   if (req.query && typeof req.query.access_token === 'string' && req.query.access_token) {
-    res.cookie(cookieName, req.query.access_token, {
+    res.cookie(PREVIEW_ACCESS_COOKIE, req.query.access_token, {
       httpOnly: true,
       sameSite: 'lax',
       path: '/runtime-preview',
@@ -385,17 +366,13 @@ app.use(
     timeout: 3000,
     proxyTimeout: 3000,
     router: (req) => resolvePreviewProxyTarget(req) || undefined,
-    pathRewrite: (_proxyPath, req) => {
-      const runtimeName = runtimeNameFromReq(req);
-      if (!runtimeName) return '/';
-      const full = (req.originalUrl || req.url || '').split('?')[0];
-      if (full.startsWith('/runtime-preview/')) {
-        return full.replace(new RegExp(`^/runtime-preview/${runtimeName}`), '') || '/';
-      }
-      return full.replace(new RegExp(`^/${runtimeName}`), '') || '/';
-    },
+    pathRewrite: (_proxyPath, req) => rewriteRuntimePreviewPath(req),
     on: {
-      proxyReqWs: (_proxyReq, req, socket) => {
+      proxyReq: (proxyReq) => {
+        stripKitUpstreamCredentials(proxyReq);
+      },
+      proxyReqWs: (proxyReq, req, socket) => {
+        stripKitUpstreamCredentials(proxyReq);
         // Belt-and-suspenders: never keep an upgrade alive without a resolved kit target
         if (!resolvePreviewProxyTarget(req)) {
           try {

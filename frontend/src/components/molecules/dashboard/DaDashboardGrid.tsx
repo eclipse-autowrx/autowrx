@@ -114,19 +114,23 @@ const WidgetItem: FC<PropsWidgetItem> = ({
   }, [vssTree, iframeLoaded])
 
   const accessToken = useAuthStore((state) => state.access?.token)
+  const isRuntimePreviewWidget = !!widgetConfig?.url?.startsWith(
+    '/builtin-widgets/runtime-preview',
+  )
 
-  // Send active runtime name + access token (for /runtime-preview iframe auth on JWT)
+  // Access token must never be postMessage'd to arbitrary/plugin/external widgets.
+  // Only the same-origin builtin runtime-preview receives runtime-info (+ token).
   useEffect(() => {
-    if (!iframeLoaded) return
+    if (!iframeLoaded || !isRuntimePreviewWidget) return
     frameElement?.current?.contentWindow?.postMessage(
       JSON.stringify({
         cmd: 'runtime-info',
         runtimeName: activeRuntimeName ?? null,
         accessToken: accessToken ?? null,
       }),
-      '*',
+      window.location.origin,
     )
-  }, [activeRuntimeName, accessToken, iframeLoaded])
+  }, [activeRuntimeName, accessToken, iframeLoaded, isRuntimePreviewWidget])
 
   // Send app running state to widget whenever it changes
   useEffect(() => {
