@@ -361,11 +361,12 @@ const PrototypeTabCode: FC = () => {
                           setShowDiff(true)
                         }
                         setCode(newCode)
-                        // Immediately advance savedCodeRef so that the next generation
-                        // (whether via this dialog or via plugin) correctly diffs against
-                        // this result rather than the stale pre-AI code.
-                        savedCodeRef.current = newCode
                         setIsOpenGenAI(false)
+                        // Persist immediately. Do not advance savedCodeRef here — that would
+                        // mark the editor "clean" and skip auto/blur save, leaving AI code
+                        // unsaved and vulnerable to being clobbered by a store refetch.
+                        // saveCodeToDb advances savedCodeRef only after the API succeeds.
+                        void saveCodeToDb(newCode)
                       }}
                     />
                   </Suspense>
