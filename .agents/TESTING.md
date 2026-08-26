@@ -80,6 +80,14 @@ npx playwright test tests/model-editable-visibility.spec.ts
 | `tests/model-editable-visibility.spec.ts` | Editable model visibility: non-owner prototype create, guest home shows editable+public, template inheritance |
 | `tests/layout.spec.ts` | Layout, responsive, visual snapshots |
 
+## Environment guard (fail-closed)
+
+Every run checks the target environment **before any test executes** (`e2e-env-guard.ts` global setup): it fetches the public site-config key `E2E_TEST_ENABLED` from `API_URL` and **aborts the whole run unless the value is exactly `true`**. Instances that have not opted in — production, shared staging, fresh deployments — are un-testable by default.
+
+- **Disposable test stacks**: after seeding the admin, set the key once — `PATCH /v2/site-config/key/E2E_TEST_ENABLED {"value": true}` — and the guard passes
+- **Production-grade instances**: never set the key. To run suites in a maintenance window, set `E2E_ALLOW_ANY_ENV=1` for that run only — the suites mutate site-config (homepage/nav) and create `E2E_*` data, and their restore hooks do not run if the run is killed mid-flight
+- **Non-mutating subset** (auth, image-fallback, read-only flows) is the only category ever defensible outside a window
+
 ## Environment
 
 Copy `.env.example` to `.env` and fill in your values:

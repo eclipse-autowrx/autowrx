@@ -5,6 +5,7 @@ dotenvConfig({ path: resolve(__dirname, '.env') });
 
 export default defineConfig({
   testDir: './tests',
+  globalSetup: resolve(__dirname, 'e2e-env-guard.ts'),
   timeout: 60000,
   expect: { timeout: 8000 },
   fullyParallel: false,

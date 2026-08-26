@@ -56,6 +56,7 @@ cd frontend && npm run lint
 - Distinguish: assertion failure (your code) vs infrastructure (DB down, port in use, missing `.env`) vs flake (re-run once to confirm).
 
 ## Guardrails
+- **Environment guard is fail-closed**: the suites abort unless the target sets site-config `E2E_TEST_ENABLED=true`. Never set that key on production or shared instances. For a maintenance-window run on production, `E2E_ALLOW_ANY_ENV=1` is the explicit override — confirm the window first. Treat any target you didn't bootstrap yourself as production until proven otherwise (hostname is NOT a signal: production often runs on localhost too).
 - Don't mark done if tests fail. If you can't run a suite (no DB, no browser, no env), say so explicitly and report what you did run.
 - Don't disable lint/test rules silently to make green — fix the code or surface the conflict.
 - Don't run destructive commands (`rm -rf`, `down.sh` on prod) to "fix" a test env.
