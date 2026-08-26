@@ -509,7 +509,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const registerClient = () => {
       const user = currentUserRef.current
       socketioRef.current?.emit('register_client', {
-        username: user?.name || user?.email || 'test',
+        // Name/id only — Kit-Manager exposes CLIENTS via public GET /listAllClient
+        username: user?.name || 'test',
         user_id: user?.id || 'test',
         domain: 'domain',
       })
@@ -522,7 +523,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     useEffect(() => {
       if (!socketioRef.current?.connected) return
       registerClient()
-    }, [currentUser?.id, currentUser?.name, currentUser?.email])
+    }, [currentUser?.id, currentUser?.name])
 
     const requestKitList = (options?: { resetLoaded?: boolean }) => {
       const sock = socketioRef.current

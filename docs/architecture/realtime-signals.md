@@ -47,11 +47,11 @@ flowchart LR
   (`https://kit.digitalauto.tech`), overridable by a user's `customKitServer`
   (localStorage). Extra options come from `RUNTIME_SERVER_CONFIG`.
 - **Connect / register** — on connect it emits `register_client` `{ username,
-  user_id, domain }` using the signed-in user's display name (then email)
-  and id when available, falling back to `'test'`/`'test'`/`'domain'`. It
-  re-emits if the profile arrives after the socket is already connected, and
-  emits `unregister_client` on cleanup, then `messageToKit { cmd:
-  'list-all-kits' }` to discover kits.
+  user_id, domain }` using the signed-in user's display name and id when
+  available (no email — Kit-Manager lists clients publicly), falling back to
+  `'test'`/`'test'`/`'domain'`. It re-emits if the profile arrives after the
+  socket is already connected, and emits `unregister_client` on cleanup, then
+  `messageToKit { cmd: 'list-all-kits' }` to discover kits.
 
 ### Protocol (all multiplexed over `messageToKit` / `messageToKit-kitReply`)
 

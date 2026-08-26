@@ -361,8 +361,9 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const SIGNAL_CONFIG_PATH = config.runtime?.signalConfigPath || '/app/remote_access/signal-config.json'
   const VSS_PATH = config.runtime?.vssPath || '/app/remote_access/vss.json'
   const KIT_SERVER_URL = runtimeServerUrl || config.runtime?.url || 'https://kit.digitalauto.tech'
+  // Name/id only — Kit-Manager exposes CLIENTS via public GET /listAllClient
   const kitRegisterPayload = {
-    username: currentUser?.name || currentUser?.email || 'plugin',
+    username: currentUser?.name || 'plugin',
     user_id: currentUser?.id || 'plugin',
     domain: 'domain',
   }
