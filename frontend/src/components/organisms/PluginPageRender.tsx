@@ -30,6 +30,8 @@ import useRuntimeStore from '@/stores/runtimeStore'
 import { configManagementService } from '@/services/configManagement.service'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import useCanEditPrototype from '@/hooks/useCanEditPrototype'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { parseReadFileReply, prepareKitFileContentForWrite } from '@/utils/kitReply'
 import { PERMISSIONS } from '@/data/permission'
 import type { PluginAPI } from '@/types/plugin.types'
 import type { Model, Prototype } from '@/types/model.type'
@@ -75,6 +77,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
 
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
   const canEditPrototype = useCanEditPrototype(data?.prototype)
+  const { data: currentUser } = useSelfProfileQuery()
 
   // Access runtime store for API values
   const { apisValue, setActiveApis } = useRuntimeStore()
@@ -358,6 +361,12 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const SIGNAL_CONFIG_PATH = config.runtime?.signalConfigPath || '/app/remote_access/signal-config.json'
   const VSS_PATH = config.runtime?.vssPath || '/app/remote_access/vss.json'
   const KIT_SERVER_URL = runtimeServerUrl || config.runtime?.url || 'https://kit.digitalauto.tech'
+  // Name/id only — Kit-Manager exposes CLIENTS via public GET /listAllClient
+  const kitRegisterPayload = {
+    username: currentUser?.name || 'plugin',
+    user_id: currentUser?.id || 'plugin',
+    domain: 'domain',
+  }
   const handleFetchSignalMapping = useCallback((kitName: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const socket = io(KIT_SERVER_URL)
@@ -376,14 +385,27 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
       }, 10000)
 
       socket.on('connect', () => {
-        socket.emit('register_client', { username: 'plugin', user_id: 'plugin', domain: 'domain' })
-        socket.emit('messageToKit', { cmd: 'read-file', to_kit_id: kitId, data: SIGNAL_CONFIG_PATH })
+        socket.emit('register_client', kitRegisterPayload)
+        socket.emit('messageToKit', {
+          cmd: 'read-file',
+          to_kit_id: kitId,
+          data: '',
+          file_path: SIGNAL_CONFIG_PATH,
+          prototype: { name: data?.prototype?.name || 'no-name', id: prototype_id || 'no-id' },
+          username: currentUser?.name || 'no',
+        })
       })
 
       socket.on('messageToKit-kitReply', (payload: any) => {
         if (payload?.cmd === 'read-file') {
+          const reply = parseReadFileReply(payload)
+          if (!reply) return
           clearTimeout(timeout)
-          finish(() => resolve(payload.data?.content || ''))
+          if (reply.hasError) {
+            finish(() => reject(new Error(reply.error || 'Read file failed')))
+            return
+          }
+          finish(() => resolve(reply.content))
         }
       })
 
@@ -392,7 +414,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
         finish(() => reject(new Error(`Connection failed: ${err.message}`)))
       })
     })
-  }, [KIT_SERVER_URL])
+  }, [KIT_SERVER_URL, data?.prototype?.name, prototype_id, currentUser?.id, currentUser?.email, currentUser?.name])
 
   const handleFetchVss = useCallback((kitName: string): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -412,14 +434,27 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
       }, 10000)
 
       socket.on('connect', () => {
-        socket.emit('register_client', { username: 'plugin', user_id: 'plugin', domain: 'domain' })
-        socket.emit('messageToKit', { cmd: 'read-file', to_kit_id: kitId, data: VSS_PATH })
+        socket.emit('register_client', kitRegisterPayload)
+        socket.emit('messageToKit', {
+          cmd: 'read-file',
+          to_kit_id: kitId,
+          data: '',
+          file_path: VSS_PATH,
+          prototype: { name: data?.prototype?.name || 'no-name', id: prototype_id || 'no-id' },
+          username: currentUser?.name || 'no',
+        })
       })
 
       socket.on('messageToKit-kitReply', (payload: any) => {
         if (payload?.cmd === 'read-file') {
+          const reply = parseReadFileReply(payload)
+          if (!reply) return
           clearTimeout(timeout)
-          finish(() => resolve(payload.data?.content || ''))
+          if (reply.hasError) {
+            finish(() => reject(new Error(reply.error || 'Read file failed')))
+            return
+          }
+          finish(() => resolve(reply.content))
         }
       })
 
@@ -428,7 +463,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
         finish(() => reject(new Error(`Connection failed: ${err.message}`)))
       })
     })
-  }, [KIT_SERVER_URL])
+  }, [KIT_SERVER_URL, data?.prototype?.name, prototype_id, currentUser?.id, currentUser?.email, currentUser?.name])
 
   const handleReplaceVss = useCallback((kitName: string, vssContent: string): Promise<void> => {
     return new Promise((resolve, reject) => {
@@ -444,11 +479,15 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
       }
 
       socket.on('connect', () => {
-        socket.emit('register_client', { username: 'plugin', user_id: 'plugin', domain: 'domain' })
+        socket.emit('register_client', kitRegisterPayload)
         socket.emit('messageToKit', {
           cmd: 'write-file',
           to_kit_id: kitId,
-          data: { path: VSS_PATH, content: vssContent },
+          prototype: { name: data?.prototype?.name || 'no-name', id: prototype_id || 'no-id' },
+          username: currentUser?.name || 'no',
+          file_path: VSS_PATH,
+          file_content: prepareKitFileContentForWrite(vssContent),
+          data: '',
         })
         setTimeout(() => {
           socket.emit('messageToKit', {
@@ -464,7 +503,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
         finish(() => reject(new Error(`Connection failed: ${err.message}`)))
       })
     })
-  }, [KIT_SERVER_URL])
+  }, [KIT_SERVER_URL, data?.prototype?.name, prototype_id, currentUser?.id, currentUser?.email, currentUser?.name])
 
   const handleReplaceSignalMapping = useCallback(async (kitName: string, fileContent: string): Promise<void> => {
     if (!model_id) throw new Error('No model available for VSS upload')
@@ -483,13 +522,17 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
 
       socket.on('connect', async () => {
         try {
-          socket.emit('register_client', { username: 'plugin', user_id: 'plugin', domain: 'domain' })
+          socket.emit('register_client', kitRegisterPayload)
 
           // 1. Write signal mapping
           socket.emit('messageToKit', {
             cmd: 'write-file',
             to_kit_id: kitId,
-            data: { path: SIGNAL_CONFIG_PATH, content: fileContent },
+            prototype: { name: data?.prototype?.name || 'no-name', id: prototype_id || 'no-id' },
+            username: currentUser?.name || 'no',
+            file_path: SIGNAL_CONFIG_PATH,
+            file_content: prepareKitFileContentForWrite(fileContent),
+            data: '',
           })
 
           // 2. Fetch current model's VSS and write it
@@ -499,7 +542,11 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
           socket.emit('messageToKit', {
             cmd: 'write-file',
             to_kit_id: kitId,
-            data: { path: VSS_PATH, content: vssJson },
+            prototype: { name: data?.prototype?.name || 'no-name', id: prototype_id || 'no-id' },
+            username: currentUser?.name || 'no',
+            file_path: VSS_PATH,
+            file_content: prepareKitFileContentForWrite(vssJson),
+            data: '',
           })
 
           // 3. Trigger vehicle model rebuild after 3s (mirrors original implementation)
@@ -520,7 +567,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
         finish(() => reject(new Error(`Connection failed: ${err.message}`)))
       })
     })
-  }, [model_id, KIT_SERVER_URL])
+  }, [model_id, KIT_SERVER_URL, data?.prototype?.name, prototype_id, currentUser?.id, currentUser?.email, currentUser?.name])
 
   const handleSetActiveTab = useCallback(
     (targetTab: string, targetPluginSlug?: string) => {

@@ -47,9 +47,11 @@ flowchart LR
   (`https://kit.digitalauto.tech`), overridable by a user's `customKitServer`
   (localStorage). Extra options come from `RUNTIME_SERVER_CONFIG`.
 - **Connect / register** — on connect it emits `register_client` `{ username,
-  user_id, domain }` (currently with placeholder values `'test'`/`'test'`/
-  `'domain'` in the code, not live user data; and `unregister_client` on
-  cleanup), then `messageToKit { cmd: 'list-all-kits' }` to discover kits.
+  user_id, domain }` using the signed-in user's display name and id when
+  available (no email — Kit-Manager lists clients publicly), falling back to
+  `'test'`/`'test'`/`'domain'`. It re-emits if the profile arrives after the
+  socket is already connected, and emits `unregister_client` on cleanup, then
+  `messageToKit { cmd: 'list-all-kits' }` to discover kits.
 
 ### Protocol (all multiplexed over `messageToKit` / `messageToKit-kitReply`)
 
@@ -65,15 +67,77 @@ flowchart LR
 | S→C | `messageToKit-kitReply` → `apis-value` | **the live signal stream** |
 | S→C | `messageToKit-kitReply` → `trace_vars`, run/deploy logs, exit codes | execution feedback |
 
+**`read-file` / `write-file` payload shape** (all fields required on emit):
+
+```json
+{
+  "cmd": "read-file",
+  "to_kit_id": "<kit-id>",
+  "data": "",
+  "file_path": "/app/remote_access/signal-config.json",
+  "prototype": { "name": "<prototype-name>", "id": "<prototype-id>" },
+  "username": "<user-name>"
+}
+```
+
+```json
+{
+  "cmd": "write-file",
+  "to_kit_id": "<kit-id>",
+  "prototype": { "name": "<prototype-name>", "id": "<prototype-id>" },
+  "username": "<user-name>",
+  "file_path": "/app/remote_access/signal-config.json",
+  "file_content": "<file-body>",
+  "data": ""
+}
+```
+
+Use `"no-name"` / `"no-id"` / `"no"` as fallbacks when prototype or user context is unavailable.
+
+**`read-file` reply shape** (kit → client via `messageToKit-kitReply`):
+
+```json
+{
+  "cmd": "read-file",
+  "kit_id": "<kit-id>",
+  "request_from": "<client-socket-id>",
+  "result": "<file-body>",
+  "has_error": false,
+  "file_path": "/app/remote_access/signal-config.json"
+}
+```
+
+When `has_error` is true, `result` contains the error message. Older runtimes may nest
+content under `data: { path, content }` — both shapes are supported by the frontend parser.
+
 Commands are exposed to the rest of the app through a `useImperativeHandle` ref
 (`runApp`, `stopApp`, `deploy`, `writeSignalsValue`, `builldVehicleModel`, …).
 
 ### Subscription lifecycle
 
-An effect emits `subscribe_apis { to_kit_id, apis: usedAPIs }` whenever the
-active kit / used APIs / a 30 s ticker change, and `unsubscribe_apis` on unmount.
-So the browser subscribes **only to the signals a prototype actually references**,
-and the kit streams back `apis-value` packets.
+An effect emits `subscribe_apis` whenever the active kit, used APIs, user context,
+or ticker changes:
+
+```json
+{
+  "cmd": "subscribe_apis",
+  "to_kit_id": "<kit-id>",
+  "apis": ["Vehicle.Speed", "..."],
+  "username": "<user-name>",
+  "user_id": "<user-id>",
+  "subscribed_at": 1710000000000
+}
+```
+
+`apis` may be an empty array (e.g. Manage Hardware Kit dialog with no signal
+subscriptions). `unsubscribe_apis` is sent when the active kit changes or on unmount.
+
+**Hardware Kit mode** (`forceKitId` set): the ticker runs every 2 s (instead of 30 s)
+and polls `list-all-kits` (direct socket event) on each tick to keep `is_online`
+fresh for the connection status badge. It also polls `get-runtime-info` only for
+the selected kit (`forceKitId`) on each tick, plus once when the kit list loads
+and when user context becomes available. Prototype pages without `forceKitId` keep
+the 30 s subscribe heartbeat only.
 
 ---
 
