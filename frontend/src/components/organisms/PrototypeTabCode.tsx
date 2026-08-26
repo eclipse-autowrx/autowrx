@@ -127,6 +127,8 @@ const PrototypeTabCode: FC = () => {
   const [showDiff, setShowDiff] = useState(false)
   // Ref to track last code saved by us — used to detect external (plugin/AI) code changes
   const savedCodeRef = useRef<string | undefined>(undefined)
+  // Latest editor code (avoids stale closures during async save)
+  const codeRef = useRef<string | undefined>(undefined)
 
   // Resize state
   const [rightPanelWidth, setRightPanelWidth] = useState<number | null>(null) // Will be calculated based on container
@@ -170,9 +172,14 @@ const PrototypeTabCode: FC = () => {
   }, [ticker])
 
   useEffect(() => {
+    codeRef.current = code
+  }, [code])
+
+  useEffect(() => {
     if (!prototype) {
       setSavedCode(undefined)
       savedCodeRef.current = undefined
+      codeRef.current = undefined
       setCode(undefined)
       setEditorType('code')
       setPreviousCode(undefined)
@@ -181,27 +188,39 @@ const PrototypeTabCode: FC = () => {
     }
 
     const prototypeCode = prototype.code || ''
+    const isInitial = savedCodeRef.current === undefined
+    const isExternal = !isInitial && prototypeCode !== savedCodeRef.current
+    const localCode = codeRef.current
 
-    if (savedCodeRef.current === undefined) {
+    if (isInitial) {
       // Initial mount — restore diff state from sessionStorage if available
       const restoredPrev = getPreviousCodeFromSession(prototype.id)
       if (restoredPrev !== undefined) {
         setPreviousCode(restoredPrev)
         setShowDiff(getDiffVisibleFromSession(prototype.id))
       }
-    } else if (prototypeCode !== savedCodeRef.current) {
+      setCode(prototypeCode)
+      codeRef.current = prototypeCode
+      setSavedCode(prototypeCode)
+      savedCodeRef.current = prototypeCode
+    } else if (isExternal) {
       // External (plugin/AI) update — capture previous code for diff
-      savePreviousCodeToSession(prototype.id, savedCodeRef.current)
+      savePreviousCodeToSession(prototype.id, savedCodeRef.current!)
       saveDiffVisibleToSession(prototype.id, true)
       setPreviousCode(savedCodeRef.current)
       setShowDiff(true)
+      setCode(prototypeCode)
+      codeRef.current = prototypeCode
+      setSavedCode(prototypeCode)
+      savedCodeRef.current = prototypeCode
+    } else {
+      // Own save echoed via setActivePrototype — do not clobber in-progress edits
+      setSavedCode(prototypeCode)
     }
 
-    setCode(prototypeCode)
-    setSavedCode(prototypeCode)
-    savedCodeRef.current = prototypeCode
-
-    const newEditorType = getEditorType(prototypeCode)
+    const newEditorType = getEditorType(
+      isInitial || isExternal ? prototypeCode : (localCode ?? prototypeCode),
+    )
     setEditorType(newEditorType)
   }, [prototype])
 
@@ -212,8 +231,9 @@ const PrototypeTabCode: FC = () => {
       dataToSave = codeToSave
     } else {
       // Periodic auto-save — skip if unchanged
-      if (code === undefined || code === savedCode) return
-      dataToSave = code
+      const latest = codeRef.current
+      if (latest === undefined || latest === savedCode) return
+      dataToSave = latest
     }
 
     if (!prototype?.id) return
@@ -222,8 +242,7 @@ const PrototypeTabCode: FC = () => {
       await updatePrototypeService(prototype.id, {
         code: dataToSave || '',
       })
-      // Only mark as saved after API succeeds
-      setCode(dataToSave)
+      // Mark as saved without setCode — preserves cursor and any edits typed during await
       setSavedCode(dataToSave)
       savedCodeRef.current = dataToSave
       const newPrototype = JSON.parse(JSON.stringify(prototype))
