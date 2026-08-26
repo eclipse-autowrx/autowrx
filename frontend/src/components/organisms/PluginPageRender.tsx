@@ -392,7 +392,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
           data: '',
           file_path: SIGNAL_CONFIG_PATH,
           prototype: { name: data?.prototype?.name || 'no-name', id: prototype_id || 'no-id' },
-          username: currentUser?.email || currentUser?.name || 'no',
+          username: currentUser?.name || 'no',
         })
       })
 
@@ -441,7 +441,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
           data: '',
           file_path: VSS_PATH,
           prototype: { name: data?.prototype?.name || 'no-name', id: prototype_id || 'no-id' },
-          username: currentUser?.email || currentUser?.name || 'no',
+          username: currentUser?.name || 'no',
         })
       })
 
@@ -484,7 +484,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
           cmd: 'write-file',
           to_kit_id: kitId,
           prototype: { name: data?.prototype?.name || 'no-name', id: prototype_id || 'no-id' },
-          username: currentUser?.email || currentUser?.name || 'no',
+          username: currentUser?.name || 'no',
           file_path: VSS_PATH,
           file_content: prepareKitFileContentForWrite(vssContent),
           data: '',
@@ -529,7 +529,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
             cmd: 'write-file',
             to_kit_id: kitId,
             prototype: { name: data?.prototype?.name || 'no-name', id: prototype_id || 'no-id' },
-            username: currentUser?.email || currentUser?.name || 'no',
+            username: currentUser?.name || 'no',
             file_path: SIGNAL_CONFIG_PATH,
             file_content: prepareKitFileContentForWrite(fileContent),
             data: '',
@@ -543,7 +543,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
             cmd: 'write-file',
             to_kit_id: kitId,
             prototype: { name: data?.prototype?.name || 'no-name', id: prototype_id || 'no-id' },
-            username: currentUser?.email || currentUser?.name || 'no',
+            username: currentUser?.name || 'no',
             file_path: VSS_PATH,
             file_content: prepareKitFileContentForWrite(vssJson),
             data: '',

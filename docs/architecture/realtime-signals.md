@@ -76,7 +76,7 @@ flowchart LR
   "data": "",
   "file_path": "/app/remote_access/signal-config.json",
   "prototype": { "name": "<prototype-name>", "id": "<prototype-id>" },
-  "username": "<user-email-or-name>"
+  "username": "<user-name>"
 }
 ```
 
@@ -85,7 +85,7 @@ flowchart LR
   "cmd": "write-file",
   "to_kit_id": "<kit-id>",
   "prototype": { "name": "<prototype-name>", "id": "<prototype-id>" },
-  "username": "<user-email-or-name>",
+  "username": "<user-name>",
   "file_path": "/app/remote_access/signal-config.json",
   "file_content": "<file-body>",
   "data": ""

@@ -390,7 +390,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           name: prototype?.name || 'no-name',
           id: prototype?.id || 'no-id',
         },
-        username: currentUser?.email || currentUser?.name || 'no',
+        username: currentUser?.name || 'no',
       })
     }
 
@@ -402,7 +402,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           name: prototype?.name || 'no-name',
           id: prototype?.id || 'no-id',
         },
-        username: currentUser?.email || currentUser?.name || 'no',
+        username: currentUser?.name || 'no',
         file_path: filePath,
         file_content: prepareKitFileContentForWrite(fileContent),
         data: '',
