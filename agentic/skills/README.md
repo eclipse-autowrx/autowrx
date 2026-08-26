@@ -11,6 +11,7 @@ Repo-specific procedures an agent loads **on demand** when a task matches. Each 
 | **Implement feature** | The canonical flow: branch → understand → implement → test → review → commit → PR. Start here for any change. | [implement-feature.md](./implement-feature.md) |
 | **Run tests** | Before declaring done; after code changes. Jest (backend) + Playwright (`.agents/`). | [run-tests.md](./run-tests.md) |
 | **Code review** | Self-review the diff before commit (correctness, reuse, simplification, altitude, style). | [code-review.md](./code-review.md) |
+| **Review PR (deep, verified)** | Reviewing a contributor’s PR (not your own diff) — verify claims against head code, runtime-probe changed behavior, independent refute pass, post verdict + tracker sync. | [review-pr.md](./review-pr.md) |
 | **Security review** | When the diff touches auth, tokens, permissions, file ops, runtime/exec, plugins, secrets, CORS/CSP, uploads, or user data. | [security-review.md](./security-review.md) |
 | **License check** | When the diff adds/modifies `.js`/`.ts`/`.tsx` or dependencies — verify Eclipse/MIT headers + no incompatible-license code. | [license-check.md](./license-check.md) |
 | **Commit & PR** | When asked to commit / open a PR. ECA, sign-off, PR template. | [commit-and-pr.md](./commit-and-pr.md) |
