@@ -106,7 +106,6 @@ const PrototypeTabCode: FC = () => {
     ],
     shallow,
   )
-  const [savedCode, setSavedCode] = useState<string | undefined>(undefined)
   const [code, setCode] = useState<string | undefined>(undefined)
   const [ticker, setTicker] = useState(0)
   const [activeTab, setActiveTab] = useState('api')
@@ -177,9 +176,7 @@ const PrototypeTabCode: FC = () => {
 
   useEffect(() => {
     if (!prototype) {
-      setSavedCode(undefined)
       savedCodeRef.current = undefined
-      codeRef.current = undefined
       setCode(undefined)
       setEditorType('code')
       setPreviousCode(undefined)
@@ -200,8 +197,6 @@ const PrototypeTabCode: FC = () => {
         setShowDiff(getDiffVisibleFromSession(prototype.id))
       }
       setCode(prototypeCode)
-      codeRef.current = prototypeCode
-      setSavedCode(prototypeCode)
       savedCodeRef.current = prototypeCode
     } else if (isExternal) {
       // External (plugin/AI) update — capture previous code for diff
@@ -210,13 +205,9 @@ const PrototypeTabCode: FC = () => {
       setPreviousCode(savedCodeRef.current)
       setShowDiff(true)
       setCode(prototypeCode)
-      codeRef.current = prototypeCode
-      setSavedCode(prototypeCode)
       savedCodeRef.current = prototypeCode
-    } else {
-      // Own save echoed via setActivePrototype — do not clobber in-progress edits
-      setSavedCode(prototypeCode)
     }
+    // Own save echoed via setActivePrototype — do not clobber in-progress edits
 
     const newEditorType = getEditorType(
       isInitial || isExternal ? prototypeCode : (localCode ?? prototypeCode),
@@ -230,24 +221,28 @@ const PrototypeTabCode: FC = () => {
       // Explicit save from editor (Save All or Ctrl+S) — always persist, do not skip
       dataToSave = codeToSave
     } else {
-      // Periodic auto-save — skip if unchanged
+      // Periodic / blur auto-save — skip if unchanged (use ref to avoid stale skip)
       const latest = codeRef.current
-      if (latest === undefined || latest === savedCode) return
+      if (latest === undefined || latest === savedCodeRef.current) return
       dataToSave = latest
     }
 
-    if (!prototype?.id) return
+    const prototypeId = prototype?.id
+    if (!prototypeId) return
 
     try {
-      await updatePrototypeService(prototype.id, {
+      await updatePrototypeService(prototypeId, {
         code: dataToSave || '',
       })
       // Mark as saved without setCode — preserves cursor and any edits typed during await
-      setSavedCode(dataToSave)
       savedCodeRef.current = dataToSave
-      const newPrototype = JSON.parse(JSON.stringify(prototype))
-      newPrototype.code = dataToSave || ''
-      setActivePrototype(newPrototype)
+      // Merge only `code` into the *current* store prototype. Cloning the render-closure
+      // prototype would revert fields (widget_config, extend, …) updated elsewhere
+      // while the editor was mounted (e.g. dashboard template apply → blur-save).
+      const current = useModelStore.getState().prototype
+      if (current?.id === prototypeId) {
+        setActivePrototype({ ...current, code: dataToSave || '' })
+      }
     } catch (err) {
       console.error('Error saving code:', err)
     }
@@ -426,7 +421,7 @@ const PrototypeTabCode: FC = () => {
               prototypeName={prototype.name}
               onChange={(data: string) => {
                 setCode(data)
-                // Do not set savedCode here — only when we actually persist (saveCodeToDb)
+                // Do not advance savedCodeRef here — only when we actually persist (saveCodeToDb)
                 // so that Save All / Ctrl+S still trigger the API when there are unsaved changes
               }}
               onSave={async (data: string) => {
