@@ -101,3 +101,5 @@ temp/
 .env.stack.secrets
 !.env.stack.example
 
+# instance backup archives (backup.sh output)
+instance-setup/backups/
