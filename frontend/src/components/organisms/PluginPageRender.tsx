@@ -1057,16 +1057,13 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     return () => {
       cancelled = true
       log('Cleanup - unmounting plugin (keeping registration in map for cache)')
-      try {
-        const el = containerRef.current
-        // Unmount using the plugin-specific registration if available
-        const registration = pluginRegistrations.get(plugin_id)
-        if (registration?.unmount) {
-          registration.unmount(el)
-        } else {
-          ; (window as any)?.DAPlugins?.[GLOBAL_KEY]?.unmount?.(el)
-        }
-      } catch { }
+      // Note: for mount()/unmount()-style plugins, the `Wrapper` component (see
+      // above) owns calling unmount() on the exact node it mounted into, as part
+      // of its own useEffect cleanup. Calling registration.unmount() again here
+      // against containerRef.current (a different, outer, React-managed node)
+      // raced with React's own unmount of that subtree and could remove DOM
+      // nodes out from under React, causing an intermittent
+      // "Failed to execute 'removeChild'" error when switching tabs.
       if (injectedScriptRef.current?.parentNode) {
         injectedScriptRef.current.remove()
       }

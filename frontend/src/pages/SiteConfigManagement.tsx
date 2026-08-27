@@ -243,6 +243,16 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
       'Plugin tabs to show on the Vehicle API (COVESA VSS) page. Each entry needs a "label" (tab display name) and "plugin" (plugin slug). Example: [{"label":"A2L Importer","plugin":"a2l-importer"}]. Only plugins that are installed will appear.',
     category: 'model_prototype',
   },
+  {
+    key: 'MODEL_API_PLUGINS',
+    scope: 'site',
+    value: [],
+    secret: false,
+    valueType: 'array',
+    description:
+      'Plugin tabs to show in the Vehicle API page Tab Bar (top-level, alongside COVESA API / custom API sets). Each entry needs a "label" (tab display name) and "plugin" (plugin slug). Example: [{"label":"My Plugin","plugin":"my-plugin"}]. Only plugins that are installed will appear.',
+    category: 'model_prototype',
+  },
 ]
 
 export const PREDEFINED_GENAI_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
