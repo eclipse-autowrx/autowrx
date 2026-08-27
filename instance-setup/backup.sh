@@ -18,13 +18,13 @@ ENV_FILE=".env.prod"
 [ -f "$ENV_FILE" ] || { echo "ERROR: $ENV_FILE not found (copy .env.prod.sample and fill it in)"; exit 1; }
 
 # Read the same variables the compose file uses
-NAME=$(grep -E '^NAME=' "$ENV_FILE" | cut -d= -f2- | tr -d '"' | tr -d "'")
+NAME=$(grep -E '^NAME=' "$ENV_FILE" | cut -d= -f2- | tr -d '"' | tr -d "'" || true)
 NAME=${NAME:-prod}
-DB_NAME=$(grep -E '^MONGODB_DATABASE=' "$ENV_FILE" | cut -d= -f2- | tr -d '"' | tr -d "'")
+DB_NAME=$(grep -E '^MONGODB_DATABASE=' "$ENV_FILE" | cut -d= -f2- | tr -d '"' | tr -d "'" || true)
 DB_NAME=${DB_NAME:-autowrx}
-UPLOAD_PATH=$(grep -E '^UPLOAD_PATH_HOST=' "$ENV_FILE" | cut -d= -f2- | tr -d '"' | tr -d "'")
+UPLOAD_PATH=$(grep -E '^UPLOAD_PATH_HOST=' "$ENV_FILE" | cut -d= -f2- | tr -d '"' | tr -d "'" || true)
 UPLOAD_PATH=${UPLOAD_PATH:-./data/upload}
-PLUGIN_PATH=$(grep -E '^PLUGIN_PATH_HOST=' "$ENV_FILE" | cut -d= -f2- | tr -d '"' | tr -d "'")
+PLUGIN_PATH=$(grep -E '^PLUGIN_PATH_HOST=' "$ENV_FILE" | cut -d= -f2- | tr -d '"' | tr -d "'" || true)
 PLUGIN_PATH=${PLUGIN_PATH:-./data/plugin}
 
 DB_CONTAINER="${NAME}-autowrx-db"
