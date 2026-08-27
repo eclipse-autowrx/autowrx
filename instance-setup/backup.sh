@@ -8,7 +8,11 @@
 #   ./backup.sh --data     # data (uploads + plugins) only
 #   ./backup.sh -y         # skip the confirmation prompt (automation)
 #
-# Output: ./backups/mongo-<timestamp>.archive.gz and data-<timestamp>.tar.gz
+# Output: ./backups/autowrx-backup-<timestamp>.zip containing:
+#   - INFO.txt            (instance name, database, source paths, created date)
+#   - .env.prod           (the instance configuration — needed for consistent restore)
+#   - mongo.archive.gz    (the database dump)
+#   - data.tar.gz         (uploads + plugins)
 # Retention is manual — old backups are never deleted automatically.
 
 set -euo pipefail
@@ -30,7 +34,10 @@ PLUGIN_PATH=${PLUGIN_PATH:-./data/plugin}
 DB_CONTAINER="${NAME}-autowrx-db"
 TS=$(date +%Y%m%d-%H%M%S)
 BACKUP_DIR="./backups"
+STAGE=$(mktemp -d)
+trap 'rm -rf "$STAGE"' EXIT
 mkdir -p "$BACKUP_DIR"
+ZIP="$BACKUP_DIR/autowrx-backup-$TS.zip"
 
 DO_DB=1; DO_DATA=1; ASSUME_YES=0
 for arg in "$@"; do
@@ -82,15 +89,13 @@ if [ "$DO_DB" -eq 1 ]; then
     exit 1
   fi
 
-  OUT="$BACKUP_DIR/mongo-$TS.archive.gz"
-  echo "[db] dumping via '$DUMP_CMD' -> $OUT"
+  OUT="$STAGE/mongo.archive.gz"
+  echo "[db] dumping via '$DUMP_CMD'"
   if docker exec "$DB_CONTAINER" "$DUMP_CMD" --db="$DB_NAME" --archive --gzip --quiet > "$OUT"; then
     SIZE=$(du -h "$OUT" | cut -f1 || true)
-    # Integrity signal: a gzip test plus a non-trivial size
     gzip -t "$OUT" && echo "[db] OK ($SIZE, gzip integrity verified)"
   else
-    echo "[db] FAILED — removing partial file"
-    rm -f "$OUT"
+    echo "[db] FAILED — aborting (no zip written)"
     exit 1
   fi
 fi
@@ -110,15 +115,59 @@ if [ "$DO_DATA" -eq 1 ]; then
   if [ "${#EXISTING[@]}" -eq 0 ]; then
     echo "[data] nothing to archive (no data directories exist yet)"
   else
-    OUT="$BACKUP_DIR/data-$TS.tar.gz"
-    echo "[data] archiving ${EXISTING[*]} -> $OUT"
+    OUT="$STAGE/data.tar.gz"
+    echo "[data] archiving ${EXISTING[*]}"
     tar czf "$OUT" "${EXISTING[@]}"
-    echo "[data] OK ($(du -h "$OUT" | cut -f1))"
+    echo "[data] OK ($(du -h "$OUT" | cut -f1 || true))"
   fi
 fi
 
+# ---------------------------------------------------------------------------
+# INFO.txt — proves what this backup is and where it came from
+# ---------------------------------------------------------------------------
+cat > "$STAGE/INFO.txt" <<INFO
+AutoWRX instance backup
+=======================
+Created (UTC): $(date -u '+%Y-%m-%d %H:%M:%S')
+Instance name: $NAME
+Database:      $DB_NAME   (container: $DB_CONTAINER)
+Data paths:    $UPLOAD_PATH, $PLUGIN_PATH
+Contents:
+  INFO.txt         this file
+  .env.prod        instance configuration used at backup time
+  mongo.archive.gz MongoDB dump of database '$DB_NAME' (mongodump --archive --gzip)
+  data.tar.gz      uploads + plugin data (tar of the paths above)
+Restore: unzip, then ./restore.sh --mongo mongo.archive.gz --data data.tar.gz
+        (restore validates that the instance/database match this file's values)
+INFO
+
+# Include the instance env so restore is self-consistent
+if [ -f "$ENV_FILE" ]; then
+  cp "$ENV_FILE" "$STAGE/$ENV_FILE"
+  echo "[env] $ENV_FILE included in the zip"
+else
+  echo "[env] WARNING: $ENV_FILE not found — zip has no env (restore will use the current one)"
+fi
+
 echo
-echo "Backup complete. Files in $BACKUP_DIR:"
-ls -lh "$BACKUP_DIR" | tail -5
+echo "[zip] writing $ZIP"
+if command -v zip >/dev/null 2>&1; then
+  (cd "$STAGE" && zip -q -r "$OLDPWD/$ZIP" .)
+else
+  # No zip binary: use python's zipfile (always available in the container host images we support)
+  python3 - "$STAGE" "$ZIP" <<'PY'
+import sys, os, zipfile
+stage, out = sys.argv[1], sys.argv[2]
+with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:
+    for root, _, files in os.walk(stage):
+        for f in files:
+            full = os.path.join(root, f)
+            z.write(full, os.path.relpath(full, stage))
+PY
+fi
+echo "[zip] OK ($(du -h "$ZIP" | cut -f1 || true))"
+echo
+echo "Backup complete: $ZIP"
+echo "Contents: $(unzip -l "$ZIP" 2>/dev/null | tail -1 || python3 -c "import zipfile,sys; print(sum(i.file_size for i in zipfile.ZipFile('$ZIP').infolist()), 'bytes')")"
 echo
 echo "Restore with: ./restore.sh"

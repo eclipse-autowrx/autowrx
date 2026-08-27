@@ -3,9 +3,13 @@
 # AutoWRX instance deployment from files produced by ./backup.sh
 #
 # Usage:
-#   ./restore.sh                        # interactive: pick a backup, restore both
-#   ./restore.sh --mongo <file>         # restore database from a specific archive
-#   ./restore.sh --data <file>          # restore data from a specific tarball
+#   ./restore.sh                        # interactive: pick a backup zip, restore both
+#   ./restore.sh --backup <file.zip>    # restore from a specific backup zip
+#
+# Backup zips (from ./backup.sh) contain INFO.txt describing the instance
+# and database they came from, plus the .env.prod of that instance. The
+# restore VALIDATES that the INFO matches the current instance before
+# proceeding, so a backup from another instance is refused.
 #
 # Protection: you must type RESTORE three times (once per confirmation
 # stage) before anything destructive happens.
@@ -35,14 +39,61 @@ DB_CONTAINER="${NAME}-autowrx-db"
 BACKUP_DIR="./backups"
 NEWLINE=$'\n'
 
-MONGO_FILE=""; DATA_FILE=""
+ZIP_FILE=""
 while [ $# -gt 0 ]; do
   case "$1" in
-    --mongo) MONGO_FILE="$2"; shift 2 ;;
-    --data)  DATA_FILE="$2"; shift 2 ;;
-    *) echo "Unknown option: $1 (supported: --mongo <file>, --data <file>)"; exit 1 ;;
+    --backup) ZIP_FILE="$2"; shift 2 ;;
+    *) echo "Unknown option: $1 (supported: --backup <file.zip>)"; exit 1 ;;
   esac
 done
+
+unzip_one() { # unzip_one <zip> <member> -> stdout
+  python3 - "$1" "$2" <<'PY'
+import sys, zipfile
+try:
+    with zipfile.ZipFile(sys.argv[1]) as z:
+        sys.stdout.buffer.write(z.read(sys.argv[2]))
+except KeyError:
+    sys.exit(3)
+PY
+}
+
+STAGE=""
+if [ -n "$ZIP_FILE" ]; then
+  [ -f "$ZIP_FILE" ] || { echo "ERROR: '$ZIP_FILE' not found"; exit 1; }
+else
+  Z=$(ls -1t "$BACKUP_DIR"/autowrx-backup-*.zip 2>/dev/null | head -1 || true)
+  [ -n "$Z" ] || { echo "ERROR: no backup zips in $BACKUP_DIR (run ./backup.sh first)"; exit 1; }
+  ZIP_FILE="$Z"
+  echo "No --backup given; using the most recent:"
+fi
+echo "Backup zip:    $ZIP_FILE"
+
+# --- Consistency validation: INFO.txt must match this instance ---
+INFO=$(unzip_one "$ZIP_FILE" INFO.txt 2>/dev/null || true)
+if [ -n "$INFO" ]; then
+  B_NAME=$(echo "$INFO" | grep -E '^Instance name:' | cut -d: -f2- | tr -d ' ')
+  B_DB=$(echo "$INFO" | grep -E '^Database:' | cut -d: -f2- | awk '{print $1}')
+  echo "Backup origin: instance '$B_NAME', database '$B_DB' (from INFO.txt)"
+  if [ "$B_NAME" != "$NAME" ] || [ "$B_DB" != "$DB_NAME" ]; then
+    echo "REFUSED: backup is from instance '$B_NAME' / database '$B_DB', but this deployment is '$NAME' / '$DB_NAME'."
+    echo "Restoring across instances is not supported by this script."
+    exit 1
+  fi
+else
+  echo "WARNING: zip has no INFO.txt — cannot verify origin. Continuing is allowed but unchecked."
+fi
+
+# Extract members to a temp stage
+STAGE=$(mktemp -d)
+trap 'rm -rf "$STAGE"' EXIT
+HAS_MONGO=0; HAS_DATA=0
+if unzip_one "$ZIP_FILE" mongo.archive.gz > "$STAGE/mongo.archive.gz" 2>/dev/null && [ -s "$STAGE/mongo.archive.gz" ]; then HAS_MONGO=1; fi
+if unzip_one "$ZIP_FILE" data.tar.gz > "$STAGE/data.tar.gz" 2>/dev/null && [ -s "$STAGE/data.tar.gz" ]; then HAS_DATA=1; fi
+MONGO_FILE=""; DATA_FILE=""
+if [ "$HAS_MONGO" -eq 1 ]; then MONGO_FILE="$STAGE/mongo.archive.gz"; fi
+if [ "$HAS_DATA" -eq 1 ]; then DATA_FILE="$STAGE/data.tar.gz"; fi
+[ -n "$MONGO_FILE" ] || [ -n "$DATA_FILE" ] || { echo "ERROR: zip contains neither mongo.archive.gz nor data.tar.gz"; exit 1; }
 
 confirm_restore() {
   local stage=$1 detail=$2
@@ -53,26 +104,14 @@ confirm_restore() {
   [ "$answer" = "RESTORE" ] || { echo "Aborted."; exit 1; }
 }
 
-# Interactive picker when no explicit files given
-latest_in() { ls -1t "$BACKUP_DIR"/$1 2>/dev/null | head -1 || true; }
-if [ -z "$MONGO_FILE" ] && [ -z "$DATA_FILE" ]; then
-  M=$(latest_in "mongo-*.archive.gz")
-  D=$(latest_in "data-*.tar.gz")
-  if [ -n "$M" ]; then MONGO_FILE="$M"; fi
-  if [ -n "$D" ]; then DATA_FILE="$D"; fi
-  if [ -z "$MONGO_FILE" ] && [ -z "$DATA_FILE" ]; then
-    echo "ERROR: no backups found in $BACKUP_DIR (run ./backup.sh first)"; exit 1
-  fi
-  echo "No --mongo/--data given; using the most recent of each:"
-fi
-
 echo "=== AutoWRX instance RESTORE (destructive) ==="
 echo "Instance:     $NAME"
 echo "Database:     $DB_NAME (container: $DB_CONTAINER) — collections will be REPLACED (--drop)"
-if [ -n "$MONGO_FILE" ]; then echo "DB backup:    $MONGO_FILE ($(du -h "$MONGO_FILE" 2>/dev/null | cut -f1 || true))"; fi
-if [ -n "$DATA_FILE" ]; then echo "Data backup:  $DATA_FILE ($(du -h "$DATA_FILE" 2>/dev/null | cut -f1 || true))"; echo "Data target:  $UPLOAD_PATH, $PLUGIN_PATH — current contents overwritten"; fi
+if [ -n "$MONGO_FILE" ]; then echo "DB backup:    mongo.archive.gz ($(du -h "$MONGO_FILE" | cut -f1 || true))"; fi
+if [ -n "$DATA_FILE" ]; then echo "Data backup:  data.tar.gz ($(du -h "$DATA_FILE" | cut -f1 || true))"; echo "Data target:  $UPLOAD_PATH, $PLUGIN_PATH — current contents overwritten"; fi
 echo "The app container will be stopped during restore and restarted after."
-echo "Backups taken AFTER the selected files contain data that will be LOST."
+echo "Backups taken AFTER this zip contain data that will be LOST."
+echo "The zip's .env.prod is NOT applied automatically — current env stays."
 
 confirm_restore 1 "Instance '$NAME', database '$DB_NAME', containers will be stopped."
 confirm_restore 2 "Database collections will be REPLACED (--drop) from:$NEWLINE$MONGO_FILE$NEWLINE$DATA_FILE"
