@@ -37,7 +37,7 @@ BACKUP_DIR="./backups"
 STAGE=$(mktemp -d)
 trap 'rm -rf "$STAGE"' EXIT
 mkdir -p "$BACKUP_DIR"
-ZIP="$BACKUP_DIR/autowrx-backup-$TS.zip"
+ZIP="$BACKUP_DIR/${NAME}-backup-$TS.zip"
 
 DO_DB=1; DO_DATA=1; ASSUME_YES=0
 for arg in "$@"; do

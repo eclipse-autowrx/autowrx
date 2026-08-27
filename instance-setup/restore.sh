@@ -1,30 +1,27 @@
 #!/usr/bin/env bash
-# restore.sh — restore the MongoDB database and/or upload/plugin data of an
-# AutoWRX instance deployment from files produced by ./backup.sh
+# backup.sh — dump the MongoDB database and archive the upload/plugin data
+# of an AutoWRX instance deployment (run after ./up.sh).
 #
 # Usage:
-#   ./restore.sh                        # interactive: pick a backup zip, restore both
-#   ./restore.sh --backup <file.zip>    # restore from a specific backup zip
+#   ./backup.sh            # backup both database and data (asks for confirmation)
+#   ./backup.sh --db       # database only
+#   ./backup.sh --data     # data (uploads + plugins) only
+#   ./backup.sh -y         # skip the confirmation prompt (automation)
 #
-# Backup zips (from ./backup.sh) contain INFO.txt describing the instance
-# and database they came from, plus the .env.prod of that instance. The
-# restore VALIDATES that the INFO matches the current instance before
-# proceeding, so a backup from another instance is refused.
-#
-# Protection: you must type RESTORE three times (once per confirmation
-# stage) before anything destructive happens.
-#
-# Destructive: the database restore uses --drop (each collection is replaced)
-# and the data restore overwrites the upload/plugin directories. The app
-# container is stopped before restore and restarted after, so no writes race
-# the restore.
+# Output: ./backups/autowrx-backup-<timestamp>.zip containing:
+#   - INFO.txt            (instance name, database, source paths, created date)
+#   - .env.prod           (the instance configuration — needed for consistent restore)
+#   - mongo.archive.gz    (the database dump)
+#   - data.tar.gz         (uploads + plugins)
+# Retention is manual — old backups are never deleted automatically.
 
 set -euo pipefail
 cd "$(dirname "$0")"
 
 ENV_FILE=".env.prod"
-[ -f "$ENV_FILE" ] || { echo "ERROR: $ENV_FILE not found"; exit 1; }
+[ -f "$ENV_FILE" ] || { echo "ERROR: $ENV_FILE not found (copy .env.prod.sample and fill it in)"; exit 1; }
 
+# Read the same variables the compose file uses
 NAME=$(grep -E '^NAME=' "$ENV_FILE" | cut -d= -f2- | tr -d '"' | tr -d "'" || true)
 NAME=${NAME:-prod}
 DB_NAME=$(grep -E '^MONGODB_DATABASE=' "$ENV_FILE" | cut -d= -f2- | tr -d '"' | tr -d "'" || true)
@@ -34,146 +31,143 @@ UPLOAD_PATH=${UPLOAD_PATH:-./data/upload}
 PLUGIN_PATH=$(grep -E '^PLUGIN_PATH_HOST=' "$ENV_FILE" | cut -d= -f2- | tr -d '"' | tr -d "'" || true)
 PLUGIN_PATH=${PLUGIN_PATH:-./data/plugin}
 
-APP_CONTAINER="${NAME}-autowrx"
 DB_CONTAINER="${NAME}-autowrx-db"
+TS=$(date +%Y%m%d-%H%M%S)
 BACKUP_DIR="./backups"
-NEWLINE=$'\n'
+STAGE=$(mktemp -d)
+trap 'rm -rf "$STAGE"' EXIT
+mkdir -p "$BACKUP_DIR"
+ZIP="$BACKUP_DIR/${NAME}-backup-$TS.zip"
 
-ZIP_FILE=""
-while [ $# -gt 0 ]; do
-  case "$1" in
-    --backup) ZIP_FILE="$2"; shift 2 ;;
-    *) echo "Unknown option: $1 (supported: --backup <file.zip>)"; exit 1 ;;
+DO_DB=1; DO_DATA=1; ASSUME_YES=0
+for arg in "$@"; do
+  case "$arg" in
+    --db)   DO_DATA=0 ;;
+    --data) DO_DB=0 ;;
+    -y|--yes) ASSUME_YES=1 ;;
+    *) echo "Unknown option: $arg (supported: --db, --data, -y)"; exit 1 ;;
   esac
 done
 
-unzip_one() { # unzip_one <zip> <member> -> stdout
-  python3 - "$1" "$2" <<'PY'
-import sys, zipfile
-try:
-    with zipfile.ZipFile(sys.argv[1]) as z:
-        sys.stdout.buffer.write(z.read(sys.argv[2]))
-except KeyError:
-    sys.exit(3)
-PY
-}
+echo "=== AutoWRX instance backup ==="
+echo "Instance name:  $NAME"
+echo "Database:       $DB_NAME (container: $DB_CONTAINER)"
+echo "Data dirs:      $UPLOAD_PATH, $PLUGIN_PATH"
+echo "Output:         $BACKUP_DIR/"
+if [ "$DO_DB" -eq 1 ]; then echo "Scope:           database + data"; fi
+if [ "$DO_DB" -eq 0 ]; then echo "Scope:           data only"; fi
+if [ "$DO_DATA" -eq 0 ]; then echo "Scope:           database only"; fi
+echo
 
-STAGE=""
-if [ -n "$ZIP_FILE" ]; then
-  [ -f "$ZIP_FILE" ] || { echo "ERROR: '$ZIP_FILE' not found"; exit 1; }
-else
-  Z=$(ls -1t "$BACKUP_DIR"/autowrx-backup-*.zip 2>/dev/null | head -1 || true)
-  [ -n "$Z" ] || { echo "ERROR: no backup zips in $BACKUP_DIR (run ./backup.sh first)"; exit 1; }
-  ZIP_FILE="$Z"
-  echo "No --backup given; using the most recent:"
+if [ "$ASSUME_YES" -eq 0 ]; then
+  read -r -p "Proceed with backup? [yes/N] " answer
+  case "$answer" in
+    yes|YES|Yes|y|Y) ;;
+    *) echo "Aborted."; exit 1 ;;
+  esac
 fi
-echo "Backup zip:    $ZIP_FILE"
-
-# --- Consistency validation: INFO.txt must match this instance ---
-INFO=$(unzip_one "$ZIP_FILE" INFO.txt 2>/dev/null || true)
-if [ -n "$INFO" ]; then
-  B_NAME=$(echo "$INFO" | grep -E '^Instance name:' | cut -d: -f2- | tr -d ' ')
-  B_DB=$(echo "$INFO" | grep -E '^Database:' | cut -d: -f2- | awk '{print $1}')
-  echo "Backup origin: instance '$B_NAME', database '$B_DB' (from INFO.txt)"
-  if [ "$B_NAME" != "$NAME" ] || [ "$B_DB" != "$DB_NAME" ]; then
-    echo "REFUSED: backup is from instance '$B_NAME' / database '$B_DB', but this deployment is '$NAME' / '$DB_NAME'."
-    echo "Restoring across instances is not supported by this script."
-    exit 1
-  fi
-else
-  echo "WARNING: zip has no INFO.txt — cannot verify origin. Continuing is allowed but unchecked."
-fi
-
-# Extract members to a temp stage
-STAGE=$(mktemp -d)
-trap 'rm -rf "$STAGE"' EXIT
-HAS_MONGO=0; HAS_DATA=0
-if unzip_one "$ZIP_FILE" mongo.archive.gz > "$STAGE/mongo.archive.gz" 2>/dev/null && [ -s "$STAGE/mongo.archive.gz" ]; then HAS_MONGO=1; fi
-if unzip_one "$ZIP_FILE" data.tar.gz > "$STAGE/data.tar.gz" 2>/dev/null && [ -s "$STAGE/data.tar.gz" ]; then HAS_DATA=1; fi
-MONGO_FILE=""; DATA_FILE=""
-if [ "$HAS_MONGO" -eq 1 ]; then MONGO_FILE="$STAGE/mongo.archive.gz"; fi
-if [ "$HAS_DATA" -eq 1 ]; then DATA_FILE="$STAGE/data.tar.gz"; fi
-[ -n "$MONGO_FILE" ] || [ -n "$DATA_FILE" ] || { echo "ERROR: zip contains neither mongo.archive.gz nor data.tar.gz"; exit 1; }
-
-confirm_restore() {
-  local stage=$1 detail=$2
-  echo
-  echo "--- Confirmation $stage of 3 ---"
-  [ -n "$detail" ] && echo "$detail"
-  read -r -p "Type RESTORE to proceed: " answer
-  [ "$answer" = "RESTORE" ] || { echo "Aborted."; exit 1; }
-}
-
-echo "=== AutoWRX instance RESTORE (destructive) ==="
-echo "Instance:     $NAME"
-echo "Database:     $DB_NAME (container: $DB_CONTAINER) — collections will be REPLACED (--drop)"
-if [ -n "$MONGO_FILE" ]; then echo "DB backup:    mongo.archive.gz ($(du -h "$MONGO_FILE" | cut -f1 || true))"; fi
-if [ -n "$DATA_FILE" ]; then echo "Data backup:  data.tar.gz ($(du -h "$DATA_FILE" | cut -f1 || true))"; echo "Data target:  $UPLOAD_PATH, $PLUGIN_PATH — current contents overwritten"; fi
-echo "The app container will be stopped during restore and restarted after."
-echo "Backups taken AFTER this zip contain data that will be LOST."
-echo "The zip's .env.prod is NOT applied automatically — current env stays."
-
-confirm_restore 1 "Instance '$NAME', database '$DB_NAME', containers will be stopped."
-confirm_restore 2 "Database collections will be REPLACED (--drop) from:$NEWLINE$MONGO_FILE$NEWLINE$DATA_FILE"
-confirm_restore 3 "Data directories will be OVERWRITTEN: $UPLOAD_PATH, $PLUGIN_PATH.$NEWLINE This is the last chance to abort."
-
-APP_WAS_RUNNING=0
-if docker inspect "$APP_CONTAINER" >/dev/null 2>&1 && [ "$(docker inspect -f '{{.State.Running}}' "$APP_CONTAINER")" = "true" ]; then
-  APP_WAS_RUNNING=1
-  echo "[app] stopping $APP_CONTAINER for the duration of the restore"
-  docker compose -f docker-compose.prod.yml --env-file "$ENV_FILE" stop autowrx
-fi
-trap '[ "$APP_WAS_RUNNING" -eq 1 ] && docker compose -f docker-compose.prod.yml --env-file "$ENV_FILE" up -d autowrx || true' EXIT
 
 # ---------------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------------
-if [ -n "$MONGO_FILE" ]; then
-  [ -f "$MONGO_FILE" ] || { echo "ERROR: '$MONGO_FILE' not found"; exit 1; }
-  docker inspect "$DB_CONTAINER" >/dev/null 2>&1 || { echo "ERROR: database container '$DB_CONTAINER' not running (run ./up.sh first)"; exit 1; }
+if [ "$DO_DB" -eq 1 ]; then
+  docker inspect "$DB_CONTAINER" >/dev/null 2>&1 || { echo "ERROR: database container '$DB_CONTAINER' is not running (run ./up.sh first)"; exit 1; }
 
-  RESTORE_CMD=""
-  if docker exec "$DB_CONTAINER" mongorestore --version >/dev/null 2>&1; then
-    RESTORE_CMD="mongorestore"
-  elif docker exec "$DB_CONTAINER" /opt/dbtools/mongorestore --version >/dev/null 2>&1; then
-    RESTORE_CMD="/opt/dbtools/mongorestore"
+  # mongo 7+ images do not bundle database tools — find a working mongodump
+  DUMP_CMD=""
+  if docker exec "$DB_CONTAINER" mongodump --version >/dev/null 2>&1; then
+    DUMP_CMD="mongodump"
+  elif docker exec "$DB_CONTAINER" /opt/dbtools/mongodump --version >/dev/null 2>&1; then
+    DUMP_CMD="/opt/dbtools/mongodump"
   else
-    echo "ERROR: no mongorestore available inside '$DB_CONTAINER' — see the tools-mount instructions in docker-compose.prod.yml"
+    echo "ERROR: no mongodump available inside '$DB_CONTAINER'."
+    echo "Mongo 7 images ship no database tools. Download them once and mount into the"
+    echo "db service (see the commented tools volume in docker-compose.prod.yml):"
+    echo "  curl -fsSL -o /tmp/tools.tgz https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2204-x86_64-100.9.5.tgz"
+    echo "  mkdir -p tools && tar -xzf /tmp/tools.tgz -C tools"
+    echo "  # then uncomment the '- ./tools/...:/opt/dbtools:ro' volume and: docker compose -f docker-compose.prod.yml --env-file $ENV_FILE up -d autowrx-db"
     exit 1
   fi
 
-  gzip -t "$MONGO_FILE" || { echo "ERROR: '$MONGO_FILE' fails gzip integrity — refusing to restore"; exit 1; }
-  echo "[db] restoring via '$RESTORE_CMD' (drop) -> $DB_NAME"
-  if docker exec -i "$DB_CONTAINER" "$RESTORE_CMD" --db="$DB_NAME" --archive --gzip --drop --quiet < "$MONGO_FILE"; then
-    COUNTS=$(docker exec "$DB_CONTAINER" mongosh --quiet "$DB_NAME" --eval \
-      'let t=0; const ns=[]; db.getCollectionNames().forEach(c=>{const n=db[c].countDocuments({}); ns.push(c+"="+n); t+=n}); print(ns.join(" ")); print("TOTAL="+t)')
-    echo "[db] OK — collection counts:"
-    echo "     $COUNTS"
+  OUT="$STAGE/mongo.archive.gz"
+  echo "[db] dumping via '$DUMP_CMD'"
+  if docker exec "$DB_CONTAINER" "$DUMP_CMD" --db="$DB_NAME" --archive --gzip --quiet > "$OUT"; then
+    SIZE=$(du -h "$OUT" | cut -f1 || true)
+    gzip -t "$OUT" && echo "[db] OK ($SIZE, gzip integrity verified)"
   else
-    echo "[db] RESTORE FAILED — database may be in a partial state; re-run with a known-good archive"
+    echo "[db] FAILED — aborting (no zip written)"
     exit 1
   fi
 fi
 
 # ---------------------------------------------------------------------------
-# Data
+# Data (uploads + plugins)
 # ---------------------------------------------------------------------------
-if [ -n "$DATA_FILE" ]; then
-  [ -f "$DATA_FILE" ] || { echo "ERROR: '$DATA_FILE' not found"; exit 1; }
-  gzip -t "$DATA_FILE" || { echo "ERROR: '$DATA_FILE' fails gzip integrity — refusing to restore"; exit 1; }
-  echo "[data] extracting $DATA_FILE over $(pwd)"
-  # Archives were created relative to the instance dir (./data/upload, ./data/plugin),
-  # so extracting here lands files exactly where the compose mounts expect them.
-  tar xzf "$DATA_FILE"
-  echo "[data] OK"
+if [ "$DO_DATA" -eq 1 ]; then
+  MISSING=0
+  for d in "$UPLOAD_PATH" "$PLUGIN_PATH"; do
+    [ -d "$d" ] || { echo "[data] WARNING: '$d' does not exist — skipping it"; MISSING=1; }
+  done
+  EXISTING=()
+  for d in "$UPLOAD_PATH" "$PLUGIN_PATH"; do
+    [ -d "$d" ] && EXISTING+=("$d")
+  done
+  if [ "${#EXISTING[@]}" -eq 0 ]; then
+    echo "[data] nothing to archive (no data directories exist yet)"
+  else
+    OUT="$STAGE/data.tar.gz"
+    echo "[data] archiving ${EXISTING[*]}"
+    tar czf "$OUT" "${EXISTING[@]}"
+    echo "[data] OK ($(du -h "$OUT" | cut -f1 || true))"
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# INFO.txt — proves what this backup is and where it came from
+# ---------------------------------------------------------------------------
+cat > "$STAGE/INFO.txt" <<INFO
+AutoWRX instance backup
+=======================
+Created (UTC): $(date -u '+%Y-%m-%d %H:%M:%S')
+Instance name: $NAME
+Database:      $DB_NAME   (container: $DB_CONTAINER)
+Data paths:    $UPLOAD_PATH, $PLUGIN_PATH
+Contents:
+  INFO.txt         this file
+  .env.prod        instance configuration used at backup time
+  mongo.archive.gz MongoDB dump of database '$DB_NAME' (mongodump --archive --gzip)
+  data.tar.gz      uploads + plugin data (tar of the paths above)
+Restore: unzip, then ./restore.sh --mongo mongo.archive.gz --data data.tar.gz
+        (restore validates that the instance/database match this file's values)
+INFO
+
+# Include the instance env so restore is self-consistent
+if [ -f "$ENV_FILE" ]; then
+  cp "$ENV_FILE" "$STAGE/$ENV_FILE"
+  echo "[env] $ENV_FILE included in the zip"
+else
+  echo "[env] WARNING: $ENV_FILE not found — zip has no env (restore will use the current one)"
 fi
 
 echo
-echo "Restore complete."
-# Restart app explicitly (trap would also do it, but report it)
-if [ "$APP_WAS_RUNNING" -eq 1 ]; then
-  docker compose -f docker-compose.prod.yml --env-file "$ENV_FILE" up -d autowrx >/dev/null 2>&1 || true
-  APP_WAS_RUNNING=0
-  echo "[app] $APP_CONTAINER restarted"
+echo "[zip] writing $ZIP"
+if command -v zip >/dev/null 2>&1; then
+  (cd "$STAGE" && zip -q -r "$OLDPWD/$ZIP" .)
+else
+  # No zip binary: use python's zipfile (always available in the container host images we support)
+  python3 - "$STAGE" "$ZIP" <<'PY'
+import sys, os, zipfile
+stage, out = sys.argv[1], sys.argv[2]
+with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:
+    for root, _, files in os.walk(stage):
+        for f in files:
+            full = os.path.join(root, f)
+            z.write(full, os.path.relpath(full, stage))
+PY
 fi
-echo "Verify the instance (open the site, check content), then consider a fresh ./backup.sh"
+echo "[zip] OK ($(du -h "$ZIP" | cut -f1 || true))"
+echo
+echo "Backup complete: $ZIP"
+echo "Contents: $(unzip -l "$ZIP" 2>/dev/null | tail -1 || python3 -c "import zipfile,sys; print(sum(i.file_size for i in zipfile.ZipFile('$ZIP').infolist()), 'bytes')")"
+echo
+echo "Restore with: ./restore.sh"
