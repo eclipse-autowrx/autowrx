@@ -47,9 +47,9 @@ echo "Instance name:  $NAME"
 echo "Database:       $DB_NAME (container: $DB_CONTAINER)"
 echo "Data dirs:      $UPLOAD_PATH, $PLUGIN_PATH"
 echo "Output:         $BACKUP_DIR/"
-[ "$DO_DB" -eq 1 ]   && echo "Scope:           database + data"
-[ "$DO_DB" -eq 0 ]   && echo "Scope:           data only"
-[ "$DO_DATA" -eq 0 ] && echo "Scope:           database only"
+if [ "$DO_DB" -eq 1 ]; then echo "Scope:           database + data"; fi
+if [ "$DO_DB" -eq 0 ]; then echo "Scope:           data only"; fi
+if [ "$DO_DATA" -eq 0 ]; then echo "Scope:           database only"; fi
 echo
 
 if [ "$ASSUME_YES" -eq 0 ]; then
@@ -85,7 +85,7 @@ if [ "$DO_DB" -eq 1 ]; then
   OUT="$BACKUP_DIR/mongo-$TS.archive.gz"
   echo "[db] dumping via '$DUMP_CMD' -> $OUT"
   if docker exec "$DB_CONTAINER" "$DUMP_CMD" --db="$DB_NAME" --archive --gzip --quiet > "$OUT"; then
-    SIZE=$(du -h "$OUT" | cut -f1)
+    SIZE=$(du -h "$OUT" | cut -f1 || true)
     # Integrity signal: a gzip test plus a non-trivial size
     gzip -t "$OUT" && echo "[db] OK ($SIZE, gzip integrity verified)"
   else
