@@ -36,13 +36,7 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { Spinner } from '@/components/atoms/spinner'
 import PluginPageRender from '@/components/organisms/PluginPageRender'
-import { getPluginBySlug } from '@/services/plugin.service'
-import { useSiteConfig } from '@/utils/siteConfig'
-
-interface VssPluginConfig {
-  label: string
-  plugin: string
-}
+import { useConfiguredPlugins } from '@/hooks/useConfiguredPlugins'
 
 const ViewApiCovesa = () => {
   const { model_id, api: apiParam } = useParams<{ model_id: string; api?: string }>()
@@ -67,46 +61,7 @@ const ViewApiCovesa = () => {
   const [url, setUrl] = useState('')
   const [showUpload, setShowUpload] = useState(false)
 
-  const vssPluginsConfig = useSiteConfig('VSS_PLUGINS')
-  const [availablePlugins, setAvailablePlugins] = useState<VssPluginConfig[]>([])
-
-  useEffect(() => {
-    let cancelled = false
-    const configs: VssPluginConfig[] = Array.isArray(vssPluginsConfig)
-      ? vssPluginsConfig
-      : []
-
-    const valid = configs.filter(
-      (entry) =>
-        entry &&
-        typeof entry.label === 'string' &&
-        typeof entry.plugin === 'string' &&
-        entry.label.trim() &&
-        entry.plugin.trim(),
-    )
-
-    if (valid.length === 0) {
-      setAvailablePlugins([])
-      return
-    }
-
-    const uniqueSlugs = [...new Set(valid.map((p) => p.plugin))]
-    Promise.allSettled(
-      uniqueSlugs.map((slug) => getPluginBySlug(slug).then(() => slug)),
-    ).then((results) => {
-      if (cancelled) return
-      const installedSlugs = new Set(
-        results
-          .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled')
-          .map((r) => r.value),
-      )
-      setAvailablePlugins(valid.filter((p) => installedSlugs.has(p.plugin)))
-    })
-
-    return () => {
-      cancelled = true
-    }
-  }, [JSON.stringify(vssPluginsConfig)])
+  const availablePlugins = useConfiguredPlugins('VSS_PLUGINS')
 
   useEffect(() => {
     // Set selected API from route param or default to first API

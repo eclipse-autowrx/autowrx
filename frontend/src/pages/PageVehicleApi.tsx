@@ -15,9 +15,11 @@ import ViewApiCovesa from '@/components/organisms/ViewApiCovesa'
 import ViewCustomApiSet from '@/components/organisms/ViewCustomApiSet'
 import ModelApiTabs from '@/components/molecules/ModelApiTabs'
 import CustomApiSetPicker from '@/components/organisms/CustomApiSetPicker'
+import PluginPageRender from '@/components/organisms/PluginPageRender'
 import { updateModelService } from '@/services/model.service'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import usePermissionHook from '@/hooks/usePermissionHook'
+import { useConfiguredPlugins } from '@/hooks/useConfiguredPlugins'
 import { PERMISSIONS } from '@/data/permission'
 import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/components/molecules/toaster/use-toast'
@@ -639,12 +641,21 @@ const DEFAULT_USP_TREE = {
 }
 
 const PageVehicleApi = () => {
-  const { model_id, instance_id, api } = useParams<{ model_id: string; instance_id?: string; api?: string }>()
+  const { model_id, instance_id, api, plugin_slug } = useParams<{
+    model_id: string
+    instance_id?: string
+    api?: string
+    plugin_slug?: string
+  }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const [isPickerOpen, setIsPickerOpen] = useState(false)
   const customApiSetsEnabled = !useSiteConfig('DISABLE_CUSTOM_API_SETS', false)
+  const modelApiPlugins = useConfiguredPlugins('MODEL_API_PLUGINS')
+  const activePlugin = plugin_slug
+    ? modelApiPlugins.find((p) => p.plugin === plugin_slug)
+    : undefined
 
   const { data: model, refetch: refetchModel } = useCurrentModel()
   const [hasWritePermission] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
@@ -740,6 +751,7 @@ const PageVehicleApi = () => {
               onAddInstance={() => setIsPickerOpen(true)}
               isModelOwner={hasWritePermission}
               covesaApiCount={covesaApiCount}
+              plugins={modelApiPlugins}
             />
           </div>
           <div className="grow"></div>
@@ -748,7 +760,13 @@ const PageVehicleApi = () => {
 
       {/* Content Area */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        {isCovesaTab || !customApiSetsEnabled ? (
+        {activePlugin ? (
+          <PluginPageRender
+            key={activePlugin.plugin}
+            plugin_id={activePlugin.plugin}
+            data={{ model: model || null, prototype: null }}
+          />
+        ) : isCovesaTab || !customApiSetsEnabled ? (
           <ViewApiCovesa />
         ) : instance_id ? (
           <ViewCustomApiSet key={instance_id} instanceId={instance_id} />

@@ -412,6 +412,14 @@ const routesConfig: RouteConfig[] = [
                 ),
               },
               {
+                path: 'api/plugin/:plugin_slug',
+                element: (
+                  <SuspenseProvider>
+                    <PageVehicleApi />
+                  </SuspenseProvider>
+                ),
+              },
+              {
                 path: 'plugin',
                 element: (
                   <SuspenseProvider>
