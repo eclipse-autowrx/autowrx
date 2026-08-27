@@ -1,3 +1,11 @@
+// Copyright (c) 2025 Eclipse Foundation.
+//
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
@@ -485,13 +493,6 @@ const ActionButtonsTab = ({
             type="RIGHT_NAV_BUTTONS"
             renderClone={(provided, snapshot, rubric) => {
               const btn = localRightNavPlugins[rubric.source.index]
-              const key = `key-${JSON.stringify({
-                plugin: btn.plugin,
-                label: btn.label,
-                hideIcon: btn.hideIcon,
-                variant: btn.variant,
-                corners: btn.corners,
-              })}`
               return (
                 <div
                   ref={provided.innerRef}
@@ -528,13 +529,7 @@ const ActionButtonsTab = ({
                 className="flex flex-col gap-2"
               >
                 {localRightNavPlugins.map((btn, i) => {
-                  const key = `key-${JSON.stringify({
-                    plugin: btn.plugin,
-                    label: btn.label,
-                    hideIcon: btn.hideIcon,
-                    variant: btn.variant,
-                    corners: btn.corners,
-                  })}`
+                  const key = `key-${btn.builtin ?? btn.plugin ?? i}`
 
                   return (
                     <Draggable key={key} draggableId={key} index={i}>
