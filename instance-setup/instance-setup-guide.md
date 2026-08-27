@@ -2,6 +2,18 @@
 
 This guide helps you deploy a new AutoWRX production instance using Docker Compose.
 
+## Backup & restore utilities
+
+Two companion scripts live alongside `up.sh` / `down.sh`:
+
+- **`./backup.sh`** — dumps the MongoDB database (`backups/mongo-<ts>.archive.gz`) and archives the upload/plugin data (`backups/data-<ts>.tar.gz`). Flags: `--db` / `--data` to scope, `-y` to skip the confirmation prompt. Backups are never auto-deleted.
+- **`./restore.sh`** — restores from those files (most recent by default, or `--mongo <file>` / `--data <file>`). The database is restored with `--drop`, the data directories are overwritten, the app container is stopped during restore and restarted after. Requires typing `RESTORE` in capitals to proceed.
+
+Notes:
+
+- On MongoDB 7 images the database tools are not bundled — both scripts detect the tools mount (`/opt/dbtools`, see the commented volume in `docker-compose.prod.yml`) and explain the one-time setup if it is missing.
+- Restore replaces post-backup data. Take a fresh `./backup.sh` first if the current state matters.
+
 ## Prerequisites
 
 - Docker and Docker Compose installed
