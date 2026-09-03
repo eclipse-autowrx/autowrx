@@ -16,6 +16,11 @@ const pick = require('../utils/pick');
 const platformAuthService = require('../services/platformAuth.service');
 const { sanitizeUser } = require('../middlewares/auth');
 
+// origin/state on these routes comes straight from the query string, before the user
+// has authenticated. Redirecting to it unchecked is an open redirect, so anything
+// that isn't on the CORS allowlist falls back to the configured client base url.
+const resolveRedirectOrigin = (origin) => (config.isAllowedOrigin(origin) ? origin : config.client.baseUrl);
+
 const authenticate = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json({
     user: req.user,
@@ -188,7 +193,7 @@ const githubCallback = catchAsync(async (req, res) => {
   try {
     const { origin, code, userId } = req.query;
     await authService.githubCallback(code, userId);
-    res.redirect(`${origin || 'http://127.0.0.1:3000'}/auth/github/success`);
+    res.redirect(`${resolveRedirectOrigin(origin)}/auth/github/success`);
   } catch (error) {
     logger.error(error);
     res.status(httpStatus.UNAUTHORIZED).send('Unauthorized. Please try again.');
@@ -255,7 +260,7 @@ const githubSsoStart = catchAsync(async (req, res) => {
   const pathWithoutQuery = (req.originalUrl || '').split('?')[0];
   const callbackPath = pathWithoutQuery.replace(/\/github-sso\/start\/?$/, '') + '/github-sso/callback';
   const redirectUri = baseUrl + callbackPath;
-  const returnOrigin = origin || config.client.baseUrl;
+  const returnOrigin = resolveRedirectOrigin(origin);
   const state = encodeURIComponent(JSON.stringify({ providerId, origin: returnOrigin }));
   const scope = (Array.isArray(provider.scopes) && provider.scopes.length)
     ? provider.scopes.join(' ')
@@ -280,7 +285,7 @@ const githubSsoCallback = catchAsync(async (req, res) => {
     try {
       const decoded = JSON.parse(decodeURIComponent(state));
       providerId = decoded.providerId;
-      if (decoded.origin) origin = decoded.origin;
+      if (decoded.origin) origin = resolveRedirectOrigin(decoded.origin);
     } catch (e) {
       providerId = decodeURIComponent(state);
     }
