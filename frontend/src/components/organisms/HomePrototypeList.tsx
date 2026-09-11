@@ -356,7 +356,7 @@ const HomePrototypeList = ({
     return null
   }
 
-  const isEmpty = totalResults === 0
+  const isEmptyRaw = totalResults === 0
 
   const handleSortFilterChange = (selected: string[]) => {
     const label = selected[0]
@@ -386,6 +386,11 @@ const HomePrototypeList = ({
   const isInitialLoading = isClientViewSort
     ? allForViewSortQuery.isLoading
     : page0Query.isLoading
+
+  // A tab is only genuinely empty once the listing query has settled — during
+  // the initial load `totalResults` is 0 simply because nothing has arrived yet,
+  // which used to render permanently disabled tabs on slow connections (#666).
+  const isEmpty = !isInitialLoading && isEmptyRaw
 
   // Number of item slots to render in the flex strip. Before the first response (initial
   // loading) render `itemsPerView` placeholder slots so the carousel reserves the right

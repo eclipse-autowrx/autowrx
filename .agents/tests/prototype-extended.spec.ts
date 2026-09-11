@@ -10,14 +10,30 @@ import {
   createTestPrototype,
   goToPrototypeOverview,
   setPrototypeStateViaUI,
+  createTestModelViaApi,
+  deleteModelViaApi,
 } from './helpers';
 
-// Helper: navigate to first model's prototype library, return modelId
+
+// Helper: navigate to first model's prototype library, return modelId.
+// On a fresh database no model exists yet, so seed one via the API before
+// looking for a card (#666) — cleaned up by the helper's caller patterns.
+let seededModelId: string | null = null
 async function goToFirstModelLibrary(page: any): Promise<string> {
   await page.goto('/model');
   await page.waitForTimeout(3000);
 
-  const firstModel = page.locator('a[href*="/model/"]').first();
+  let firstModel = page.locator('a[href*="/model/"]').first();
+  if (!(await firstModel.isVisible().catch(() => false))) {
+    seededModelId = await createTestModelViaApi(
+      page,
+      `E2E_Seed_${Date.now()}`,
+      'public',
+    );
+    await page.goto('/model');
+    await page.waitForTimeout(3000);
+    firstModel = page.locator('a[href*="/model/"]').first();
+  }
   await expect(firstModel).toBeVisible({ timeout: 8000 });
   const href = await firstModel.getAttribute('href');
   const modelId = href?.split('/model/')[1]?.split('/')[0] || '';
@@ -35,6 +51,18 @@ async function getFirstPrototypeHref(page: any): Promise<string | null> {
 }
 
 test.describe('Prototype Extended', () => {
+  test.afterAll(async ({ page }) => {
+    if (seededModelId) {
+      try {
+        await loginAsAdmin(page)
+        await deleteModelViaApi(page, seededModelId)
+      } catch {
+        // best-effort cleanup; the E2E_ seed model is harmless if left
+      }
+      seededModelId = null
+    }
+  })
+
 
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
