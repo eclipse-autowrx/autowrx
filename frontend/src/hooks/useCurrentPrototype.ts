@@ -19,8 +19,8 @@ const useCurrentPrototype = () => {
   const [searchParams] = useSearchParams()
   const prototype_id =
     pathPrototypeId || searchParams.get('prototype_id') || undefined
-  // Gate on auth bootstrap so the fetch carries the access token (#665,
-  // same pattern as useSelfProfile).
+  // Gate on auth bootstrap so the fetch carries the access token (#665, same pattern
+  // as useSelfProfile).
   const [authBootstrapped, accessToken] = useAuthStore((state) => [
     state.authBootstrapped,
     state.access?.token,
@@ -35,7 +35,7 @@ const useCurrentPrototype = () => {
       }
       return prototype
     },
-    enabled: !!prototype_id && (authBootstrapped || !accessToken),
+    enabled: !!prototype_id && authBootstrapped,
   })
 }
 

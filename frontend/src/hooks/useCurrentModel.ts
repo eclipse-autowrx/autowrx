@@ -28,7 +28,7 @@ const useCurrentModel = () => {
   return useQuery<Model>({
     queryKey: ['model', model_id],
     queryFn: () => getModel(model_id!),
-    enabled: !!model_id && (authBootstrapped || !accessToken),
+    enabled: !!model_id && authBootstrapped,
   })
 }
 
