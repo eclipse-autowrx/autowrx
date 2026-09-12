@@ -59,7 +59,8 @@ async function getFirstPrototypeHref(page: any): Promise<string | null> {
 }
 
 test.describe('Prototype Extended', () => {
-  test.afterAll(async ({ page }) => {
+  test.afterAll(async ({ browser }) => {
+    const page = await browser.newPage()
     if (seededModelId) {
       try {
         await loginAsAdmin(page)

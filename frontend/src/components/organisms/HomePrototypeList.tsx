@@ -120,6 +120,13 @@ const HomePrototypeList = ({
   title,
 }: HomePrototypeListProps) => {
   const { data: user, isLoading: userLoading } = useSelfProfileQuery()
+  // Gate listing queries on auth bootstrap: during the post-reload restore the
+  // self-profile query is disabled (reports isLoading:false), so !userLoading
+  // alone fired the listing unauthenticated — a guest-shaped result settled
+  // and (with no user in the query key) was never refetched, leaving tabs
+  // permanently disabled when the guest listing is empty (#666 follow-up,
+  // same class as #665).
+  const authBootstrapped = useAuthStore((state) => state.authBootstrapped)
   const { authConfigs } = useAuthConfigs()
   const navigate = useNavigate()
   const itemsPerView = useItemsPerPage()
@@ -177,7 +184,7 @@ const HomePrototypeList = ({
           ? { created_by: user.id }
           : {}),
       }),
-    enabled: !userLoading && isClientViewSort,
+    enabled: authBootstrapped && !userLoading && isClientViewSort,
   })
 
   const sortedItems = useMemo(() => {
@@ -204,7 +211,7 @@ const HomePrototypeList = ({
   const page0Query = useQuery({
     queryKey: prototypeQueryKeys.paged({ ...pagedQueryKeyParams, page: 1 }),
     queryFn: () => listPrototypesPaged({ ...baseParams, page: 1 }),
-    enabled: !userLoading && !isClientViewSort,
+    enabled: authBootstrapped && !userLoading && !isClientViewSort,
   })
 
   const pagedTotalResults = page0Query.data?.totalResults
@@ -390,7 +397,7 @@ const HomePrototypeList = ({
   // A tab is only genuinely empty once the listing query has settled — during
   // the initial load `totalResults` is 0 simply because nothing has arrived yet,
   // which used to render permanently disabled tabs on slow connections (#666).
-  const isEmpty = !isInitialLoading && isEmptyRaw
+  const isEmpty = authBootstrapped && !isInitialLoading && isEmptyRaw
 
   // Number of item slots to render in the flex strip. Before the first response (initial
   // loading) render `itemsPerView` placeholder slots so the carousel reserves the right
