@@ -16,6 +16,7 @@ import {
 import { cn } from '@/lib/utils'
 import { TbX } from 'react-icons/tb'
 import { dismissAllOpenSelects } from '@/lib/selectDismiss'
+import { DialogTitle } from '@/components/atoms/dialog'
 
 // Radix Select content uses data-slot / role=listbox — not data-radix-select-content.
 const SELECT_OPEN_SELECTOR =
@@ -219,7 +220,7 @@ const DaDialog = ({
           >
             <div className="flex flex-col gap-0.5 min-w-0">
               {dialogTitle && (
-                <h2 className="text-lg font-semibold text-primary leading-tight">{dialogTitle}</h2>
+                <DialogTitle className="text-lg font-semibold text-primary leading-tight">{dialogTitle}</DialogTitle>
               )}
               {description && (
                 <p className="text-sm text-muted-foreground leading-snug">{description}</p>
