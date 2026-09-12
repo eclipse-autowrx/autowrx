@@ -65,20 +65,20 @@
     "helmet": "^8.0.0",
     "http-proxy-middleware": "^3.0.0",
     "http-status": "^1.7.4",
-    "jimp": "^0.22.12",
+    "jimp": "^1.6.1",
     "joi": "^17.3.0",
     "jsonwebtoken": "^9.0.0",
     "lodash": "^4.17.21",
     "moment": "^2.30.0",
     "mongoose": "^8.0.0",
     "morgan": "^1.10.0",
-    "multer": "^1.4.5-lts.1",
-    "nodemailer": "^6.9.15",
+    "multer": "^2.0.0",
+    "nodemailer": "^9.0.5",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
-    "pm2": "^5.1.0",
+    "pm2": "^7.0.3",
     "resend": "^6.9.2",
-    "sharp": "^0.33.0",
+    "sharp": "^0.35.3",
     "socket.io": "^4.8.1",
     "swagger-jsdoc": "^6.0.8",
     "swagger-ui-express": "^5.0.1",
@@ -89,7 +89,7 @@
     "yauzl": "^3.4.0"
   },
   "devDependencies": {
-    "@faker-js/faker": "^8.0.0",
+    "@faker-js/faker": "^10.6.0",
     "@types/lodash": "^4.17.12",
     "@types/mongoose": "^5.11.97",
     "eslint": "^8.57.0",
@@ -118,7 +118,7 @@
     "json5": "^2.2.3",
     "decode-uri-component": "^0.4.1",
     "async": "^3.2.6",
-    "fast-xml-parser": "^4.5.0",
+    "fast-xml-parser": "^5.7.0",
     "tar-fs": "^3.0.6",
     "follow-redirects": "^1.15.9",
     "tough-cookie": "^5.0.0",
@@ -136,6 +136,14 @@
     "body-parser": "^1.20.3",
     "systeminformation": "^5.23.20",
     "form-data": "^4.0.4",
-    "json-schema": "^0.4.0"
+    "json-schema": "^0.4.0",
+    "pm2/js-yaml": "^4.3.1"
+  },
+  "overrides": {
+    "pm2": {
+      "js-yaml": "^4.3.1"
+    },
+    "csv-parse": "^7.0.2",
+    "qs": "^6.16.0"
   }
 }

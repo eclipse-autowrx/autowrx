@@ -39,6 +39,15 @@ RUN yarn install --frozen-lockfile --production
 # Remove build tools to reduce image size (optional, but keeps python3 for runtime if needed)
 RUN apk del make g++
 
+# Remove the npm CLI bundled in the base image and the yarn download cache.
+# Nothing at runtime uses npm (CMD runs node via yarn), and npm ships its own
+# vendored copies of tar/pacote/sigstore/brace-expansion/ip-address/picomatch
+# that trip CVE scanners even though the app never loads them.
+RUN rm -rf /usr/local/lib/node_modules/npm \
+           /usr/local/bin/npm /usr/local/bin/npx \
+           /usr/local/share/.cache/yarn \
+           /opt/yarn-v*/lib/cli.js.map
+
 COPY --chown=node:node backend/ .
 
 # Create data directory for VSS files (will be populated by setupScheduledCheck on startup)
