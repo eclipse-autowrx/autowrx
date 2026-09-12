@@ -8,12 +8,15 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { getModel } from '@/services/model.service'
+import useAuthStore from '@/stores/authStore'
 
 const useGetModel = (model_id?: string | null) => {
+  const authBootstrapped = useAuthStore((state) => state.authBootstrapped)
+
   return useQuery({
     queryKey: ['getModel', model_id],
     queryFn: () => getModel(model_id!),
-    enabled: !!model_id,
+    enabled: !!model_id && authBootstrapped,
   })
 }
 

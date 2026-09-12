@@ -8,9 +8,15 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { getPrototype } from "@/services/prototype.service"
+import useAuthStore from "@/stores/authStore"
 
 const useGetPrototype = (prototype_id: string) => {
-  return useQuery({ queryKey: ["getPrototype", prototype_id], queryFn: () => getPrototype(prototype_id) })
+  const authBootstrapped = useAuthStore((state) => state.authBootstrapped)
+  return useQuery({
+    queryKey: ["getPrototype", prototype_id],
+    queryFn: () => getPrototype(prototype_id),
+    enabled: authBootstrapped,
+  })
 }
 
 export default useGetPrototype
