@@ -103,6 +103,31 @@ if (envVars.AUTH_PROVIDER === 'platform' && !platformHeaders.email) {
   );
 }
 
+// Shared by CORS and by anything that redirects based on a caller-supplied origin
+// (OAuth/SSO return URLs). Same allowlist, same CORS_ORIGINS patterns, so a host
+// that isn't trusted for CORS isn't trusted as a redirect target either.
+const isAllowedOrigin = (origin) => {
+  if (!origin) {
+    return false;
+  }
+
+  const corsOriginsPatterns = envVars.CORS_ORIGINS.split(',')
+    .map((pattern) => pattern.trim())
+    .filter(Boolean);
+
+  const allowedOrigins = [];
+  corsOriginsPatterns.forEach((pattern) => {
+    try {
+      allowedOrigins.push(new RegExp(`^http://${pattern}$`));
+      allowedOrigins.push(new RegExp(`^https://${pattern}$`));
+    } catch (e) {
+      console.error(`Invalid CORS origin pattern: ${pattern}`, e);
+    }
+  });
+
+  return allowedOrigins.some((pattern) => pattern.test(origin));
+};
+
 const config = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
@@ -156,24 +181,7 @@ const config = {
         return callback(null, true);
       }
 
-      // Parse CORS_ORIGINS from environment variable (comma-separated regex patterns)
-      const corsOriginsPatterns = envVars.CORS_ORIGINS.split(',').map(pattern => pattern.trim()).filter(Boolean);
-
-      // Build allowed origins list with both http and https for each pattern
-      const allowedOrigins = [];
-      corsOriginsPatterns.forEach(pattern => {
-        try {
-          allowedOrigins.push(new RegExp(`^http://${pattern}$`));
-          allowedOrigins.push(new RegExp(`^https://${pattern}$`));
-        } catch (e) {
-          console.error(`Invalid CORS origin pattern: ${pattern}`, e);
-        }
-      });
-
-      // Check if origin matches any of the allowed patterns
-      const isAllowed = allowedOrigins.some(pattern => pattern.test(origin));
-
-      if (isAllowed) {
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
       } else {
         console.log(`CORS blocked origin: ${origin}`);
@@ -181,6 +189,7 @@ const config = {
       }
     },
   },
+  isAllowedOrigin,
   constraints: {
     model: {
       maximumAuthorizedUsers: 1000,
