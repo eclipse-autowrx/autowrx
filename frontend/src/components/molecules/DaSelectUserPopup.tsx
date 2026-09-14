@@ -116,14 +116,13 @@ const DaSelectUserPopup = ({
       contentContainerClassName="max-h-[85vh]"
     >
       <div className="flex min-w-[500px] select-none flex-col rounded">
-        <div className="mt-2 px-2">
+        <div>
           <Input
-            className="border-t-2 pt-3"
             placeholder="Search"
             value={search}
             onChange={handleSearchChange}
           />
-          <div className="-mx-4 mt-2 max-h-[400px] min-h-[400px] overflow-auto p-1 px-4 xl:max-h-[600px]">
+          <div className="-mx-6 mt-3 max-h-[400px] min-h-[400px] overflow-auto px-6 xl:max-h-[600px]">
             {isLoading ? (
               <div className="flex h-full w-full items-center justify-center">
                 <Spinner />

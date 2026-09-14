@@ -60,6 +60,8 @@ const DeployPluginSection: React.FC = () => {
   const [pluginFormOpen, setPluginFormOpen] = useState(false)
   const [pluginFormStageIndex, setPluginFormStageIndex] = useState<number | null>(null)
   const [editingPluginId, setEditingPluginId] = useState<string | undefined>(undefined)
+  const [stageMenuOpenIndex, setStageMenuOpenIndex] = useState<number | null>(null)
+  const [pluginMenuOpen, setPluginMenuOpen] = useState<{ stageIndex: number; pluginId: string } | null>(null)
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
@@ -427,7 +429,10 @@ const DeployPluginSection: React.FC = () => {
                                 <h3 className="font-semibold text-foreground truncate flex-1">
                                   {stage.name}
                                 </h3>
-                                <DropdownMenu>
+                                <DropdownMenu
+                                  open={stageMenuOpenIndex === index}
+                                  onOpenChange={(open) => setStageMenuOpenIndex(open ? index : null)}
+                                >
                                   <DropdownMenuTrigger asChild>
                                     <Button
                                       variant="ghost"
@@ -438,12 +443,20 @@ const DeployPluginSection: React.FC = () => {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleEdit(index)}>
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setStageMenuOpenIndex(null)
+                                        handleEdit(index)
+                                      }}
+                                    >
                                       <TbPencil className="w-4 h-4 mr-2" />
                                       Edit
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                      onClick={() => handleDelete(index)}
+                                      onClick={() => {
+                                        setStageMenuOpenIndex(null)
+                                        handleDelete(index)
+                                      }}
                                       className="text-destructive focus:text-destructive"
                                     >
                                       <TbTrash className="w-4 h-4 mr-2" />
@@ -504,7 +517,12 @@ const DeployPluginSection: React.FC = () => {
                                               </p>
                                             )}
                                           </div>
-                                          <DropdownMenu>
+                                          <DropdownMenu
+                                            open={pluginMenuOpen?.stageIndex === index && pluginMenuOpen?.pluginId === plugin.id}
+                                            onOpenChange={(open) =>
+                                              setPluginMenuOpen(open ? { stageIndex: index, pluginId: plugin.id } : null)
+                                            }
+                                          >
                                             <DropdownMenuTrigger asChild>
                                               <Button
                                                 variant="ghost"
@@ -519,6 +537,7 @@ const DeployPluginSection: React.FC = () => {
                                               <DropdownMenuItem
                                                 onClick={(e) => {
                                                   e.stopPropagation()
+                                                  setPluginMenuOpen(null)
                                                   handleOpenPluginForm(index, plugin.id)
                                                 }}
                                               >
@@ -528,6 +547,7 @@ const DeployPluginSection: React.FC = () => {
                                               <DropdownMenuItem
                                                 onClick={(e) => {
                                                   e.stopPropagation()
+                                                  setPluginMenuOpen(null)
                                                   handleRemovePlugin(index, plugin.id)
                                                 }}
                                                 className="text-destructive focus:text-destructive"

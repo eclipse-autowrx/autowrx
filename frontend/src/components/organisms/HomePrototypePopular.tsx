@@ -6,16 +6,16 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Prototype } from '@/types/model.type'
-import { listPopularPrototypes } from '@/services/prototype.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { usePopularPrototypes } from '@/hooks/usePrototypeQueries'
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb'
 import { Button } from '../atoms/button'
 import DaDialog from '../molecules/DaDialog'
 import useAuthStore from '@/stores/authStore'
-import { DaPrototypeItem } from '../molecules/DaPrototypeItem'
+import { DaPrototypeCard } from '../molecules/DaPrototypeCard'
 import DaSkeletonGrid from '../molecules/DaSkeletonGrid'
 import { useAuthConfigs } from '@/hooks/useAuthConfigs'
 
@@ -28,11 +28,9 @@ const HomePrototypePopular = ({
   requiredLogin,
   title,
 }: HomePrototypePopularProps) => {
-  const { data: user } = useSelfProfileQuery()
+  const { data: user, isLoading, isFetching } = useSelfProfileQuery()
   const { authConfigs } = useAuthConfigs()
-  const [popularPrototypes, setPopularPrototypes] = useState<
-    Prototype[] | undefined
-  >(undefined)
+  const { data: popularPrototypes } = usePopularPrototypes()
   const [showMore, setShowMore] = useState(false)
   const navigate = useNavigate()
 
@@ -40,17 +38,10 @@ const HomePrototypePopular = ({
   const [selectedPrototype, setSelectedPrototype] = useState<Prototype | null>(
     null,
   )
-  const { setOpenLoginDialog } = useAuthStore()
+  const { setOpenLoginDialog, authBootstrapped } = useAuthStore()
+  const isResolvingAuth = !authBootstrapped || (!user && (isLoading || isFetching))
 
-  useEffect(() => {
-    const fetchProposalPrototypes = async () => {
-      const popularPrototypes = await listPopularPrototypes()
-      setPopularPrototypes(popularPrototypes)
-    }
-    fetchProposalPrototypes()
-  }, [user])
-
-  if (requiredLogin && !user) {
+  if (requiredLogin && !user && !isResolvingAuth) {
     return null
   }
 
@@ -59,7 +50,6 @@ const HomePrototypePopular = ({
   }
 
   const handlePrototypeClick = (prototype: Prototype) => {
-    // Allow navigation if public viewing enabled OR user is logged in
     if (authConfigs.PUBLIC_VIEWING || user) {
       navigate(
         `/model/${prototype.model_id}/library/prototype/${prototype.id}/view`,
@@ -104,13 +94,13 @@ const HomePrototypePopular = ({
         <div className="mt-2 w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {popularPrototypes
             .slice(0, showMore ? popularPrototypes.length : 4)
-            .map((prototype, pIndex) => (
+            .map((prototype) => (
               <div
-                key={pIndex}
+                key={prototype.id}
                 onClick={() => handlePrototypeClick(prototype)}
                 className="cursor-pointer"
               >
-                <DaPrototypeItem prototype={prototype} />
+                <DaPrototypeCard prototype={prototype} variant="home" />
               </div>
             ))}
         </div>
@@ -130,32 +120,29 @@ const HomePrototypePopular = ({
         </div>
       )}
 
-      {/* Popup Dialog */}
-      <DaDialog open={openRemindDialog} onOpenChange={setOpenRemindDialog}>
-        <div className="flex flex-col max-w-xl">
-          <h3 className="text-lg font-semibold text-primary">
-            Sign In Required
-          </h3>
-          <p className="mt-4 text-base text-muted-foreground">
-            You must first sign in to explore SDV idea about
-            <span className="text-primary px-1 font-semibold">
-              {selectedPrototype?.name}
-            </span>
-          </p>
-          <div className="flex justify-end mt-6">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => {
-                setOpenRemindDialog(false)
-                setOpenLoginDialog(true)
-              }}
-              className="w-20"
-            >
-              Sign In
-            </Button>
-          </div>
-        </div>
+      <DaDialog
+        open={openRemindDialog}
+        onOpenChange={setOpenRemindDialog}
+        className="w-110"
+        dialogTitle="Sign In Required"
+        footer={
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => {
+              setOpenRemindDialog(false)
+              setOpenLoginDialog(true)
+            }}
+            className="w-20"
+          >
+            Sign In
+          </Button>
+        }
+      >
+        <p className="text-base text-muted-foreground">
+          You must first sign in to explore SDV idea about{' '}
+          <span className="text-primary font-semibold">{selectedPrototype?.name}</span>
+        </p>
       </DaDialog>
     </div>
   )

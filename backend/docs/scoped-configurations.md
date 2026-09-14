@@ -58,11 +58,11 @@ GET /v2/site-config/public/KEY?scope=user&target_id=USER_ID
 
 #### Scoped Public Routes
 ```http
-GET /v2/site-config/public/site
 GET /v2/site-config/public/user/USER_ID
 GET /v2/site-config/public/model/MODEL_ID
 GET /v2/site-config/public/user/USER_ID/KEY
 ```
+> Site-scope public configs are fetched with `GET /v2/site-config/public?scope=site` (a single segment after `/public`, e.g. `/public/site`, is interpreted as `GET /public/:key` — the config whose **key** is `site`).
 
 ### Admin Endpoints (Authentication Required)
 
@@ -74,11 +74,11 @@ GET /v2/site-config/all?scope=user&target_id=USER_ID
 
 #### Scoped Admin Routes
 ```http
-GET /v2/site-config/site
 GET /v2/site-config/user/USER_ID
 GET /v2/site-config/model/MODEL_ID
 GET /v2/site-config/user/USER_ID/all
 ```
+> Site-scope configs are fetched via `GET /v2/site-config/all?scope=site` or `GET /v2/site-config/?scope=site` (a single-segment `/site` would be interpreted as `/:siteConfigId`).
 
 #### Create Configuration
 ```http
@@ -142,8 +142,8 @@ const modelSettings = await getConfig('settings', 'model', modelId);
 // Get all public configs for a user
 const userConfigs = await getPublicConfigs('user', userId);
 
-// React hook usage
-const { configs, loading, error } = useSiteConfigs(['theme-color', 'language'], 'user', userId);
+// React hook usage (site-scope only — useSiteConfigs(keys, defaultValue?))
+const { configs, loading, error } = useSiteConfigs(['theme-color', 'language']);
 ```
 
 ## Configuration Hierarchy

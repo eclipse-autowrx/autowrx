@@ -6,10 +6,10 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { FC, useEffect, useRef, useState } from 'react'
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
-import { TbPlayerPlayFilled, TbPlayerStopFilled } from 'react-icons/tb'
+import { TbPlayerPlayFilled, TbPlayerStopFilled, TbSettings } from 'react-icons/tb'
 import { FaAnglesLeft, FaAnglesRight } from 'react-icons/fa6'
 import { SlOptionsVertical } from 'react-icons/sl'
 import { cn } from '@/lib/utils'
@@ -22,6 +22,7 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import DaRuntimeConnector from '../DaRuntimeConnector'
+import useRuntimeStore from '@/stores/runtimeStore'
 import { useSiteConfig } from '@/utils/siteConfig'
 import DaApisWatch from './DaApisWatch'
 import {
@@ -38,8 +39,8 @@ import { GoDotFill } from 'react-icons/go'
 import DaMockManager from './DaMockManager'
 import PrototypeVarsWatch from './PrototypeVarsWatch'
 import DaRemoteCompileRust from '../remote-compiler/DaRemoteCompileRust'
-
-const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
+import { useSystemUI } from '@/hooks/useSystemUI'
+import { useUsedVehicleApis } from '@/hooks/useUsedVehicleApis'
 
 const AlwaysScrollToBottom = () => {
   const elementRef = useRef<HTMLDivElement>(null)
@@ -52,19 +53,38 @@ const AlwaysScrollToBottom = () => {
   return <div ref={elementRef} />
 }
 
-const DaRuntimeControl: FC = () => {
+interface DaRuntimeControlProps {
+  className?: string
+}
+
+const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   const { data: currentUser } = useSelfProfileQuery()
-  const [prototype, activeModelApis] = useModelStore(
-    (state) => [state.prototype as Prototype, state.activeModelApis],
+  const [prototype] = useModelStore(
+    (state) => [state.prototype as Prototype],
     shallow,
   )
   const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
   const runtimeServerUrl = useSiteConfig(
     'RUNTIME_SERVER_URL',
-    DEFAULT_KIT_SERVER,
   )
+  const runtimeServerConfigRaw = useSiteConfig('RUNTIME_SERVER_CONFIG', '')
+  const runtimeServerConfig = useMemo(() => {
+    if (!runtimeServerConfigRaw) return {}
+    try {
+      const parsed =
+        typeof runtimeServerConfigRaw === 'string'
+          ? JSON.parse(runtimeServerConfigRaw)
+          : runtimeServerConfigRaw
+      return typeof parsed === 'object' && parsed !== null ? parsed : {}
+    } catch {
+      return {}
+    }
+  }, [runtimeServerConfigRaw])
+  const { showPrototypeDashboardFullScreen } = useSystemUI()
 
+  const setActiveRuntimeName = useRuntimeStore((state) => state.setActiveRuntimeName)
+  const setIsAppRunning = useRuntimeStore((state) => state.setIsAppRunning)
   const [isExpand, setIsExpand] = useState(false)
   const [isRunning, setIsRunning] = useState(false)
   const [activeRtId, setActiveRtId] = useState<string | undefined>('')
@@ -80,11 +100,16 @@ const DaRuntimeControl: FC = () => {
     localStorage.getItem('customKitServer') || '',
   )
   const [showConfigDialog, setShowConfigDialog] = useState<boolean>(false)
+  const [runtimeMenuOpen, setRuntimeMenuOpen] = useState(false)
   const [useRuntime, setUseRuntime] = useState<boolean>(true)
   const [mockSignals, setMockSignals] = useState<any[]>([])
   const [curRuntimeInfo, setCurRuntimeInfo] = useState<any>(null)
   const [code, setCode] = useState<string>('')
-  const [usedApis, setUsedApis] = useState<any[]>([])
+  const usedApiObjects = useUsedVehicleApis(code)
+  const usedApis = useMemo(
+    () => usedApiObjects.map((api) => api.name),
+    [usedApiObjects],
+  )
   const [requestContent, setRequestContent] = useState<string>('')
   const [requestMode, setRequestMode] = useState<string>('')
   const [showRtDialog, setShowRtDialog] = useState<boolean>(false)
@@ -92,6 +117,7 @@ const DaRuntimeControl: FC = () => {
   const [listenerOnRt, setListenerOnRt] = useState<any[]>([])
   const [isAdvantageMode, setIsAdvantageMode] = useState<number>(-5)
   const rustCompilerRef = useRef<any>()
+  
 
   useEffect(() => {
     localStorage.setItem('customKitServer', customKitServer.trim())
@@ -131,28 +157,9 @@ const DaRuntimeControl: FC = () => {
     }
   }, [prototype?.code, prototype?.id])
 
-  useEffect(() => {
-    if (!code || !activeModelApis || activeModelApis.length === 0) {
-      setUsedApis([])
-      return
-    }
-    let dashboardCfg = prototype?.widget_config || ''
-    let apis: any[] = []
-    activeModelApis.forEach((item: any) => {
-      if (item.shortName) {
-        if (
-          code.includes(item.shortName) ||
-          dashboardCfg.includes(item.shortName)
-        ) {
-          apis.push(item.name)
-        }
-      }
-    })
-    setUsedApis(apis)
-  }, [code, activeModelApis, prototype?.widget_config])
-
   const handleRun = () => {
     setIsRunning(true)
+    setIsAppRunning(true)
     setActiveTab('output')
     setLog('')
 
@@ -189,6 +196,7 @@ const DaRuntimeControl: FC = () => {
 
   const handleStop = () => {
     setIsRunning(false)
+    setIsAppRunning(false)
     switch (prototype?.language) {
       case 'rust':
       default:
@@ -263,6 +271,32 @@ const DaRuntimeControl: FC = () => {
     }
   }, [])
 
+  const runtimeRefreshTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
+
+  const scheduleRuntimeReconnect = useCallback((delayMs = 500) => {
+    setUseRuntime(false)
+    if (runtimeRefreshTimeoutRef.current) {
+      clearTimeout(runtimeRefreshTimeoutRef.current)
+    }
+    runtimeRefreshTimeoutRef.current = setTimeout(() => {
+      setUseRuntime(true)
+      runtimeRefreshTimeoutRef.current = undefined
+    }, delayMs)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (runtimeRefreshTimeoutRef.current) {
+        clearTimeout(runtimeRefreshTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const refreshRuntimeConnector = useCallback(
+    () => scheduleRuntimeReconnect(500),
+    [scheduleRuntimeReconnect],
+  )
+
   const getTimeSpanAsString = (from: number) => {
     const now = Date.now()
     const diff = now - from * 1000
@@ -283,12 +317,19 @@ const DaRuntimeControl: FC = () => {
     return 'just now'
   }
 
+  const hasRuntimeSelected = Boolean(activeRtId)
+  const canRun = hasRuntimeSelected && !isRunning
+
   return (
     <div
       data-id="runtime-control-panel"
       className={cn(
-        'absolute bottom-0 right-0 top-0 z-10 flex flex-col px-1 py-1',
+        'right-0 z-10 flex flex-col px-1 py-1',
+        showPrototypeDashboardFullScreen
+          ? 'fixed top-[58px] bottom-[22.55px]'
+          : 'absolute top-0 bottom-0',
         isExpand ? 'w-[500px]' : 'w-14',
+        className,
       )}
       style={{
         backgroundColor: 'hsl(217, 33%, 17%)',
@@ -298,21 +339,15 @@ const DaRuntimeControl: FC = () => {
       <DaDialog
         open={showRtDialog}
         onOpenChange={setShowRtDialog}
+        onClose={refreshRuntimeConnector}
         trigger={<span></span>}
         className="w-[800px] max-w-[90vw]"
         showCloseButton={false}
+        contentContainerClassName="p-0"
       >
         <RuntimeAssetManager
-          onClose={() => {
-            setShowRtDialog(false)
-            setUseRuntime(false)
-            setTimeout(() => {
-              setUseRuntime(true)
-            }, 500)
-          }}
-          onCancel={() => {
-            setShowRtDialog(false)
-          }}
+          open={showRtDialog}
+          onClose={() => setShowRtDialog(false)}
         />
       </DaDialog>
 
@@ -323,23 +358,9 @@ const DaRuntimeControl: FC = () => {
         trigger={<span></span>}
         className="w-[600px] max-w-[90vw]"
         showCloseButton={false}
-      >
-        <div className="p-4">
-          <h3 className="text-lg font-semibold mb-4">
-            Configure Runtime Server
-          </h3>
-          <div className="mb-4 text-sm text-gray-600">
-            Runtime server URL: leave empty to use default server
-          </div>
-          <Input
-            className="w-full mb-4 text-primary"
-            value={tmpCustomKitServer}
-            onChange={(e) => {
-              setTmpCustomKitServer(e.target.value)
-            }}
-            placeholder="Custom server URL"
-          />
-          <div className="flex justify-end gap-2">
+        dialogTitle="Configure Runtime Server"
+        footer={
+          <>
             <Button
               variant="outline"
               onClick={() => {
@@ -355,15 +376,26 @@ const DaRuntimeControl: FC = () => {
                 localStorage.setItem('customKitServer', newServer)
                 setCustomKitServer(newServer)
                 setShowConfigDialog(false)
-                setUseRuntime(false)
-                setTimeout(() => {
-                  setUseRuntime(true)
-                }, 100)
+                scheduleRuntimeReconnect(100)
               }}
             >
               Save
             </Button>
-          </div>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Runtime server URL: leave empty to use default server
+          </p>
+          <Input
+            className="w-full text-primary"
+            value={tmpCustomKitServer}
+            onChange={(e) => {
+              setTmpCustomKitServer(e.target.value)
+            }}
+            placeholder="Custom server URL"
+          />
         </div>
       </DaDialog>
 
@@ -381,12 +413,14 @@ const DaRuntimeControl: FC = () => {
               <DaRuntimeConnector
                 targetPrefix="runtime-"
                 kitServerUrl={customKitServer}
+                socketIoConfig={runtimeServerConfig}
                 ref={runTimeRef}
                 usedAPIs={usedApis}
                 hideLabel={true}
-                onActiveRtChanged={(rtId: string | undefined) =>
+                onActiveRtChanged={(rtId: string | undefined) => {
                   setActiveRtId(rtId)
-                }
+                  setActiveRuntimeName(rtId)
+                }}
                 onLoadedMockSignals={setMockSignals}
                 onNewLog={appendLog}
                 onAppRunningStateChanged={(state: boolean) => {
@@ -398,12 +432,14 @@ const DaRuntimeControl: FC = () => {
               <DaRuntimeConnector
                 targetPrefix="runtime-"
                 kitServerUrl={runtimeServerUrl}
+                socketIoConfig={runtimeServerConfig}
                 ref={runTimeRef1}
                 usedAPIs={usedApis}
                 hideLabel={true}
-                onActiveRtChanged={(rtId: string | undefined) =>
+                onActiveRtChanged={(rtId: string | undefined) => {
                   setActiveRtId(rtId)
-                }
+                  setActiveRuntimeName(rtId)
+                }}
                 onLoadedMockSignals={setMockSignals}
                 onNewLog={appendLog}
                 onAppRunningStateChanged={(state: boolean) => {
@@ -428,7 +464,7 @@ const DaRuntimeControl: FC = () => {
           </Button>
         </div>
         <div className="grow" />
-        <DropdownMenu>
+        <DropdownMenu open={runtimeMenuOpen} onOpenChange={setRuntimeMenuOpen}>
           <DropdownMenuTrigger asChild>
             <div
               className="cursor-pointer hover:bg-slate-500 p-2 rounded"
@@ -440,12 +476,14 @@ const DaRuntimeControl: FC = () => {
           <DropdownMenuContent align="end">
             <DropdownMenuItem
               onClick={() => {
+                setRuntimeMenuOpen(false)
                 setTmpCustomKitServer(customKitServer)
                 setShowConfigDialog(true)
               }}
             >
-              <div className="flex w-full items-center">
-                Config Runtime Server
+              <div className="flex w-full items-center justify-between gap-2">
+                <TbSettings className="w-5 h-5" />
+                <span>Config Runtime Server</span>
               </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -454,72 +492,71 @@ const DaRuntimeControl: FC = () => {
 
       {/* Play/Stop Controls */}
       <div className={cn('flex px-1', !isExpand && 'flex-col')}>
-        {activeRtId && (
-          <>
-            <button
-              data-id="btn-run-prototype"
-              disabled={isRunning}
-              onClick={handleRun}
-              className="mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm"
-              style={{
-                color: isRunning ? 'hsl(215, 16%, 47%)' : 'hsl(0, 0%, 100%)',
-                borderColor: 'hsl(215, 16%, 47%)',
-              }}
-              onMouseEnter={(e) => {
-                if (!isRunning) {
-                  e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              <TbPlayerPlayFilled className="w-4 h-4" />
-            </button>
-            <button
-              data-id="btn-stop-prototype"
-              disabled={!isRunning}
-              onClick={handleStop}
-              className={cn(
-                'mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm',
-                isExpand && 'mx-2',
-              )}
-              style={{
-                color: !isRunning ? 'hsl(215, 16%, 47%)' : 'hsl(0, 0%, 100%)',
-                borderColor: 'hsl(215, 16%, 47%)',
-              }}
-              onMouseEnter={(e) => {
-                if (isRunning) {
-                  e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              <TbPlayerStopFilled className="w-4 h-4" />
-            </button>
+        <>
+          <button
+            data-id="btn-run-prototype"
+            disabled={!canRun}
+            title={!hasRuntimeSelected ? 'Select a runtime to run' : undefined}
+            onClick={handleRun}
+            className="mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm"
+            style={{
+              color: canRun ? 'hsl(0, 0%, 100%)' : 'hsl(215, 16%, 47%)',
+              borderColor: 'hsl(215, 16%, 47%)',
+            }}
+            onMouseEnter={(e) => {
+              if (canRun) {
+                e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+            }}
+          >
+            <TbPlayerPlayFilled className="w-4 h-4" />
+          </button>
+          <button
+            data-id="btn-stop-prototype"
+            disabled={!isRunning || !activeRtId}
+            onClick={handleStop}
+            className={cn(
+              'mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm',
+              isExpand && 'mx-2',
+            )}
+            style={{
+              color: !isRunning ? 'hsl(215, 16%, 47%)' : 'hsl(0, 0%, 100%)',
+              borderColor: 'hsl(215, 16%, 47%)',
+            }}
+            onMouseEnter={(e) => {
+              if (isRunning && hasRuntimeSelected) {
+                e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+            }}
+          >
+            <TbPlayerStopFilled className="w-4 h-4" />
+          </button>
 
-            {prototype?.language === 'rust' && (
-              <DaRemoteCompileRust
-                ref={rustCompilerRef}
-                onResponse={(log, isDone, status, appName) => {
-                  appendLog(log)
-                  if (isDone) {
-                    if (status === 'compile-done' && appName) {
-                      if (runTimeRef.current) {
-                        runTimeRef.current?.runBinApp(appName)
-                      }
-                      if (runTimeRef1.current) {
-                        runTimeRef1.current?.runBinApp(appName)
-                      }
+          {prototype?.language === 'rust' && (
+            <DaRemoteCompileRust
+              ref={rustCompilerRef}
+              onResponse={(log, isDone, status, appName) => {
+                appendLog(log)
+                if (isDone) {
+                  if (status === 'compile-done' && appName) {
+                    if (runTimeRef.current) {
+                      runTimeRef.current?.runBinApp(appName)
+                    }
+                    if (runTimeRef1.current) {
+                      runTimeRef1.current?.runBinApp(appName)
                     }
                   }
-                }}
-              />
-            )}
-          </>
-        )}
+                }
+              }}
+            />
+          )}
+        </>
         {isExpand && (
           <>
             <div className="grow" />
@@ -564,11 +601,10 @@ const DaRuntimeControl: FC = () => {
                         }}
                       />
                       <div
-                        className={`ml-2 mr-2 px-2 py-1 rounded text-xs ${
-                          requestContent.trim()
-                            ? 'text-yellow-400 font-semibold cursor-pointer hover:underline'
-                            : 'text-gray-400 font-thin'
-                        }`}
+                        className={`ml-2 mr-2 px-2 py-1 rounded text-xs ${requestContent.trim()
+                          ? 'text-yellow-400 font-semibold cursor-pointer hover:underline'
+                          : 'text-gray-400 font-thin'
+                          }`}
                         onClick={() => {
                           if (!requestContent.trim()) return
                           if (runTimeRef.current) {
@@ -689,6 +725,7 @@ const DaRuntimeControl: FC = () => {
 
             {activeTab === 'apis' && (
               <DaApisWatch
+                usedAPIs={usedApis}
                 requestWriteSignalValue={(obj: any) => {
                   writeSignalValue(obj)
                 }}

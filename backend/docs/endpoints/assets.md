@@ -58,8 +58,8 @@ Asset:
           schema:
             $ref: '#/components/schemas/CreateAssetRequest'
     responses:
-      '201':
-        description: Created
+      '200':
+        description: Created (returns the asset)
 
 /v2/assets/manage:
   get:
@@ -102,8 +102,8 @@ Asset:
     security:
       - bearerAuth: []
     responses:
-      '204':
-        description: No content
+      '200':
+        description: Deleted (empty body)
 
 /v2/assets/{id}/generate-token:
   post:
@@ -126,18 +126,24 @@ Asset:
           schema:
             $ref: '#/components/schemas/AddAssetAuthorizedUserRequest'
     responses:
-      '200':
+      '201':
         description: Added
   delete:
-    summary: Remove authorized user from asset
+    summary: Remove authorized user from asset (query params, not body)
     security:
       - bearerAuth: []
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/DeleteAssetAuthorizedUserRequest'
+    parameters:
+      - in: query
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: role
+        required: true
+        schema:
+          type: string
+          enum: [read_asset, write_asset]
     responses:
       '204':
         description: Removed

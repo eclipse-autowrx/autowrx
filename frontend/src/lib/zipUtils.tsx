@@ -12,17 +12,54 @@ import { saveAs } from 'file-saver'
 import { Model, Prototype } from '@/types/model.type'
 // import { getPlugins }
 import { listModelPrototypes } from '@/services/prototype.service'
-import { CVI_v4_1 } from '@/data/CVI_v4.1'
+import { getComputedAPIs } from '@/services/model.service'
 import {
   getExtendedApi,
-  listExtendedApis,
+  listAllExtendedApis,
 } from '@/services/extendedApis.service'
 
 import { convertCode } from '@/services/convert_code.service'
-import DaWidgetSetup from '@/components/molecules/widgets/DaWidgetSetup'
+import { uploadFileService } from '@/services/upload.service'
+import { FileSystemItem } from '@/components/molecules/project_editor/types'
+import { base64ToArrayBuffer } from '@/lib/utils'
 
 const removeSpecialCharacters = (str: string) => {
   return str.replace(/[^a-zA-Z0-9 ]/g, '')
+}
+
+const readImageFileFromZip = async (
+  zipFile: JSZip,
+  path: string,
+): Promise<File | undefined> => {
+  const entry = zipFile.file(path)
+  if (!entry) return undefined
+  const blob = await entry.async('blob')
+  const filename = path.split('/').pop() || 'image_file.png'
+  return new File([blob], filename, { type: blob.type || 'image/png' })
+}
+
+const resolvePrototypeImageUrl = async (
+  zipFile: JSZip,
+  imagePath: string,
+  metadataUrl?: string,
+): Promise<string | undefined> => {
+  try {
+    const imageFile = await readImageFileFromZip(zipFile, imagePath)
+    if (imageFile) {
+      const { url } = await uploadFileService(imageFile)
+      return url
+    }
+  } catch (err) {
+    console.error('Failed to upload prototype image from zip:', err)
+  }
+  if (
+    typeof metadataUrl === 'string' &&
+    metadataUrl.trim() &&
+    !metadataUrl.startsWith('/ref/')
+  ) {
+    return metadataUrl
+  }
+  return undefined
 }
 
 const getImgFile = (zip: JSZip, imageUrl: string, filename: string) => {
@@ -37,6 +74,79 @@ const getImgFile = (zip: JSZip, imageUrl: string, filename: string) => {
         console.error('Error downloading image:', error)
         resolve()
       })
+  })
+}
+
+const isProjectCode = (code?: string | null): boolean => {
+  if (!code) return false
+  try {
+    const parsed = JSON.parse(code)
+    if (!Array.isArray(parsed) || parsed.length === 0) return false
+
+    const first = parsed[0] as any
+    return (
+      first &&
+      typeof first === 'object' &&
+      (first.type === 'file' || first.type === 'folder') &&
+      typeof first.name === 'string'
+    )
+  } catch {
+    return false
+  }
+}
+
+const addProjectFilesToZip = (zip: JSZip, fsData: FileSystemItem[]) => {
+  const addItems = (items: FileSystemItem[], basePath: string) => {
+    items.forEach((item) => {
+      if (item.type === 'file') {
+        // Binary file stored as base64
+        if ((item as any).isBase64 && item.content) {
+          try {
+            const arrayBuffer = base64ToArrayBuffer(item.content)
+            zip.file(basePath + item.name, arrayBuffer, { binary: true })
+          } catch (error) {
+            console.error(`Error converting base64 for ${item.name}:`, error)
+            zip.file(basePath + item.name, item.content || '')
+          }
+        } else {
+          zip.file(basePath + item.name, item.content || '')
+        }
+      } else if (item.type === 'folder') {
+        addItems(item.items, basePath + item.name + '/')
+      }
+    })
+  }
+
+  if (!fsData || fsData.length === 0) return
+
+  // The project editor currently produces a single root folder, but we defensively
+  // handle multiple root items and root-level files. Everything is still placed
+  // under the top-level "code/" folder in the zip.
+  if (fsData.length > 1) {
+    console.warn(
+      'addProjectFilesToZip: multiple root items detected; exporting all under code/.',
+    )
+  }
+
+  fsData.forEach((item) => {
+    if (item.type === 'folder') {
+      addItems(item.items, 'code/' + item.name + '/')
+    } else if (item.type === 'file') {
+      // Root-level files are placed directly under code/
+      if ((item as any).isBase64 && item.content) {
+        try {
+          const arrayBuffer = base64ToArrayBuffer(item.content)
+          zip.file('code/' + item.name, arrayBuffer, { binary: true })
+        } catch (error) {
+          console.error(`Error converting base64 for ${item.name}:`, error)
+          zip.file('code/' + item.name, item.content || '')
+        }
+      } else {
+        zip.file('code/' + item.name, item.content || '')
+      }
+    } else {
+      console.warn('addProjectFilesToZip: unknown root item type', item)
+    }
   })
 }
 
@@ -59,6 +169,8 @@ const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
           // analysis_image_file: prototype.analysis_image_file,
           customer_journey: prototype.customer_journey,
           // partner_logo: prototype.partner_logo,
+          ...(prototype.extend != null && { extend: prototype.extend }),
+          ...(prototype.portfolio != null && { portfolio: prototype.portfolio }),
         })),
         null,
         4,
@@ -85,6 +197,8 @@ const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
             // analysis_image_file: prototype.analysis_image_file,
             customer_journey: prototype.customer_journey,
             // partner_logo: prototype.partner_logo,
+            ...(prototype.extend != null && { extend: prototype.extend }),
+            ...(prototype.portfolio != null && { portfolio: prototype.portfolio }),
           },
           null,
           4,
@@ -104,44 +218,48 @@ const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
 export const downloadModelZip = async (model: Model) => {
   if (!model) return
 
-  try {
-    const extended_apis = (await listExtendedApis(model.id))?.results || []
+  const extended_apis = await listAllExtendedApis(model.id)
+  const computedApis = await getComputedAPIs(model.id)
 
-    const zip = new JSZip()
-    const zipFilename = `model_${removeSpecialCharacters(model.name)}.zip`
-    // Deprecated
-    zip.file('vss.json', JSON.stringify(JSON.parse(CVI_v4_1), null, 4)) // Using default CVI while waiting for new CVI api
-    zip.file('custom_api.json', JSON.stringify(model.custom_apis, null, 4))
+  const zip = new JSZip()
+  const zipFilename = `model_${removeSpecialCharacters(model.name)}.zip`
+  zip.file('vss.json', JSON.stringify(computedApis, null, 4))
+  zip.file('custom_api.json', JSON.stringify(model.custom_apis, null, 4))
 
-    zip.file('extended_apis.json', JSON.stringify(extended_apis, null, 4))
-    zip.file(
-      'metadata.json',
-      JSON.stringify(
-        {
-          name: model.name,
-          model_files: JSON.stringify(model.model_files, null, 4),
-          main_api: model.main_api,
-          model_home_image_file: model.model_home_image_file,
-          visibility: model.visibility,
-          api_version: model.api_version,
-        },
-        null,
-        4,
-      ),
+  zip.file('extended_apis.json', JSON.stringify(extended_apis, null, 4))
+  zip.file(
+    'metadata.json',
+    JSON.stringify(
+      {
+        name: model.name,
+        model_files: JSON.stringify(model.model_files, null, 4),
+        main_api: model.main_api,
+        model_home_image_file: model.model_home_image_file,
+        visibility: model.visibility,
+        api_version:
+          typeof model.api_version === 'string' && model.api_version.trim()
+            ? model.api_version.trim()
+            : null,
+        ...(model.custom_template != null && {
+          custom_template: model.custom_template,
+        }),
+      },
+      null,
+      4,
+    ),
+  )
+  if (model.model_home_image_file) {
+    await getImgFile(
+      zip,
+      model.model_home_image_file,
+      'model_home_image_file.png',
     )
-    if (model.model_home_image_file) {
-      await getImgFile(
-        zip,
-        model.model_home_image_file,
-        'model_home_image_file.png',
-      )
-    }
-    // await downloadAllPluginInModel(model, zip)
-    await downloadAllPrototypeInModel(model, zip)
+  }
+  // await downloadAllPluginInModel(model, zip)
+  await downloadAllPrototypeInModel(model, zip)
 
-    const content = await zip.generateAsync({ type: 'blob' })
-    saveAs(content, zipFilename)
-  } catch (err) { }
+  const content = await zip.generateAsync({ type: 'blob' })
+  saveAs(content, zipFilename)
 }
 
 export const zipToModel = async (file: File) => {
@@ -155,10 +273,10 @@ export const zipToModel = async (file: File) => {
     model_home_image_file: '',
     visibility: '',
     extended_apis: [],
-    api_version: 'v4.1',
   }
   let plugins: any[] = []
   let prototypes: any[] = []
+  let modelHomeImageFile: File | undefined
 
   try {
     const zipFile = await zip.loadAsync(file)
@@ -167,6 +285,15 @@ export const zipToModel = async (file: File) => {
       (await zipFile.file('metadata.json')?.async('string')) || '{}',
     )
     Object.assign(model, metadata)
+    // Preserve explicit null (custom models); only default for legacy ZIPs missing the field
+    if (!('api_version' in metadata)) {
+      model.api_version = 'v4.1'
+    } else if (
+      model.api_version == null ||
+      (typeof model.api_version === 'string' && !model.api_version.trim())
+    ) {
+      model.api_version = null
+    }
     model.model_files = JSON.parse(metadata.model_files || '{}')
 
     model.cvi = (await zipFile.file('vss.json')?.async('string')) || '{}'
@@ -176,6 +303,14 @@ export const zipToModel = async (file: File) => {
     model.extended_apis = JSON.parse(
       (await zipFile.file('extended_apis.json')?.async('string')) || '[]',
     )
+
+    const homeImageEntry = zipFile.file('model_home_image_file.png')
+    if (homeImageEntry) {
+      const blob = await homeImageEntry.async('blob')
+      modelHomeImageFile = new File([blob], 'model_home_image_file.png', {
+        type: 'image/png',
+      })
+    }
 
     const prototypesStr =
       (await zipFile.file('prototypes.json')?.async('string')) || '[]'
@@ -189,6 +324,14 @@ export const zipToModel = async (file: File) => {
         (await zipFile
           .file(`prototypes/${prototype.name}/dashboard.json`)
           ?.async('string')) || '[]'
+      const imageUrl = await resolvePrototypeImageUrl(
+        zipFile,
+        `prototypes/${prototype.name}/image_file.png`,
+        prototype.image_file,
+      )
+      if (imageUrl) {
+        prototype.image_file = imageUrl
+      }
     }
 
     const pluginsStr =
@@ -197,7 +340,7 @@ export const zipToModel = async (file: File) => {
   } catch (err) {
     return null
   }
-  return { model, plugins, prototypes }
+  return { model, plugins, prototypes, modelHomeImageFile }
 }
 
 export const downloadPrototypeZip = async (prototype: Prototype) => {
@@ -206,7 +349,24 @@ export const downloadPrototypeZip = async (prototype: Prototype) => {
   try {
     const zip = new JSZip()
     const zipFilename = `prototype_${removeSpecialCharacters(prototype.name)}.zip`
-    zip.file('code.py', prototype.code)
+
+    // If prototype.code is a JSON array, treat it as a multi-file project
+    if (isProjectCode(prototype.code)) {
+      try {
+        const fsData = JSON.parse(prototype.code || '[]') as FileSystemItem[]
+        addProjectFilesToZip(zip, fsData)
+      } catch (e) {
+        console.error('Failed to parse project code for prototype export', e)
+      }
+    }
+
+    // Always include the legacy single-file payload for compatibility.
+    // NOTE:
+    // - For single-file prototypes, code.py contains actual Python code.
+    // - For multi-file projects, code.py contains the raw JSON FileSystemItem array
+    //   (not Python code) but we keep the .py name for backward compatibility with
+    //   existing import flows that only read code.py.
+    zip.file('code.py', prototype.code || '')
     zip.file('dashboard.json', prototype.widget_config || '{"widgets":[]}')
     zip.file(
       'metadata.json',
@@ -223,6 +383,8 @@ export const downloadPrototypeZip = async (prototype: Prototype) => {
           // analysis_image_file: prototype.analysis_image_file,
           customer_journey: prototype.customer_journey,
           // partner_logo: prototype.partner_logo,
+          ...(prototype.extend != null && { extend: prototype.extend }),
+          ...(prototype.portfolio != null && { portfolio: prototype.portfolio }),
         },
         null,
         4,
@@ -232,28 +394,30 @@ export const downloadPrototypeZip = async (prototype: Prototype) => {
       await getImgFile(zip, prototype.image_file, 'image_file.png')
     }
 
-    if (prototype.widget_config) {
-      try {
-        const pluginList: any[] = []
-        const wConfig = JSON.parse(prototype.widget_config)
-        if (Array.isArray(wConfig) && wConfig.length > 0) {
-          for (const widget of wConfig) {
-            if (
-              widget.plugin &&
-              widget.plugin.length > 0 &&
-              !pluginList.includes(widget.plugin)
-            ) {
-              pluginList.push(widget.plugin)
-            }
-          }
-        }
-      } catch (e) { }
-    }
-
     const content = await zip.generateAsync({ type: 'blob' })
     saveAs(content, zipFilename)
   } catch (err) { }
 }
+
+export const buildPrototypeImportPayload = (
+  proto: Partial<Prototype>,
+  modelId: string,
+  name?: string,
+): Partial<Prototype> => ({
+  state: proto.state || 'development',
+  apis: proto.apis ?? { VSS: [], VSC: [] },
+  code: proto.code || '',
+  widget_config: proto.widget_config || '{}',
+  description: proto.description,
+  tags: proto.tags || [],
+  image_file: proto.image_file,
+  model_id: modelId,
+  name: name ?? proto.name,
+  complexity_level: proto.complexity_level || '3',
+  customer_journey: proto.customer_journey || '{}',
+  portfolio: proto.portfolio || {},
+  ...(proto.extend != null && { extend: proto.extend }),
+})
 
 export const zipToPrototype = async (
   model_id: string,
@@ -288,7 +452,24 @@ export const zipToPrototype = async (
     const metadata = JSON.parse(
       (await zipFile.file('metadata.json')?.async('string')) || '{}',
     )
+    // Import currently reads only code.py as the source of truth for prototype.code.
+    // For multi-file exports, code.py contains the JSON FileSystemItem tree and the
+    // concrete files are also written under the code/ folder. Any manual edits to
+    // the files in code/ will be ignored on import until we add support for
+    // reconstructing prototype.code from that folder.
+    // TODO: consider rebuilding prototype.code from the code/ folder contents.
     let code = (await zipFile.file('code.py')?.async('string')) || ''
+
+    // Guard against the case where code.py is missing but a code/ folder exists,
+    // to avoid silently ignoring user changes.
+    const hasCodeFolder = Object.keys(zipFile.files).some((key) =>
+      key.startsWith('code/'),
+    )
+    if (!code && hasCodeFolder) {
+      console.warn(
+        'zipToPrototype: found code/ folder without code.py; project files are currently ignored on import.',
+      )
+    }
     if (code.startsWith("from sdv_model import Vehicle")) {
       let converted_code = await convertCode(code)
       code = converted_code || code
@@ -317,6 +498,15 @@ export const zipToPrototype = async (
     let newDashboard = { widgets: newWidgets }
 
     Object.assign(prototype, metadata, { code, widget_config: JSON.stringify(newDashboard) })
+
+    const imageUrl = await resolvePrototypeImageUrl(
+      zipFile,
+      'image_file.png',
+      metadata.image_file,
+    )
+    if (imageUrl) {
+      prototype.image_file = imageUrl
+    }
 
     // Ensure the model_id is correctly set to the new model_id
     prototype.model_id = model_id

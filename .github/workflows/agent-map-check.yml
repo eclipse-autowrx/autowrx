@@ -1,0 +1,29 @@
+name: agent-map-check
+
+# Verifies that links inside the agentic framework (AGENTS.md, CLAUDE.md,
+# agentic/** ) still resolve. Catches drift when docs or repo structure
+# move. Markdown-link based; cheap to run.
+
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "CLAUDE.md"
+      - "agentic/**"
+      - "docs/architecture/**"
+      - "docs/capabilities/**"
+      - "docs/getting-started/**"
+      - "docs/principles/**"
+      - ".agents/SITEMAP.md"
+      - ".github/workflows/agent-map-check.yml"
+      - "scripts/check-agent-map.sh"
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify agentic framework links
+        run: bash scripts/check-agent-map.sh

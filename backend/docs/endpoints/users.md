@@ -3,10 +3,10 @@
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | POST | / | Required + Admin | Create a user. |
-| GET | / | Optional (strictAuth=false) | List users. |
+| GET | / | Optional (when PUBLIC_VIEWING enabled) | List users. |
 | GET | /self | Required | Get current user profile. |
 | PATCH | /self | Required | Update current user profile. |
-| GET | /:userId | Optional (strictAuth=false) | Get a user by ID. |
+| GET | /:userId | Optional (when PUBLIC_VIEWING enabled) | Get a user by ID. |
 | PATCH | /:userId | Required + Admin | Update a user. |
 | DELETE | /:userId | Required + Admin | Delete a user. |
 

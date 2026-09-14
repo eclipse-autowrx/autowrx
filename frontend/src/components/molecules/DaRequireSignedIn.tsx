@@ -19,12 +19,16 @@ interface DaRequireSignedInProps {
 }
 
 const DaRequireSignedIn = ({ children, message }: DaRequireSignedInProps) => {
-  const { data: user } = useSelfProfileQuery()
+  const { data: user, isLoading, isFetching } = useSelfProfileQuery()
   const { authConfigs } = useAuthConfigs()
-  const { openLoginDialog, setOpenLoginDialog } = useAuthStore()
+  const { openLoginDialog, setOpenLoginDialog, authBootstrapped } = useAuthStore()
   const [openRemindDialog, setOpenRemindDialog] = useState(false)
+  const isResolvingAuth = !authBootstrapped || (!user && (isLoading || isFetching))
 
   const handleClick = () => {
+    if (isResolvingAuth) {
+      return
+    }
     // Show login dialog if not signed in and public viewing is disabled
     if (!user && !authConfigs.PUBLIC_VIEWING) {
       setOpenRemindDialog(true)
@@ -35,31 +39,34 @@ const DaRequireSignedIn = ({ children, message }: DaRequireSignedInProps) => {
     <>
       {!user ? (
         <>
-          <div onClick={handleClick} className="cursor-pointer">
+          <div
+            onClick={handleClick}
+            className={isResolvingAuth ? 'cursor-default' : 'cursor-pointer'}
+          >
             {children}
           </div>
-          <DaDialog open={openRemindDialog} onOpenChange={setOpenRemindDialog}>
-            <div className="flex flex-col max-w-xl">
-              <h3 className="text-lg font-semibold text-primary">
-                Sign In Required
-              </h3>
-              <p className="mt-4 text-base text-muted-foreground">
-                {message || 'You must first sign in to explore this feature'}
-              </p>
-              <div className="flex justify-end mt-6">
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => {
-                    setOpenRemindDialog(false)
-                    setOpenLoginDialog(true)
-                  }}
-                  className="w-20"
-                >
-                  Sign In
-                </Button>
-              </div>
-            </div>
+          <DaDialog
+            open={openRemindDialog}
+            onOpenChange={setOpenRemindDialog}
+            dialogTitle="Sign In Required"
+            className="w-110"
+            footer={
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => {
+                  setOpenRemindDialog(false)
+                  setOpenLoginDialog(true)
+                }}
+                className="w-20"
+              >
+                Sign In
+              </Button>
+            }
+          >
+            <p className="text-base text-muted-foreground">
+              {message || 'You must first sign in to explore this feature'}
+            </p>
           </DaDialog>
         </>
       ) : (

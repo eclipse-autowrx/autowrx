@@ -86,6 +86,8 @@ const UsersManagement = () => {
           <DaDialog
             open={open}
             onOpenChange={setOpen}
+            dialogTitle="Create New User"
+            className="max-h-[90vh]"
             trigger={
               <Button>
                 <TbPlus className="mr-2" /> Create new user

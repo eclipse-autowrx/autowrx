@@ -14,7 +14,7 @@ A high-level guide to the backend architecture, core modules, and how requests f
 - `src/app.js`: Express application setup. Wires middlewares, Passport strategy, routes under `/v2`, proxies, and error handlers.
 
 ### Configuration
-- `src/config/config.js`: Central configuration (environment, port, MongoDB URL, JWT and cookie settings, SMTP/email, client base URL, external service URLs like Auth, Email, Upload, Log, etc.).
+- `src/config/config.js`: Central configuration (environment, port, MongoDB URL, JWT and cookie settings, SMTP/email, client base URL, external service URLs like Auth, Email, Log, Cache, GenAI, Kit Server).
 - Environment variables documented in `src/docs/environment-variables.md` and `src/docs/configuration.md`.
 
 Key JWT cookie options (via env): `secure`, `httpOnly`, `sameSite`, and optional `domain` in production.
@@ -28,8 +28,8 @@ Key JWT cookie options (via env): `secure`, `httpOnly`, `sameSite`, and optional
 
 ### Routing
 - Base path: `/v2`
-- Router index: `src/routes/v2/index.js` mounts feature routers:
-  - `/auth`, `/users`, `/models`, `/prototypes`, `/apis`, `/discussions`, `/feedbacks`, `/permissions`, `/extendedApis`, `/search`, `/assets`, `/change-logs`, `/inventory/{schemas,relations,instances}`
+- Router index: `src/routes/v2/index.js` mounts four grouped sub-routers — `user-management/`, `vehicle-data/`, `content/`, `system/` (each with its own `index.js`). Mounted feature routes include:
+  - `/auth`, `/users`, `/assets`, `/permissions`, `/models`, `/prototypes`, `/apis`, `/extendedApis`, `/custom-api-sets`, `/discussions`, `/feedbacks`, `/change-logs`, `/search`, `/site-config`, `/plugin`, `/custom-api-schema`, `/model-template`, `/dashboard-template`, `/project-template`, `/genai`, `/file`, `/health`
 - Each router delegates to controller methods in `src/controllers` and validation rules in `src/validations`.
 
 ### Controllers, Services, Models
@@ -47,7 +47,7 @@ Key JWT cookie options (via env): `secure`, `httpOnly`, `sameSite`, and optional
 - Clients must provide `access_token` in the connection query. The token is verified and `socket.user` is attached on success.
 
 ### Proxies and External Services
-- `src/config/proxyHandler.js` can forward or proxy requests to external services configured under `config.services` (Auth, Email, Upload, Log, etc.).
+- `src/config/proxyHandler.js` can forward or proxy requests to external services configured under `config.services` (Auth, Email, Log, Cache, GenAI, Kit Server).
 
 ### Data and Docs
 - `backend/data/`: VSS data files and related JSONs exposed via API routes.
@@ -93,7 +93,7 @@ backend/
 - MongoDB URL, JWT secret and expirations, cookie name/options
 - SMTP/email configuration
 - Client base URL for redirects
-- Optional service URLs (Auth, Email, Upload, Log)
+- Optional service URLs (Auth, Email, Log, Cache, GenAI, Kit Server)
 
 For the exhaustive list and defaults, see `src/docs/environment-variables.md` and `src/docs/configuration.md`.
 

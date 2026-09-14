@@ -43,9 +43,6 @@ const refreshTokens = {
 };
 
 const forgotPassword = {
-  query: Joi.object().keys({
-    return_raw_token: Joi.boolean().default(false),
-  }),
   body: Joi.object().keys({
     email: Joi.string().email().required(),
   }),
@@ -53,9 +50,11 @@ const forgotPassword = {
 
 const resetPassword = {
   query: Joi.object().keys({
-    token: Joi.string().required(),
+    token: Joi.string(),
   }),
   body: Joi.object().keys({
+    email: Joi.string().email(),
+    code: Joi.string(),
     password: Joi.string().required().custom(password),
   }),
 };
@@ -76,8 +75,8 @@ const legacyRegister = {
 
 const sso = {
   body: Joi.object().keys({
-    msAccessToken: Joi.string().required(),
     providerId: Joi.string().required(),
+    idToken: Joi.string().required(),
   }),
 };
 

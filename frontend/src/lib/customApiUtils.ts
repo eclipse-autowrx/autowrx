@@ -91,7 +91,8 @@ export const exportCustomApiSet = async (set: CustomApiSet) => {
         
         // Detect image format from URL or Content-Type header
         let imageExtension = 'png' // default
-        const contentType = imageResponse.headers['content-type']
+        const contentTypeHeader = imageResponse.headers['content-type']
+        const contentType = typeof contentTypeHeader === 'string' ? contentTypeHeader : ''
         const avatarUrl = set.avatar.toLowerCase()
         
         if (contentType) {

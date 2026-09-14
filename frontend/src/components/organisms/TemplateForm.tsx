@@ -1,3 +1,11 @@
+// Copyright (c) 2026 Eclipse Foundation.
+//
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { useEffect, useMemo, useState, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -8,15 +16,89 @@ import {
 } from '@/services/modelTemplate.service'
 import { Input } from '@/components/atoms/input'
 import { Textarea } from '@/components/atoms/textarea'
-import { Button } from '@/components/atoms/button'
 import { Label } from '@/components/atoms/label'
+import { Button } from '@/components/atoms/button'
+import { Spinner } from '@/components/atoms/spinner'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import DaImportFile from '@/components/atoms/DaImportFile'
+import ActionButtonsTab from '@/components/organisms/ActionButtonsTab'
+import ModelTabListEditor, {
+  applyModelTabAddonSelect,
+  ModelTabAddonSelectDialog,
+  ModelTabListEditorHandle,
+} from '@/components/molecules/ModelTabListEditor'
 // No direct JSON editor; we provide structured editors for config
 import { uploadFileService } from '@/services/upload.service'
-import { TbPhotoEdit } from 'react-icons/tb'
+import {
+  TbPhotoEdit,
+  TbListCheck,
+  TbEye,
+  TbEyeOff,
+  TbGripVertical,
+  TbPuzzle,
+  TbLayoutSidebar,
+  TbSearch,
+  TbTrash,
+  TbPencil,
+  TbChevronUp,
+  TbCode,
+  TbRoute,
+  TbMapPin,
+  TbGauge,
+  TbMessagePlus,
+  TbCheck,
+  TbX,
+} from 'react-icons/tb'
+import { MdOutlineDoubleArrow } from 'react-icons/md'
 import { toast } from 'react-toastify'
 import { listPlugins, type Plugin } from '@/services/plugin.service'
+import {
+  TabConfig,
+  StagingConfig,
+  RightNavPluginButton,
+  TabsBorderRadius,
+  ensureStagingRightNavButton,
+} from '@/components/organisms/CustomTabEditor'
+import {
+  getModelTabConfig,
+  hasIncompleteModelTabs,
+  sanitizeModelTabsForSave,
+} from '@/lib/modelTabUtils'
+import DOMPurify from 'dompurify'
+import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  DropResult,
+} from '@hello-pangea/dnd'
+
+// Template-safe normalizer: preserves full TabConfig without injecting default builtin tabs.
+// Used only inside TemplateForm so that the saved template contains exactly what was configured,
+// and builtin tabs that are not explicitly listed are NOT auto-added on the new model.
+const normalizeTabsForTemplate = (tabs?: any[]): TabConfig[] => {
+  if (!tabs || tabs.length === 0) return []
+  // Already new format (has 'type' field) — return as-is
+  if ('type' in tabs[0]) return tabs as TabConfig[]
+  // Old format ({ label, plugin }): convert to custom type only, no builtin defaults
+  return tabs.map((tab) => ({
+    type: 'custom' as const,
+    label: tab.label || '',
+    plugin: tab.plugin || '',
+  }))
+}
+
+type TemplateVisibility = 'public' | 'private' | 'editable'
+
+const normalizeTemplateFormFields = (source: {
+  visibility?: string
+  is_default?: boolean
+}) => ({
+  visibility: (
+    source.visibility === 'default' ? 'public' : source.visibility || 'public'
+  ) as TemplateVisibility,
+  is_default: source.is_default ?? source.visibility === 'default',
+})
 
 type Props = {
   templateId?: string
@@ -28,12 +110,17 @@ type Props = {
     image?: string
     visibility?: string
     config?: any // Full custom_template object
-    model_tabs?: Array<{ label: string; plugin: string }>
-    prototype_tabs?: Array<{ label: string; plugin: string }>
+    model_tabs?: TabConfig[]
+    prototype_tabs?: TabConfig[]
   }
 }
 
-export default function TemplateForm({ templateId, onClose, open, initialData }: Props) {
+export default function TemplateForm({
+  templateId,
+  onClose,
+  open,
+  initialData,
+}: Props) {
   const qc = useQueryClient()
   const isCreate = useMemo(() => !templateId, [templateId])
   const [activeTab, setActiveTab] = useState<'meta' | 'model' | 'prototype'>(
@@ -41,18 +128,13 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
   )
   const prevOpenRef = useRef(open)
 
-  // Debug: Log when initialData changes
-  // useEffect(() => {
-  //   console.log('[TemplateForm] initialData received:', initialData)
-  // }, [initialData])
-
   const { data: initial, isFetching } = useQuery({
     queryKey: ['model-template', templateId],
     queryFn: () =>
       templateId
         ? getModelTemplateById(templateId)
         : Promise.resolve(undefined),
-    enabled: !isCreate && !!templateId,
+    enabled: !isCreate && !!templateId && !!open,
   })
 
   const [form, setForm] = useState<Partial<ModelTemplate>>({
@@ -60,51 +142,91 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
     description: '',
     image: '',
     visibility: 'public',
+    is_default: false,
     config: {},
   })
-  const [modelTabs, setModelTabs] = useState<
-    Array<{ label: string; plugin: string }>
+  const [modelTabs, setModelTabs] = useState<TabConfig[]>([])
+  const modelTabListRef = useRef<ModelTabListEditorHandle>(null)
+  const [addonSelectOpen, setAddonSelectOpen] = useState(false)
+  const [changingPluginIndex, setChangingPluginIndex] = useState<number | null>(
+    null,
+  )
+  const [prototypeTabs, setPrototypeTabs] = useState<TabConfig[]>([])
+  const [prototypeStagingConfig, setPrototypeStagingConfig] =
+    useState<StagingConfig>({})
+  const [prototypeTabsVariant, setPrototypeTabsVariant] =
+    useState<string>('tab')
+  const [prototypeTabsBorderRadius, setPrototypeTabsBorderRadius] =
+    useState<TabsBorderRadius>('round')
+  const [prototypeRightNavButtons, setPrototypeRightNavButtons] = useState<
+    RightNavPluginButton[]
   >([])
-  const [prototypeTabs, setPrototypeTabs] = useState<
-    Array<{ label: string; plugin: string }>
-  >([])
-  const { data: pluginData } = useQuery({
-    queryKey: ['plugins-for-template'],
-    queryFn: () => listPlugins({ limit: 1000, page: 1 }),
-  })
+  const [localSidebarPlugin, setLocalSidebarPlugin] = useState<string | null>(
+    null,
+  )
+  const [showSidebarPluginPicker, setShowSidebarPluginPicker] = useState(false)
+  const [sidebarSearchTerm, setSidebarSearchTerm] = useState('')
+  const [activePrototypeTab, setActivePrototypeTab] = useState<
+    'tabs' | 'style' | 'sidebar' | 'actions'
+  >('tabs')
+  const [editingTabIndex, setEditingTabIndex] = useState<number | null>(null)
+  const [editingTabLabel, setEditingTabLabel] = useState('')
+  const [editingTabIconSvg, setEditingTabIconSvg] = useState('')
 
   useEffect(() => {
     if (initial) {
-      console.log('[TemplateForm] initial found:', initial)
-      setForm(initial)
+      const { visibility, is_default } = normalizeTemplateFormFields(initial)
+      setForm({ ...initial, visibility, is_default })
       const cfg: any = initial.config || {}
-      setModelTabs(
-        Array.isArray(cfg.model_tabs)
-          ? cfg.model_tabs.map((x: any) => ({
-              label: x.label || '',
-              plugin: x.plugin || '',
-            }))
-          : [],
-      )
+      // Model tabs use getModelTabConfig so empty/missing config shows the 3
+      // built-in defaults in the editor (unlike prototype tabs above).
+      setModelTabs(getModelTabConfig(cfg.model_tabs))
       setPrototypeTabs(
         Array.isArray(cfg.prototype_tabs)
-          ? cfg.prototype_tabs.map((x: any) => ({
-              label: x.label || '',
-              plugin: x.plugin || '',
-            }))
+          ? normalizeTabsForTemplate(cfg.prototype_tabs)
           : [],
       )
+      setPrototypeTabsVariant(cfg.prototype_tabs_variant || 'tab')
+      setPrototypeTabsBorderRadius(cfg.prototype_tabs_border_radius || 'round')
+      setLocalSidebarPlugin(cfg.prototype_sidebar_plugin || null)
+      // Extract staging config and non-staging right nav buttons from prototype_right_nav_buttons
+      const rightNavRaw: RightNavPluginButton[] = Array.isArray(
+        cfg.prototype_right_nav_buttons,
+      )
+        ? cfg.prototype_right_nav_buttons
+        : []
+      const stagingItem = rightNavRaw.find((b) => b.builtin === 'staging')
+      const stagingItemConfig: StagingConfig = stagingItem
+        ? {
+            label: stagingItem.label,
+            iconSvg: stagingItem.iconSvg,
+            hideIcon: stagingItem.hideIcon,
+            variant: stagingItem.variant,
+            hidden: stagingItem.hidden,
+            corners: stagingItem.corners,
+            renderPlugin: stagingItem.renderPlugin,
+          }
+        : {}
+      setPrototypeStagingConfig(stagingItemConfig)
+      setPrototypeRightNavButtons(
+        ensureStagingRightNavButton(rightNavRaw, stagingItemConfig),
+      )
     } else {
-      console.log('[TemplateForm] initial not found')
       setForm({
         name: '',
         description: '',
         image: '',
         visibility: 'public',
+        is_default: false,
         config: {},
       })
-      setModelTabs([])
+      setModelTabs(getModelTabConfig([]))
       setPrototypeTabs([])
+      setPrototypeStagingConfig({})
+      setPrototypeRightNavButtons(ensureStagingRightNavButton([]))
+      setPrototypeTabsVariant('tab')
+      setPrototypeTabsBorderRadius('round')
+      setLocalSidebarPlugin(null)
     }
   }, [initial])
 
@@ -112,22 +234,27 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
   useEffect(() => {
     const wasOpen = prevOpenRef.current
     prevOpenRef.current = open
-    
+
     if (open && !wasOpen && isCreate) {
-      console.log('[TemplateForm] Dialog opened in create mode. initialData:', initialData)
       setActiveTab('meta')
+      setAddonSelectOpen(false)
+      setChangingPluginIndex(null)
       // If no initialData, reset to empty form
       if (!initialData) {
-        console.log('[TemplateForm] initialData not found, resetting form')
         setForm({
           name: '',
           description: '',
           image: '',
           visibility: 'public',
+          is_default: false,
           config: {},
         })
         setModelTabs([])
         setPrototypeTabs([])
+        setPrototypeStagingConfig({})
+        setPrototypeRightNavButtons(ensureStagingRightNavButton([]))
+        setPrototypeTabsBorderRadius('round')
+        setLocalSidebarPlugin(null)
       }
     }
   }, [open, isCreate, initialData])
@@ -135,46 +262,59 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
   // Handle initialData when dialog is open and in create mode
   useEffect(() => {
     if (open && isCreate && initialData) {
-      console.log('[TemplateForm] Processing initialData:', initialData)
       // Get the full config from initialData.config (custom_template)
-      console.log('[TemplateForm] initialData.config:', initialData.config)
-      console.log('[TemplateForm] initialData.config.model_tabs:', initialData.config?.model_tabs)
-      console.log('[TemplateForm] initialData.config.prototype_tabs:', initialData.config?.prototype_tabs)
       const fullConfig = initialData.config || {}
-      console.log('[TemplateForm] fullConfig:', fullConfig)
-      
+
       // Extract tabs directly from config (custom_template) - this is the source of truth
-      const modelTabsFromConfig = Array.isArray(fullConfig.model_tabs) 
-        ? fullConfig.model_tabs 
+      const modelTabsFromConfig = Array.isArray(initialData.model_tabs)
+        ? initialData.model_tabs
+        : Array.isArray(fullConfig.model_tabs)
+          ? fullConfig.model_tabs
+          : []
+      const prototypeTabsFromConfig = Array.isArray(fullConfig.prototype_tabs)
+        ? fullConfig.prototype_tabs
         : []
-      const prototypeTabsFromConfig = Array.isArray(fullConfig.prototype_tabs) 
-        ? fullConfig.prototype_tabs 
-        : []
-      
-      console.log('[TemplateForm] Extracted tabs:', {
-        modelTabsFromConfig,
-        prototypeTabsFromConfig,
-      })
-      
+
       // Pre-populate with initial data, preserving entire config structure
+      const { visibility, is_default } = normalizeTemplateFormFields(initialData)
       setForm({
         name: initialData.name || '',
         description: initialData.description || '',
         image: initialData.image || '',
-        visibility: (initialData.visibility as 'public' | 'private' | 'default') || 'public',
+        visibility,
+        is_default,
         config: fullConfig, // Preserve entire custom_template structure
       })
-      setModelTabs(
-        modelTabsFromConfig.map((x: any) => ({
-          label: x.label || '',
-          plugin: x.plugin || '',
-        }))
+      // Prefill with full runtime tab config (built-ins + custom, order preserved).
+      setModelTabs(getModelTabConfig(modelTabsFromConfig))
+      // Preserve full TabConfig structure (type, key, hidden) without adding default builtin tabs
+      setPrototypeTabs(normalizeTabsForTemplate(prototypeTabsFromConfig))
+      setPrototypeTabsVariant(fullConfig.prototype_tabs_variant || 'tab')
+      setPrototypeTabsBorderRadius(
+        fullConfig.prototype_tabs_border_radius || 'round',
       )
-      setPrototypeTabs(
-        prototypeTabsFromConfig.map((x: any) => ({
-          label: x.label || '',
-          plugin: x.plugin || '',
-        }))
+      setLocalSidebarPlugin(fullConfig.prototype_sidebar_plugin || null)
+      // Extract staging config and non-staging right nav buttons from prototype_right_nav_buttons
+      const rightNavRaw2: RightNavPluginButton[] = Array.isArray(
+        fullConfig.prototype_right_nav_buttons,
+      )
+        ? fullConfig.prototype_right_nav_buttons
+        : []
+      const stagingItem2 = rightNavRaw2.find((b) => b.builtin === 'staging')
+      const stagingItemConfig2: StagingConfig = stagingItem2
+        ? {
+            label: stagingItem2.label,
+            iconSvg: stagingItem2.iconSvg,
+            hideIcon: stagingItem2.hideIcon,
+            variant: stagingItem2.variant,
+            hidden: stagingItem2.hidden,
+            corners: stagingItem2.corners,
+            renderPlugin: stagingItem2.renderPlugin,
+          }
+        : {}
+      setPrototypeStagingConfig(stagingItemConfig2)
+      setPrototypeRightNavButtons(
+        ensureStagingRightNavButton(rightNavRaw2, stagingItemConfig2),
       )
     }
   }, [open, isCreate, initialData])
@@ -184,35 +324,172 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
 
   const save = useMutation({
     mutationFn: async () => {
+      const flushedTabs = modelTabListRef.current?.flushPendingEdit()
+      if (flushedTabs === null) {
+        throw new Error(
+          'All custom tabs must have a plugin and label before saving.',
+        )
+      }
+      const tabsToSave = flushedTabs ?? modelTabs
+      if (hasIncompleteModelTabs(tabsToSave)) {
+        throw new Error(
+          'All custom tabs must have a plugin and label before saving.',
+        )
+      }
+
       const payload = {
         name: form.name,
         description: form.description,
         image: form.image,
         visibility: form.visibility || 'public',
+        is_default: form.is_default ?? false,
         config: {
           ...(form.config || {}),
-          model_tabs: [...modelTabs],
+          model_tabs: sanitizeModelTabsForSave(tabsToSave),
           prototype_tabs: [...prototypeTabs],
+          prototype_tabs_variant:
+            prototypeTabsVariant !== 'tab' ? prototypeTabsVariant : null,
+          prototype_tabs_border_radius:
+            prototypeTabsBorderRadius !== 'round'
+              ? prototypeTabsBorderRadius
+              : null,
+          prototype_sidebar_plugin: localSidebarPlugin,
+          prototype_right_nav_buttons: prototypeRightNavButtons,
         },
       }
       if (isCreate) return createModelTemplate(payload)
       if (!templateId) throw new Error('Missing id')
       return updateModelTemplate(templateId, payload)
     },
-    onSuccess: () => {
+    onSuccess: (saved) => {
       toast.success('Template saved')
       qc.invalidateQueries({ queryKey: ['model-templates'] })
+      if (saved?.id) {
+        qc.setQueryData(['model-template', saved.id], saved)
+        qc.invalidateQueries({ queryKey: ['model-template', saved.id] })
+      }
       onClose()
     },
     onError: (e: any) =>
       toast.error(e?.response?.data?.message || e.message || 'Save failed'),
   })
 
+  // Helper function to get icon for builtin tabs
+  const getBuiltinIcon = (key?: string) => {
+    switch (key) {
+      case 'overview':
+        return <TbRoute className="w-4 h-4" />
+      case 'journey':
+        return <TbMapPin className="w-4 h-4" />
+      case 'code':
+        return <TbCode className="w-4 h-4" />
+      case 'dashboard':
+        return <TbGauge className="w-4 h-4" />
+      case 'feedback':
+        return <TbMessagePlus className="w-4 h-4" />
+      case 'flow':
+        return <MdOutlineDoubleArrow className="w-4 h-4" />
+      default:
+        return <TbPuzzle className="w-4 h-4" />
+    }
+  }
+
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return
+    const items = Array.from(prototypeTabs)
+    const [reorderedItem] = items.splice(result.source.index, 1)
+    items.splice(result.destination.index, 0, reorderedItem)
+    setPrototypeTabs(items)
+  }
+
+  const handleStartEdit = (index: number) => {
+    setEditingTabIndex(index)
+    setEditingTabLabel(prototypeTabs[index].label)
+    setEditingTabIconSvg(prototypeTabs[index].iconSvg || '')
+  }
+
+  const handleSaveEdit = () => {
+    if (editingTabIndex !== null && editingTabLabel.trim()) {
+      const updatedTabs = [...prototypeTabs]
+      updatedTabs[editingTabIndex] = {
+        ...updatedTabs[editingTabIndex],
+        label: editingTabLabel.trim(),
+        iconSvg: editingTabIconSvg.trim() || undefined,
+      }
+      setPrototypeTabs(updatedTabs)
+      setEditingTabIndex(null)
+      setEditingTabLabel('')
+      setEditingTabIconSvg('')
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingTabIndex(null)
+    setEditingTabLabel('')
+    setEditingTabIconSvg('')
+  }
+
+  const handleRemoveTab = (index: number) => {
+    if (prototypeTabs[index].type === 'custom') {
+      setPrototypeTabs(prototypeTabs.filter((_, i) => i !== index))
+    }
+  }
+
+  const handleToggleHidden = (index: number) => {
+    const updatedTabs = [...prototypeTabs]
+    updatedTabs[index] = {
+      ...updatedTabs[index],
+      hidden: !updatedTabs[index].hidden,
+    }
+    setPrototypeTabs(updatedTabs)
+  }
+
+  // Get selected sidebar plugin data
+  const { data: pluginsData, isLoading: pluginsLoading } = useQuery({
+    queryKey: ['plugins-for-sidebar'],
+    queryFn: () => listPlugins({ page: 1, limit: 100 }),
+    enabled:
+      activePrototypeTab === 'sidebar' || activePrototypeTab === 'actions',
+  })
+
+  const selectedSidebarPluginData = pluginsData?.results?.find(
+    (p) => p.slug === localSidebarPlugin,
+  )
+
+  const filteredSidebarPlugins =
+    pluginsData?.results?.filter(
+      (plugin) =>
+        plugin.name.toLowerCase().includes(sidebarSearchTerm.toLowerCase()) ||
+        plugin.slug?.toLowerCase().includes(sidebarSearchTerm.toLowerCase()) ||
+        plugin.description
+          ?.toLowerCase()
+          .includes(sidebarSearchTerm.toLowerCase()),
+    ) ?? []
+
+  const handleRequestAddonSelect = (index: number | null) => {
+    setChangingPluginIndex(index)
+    setAddonSelectOpen(true)
+  }
+
+  const handleModelAddonSelect = (plugin: Plugin, label: string) => {
+    const result = applyModelTabAddonSelect(
+      modelTabs,
+      plugin,
+      label,
+      changingPluginIndex,
+    )
+    if (result === 'duplicate') {
+      toast.info('This addon is already added to model tabs')
+      return
+    }
+    setModelTabs(result)
+    setAddonSelectOpen(false)
+    setChangingPluginIndex(null)
+  }
+
   return (
-    <div className="flex flex-col w-full">
-      <h2 className="text-xl font-semibold text-foreground mb-4">
-        {isCreate ? 'Create Template' : 'Edit Template'}
-      </h2>
+    <>
+    <div className="flex flex-col w-full h-full overflow-auto">
       <div className="flex border-b border-input">
         <DaTabItem
           small
@@ -237,7 +514,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
         </DaTabItem>
       </div>
 
-      <div className="p-6 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto p-6">
         {isFetching && !isCreate ? (
           <p className="text-sm text-muted-foreground">Loading...</p>
         ) : (
@@ -263,18 +540,42 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <Label>Visibility</Label>
-                    <select
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                    <DaSelect
                       value={form.visibility || 'public'}
-                      onChange={(e) => onChange('visibility', e.target.value)}
+                      onValueChange={(v) => onChange('visibility', v)}
+                      className="h-9 text-sm"
                     >
-                      <option value="public">public</option>
-                      <option value="private">private</option>
-                      <option value="default">default</option>
-                    </select>
+                      <DaSelectItem value="editable">editable</DaSelectItem>
+                      <DaSelectItem value="public">public</DaSelectItem>
+                      <DaSelectItem value="private">private</DaSelectItem>
+                    </DaSelect>
+                    {form.visibility === 'editable' && (
+                      <p className="text-xs text-muted-foreground">
+                        Models created from this template can allow non-owners to add
+                        prototypes.
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="checkbox"
+                      id="is-default-template"
+                      checked={!!form.is_default}
+                      onChange={(e) => onChange('is_default', e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <Label
+                      htmlFor="is-default-template"
+                      className="cursor-pointer text-sm"
+                    >
+                      Set as default template
+                    </Label>
+                    <span className="text-xs text-muted-foreground">
+                      (auto-selected when creating new models)
+                    </span>
                   </div>
                 </div>
-                <div className="w-44 flex-shrink-0">
+                <div className="w-44 shrink-0">
                   <div className="relative aspect-square w-full border border-input rounded-md overflow-hidden bg-white">
                     <img
                       src={form.image || '/imgs/plugin.png'}
@@ -308,156 +609,492 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
             )}
 
             {activeTab === 'model' && (
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-semibold text-foreground">
-                    Model Tabs
-                  </span>
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      setModelTabs((t) => [...t, { label: '', plugin: '' }])
-                    }
-                  >
-                    Add Item
-                  </Button>
-                </div>
-                {modelTabs.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    No items. Click Add Item.
-                  </p>
-                )}
-                {modelTabs.map((it, idx) => (
-                  <div
-                    key={idx}
-                    className="grid grid-cols-12 gap-2 items-center"
-                  >
-                    <div className="col-span-5">
-                      <Input
-                        placeholder="Label"
-                        value={it.label}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setModelTabs((arr) =>
-                            arr.map((x, i) =>
-                              i === idx ? { ...x, label: v } : x,
-                            ),
-                          )
-                        }}
-                      />
-                    </div>
-                    <div className="col-span-6">
-                      <select
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                        value={it.plugin}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setModelTabs((arr) =>
-                            arr.map((x, i) =>
-                              i === idx ? { ...x, plugin: v } : x,
-                            ),
-                          )
-                        }}
-                      >
-                        <option value="">Select plugin</option>
-                        {pluginData?.results?.map((p: Plugin) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="col-span-1 flex justify-end">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() =>
-                          setModelTabs((arr) => arr.filter((_, i) => i !== idx))
-                        }
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <ModelTabListEditor
+                key={open ? 'modeltablisteditor-open' : 'modeltablisteditor-closed'}
+                ref={modelTabListRef}
+                tabs={modelTabs}
+                onTabsChange={setModelTabs}
+                onRequestAddonSelect={handleRequestAddonSelect}
+              />
             )}
 
             {activeTab === 'prototype' && (
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-semibold text-foreground">
-                    Prototype Tabs
-                  </span>
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      setPrototypeTabs((t) => [...t, { label: '', plugin: '' }])
-                    }
+              <div className="flex flex-col gap-4">
+                {/* Sub-tab navigation */}
+                <div className="flex border-b border-border gap-1">
+                  <button
+                    onClick={() => setActivePrototypeTab('tabs')}
+                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                      activePrototypeTab === 'tabs'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
                   >
-                    Add Item
-                  </Button>
+                    <TbPuzzle className="w-4 h-4" />
+                    Tab Bar
+                  </button>
+                  <button
+                    onClick={() => setActivePrototypeTab('style')}
+                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                      activePrototypeTab === 'style'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <TbEye className="w-4 h-4" />
+                    Appearance
+                  </button>
+                  <button
+                    onClick={() => setActivePrototypeTab('sidebar')}
+                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                      activePrototypeTab === 'sidebar'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <TbLayoutSidebar className="w-4 h-4" />
+                    Sidebar Panel
+                  </button>
+                  <button
+                    onClick={() => setActivePrototypeTab('actions')}
+                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                      activePrototypeTab === 'actions'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <TbListCheck className="w-4 h-4" />
+                    Action Buttons
+                  </button>
                 </div>
-                {prototypeTabs.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    No items. Click Add Item.
-                  </p>
+
+                {/* Tab Bar Sub-tab */}
+                {activePrototypeTab === 'tabs' && (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      Configure which tabs appear in the prototype tab bar,
+                      their order, labels, and visibility.
+                    </p>
+                    {prototypeTabs.length > 0 ? (
+                      <DragDropContext onDragEnd={handleDragEnd}>
+                        <Droppable droppableId="prototype-tabs">
+                          {(provided, snapshot) => (
+                            <div
+                              {...provided.droppableProps}
+                              ref={provided.innerRef}
+                              className="flex flex-col gap-2"
+                            >
+                              {prototypeTabs.map((tab, index) => {
+                                const draggableId =
+                                  tab.type === 'builtin'
+                                    ? `builtin-${tab.key}`
+                                    : `custom-${tab.plugin}`
+                                return (
+                                  <Draggable
+                                    key={draggableId}
+                                    draggableId={draggableId}
+                                    index={index}
+                                  >
+                                    {(provided, snapshot) => (
+                                      <div
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        className={`flex items-center gap-3 p-4 border border-border rounded bg-background ${
+                                          snapshot.isDragging
+                                            ? 'opacity-40'
+                                            : ''
+                                        } ${tab.hidden ? 'opacity-60' : ''}`}
+                                      >
+                                        {/* Drag Handle */}
+                                        <div
+                                          {...provided.dragHandleProps}
+                                          className="flex items-center justify-center text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
+                                        >
+                                          <TbGripVertical className="w-5 h-5" />
+                                        </div>
+
+                                        {/* Icon */}
+                                        {tab.iconSvg ? (
+                                          <span
+                                            className="inline-flex size-5 [&>svg]:w-full [&>svg]:h-full"
+                                            dangerouslySetInnerHTML={{
+                                              __html: DOMPurify.sanitize(
+                                                tab.iconSvg,
+                                                {
+                                                  USE_PROFILES: {
+                                                    svg: true,
+                                                    svgFilters: true,
+                                                  },
+                                                },
+                                              ),
+                                            }}
+                                          />
+                                        ) : (
+                                          tab.type === 'builtin' && (
+                                            <div className="text-muted-foreground">
+                                              {getBuiltinIcon(tab.key)}
+                                            </div>
+                                          )
+                                        )}
+
+                                        {/* Content */}
+                                        <div className="flex-1 flex flex-col gap-1 min-w-0">
+                                          {editingTabIndex === index ? (
+                                            <div className="flex flex-col gap-2">
+                                              <Label
+                                                htmlFor={`edit-label-${index}`}
+                                                className="text-xs"
+                                              >
+                                                Tab Label
+                                              </Label>
+                                              <Input
+                                                id={`edit-label-${index}`}
+                                                value={editingTabLabel}
+                                                onChange={(e) =>
+                                                  setEditingTabLabel(
+                                                    e.target.value,
+                                                  )
+                                                }
+                                                onKeyDown={(e) => {
+                                                  if (e.key === 'Enter')
+                                                    handleSaveEdit()
+                                                  if (e.key === 'Escape')
+                                                    handleCancelEdit()
+                                                }}
+                                                className="text-sm"
+                                                autoFocus
+                                              />
+                                              <Label
+                                                htmlFor={`edit-svg-${index}`}
+                                                className="text-xs mt-1"
+                                              >
+                                                Custom Icon (SVG)
+                                              </Label>
+                                              <textarea
+                                                id={`edit-svg-${index}`}
+                                                value={editingTabIconSvg}
+                                                onChange={(e) =>
+                                                  setEditingTabIconSvg(
+                                                    e.target.value,
+                                                  )
+                                                }
+                                                placeholder='<svg xmlns="...">...</svg>'
+                                                className="text-xs font-mono flex-1 min-h-15 resize-y rounded border border-input bg-background px-2 py-1.5 outline-none focus:ring-1 focus:ring-ring"
+                                                spellCheck={false}
+                                              />
+                                            </div>
+                                          ) : (
+                                            <>
+                                              <div className="flex items-center gap-2">
+                                                <p className="text-sm font-medium text-foreground truncate">
+                                                  {tab.label}
+                                                </p>
+                                                {tab.type === 'builtin' && (
+                                                  <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded">
+                                                    Built-in
+                                                  </span>
+                                                )}
+                                              </div>
+                                              <p className="text-xs text-muted-foreground font-mono truncate">
+                                                {tab.type === 'builtin'
+                                                  ? `builtin: ${tab.key}`
+                                                  : `plugin: ${tab.plugin}`}
+                                              </p>
+                                            </>
+                                          )}
+                                        </div>
+
+                                        {/* Visibility Toggle */}
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() =>
+                                            handleToggleHidden(index)
+                                          }
+                                          className="h-8 w-8"
+                                          title={
+                                            tab.hidden ? 'Show tab' : 'Hide tab'
+                                          }
+                                        >
+                                          {tab.hidden ? (
+                                            <TbEyeOff className="w-4 h-4 text-muted-foreground" />
+                                          ) : (
+                                            <TbEye className="w-4 h-4" />
+                                          )}
+                                        </Button>
+
+                                        {/* Actions */}
+                                        <div className="flex items-center gap-2">
+                                          {editingTabIndex === index ? (
+                                            <>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={handleSaveEdit}
+                                                className="h-8 w-8"
+                                              >
+                                                <TbCheck className="w-4 h-4 text-green-600" />
+                                              </Button>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={handleCancelEdit}
+                                                className="h-8 w-8"
+                                              >
+                                                <TbX className="w-4 h-4 text-muted-foreground" />
+                                              </Button>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() =>
+                                                  handleStartEdit(index)
+                                                }
+                                                className="h-8 w-8"
+                                              >
+                                                <TbPencil className="w-4 h-4" />
+                                              </Button>
+                                              {tab.type === 'custom' && (
+                                                <Button
+                                                  variant="ghost"
+                                                  size="icon"
+                                                  onClick={() =>
+                                                    handleRemoveTab(index)
+                                                  }
+                                                  className="h-8 w-8 text-destructive hover:text-destructive"
+                                                >
+                                                  <TbTrash className="w-4 h-4" />
+                                                </Button>
+                                              )}
+                                            </>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </Draggable>
+                                )
+                              })}
+                              {provided.placeholder}
+                            </div>
+                          )}
+                        </Droppable>
+                      </DragDropContext>
+                    ) : (
+                      <div className="flex items-center justify-center p-8 border border-dashed border-border rounded">
+                        <p className="text-sm text-muted-foreground">
+                          No tabs configured
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
-                {prototypeTabs.map((it, idx) => (
-                  <div
-                    key={idx}
-                    className="grid grid-cols-12 gap-2 items-center"
-                  >
-                    <div className="col-span-5">
-                      <Input
-                        placeholder="Label"
-                        value={it.label}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setPrototypeTabs((arr) =>
-                            arr.map((x, i) =>
-                              i === idx ? { ...x, label: v } : x,
-                            ),
-                          )
-                        }}
-                      />
-                    </div>
-                    <div className="col-span-6">
-                      <select
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                        value={it.plugin}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setPrototypeTabs((arr) =>
-                            arr.map((x, i) =>
-                              i === idx ? { ...x, plugin: v } : x,
-                            ),
-                          )
-                        }}
-                      >
-                        <option value="">Select plugin</option>
-                        {pluginData?.results?.map((p: Plugin) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="col-span-1 flex justify-end">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() =>
-                          setPrototypeTabs((arr) =>
-                            arr.filter((_, i) => i !== idx),
-                          )
-                        }
-                      >
-                        Delete
-                      </Button>
+
+                {/* Appearance Sub-tab */}
+                {activePrototypeTab === 'style' && (
+                  <div className="flex flex-col gap-5">
+                    <p className="text-sm text-muted-foreground">
+                      Choose the visual style for all tab bar buttons.
+                    </p>
+                    <div className="gap-3 grid grid-cols-[auto_1fr]">
+                      <Label className="text-xs w-20 shrink-0 text-foreground mt-1">
+                        Style
+                      </Label>
+                      <div className="flex flex-col gap-3 flex-1">
+                        <div className="flex flex-wrap gap-2">
+                          {(
+                            ['tab', 'primary', 'outline', 'ghost'] as const
+                          ).map((v) => (
+                            <button
+                              key={v}
+                              type="button"
+                              onClick={() => setPrototypeTabsVariant(v)}
+                              className={`px-3 py-1 text-xs rounded border capitalize transition-colors ${
+                                prototypeTabsVariant === v
+                                  ? 'bg-primary text-primary-foreground border-primary'
+                                  : 'bg-background text-foreground border-border hover:bg-accent'
+                              }`}
+                            >
+                              {v}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <Label className="text-xs w-20 shrink-0 text-foreground mt-1">
+                        Corners
+                      </Label>
+                      <div className="flex flex-col gap-3 flex-1">
+                        <div className="flex flex-wrap gap-2">
+                          {(
+                            [
+                              { value: 'none', label: 'Square' },
+                              { value: 'round', label: 'Round' },
+                              { value: 'full', label: 'Pill' },
+                            ] as const
+                          ).map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() =>
+                                setPrototypeTabsBorderRadius(opt.value)
+                              }
+                              className={`px-3 py-1 text-xs rounded border transition-colors ${
+                                prototypeTabsBorderRadius === opt.value
+                                  ? 'bg-primary text-primary-foreground border-primary'
+                                  : 'bg-background text-foreground border-border hover:bg-accent'
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                ))}
+                )}
+
+                {/* Sidebar Panel Sub-tab */}
+                {activePrototypeTab === 'sidebar' && (
+                  <div className="flex flex-col gap-3">
+                    <p className="text-sm text-muted-foreground">
+                      Select a plugin to display in a collapsible panel on the
+                      left side of the prototype view.
+                    </p>
+
+                    {localSidebarPlugin && !showSidebarPluginPicker ? (
+                      <div className="flex items-center gap-3 p-3 border border-border rounded bg-accent/50">
+                        <TbPuzzle className="w-5 h-5 text-muted-foreground shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {selectedSidebarPluginData?.name ||
+                              localSidebarPlugin}
+                          </p>
+                          <p className="text-xs text-muted-foreground font-mono truncate">
+                            plugin: {localSidebarPlugin}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setShowSidebarPluginPicker(true)}
+                          className="h-8 w-8"
+                          title="Change plugin"
+                        >
+                          <TbPencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setLocalSidebarPlugin(null)
+                            setShowSidebarPluginPicker(false)
+                          }}
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          title="Remove sidebar plugin"
+                        >
+                          <TbTrash className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : showSidebarPluginPicker ? (
+                      <div className="flex flex-col gap-2 border border-border rounded p-3">
+                        <div className="relative">
+                          <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            type="text"
+                            placeholder="Search plugins..."
+                            value={sidebarSearchTerm}
+                            onChange={(e) =>
+                              setSidebarSearchTerm(e.target.value)
+                            }
+                            className="pl-10 text-sm"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="flex flex-col max-h-48 overflow-y-auto">
+                          {pluginsLoading ? (
+                            <div className="flex items-center justify-center p-4">
+                              <Spinner size={20} />
+                            </div>
+                          ) : filteredSidebarPlugins.length === 0 ? (
+                            <p className="text-xs text-muted-foreground p-4 text-center">
+                              {sidebarSearchTerm
+                                ? 'No plugins found'
+                                : 'No plugins available'}
+                            </p>
+                          ) : (
+                            filteredSidebarPlugins.map((plugin) => (
+                              <button
+                                key={plugin.id}
+                                onClick={() => {
+                                  setLocalSidebarPlugin(plugin.slug)
+                                  setShowSidebarPluginPicker(false)
+                                  setSidebarSearchTerm('')
+                                }}
+                                className="flex items-center gap-3 p-2 hover:bg-accent rounded transition-colors text-left"
+                              >
+                                {plugin.image ? (
+                                  <img
+                                    src={plugin.image}
+                                    alt={plugin.name}
+                                    className="w-8 h-8 rounded object-cover shrink-0"
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
+                                    <span className="text-xs text-muted-foreground">
+                                      {plugin.name.charAt(0).toUpperCase()}
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-foreground truncate">
+                                    {plugin.name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground font-mono truncate">
+                                    {plugin.slug}
+                                  </p>
+                                </div>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                        <div className="flex justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setShowSidebarPluginPicker(false)
+                              setSidebarSearchTerm('')
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-fit"
+                        onClick={() => setShowSidebarPluginPicker(true)}
+                      >
+                        <TbPuzzle className="w-4 h-4 mr-2" />
+                        Set Sidebar Plugin
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {/* Action Buttons Sub-tab */}
+                {activePrototypeTab === 'actions' && (
+                  <ActionButtonsTab
+                    pluginsData={pluginsData}
+                    pluginsLoading={pluginsLoading}
+                    localRightNavPlugins={prototypeRightNavButtons}
+                    setLocalRightNavPlugins={setPrototypeRightNavButtons}
+                  />
+                )}
               </div>
             )}
 
@@ -476,5 +1113,16 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
         )}
       </div>
     </div>
+    <ModelTabAddonSelectDialog
+      open={addonSelectOpen}
+      onOpenChange={(nextOpen) => {
+        setAddonSelectOpen(nextOpen)
+        if (!nextOpen) setChangingPluginIndex(null)
+      }}
+      tabs={modelTabs}
+      changingPluginIndex={changingPluginIndex}
+      onSelect={handleModelAddonSelect}
+    />
+    </>
   )
 }

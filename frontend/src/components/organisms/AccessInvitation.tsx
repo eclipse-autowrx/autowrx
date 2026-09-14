@@ -114,7 +114,7 @@ const AccessInvitation = ({
     >
       <div className="flex h-[500px] max-h-[calc(100vw-160px)] min-h-[400px] w-full flex-col">
         <div className="mb-4">
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-start">
             <DaMultiUsersInput
               inputString={inputString}
               onInputStringChange={setInputString}

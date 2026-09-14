@@ -6,12 +6,82 @@
 //
 // SPDX-License-Identifier: MIT
 
-const { SiteConfig } = require('../models');
+const { SiteConfig, SiteConfigSnapshot, SiteConfigSnapshotMeta } = require('../models');
+const mongoose = require('mongoose');
 const ApiError = require('../utils/ApiError');
 const httpStatus = require('http-status');
 const fs = require('fs');
 const path = require('path');
 const ssoService = require('./sso.service');
+const { encrypt, decrypt } = require('../utils/encryption');
+const PREDEFINED_SITE_CONFIGS = require('../config/predefinedSiteConfigs');
+const PREDEFINED_AUTH_CONFIGS = require('../config/predefinedAuthConfigs');
+const PREDEFINED_HOME_CONFIGS = require('../config/predefinedHomeConfigs');
+
+const ALL_PREDEFINED_RESTORE_DEFAULTS = (() => {
+  const byKey = new Map();
+  for (const config of PREDEFINED_SITE_CONFIGS) {
+    byKey.set(config.key, config);
+  }
+  for (const config of PREDEFINED_AUTH_CONFIGS) {
+    byKey.set(config.key, config);
+  }
+  for (const config of PREDEFINED_HOME_CONFIGS) {
+    byKey.set(config.key, config);
+  }
+  return Array.from(byKey.values());
+})();
+
+/**
+ * Encrypt sensitive fields in EMAIL_CONFIG value before storage.
+ * Only encrypts values that are not already encrypted (no colon separator).
+ * @param {Object} emailConfig - The email config object
+ * @returns {Object} Config with encrypted secrets
+ */
+const encryptEmailConfigSecrets = (emailConfig) => {
+  if (!emailConfig || typeof emailConfig !== 'object') return emailConfig;
+  const result = { ...emailConfig };
+
+  // Encrypt apiKey if present and not already encrypted
+  if (result.apiKey && typeof result.apiKey === 'string' && !result.apiKey.includes(':')) {
+    result.apiKey = encrypt(result.apiKey);
+  }
+
+  // Encrypt SMTP password if present and not already encrypted
+  if (result.smtpConfig && result.smtpConfig.pass && typeof result.smtpConfig.pass === 'string' && !result.smtpConfig.pass.includes(':')) {
+    result.smtpConfig = { ...result.smtpConfig, pass: encrypt(result.smtpConfig.pass) };
+  }
+
+  return result;
+};
+
+/**
+ * Decrypt sensitive fields in EMAIL_CONFIG value for admin read.
+ * @param {Object} emailConfig - The email config object with encrypted secrets
+ * @returns {Object} Config with decrypted secrets
+ */
+const decryptEmailConfigSecrets = (emailConfig) => {
+  if (!emailConfig || typeof emailConfig !== 'object') return emailConfig;
+  const result = { ...emailConfig };
+
+  if (result.apiKey && typeof result.apiKey === 'string' && result.apiKey.includes(':')) {
+    try {
+      result.apiKey = decrypt(result.apiKey);
+    } catch {
+      // Leave as-is if decryption fails
+    }
+  }
+
+  if (result.smtpConfig && result.smtpConfig.pass && typeof result.smtpConfig.pass === 'string' && result.smtpConfig.pass.includes(':')) {
+    try {
+      result.smtpConfig = { ...result.smtpConfig, pass: decrypt(result.smtpConfig.pass) };
+    } catch {
+      // Leave as-is if decryption fails
+    }
+  }
+
+  return result;
+};
 
 /**
  * Get value type from a value
@@ -305,12 +375,15 @@ const createSiteConfig = async (siteConfigBody) => {
 
   const valueType = clientValueType || getValueType(value);
   
-  // Encrypt SSO provider secrets if this is SSO_PROVIDERS config
+  // Encrypt secrets for specific config keys
   let processedValue = value;
   if (key === 'SSO_PROVIDERS' && Array.isArray(value)) {
     processedValue = ssoService.encryptProviderSecrets(value);
   }
-  
+  if (key === 'EMAIL_CONFIG' && value && typeof value === 'object') {
+    processedValue = encryptEmailConfigSecrets(value);
+  }
+
   return SiteConfig.create({
     key,
     scope,
@@ -408,12 +481,15 @@ const querySiteConfigs = async (filter, options) => {
 const getSiteConfigById = async (id) => {
   const config = await SiteConfig.findById(id);
   
-  // Decrypt SSO provider secrets for admin access
+  // Decrypt secrets for admin access
   if (config && config.key === 'SSO_PROVIDERS' && Array.isArray(config.value)) {
     const decryptedValue = ssoService.decryptProviderSecrets(config.value);
     return { ...config.toObject(), value: decryptedValue };
   }
-  
+  if (config && config.key === 'EMAIL_CONFIG' && config.value && typeof config.value === 'object') {
+    return { ...config.toObject(), value: decryptEmailConfigSecrets(config.value) };
+  }
+
   return config;
 };
 
@@ -607,53 +683,103 @@ const updateSiteConfigById = async (siteConfigId, updateBody) => {
   // Preserve existing valueType unless client explicitly provides a new one
   // If only value is updated, do NOT auto-derive and overwrite valueType
 
-  // Encrypt SSO provider secrets if this is SSO_PROVIDERS config and value is being updated
+  // Encrypt secrets for specific config keys
   if (siteConfig.key === 'SSO_PROVIDERS' && updateBody.value && Array.isArray(updateBody.value)) {
     updateBody.value = ssoService.encryptProviderSecrets(updateBody.value);
+  }
+  if (siteConfig.key === 'EMAIL_CONFIG' && updateBody.value && typeof updateBody.value === 'object') {
+    updateBody.value = encryptEmailConfigSecrets(updateBody.value);
   }
 
   Object.assign(siteConfig, updateBody);
   await siteConfig.save();
-  
-  // Return decrypted version for SSO_PROVIDERS
+
+  // Return decrypted version for admin access
   if (siteConfig.key === 'SSO_PROVIDERS' && Array.isArray(siteConfig.value)) {
     const decryptedValue = ssoService.decryptProviderSecrets(siteConfig.value);
     return { ...siteConfig.toObject(), value: decryptedValue };
   }
-  
+  if (siteConfig.key === 'EMAIL_CONFIG' && siteConfig.value && typeof siteConfig.value === 'object') {
+    return { ...siteConfig.toObject(), value: decryptEmailConfigSecrets(siteConfig.value) };
+  }
+
   return siteConfig;
 };
 
 /**
- * Update site config by key
+ * Update site config by key (upsert - creates if not found)
  * @param {string} key
- * @param {Object} updateBody
+ * @param {Object} updateBody - Must include updated_by, and optionally value, valueType, secret, description, category
  * @returns {Promise<SiteConfig>}
  */
 const updateSiteConfigByKey = async (key, updateBody) => {
   // Don't use default fallback for update operations - get Mongoose document directly
-  const siteConfig = await SiteConfig.findOne({ key, scope: 'site' });
+  let siteConfig = await SiteConfig.findOne({ key, scope: 'site' });
+  
+  // If config doesn't exist, create it (upsert behavior)
   if (!siteConfig) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Site config not found');
+    // Determine valueType from updateBody or infer from value
+    const valueType = updateBody.valueType || (updateBody.value !== undefined ? getValueType(updateBody.value) : 'string');
+    
+    // Create new config with required fields
+    const newConfigBody = {
+      key,
+      scope: 'site',
+      value: updateBody.value !== undefined ? updateBody.value : null,
+      valueType: valueType,
+      secret: updateBody.secret !== undefined ? updateBody.secret : false,
+      description: updateBody.description || '',
+      category: updateBody.category || 'general',
+      created_by: updateBody.updated_by, // Use updated_by as created_by for new configs
+      updated_by: updateBody.updated_by,
+    };
+
+    // Encrypt secrets for specific config keys
+    if (key === 'SSO_PROVIDERS' && newConfigBody.value && Array.isArray(newConfigBody.value)) {
+      newConfigBody.value = ssoService.encryptProviderSecrets(newConfigBody.value);
+    }
+    if (key === 'EMAIL_CONFIG' && newConfigBody.value && typeof newConfigBody.value === 'object') {
+      newConfigBody.value = encryptEmailConfigSecrets(newConfigBody.value);
+    }
+
+    siteConfig = await SiteConfig.create(newConfigBody);
+
+    // Return decrypted version for admin access
+    if (siteConfig.key === 'SSO_PROVIDERS' && Array.isArray(siteConfig.value)) {
+      const decryptedValue = ssoService.decryptProviderSecrets(siteConfig.value);
+      return { ...siteConfig.toObject(), value: decryptedValue };
+    }
+    if (siteConfig.key === 'EMAIL_CONFIG' && siteConfig.value && typeof siteConfig.value === 'object') {
+      return { ...siteConfig.toObject(), value: decryptEmailConfigSecrets(siteConfig.value) };
+    }
+
+    return siteConfig;
   }
 
+  // Config exists - update it
   // Preserve existing valueType unless client explicitly provides a new one
   // If only value is updated, do NOT auto-derive and overwrite valueType
 
-  // Encrypt SSO provider secrets if this is SSO_PROVIDERS config and value is being updated
+  // Encrypt secrets for specific config keys
   if (siteConfig.key === 'SSO_PROVIDERS' && updateBody.value && Array.isArray(updateBody.value)) {
     updateBody.value = ssoService.encryptProviderSecrets(updateBody.value);
+  }
+  if (siteConfig.key === 'EMAIL_CONFIG' && updateBody.value && typeof updateBody.value === 'object') {
+    updateBody.value = encryptEmailConfigSecrets(updateBody.value);
   }
 
   Object.assign(siteConfig, updateBody);
   await siteConfig.save();
-  
-  // Return decrypted version for SSO_PROVIDERS
+
+  // Return decrypted version for admin access
   if (siteConfig.key === 'SSO_PROVIDERS' && Array.isArray(siteConfig.value)) {
     const decryptedValue = ssoService.decryptProviderSecrets(siteConfig.value);
     return { ...siteConfig.toObject(), value: decryptedValue };
   }
-  
+  if (siteConfig.key === 'EMAIL_CONFIG' && siteConfig.value && typeof siteConfig.value === 'object') {
+    return { ...siteConfig.toObject(), value: decryptEmailConfigSecrets(siteConfig.value) };
+  }
+
   return siteConfig;
 };
 
@@ -714,6 +840,243 @@ const bulkUpsertSiteConfigs = async (configs, userId) => {
   return SiteConfig.find({ key: { $in: configs.map(c => c.key) } });
 };
 
+/**
+ * Seed predefined site configs on server startup.
+ * Uses $setOnInsert to only insert keys that don't exist — never overwrites admin-customized values.
+ * @param {Array} predefinedConfigs - Array of predefined config objects
+ * @returns {Promise<void>}
+ */
+const seedPredefinedSiteConfigs = async (predefinedConfigs, systemUserId) => {
+  if (!predefinedConfigs || predefinedConfigs.length === 0) return;
+
+  try {
+    const operations = predefinedConfigs.map((config) => ({
+      updateOne: {
+        filter: { key: config.key, scope: config.scope || 'site' },
+        update: {
+          $setOnInsert: {
+            key: config.key,
+            scope: config.scope || 'site',
+            value: config.value !== undefined ? config.value : null,
+            valueType: config.valueType || 'string',
+            secret: config.secret !== undefined ? config.secret : false,
+            description: config.description || '',
+            category: config.category || 'general',
+            created_by: systemUserId,
+            updated_by: systemUserId,
+          },
+        },
+        upsert: true,
+      },
+    }));
+
+    const result = await SiteConfig.bulkWrite(operations, { ordered: false });
+
+    // Backfill created_by/updated_by for configs seeded before this fix
+    if (systemUserId) {
+      await SiteConfig.updateMany(
+        { scope: 'site', $or: [{ created_by: { $exists: false } }, { created_by: null }] },
+        { $set: { created_by: systemUserId, updated_by: systemUserId } }
+      );
+    }
+
+    const inserted = result.upsertedCount;
+    const skipped = predefinedConfigs.length - inserted;
+    if (inserted === 0) {
+      console.log(`[SiteConfig] Skipped all ${skipped} predefined configs (already exist).`);
+    } else {
+      console.log(`[SiteConfig] Seeded ${inserted} predefined config(s); skipped ${skipped} existing.`);
+    }
+  } catch (error) {
+    console.error('[SiteConfig] Failed to seed predefined configs:', error.message);
+  }
+};
+
+const SNAPSHOT_META_ID = 'meta';
+const SEED_META_ID = 'seeder_has_run';
+
+/**
+ * Sync site config snapshots from live configs when deploy seeder has run.
+ * Uses _seed_meta.lastRunAt written by etas-instance-config seed.js.
+ * @returns {Promise<boolean>} true if a sync was performed
+ */
+const syncSiteConfigSnapshotsIfNeeded = async () => {
+  const seedMetaCol = mongoose.connection.db.collection('_seed_meta');
+  const seedMeta = await seedMetaCol.findOne({ _id: SEED_META_ID });
+  const seedRunAt = seedMeta?.lastRunAt;
+
+  if (!seedRunAt) {
+    return false;
+  }
+
+  const meta = await SiteConfigSnapshotMeta.findById(SNAPSHOT_META_ID);
+  if (meta?.lastSyncedSeedRunAt && new Date(seedRunAt) <= new Date(meta.lastSyncedSeedRunAt)) {
+    return false;
+  }
+
+  const liveConfigs = await SiteConfig.find({ scope: 'site' }).lean();
+  await SiteConfigSnapshot.deleteMany({});
+  if (liveConfigs.length > 0) {
+    const snapshots = liveConfigs.map((config) => ({
+      key: config.key,
+      scope: config.scope,
+      value: config.value,
+      valueType: config.valueType,
+      secret: config.secret,
+      description: config.description,
+      category: config.category,
+    }));
+    await SiteConfigSnapshot.insertMany(snapshots);
+  }
+
+  await SiteConfigSnapshotMeta.findByIdAndUpdate(
+    SNAPSHOT_META_ID,
+    { lastSyncedSeedRunAt: new Date(seedRunAt) },
+    { upsert: true, new: true }
+  );
+
+  console.log(
+    `[SiteConfig] Snapshot synced ${liveConfigs.length} config(s) from seed run at ${new Date(seedRunAt).toISOString()}`
+  );
+  return true;
+};
+
+/**
+ * Build MongoDB filter for snapshot restore (union of keys, categories, secret).
+ * @param {{ keys?: string[], categories?: string[], secret?: boolean }} filter
+ * @returns {Object|null}
+ */
+const buildSnapshotRestoreFilter = (filter) => {
+  const orClauses = [];
+
+  if (filter.keys?.length) {
+    orClauses.push({ key: { $in: filter.keys } });
+  }
+  if (filter.categories?.length) {
+    orClauses.push({ category: { $in: filter.categories } });
+  }
+  if (filter.secret === true) {
+    orClauses.push({ secret: true });
+  }
+
+  if (orClauses.length === 0) {
+    return null;
+  }
+
+  return orClauses.length === 1 ? orClauses[0] : { $or: orClauses };
+};
+
+/**
+ * Check if a config matches the restore filter (union semantics).
+ * @param {{ key: string, category?: string, secret?: boolean }} config
+ * @param {{ keys?: string[], categories?: string[], secret?: boolean }} filter
+ * @returns {boolean}
+ */
+const matchesRestoreFilter = (config, filter) => {
+  if (filter.keys?.length && filter.keys.includes(config.key)) {
+    return true;
+  }
+  if (filter.categories?.length && filter.categories.includes(config.category || 'general')) {
+    return true;
+  }
+  if (filter.secret === true && config.secret === true) {
+    return true;
+  }
+  return false;
+};
+
+const snapshotToRestoreConfig = (snapshot) => ({
+  key: snapshot.key,
+  scope: snapshot.scope,
+  value: snapshot.value,
+  valueType: snapshot.valueType,
+  secret: snapshot.secret,
+  description: snapshot.description,
+  category: snapshot.category,
+});
+
+/**
+ * Merge deployment snapshots with predefined defaults (snapshot wins per key).
+ * @param {{ keys?: string[], categories?: string[], secret?: boolean }} filter
+ * @param {Array} snapshots
+ * @returns {{ configs: Array, source: 'snapshot' | 'predefined' | 'mixed' | 'none' }}
+ */
+const resolveRestoreConfigs = (filter, snapshots) => {
+  const predefined = ALL_PREDEFINED_RESTORE_DEFAULTS.filter((config) =>
+    matchesRestoreFilter(config, filter)
+  );
+  const predefinedByKey = new Map(predefined.map((config) => [config.key, config]));
+  const snapshotByKey = new Map(snapshots.map((snapshot) => [snapshot.key, snapshot]));
+
+  const keysToRestore = new Set([
+    ...snapshots.map((snapshot) => snapshot.key),
+    ...predefined.map((config) => config.key),
+    ...(filter.keys || []),
+  ]);
+
+  const configs = [];
+  let fromSnapshot = 0;
+  let fromPredefined = 0;
+
+  for (const key of keysToRestore) {
+    if (snapshotByKey.has(key)) {
+      configs.push(snapshotToRestoreConfig(snapshotByKey.get(key)));
+      fromSnapshot += 1;
+    } else if (predefinedByKey.has(key)) {
+      configs.push(predefinedByKey.get(key));
+      fromPredefined += 1;
+    }
+  }
+
+  let source = 'none';
+  if (fromSnapshot > 0 && fromPredefined > 0) {
+    source = 'mixed';
+  } else if (fromSnapshot > 0) {
+    source = 'snapshot';
+  } else if (fromPredefined > 0) {
+    source = 'predefined';
+  }
+
+  return { configs, source };
+};
+
+/**
+ * Restore site configs from deployment snapshot.
+ * @param {{ keys?: string[], categories?: string[], secret?: boolean }} filter
+ * @param {string} userId
+ * @returns {Promise<{ restored: number, keys: string[], source: string }>}
+ */
+const restoreSiteConfigFromSnapshot = async (filter, userId) => {
+  await syncSiteConfigSnapshotsIfNeeded();
+
+  const snapshotFilter = buildSnapshotRestoreFilter(filter);
+  if (!snapshotFilter) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      'At least one filter is required: keys, categories, or secret'
+    );
+  }
+
+  const snapshots = await SiteConfigSnapshot.find({
+    scope: 'site',
+    ...snapshotFilter,
+  }).lean();
+
+  const { configs, source } = resolveRestoreConfigs(filter, snapshots);
+
+  if (!configs.length) {
+    return { restored: 0, keys: [], source: 'none' };
+  }
+
+  await bulkUpsertSiteConfigs(configs, userId);
+
+  return {
+    restored: configs.length,
+    keys: configs.map((c) => c.key),
+    source,
+  };
+};
+
 module.exports = {
   createSiteConfig,
   querySiteConfigs,
@@ -731,4 +1094,7 @@ module.exports = {
   deleteSiteConfigById,
   deleteSiteConfigByKey,
   bulkUpsertSiteConfigs,
+  seedPredefinedSiteConfigs,
+  syncSiteConfigSnapshotsIfNeeded,
+  restoreSiteConfigFromSnapshot,
 };

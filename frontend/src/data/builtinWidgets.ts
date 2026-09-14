@@ -32,10 +32,8 @@ const BUILT_IN_WIDGETS = [
     path: '/builtin-widgets/chart-signals/index.html',
     desc: 'Visualize multiple signals in one chart',
     options: {
-      apis: [
-        'Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed',
-        'Vehicle.Cabin.HVAC.Station.Row1.Passenger.FanSpeed',
-      ],
+      syncWithCode: true,
+      apis: [],
       dataUpdateInterval: 1000,
       maxDataPoints: 60,
       iconURL: '/builtin-widgets/chart-signals/chart-signals.png',
@@ -50,10 +48,8 @@ const BUILT_IN_WIDGETS = [
     path: '/builtin-widgets/signal-list-settable/index.html',
     desc: 'Display and modify multiple vehicle signals',
     options: {
-      apis: [
-        'Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed',
-        'Vehicle.Cabin.HVAC.Station.Row1.Passenger.FanSpeed',
-      ],
+      syncWithCode: true,
+      apis: [],
       iconURL: '/builtin-widgets/signal-list-settable/signal-list-settable.png',
     },
   },
@@ -156,6 +152,20 @@ const BUILT_IN_WIDGETS = [
     options: {
       api: 'Vehicle.Body.Windshield.Front.Wiping.Mode',
       iconURL: '/builtin-widgets/simple-wiper/simple-wiper.png',
+    },
+  },
+  {
+    id: 'Runtime-Preview-Widget',
+    plugin: 'Builtin',
+    widget: 'Runtime Preview',
+    label: 'Runtime Preview',
+    icon: '/builtin-widgets/runtime-preview/runtime-preview.png',
+    path: '/builtin-widgets/runtime-preview/index.html',
+    desc: 'Show an iframe preview for the currently selected runtime',
+    options: {
+      runtimeMappings: [],
+      showDefaultUi: false,
+      iconURL: '/builtin-widgets/runtime-preview/runtime-preview.png',
     },
   },
 ]

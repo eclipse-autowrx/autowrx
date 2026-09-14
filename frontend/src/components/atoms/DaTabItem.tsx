@@ -17,6 +17,8 @@ interface DaTabItemProps {
   small?: boolean
   onClick?: React.MouseEventHandler<HTMLDivElement>
   dataId?: string
+  customTextColor?: string
+  className?: string
 }
 
 const DaTabItem: FC<DaTabItemProps> = ({
@@ -26,26 +28,48 @@ const DaTabItem: FC<DaTabItemProps> = ({
   small,
   onClick,
   dataId,
+  customTextColor,
+  className,
 }) => {
+  const hasCustomColor = !!customTextColor
+  const inner = (
+    <div
+      onClick={onClick}
+      data-id={dataId}
+      className={cn(
+        `flex h-full text-sm font-semibold items-center justify-center min-w-20 cursor-pointer hover:opacity-80 border-b-2 border-transparent `,
+        small ? 'py-0.5 px-2' : 'py-1 px-4',
+        className,
+        hasCustomColor
+          ? active
+            ? 'border-b-2'
+            : 'opacity-60'
+          : active
+            ? 'text-primary border-b-2 border-primary'
+            : 'text-muted-foreground',
+      )}
+      style={
+        hasCustomColor
+          ? {
+              color: customTextColor,
+              borderColor: active ? customTextColor : 'transparent',
+            }
+          : undefined
+      }
+    >
+      {children}
+    </div>
+  )
+  if (!to) {
+    return inner
+  }
   return (
     <Link
-      to={to || ''}
-      target={to && to.startsWith('http') ? '_blank' : '_self'}
+      to={to}
+      target={to.startsWith('http') ? '_blank' : '_self'}
       rel="noopener noreferrer"
     >
-      <div
-        onClick={onClick}
-        data-id={dataId}
-        className={cn(
-          `flex h-full text-sm font-semibold items-center justify-center min-w-20 cursor-pointer hover:opacity-80 border-b-2 border-transparent `,
-          small ? 'py-0.5 px-2' : 'py-1 px-4',
-          active
-            ? 'text-primary border-b-2 border-primary'
-            : 'text-muted-foreground ',
-        )}
-      >
-        {children}
-      </div>
+      {inner}
     </Link>
   )
 }

@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -9,17 +9,21 @@
 const httpStatus = require('http-status');
 const { userService } = require('.');
 const prototypeService = require('./prototype.service');
+const extendedApiService = require('./extendedApi.service');
 const apiService = require('./api.service');
 const permissionService = require('./permission.service');
 const fileService = require('./file.service');
-const { Model, Role, CustomApiSchema, CustomApiSet } = require('../models');
+const { Model, Role, UserRole, Prototype, ModelTemplate, CustomApiSet } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { PERMISSIONS } = require('../config/roles');
+const { publiclyVisibleVisibilities, visibilityTypes } = require('../config/enums');
 const mongoose = require('mongoose');
 const logger = require('../config/logger');
 const _ = require('lodash');
 const config = require('../config/config');
 const customApiSetService = require('./customApiSet.service');
+const fs = require('fs');
+const path = require('path');
 
 /**
  *
@@ -27,6 +31,8 @@ const customApiSetService = require('./customApiSet.service');
  * @param {Object} modelBody
  * @returns {Promise<string>}
  */
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const createModel = async (userId, modelBody) => {
   const user = await userService.getUserById(userId);
 
@@ -36,6 +42,21 @@ const createModel = async (userId, modelBody) => {
       if (!(await permissionService.hasPermission(userId, PERMISSIONS.UNLIMITED_MODEL))) {
         throw new ApiError(httpStatus.FORBIDDEN, 'Users are limited to 3 models');
       }
+    }
+  }
+
+  const existingModel = await Model.findOne({
+    created_by: userId,
+    name: { $regex: `^${escapeRegex(modelBody.name)}$`, $options: 'i' },
+  });
+  if (existingModel) {
+    throw new ApiError(httpStatus.CONFLICT, 'A model with this name already exists');
+  }
+
+  if (modelBody.model_template_id) {
+    const template = await ModelTemplate.findById(modelBody.model_template_id).select('visibility');
+    if (template?.visibility && Object.values(visibilityTypes).includes(template.visibility)) {
+      modelBody.visibility = template.visibility;
     }
   }
 
@@ -154,6 +175,167 @@ const getModelStats = async (model) => {
   return stats;
 };
 
+const createEmptyModelStats = () => ({
+  apis: {
+    total: { count: 0 },
+    used: { count: 0 },
+  },
+  prototypes: { count: 0 },
+  architecture: {
+    prototypes: { count: 0 },
+    model: { count: 0 },
+    total: { count: 0 },
+  },
+  collaboration: {
+    contributors: { count: 0 },
+    members: { count: 0 },
+  },
+});
+
+const normalizeSignalName = (signal = '') => {
+  const value = String(signal || '').trim();
+  if (!value) return null;
+  if (value.startsWith('Vehicle.')) {
+    return `.${value.slice('Vehicle.'.length)}`;
+  }
+  if (value.startsWith('.')) return value;
+  return `.${value}`;
+};
+
+/**
+ * Batch model stats for list/grid rendering.
+ * Avoids per-model DB queries by aggregating prototypes and collaborations by model ids.
+ * @param {Array<string | {id?: string; _id?: string}>} modelsOrIds
+ * @returns {Promise<Record<string, ReturnType<typeof createEmptyModelStats>>>}
+ */
+const getModelStatsSummaryByIds = async (modelsOrIds = []) => {
+  const ids = (modelsOrIds || [])
+    .map((item) => {
+      if (!item) return null;
+      if (typeof item === 'string') return item;
+      return String(item.id || item._id || '');
+    })
+    .filter(Boolean);
+
+  if (!ids.length) return {};
+
+  const uniqueIds = Array.from(new Set(ids));
+  const objectIds = uniqueIds.map((id) => new mongoose.Types.ObjectId(id));
+  const statsById = Object.fromEntries(uniqueIds.map((id) => [id, createEmptyModelStats()]));
+
+  const [prototypeCountAgg, prototypeUsageDocs, roles] = await Promise.all([
+    Prototype.aggregate([
+      {
+        $match: {
+          model_id: { $in: objectIds },
+        },
+      },
+      {
+        $group: {
+          _id: '$model_id',
+          count: { $sum: 1 },
+        },
+      },
+    ]),
+    Prototype.find({
+      model_id: { $in: objectIds },
+    })
+      .select('model_id code apis.VSS')
+      .lean(),
+    Role.find({ ref: { $in: ['model_contributor', 'model_member'] } })
+      .select('_id ref')
+      .lean(),
+  ]);
+
+  prototypeCountAgg.forEach((item) => {
+    const id = String(item._id);
+    if (statsById[id]) {
+      statsById[id].prototypes.count = item.count || 0;
+    }
+  });
+
+  const usageByModel = new Map();
+  prototypeUsageDocs.forEach((prototype) => {
+    const modelId = String(prototype.model_id);
+    if (!usageByModel.has(modelId)) {
+      usageByModel.set(modelId, {
+        mergedCode: '',
+        candidateSignals: new Set(),
+      });
+    }
+
+    const usage = usageByModel.get(modelId);
+    usage.mergedCode += `\n${prototype.code || ''}`;
+
+    const fromStoredApis = prototype?.apis?.VSS || [];
+    fromStoredApis.forEach((signal) => {
+      const normalized = normalizeSignalName(signal);
+      if (normalized) usage.candidateSignals.add(normalized);
+    });
+  });
+
+  usageByModel.forEach((usage, modelId) => {
+    if (!statsById[modelId]) return;
+    statsById[modelId].apis.used.count = Array.from(usage.candidateSignals).reduce((count, signal) => {
+      return usage.mergedCode.includes(signal) ? count + 1 : count;
+    }, 0);
+  });
+
+  // Align used-signals count with the legacy listAllModels behavior.
+  await Promise.all(
+    Object.entries(statsById).map(async ([modelId, stats]) => {
+      try {
+        const mergedCode = usageByModel.get(modelId)?.mergedCode || '';
+        const cvi = await apiService.computeVSSApi(modelId);
+        const apiList = apiService.parseCvi(cvi);
+        const usedApis = apiService.getUsedApis(mergedCode, apiList);
+        stats.apis.used.count = usedApis.length;
+      } catch (error) {
+        logger.warn(`Error in computing used VSS signals for model ${modelId}: ${error}`);
+      }
+    }),
+  );
+
+  const contributorRole = roles.find((role) => role.ref === 'model_contributor');
+  const memberRole = roles.find((role) => role.ref === 'model_member');
+  const roleIds = [contributorRole?._id, memberRole?._id].filter(Boolean);
+
+  if (roleIds.length) {
+    const collaborationAgg = await UserRole.aggregate([
+      {
+        $match: {
+          ref: { $in: objectIds },
+          role: { $in: roleIds },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            ref: '$ref',
+            role: '$role',
+          },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    collaborationAgg.forEach((item) => {
+      const refId = String(item._id.ref);
+      const roleId = String(item._id.role);
+      if (!statsById[refId]) return;
+
+      if (contributorRole && roleId === String(contributorRole._id)) {
+        statsById[refId].collaboration.contributors.count = item.count || 0;
+      }
+      if (memberRole && roleId === String(memberRole._id)) {
+        statsById[refId].collaboration.members.count = item.count || 0;
+      }
+    });
+  }
+
+  return statsById;
+};
+
 /**
  * Query for models with filters
  * @param {Object} filter
@@ -191,7 +373,7 @@ const queryModels = async (filter, options, advanced, userId) => {
   };
 
   if (!advanced.is_contributor) {
-    permissionFilter.$or.push({ visibility: 'public' });
+    permissionFilter.$or.push({ visibility: { $in: publiclyVisibleVisibilities } });
   }
 
   // List based on permissions
@@ -223,7 +405,7 @@ const queryModels = async (filter, options, advanced, userId) => {
             },
           },
         },
-      ]
+      ],
     );
   }
 
@@ -278,7 +460,7 @@ const queryModels = async (filter, options, advanced, userId) => {
           preserveNullAndEmptyArrays: true,
         },
       },
-    ]
+    ],
   );
 
   const models = await Model.aggregate(pipeline).exec();
@@ -309,8 +491,10 @@ const queryModels = async (filter, options, advanced, userId) => {
  * @returns {Promise<Model>}
  */
 const getModelById = async (id, userId, includeCreatorFullDetails) => {
-  const model = await Model.findById(id)
-    .populate('created_by', includeCreatorFullDetails ? 'id name image_file email' : 'id name image_file');
+  const model = await Model.findById(id).populate(
+    'created_by',
+    includeCreatorFullDetails ? 'id name image_file email' : 'id name image_file',
+  );
   if (!model) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Model not found');
   }
@@ -340,6 +524,17 @@ const updateModelById = async (id, updateBody, actionOwner) => {
 
   updateBody.action_owner = actionOwner;
 
+  if (updateBody.name) {
+    const duplicate = await Model.findOne({
+      created_by: model.created_by,
+      name: { $regex: `^${escapeRegex(updateBody.name)}$`, $options: 'i' },
+      _id: { $ne: id },
+    });
+    if (duplicate) {
+      throw new ApiError(httpStatus.CONFLICT, 'A model with this name already exists');
+    }
+  }
+
   if (updateBody.extend && typeof updateBody.extend === 'string') {
     try {
       const parsedExtend = JSON.parse(updateBody.extend);
@@ -362,15 +557,10 @@ const updateModelById = async (id, updateBody, actionOwner) => {
 
     // Check access permissions for user-scoped sets
     const userScopedSets = sets.filter((set) => set.scope === 'user');
-    const inaccessibleSets = userScopedSets.filter(
-      (set) => set.owner.toString() !== actionOwner.toString()
-    );
+    const inaccessibleSets = userScopedSets.filter((set) => set.owner.toString() !== actionOwner.toString());
 
     if (inaccessibleSets.length > 0) {
-      throw new ApiError(
-        httpStatus.FORBIDDEN,
-        'You do not have access to one or more user-scoped CustomApiSets'
-      );
+      throw new ApiError(httpStatus.FORBIDDEN, 'You do not have access to one or more user-scoped CustomApiSets');
     }
   }
 
@@ -392,6 +582,7 @@ const deleteModelById = async (id, actionOwner) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Model not found');
   }
 
+  await extendedApiService.deleteExtendedApisByModelId(id);
   model.action_owner = actionOwner;
   await model.deleteOne();
   await prototypeService.deleteMany({ model_id: id }, actionOwner);
@@ -449,7 +640,7 @@ const getAccessibleModels = async (userId) => {
 
   const visibleModels = await Model.find({
     $or: [
-      { visibility: 'public' },
+      { visibility: { $in: publiclyVisibleVisibilities } },
       { created_by: userId },
       {
         $expr: {
@@ -506,7 +697,14 @@ const traverse = (api, callback, prefix = '') => {
 const processApiDataUrl = async (apiDataUrl) => {
   try {
     // resolve the correct url incase the apiDataUrl is relative. Eg. /api/v2/data/vehicle.json
-    const response = await fetch(fileService.resolveUrl(apiDataUrl));
+    const resolvedUrl = fileService.resolveUrl(apiDataUrl);
+    logger.debug(`Processing API data from URL: ${resolvedUrl}`);
+    const response = await fetch(resolvedUrl);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch API data: HTTP ${response.status} ${response.statusText}`);
+    }
+
     const data = await response.json();
     const extendedApis = [];
 
@@ -523,28 +721,90 @@ const processApiDataUrl = async (apiDataUrl) => {
               convertToExtendedApiFormat({
                 ...value,
                 name,
-              })
+              }),
             );
             delete api.children[key];
           }
         }
       },
-      mainApi
+      mainApi,
     );
 
     const result = {
       main_api: mainApi,
     };
 
-    // Check if this is COVESA VSS version
-    const versionList = require('../../data/vss.json');
-    for (const version of versionList) {
-      const file = require(`../../data/${version.name}.json`);
-      const isEqual = _.isEqual(file, data);
-      if (isEqual) {
-        result.api_version = version.name;
-        break;
+    // Check if this is a COVESA VSS version (only for standard versions, skip for custom files)
+    // Quick optimization: Only check if we have standard VSS files available
+    // Custom uploaded files don't need version detection - they're already custom
+    try {
+      const vssJsonPath = path.join(__dirname, '../../data/vss.json');
+      if (!fs.existsSync(vssJsonPath)) {
+        // No standard VSS files available, treat as custom
+        logger.debug('vss.json not found, treating uploaded file as custom');
+      } else {
+        const versionList = require('../../data/vss.json');
+        if (!versionList || versionList.length === 0) {
+          // No versions to check, treat as custom
+          logger.debug('No VSS versions available, treating uploaded file as custom');
+        } else {
+          // Quick check: compare data size/structure first to avoid expensive deep comparison
+          const dataKeys = Object.keys(data);
+          const dataSize = JSON.stringify(data).length;
+
+          // Only check versions that actually exist on disk
+          let matched = false;
+          for (const version of versionList) {
+            const versionFilePath = path.join(__dirname, `../../data/${version.name}.json`);
+            if (!fs.existsSync(versionFilePath)) {
+              logger.debug(`Version file ${version.name}.json not found on disk, skipping`);
+              continue;
+            }
+
+            try {
+              // Quick size check first (much faster than deep comparison)
+              const versionFileStats = fs.statSync(versionFilePath);
+              const versionFileSize = versionFileStats.size;
+
+              // If sizes are very different, skip deep comparison (likely custom file)
+              const sizeDiff = Math.abs(dataSize - versionFileSize);
+              const sizeDiffPercent = (sizeDiff / Math.max(dataSize, versionFileSize)) * 100;
+              if (sizeDiffPercent > 5) {
+                // More than 5% size difference, likely custom, skip
+                continue;
+              }
+
+              // Size is similar, do deep comparison
+              const file = require(`../../data/${version.name}.json`);
+              const fileKeys = Object.keys(file);
+
+              // Quick key check before expensive deep comparison
+              if (dataKeys.length !== fileKeys.length) {
+                continue;
+              }
+
+              const isEqual = _.isEqual(file, data);
+              if (isEqual) {
+                result.api_version = version.name;
+                matched = true;
+                logger.debug(`Matched uploaded file to standard VSS version: ${version.name}`);
+                break;
+              }
+            } catch (fileError) {
+              // Skip if file can't be loaded (corrupted, etc.)
+              logger.debug(`Error loading version file ${version.name}.json: ${fileError.message}`);
+              continue;
+            }
+          }
+
+          if (!matched) {
+            logger.debug('Uploaded file does not match any standard VSS version, treating as custom');
+          }
+        }
       }
+    } catch (vssError) {
+      // If vss.json can't be loaded, treat as custom file (no version detection)
+      logger.debug(`Error loading vss.json: ${vssError.message}, treating uploaded file as custom`);
     }
 
     // If not COVESA VSS version, then add the rest APIs
@@ -558,12 +818,12 @@ const processApiDataUrl = async (apiDataUrl) => {
               convertToExtendedApiFormat({
                 ...value,
                 name,
-              })
+              }),
             );
             delete api.children[key];
           }
         },
-        mainApi
+        mainApi,
       );
     }
 
@@ -573,11 +833,22 @@ const processApiDataUrl = async (apiDataUrl) => {
 
     return result;
   } catch (error) {
-    logger.error(`Error in processing api data: ${error}`);
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      error?.message || `Error in processing api data. Please check content of the file again.`
-    );
+    logger.error(`Error in processing api data: ${error.message || error}`);
+    logger.error(error.stack);
+
+    // Provide more specific error messages
+    let errorMessage = 'Error in processing api data. Please check content of the file again.';
+    if (error.message) {
+      if (error.message.includes('fetch')) {
+        errorMessage = `Failed to fetch API data file: ${error.message}`;
+      } else if (error.message.includes('JSON') || error.message.includes('parse')) {
+        errorMessage = `Invalid JSON format in API data file: ${error.message}`;
+      } else {
+        errorMessage = error.message;
+      }
+    }
+
+    throw new ApiError(httpStatus.BAD_REQUEST, errorMessage);
   }
 };
 
@@ -590,18 +861,18 @@ const processApiDataUrl = async (apiDataUrl) => {
  */
 const addCustomApiSet = async (modelId, setId, userId) => {
   const model = await getModelById(modelId, userId);
-  
+
   // Verify set exists and user has access
   const set = await customApiSetService.getSetById(setId, userId);
-  
+
   if (!model.custom_api_sets) {
     model.custom_api_sets = [];
   }
-  
+
   if (model.custom_api_sets.some((id) => id.toString() === setId)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'CustomApiSet already linked to this model');
   }
-  
+
   model.custom_api_sets.push(setId);
   await model.save();
   return model;
@@ -616,16 +887,16 @@ const addCustomApiSet = async (modelId, setId, userId) => {
  */
 const removeCustomApiSet = async (modelId, setId, userId) => {
   const model = await getModelById(modelId, userId);
-  
+
   if (!model.custom_api_sets) {
     model.custom_api_sets = [];
   }
-  
+
   const index = model.custom_api_sets.findIndex((id) => id.toString() === setId);
   if (index === -1) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'CustomApiSet not linked to this model');
   }
-  
+
   model.custom_api_sets.splice(index, 1);
   await model.save();
   return model;
@@ -642,5 +913,6 @@ module.exports.deleteAuthorizedUser = deleteAuthorizedUser;
 module.exports.getAccessibleModels = getAccessibleModels;
 module.exports.processApiDataUrl = processApiDataUrl;
 module.exports.getModelStats = getModelStats;
+module.exports.getModelStatsSummaryByIds = getModelStatsSummaryByIds;
 module.exports.addCustomApiSet = addCustomApiSet;
 module.exports.removeCustomApiSet = removeCustomApiSet;

@@ -6,12 +6,13 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { url } from 'inspector'
-
 const config: any = {
   instance: 'autowrx',
-  serverBaseUrl:
-    import.meta.env.VITE_SERVER_BASE_URL || '',
+  serverBaseUrl: (() => {
+    const env = (import.meta.env.VITE_SERVER_BASE_URL || '').trim()
+    if (env) return env
+    return typeof window !== 'undefined' ? window.location.origin : ''
+  })(),
   serverVersion: import.meta.env.VITE_SERVER_VERSION || 'v2',
   logBaseUrl: '',
   // cacheBaseUrl: '',

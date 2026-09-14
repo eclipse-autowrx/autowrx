@@ -6,7 +6,8 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Prototype } from '../../types/model.type'
 import { DaImage } from '../atoms/DaImage'
 import { Button } from '../atoms/button'
@@ -20,17 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../atoms/select'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../atoms/dropdown-menu'
 import { DaTableProperty } from '../molecules/DaTableProperty'
 import DaImportFile from '../atoms/DaImportFile'
 import DaConfirmPopup from '../molecules/DaConfirmPopup'
 import {
-  TbDotsVertical,
   TbDownload,
   TbEdit,
   TbLoader,
@@ -43,8 +37,12 @@ import { updatePrototypeService, deletePrototypeService } from '@/services/proto
 import { uploadFileService } from '@/services/upload.service'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { useNavigate } from 'react-router-dom'
-import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import {
+  invalidatePrototypeListQueries,
+  useListModelPrototypes,
+} from '@/hooks/usePrototypeQueries'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
+import useCanEditPrototype from '@/hooks/useCanEditPrototype'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { cn } from '@/lib/utils'
@@ -53,6 +51,9 @@ import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { toast } from 'react-toastify'
 import { isAxiosError } from 'axios'
+import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
+import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import { useDefaultPrototypeImage } from '@/utils/siteConfig'
 
 interface PrototypeTabInfoProps {
   prototype: Prototype
@@ -66,19 +67,28 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [localPrototype, setLocalPrototype] = useState(prototype)
+  const defaultPrototypeImage = useDefaultPrototypeImage()
+  const queryClient = useQueryClient()
   const { data: model } = useCurrentModel()
-  const { refetch: refetchModelPrototypes } = useListModelPrototypes(
+  const { data: modelPrototypes, refetch: refetchModelPrototypes } = useListModelPrototypes(
     model?.id || '',
   )
+
+  const existingPrototypeNames = useMemo(
+    () => modelPrototypes?.filter((p: Prototype) => p.id !== prototype.id).map((p: Prototype) => p.name) ?? [],
+    [modelPrototypes, prototype.id],
+  )
+
+  const { isDuplicate: isDuplicatePrototypeName, suggestedName: suggestedPrototypeName } =
+    useDuplicateNameCheck(localPrototype.name, existingPrototypeNames)
   const { refetch: refetchCurrentPrototype } = useCurrentPrototype()
   const navigate = useNavigate()
-  const [isAuthorized, isAdmin] = usePermissionHook(
-    [PERMISSIONS.READ_MODEL, model?.id],
-    [PERMISSIONS.MANAGE_USERS],
-  )
+  const editable = useCanEditPrototype(prototype)
+  const [isAdmin] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
   const [isDeleting, setIsDeleting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string>('')
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
   const { data: currentUser } = useSelfProfileQuery()
 
@@ -96,7 +106,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
 
   const handleSave = async () => {
     if (!localPrototype) return
-    setIsEditing(false)
+    setError('')
     setIsSaving(true)
     const updateData = {
       name: localPrototype.name,
@@ -126,9 +136,14 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
         })
       }
       await refetchCurrentPrototype()
+      setIsEditing(false)
     } catch (error) {
       console.error('Error updating prototype:', error)
-      toast.error('Failed to update prototype')
+      if (isAxiosError(error)) {
+        setError(error.response?.data?.message || 'Failed to update prototype')
+      } else {
+        setError('Failed to update prototype')
+      }
     } finally {
       setIsSaving(false)
     }
@@ -137,6 +152,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
   const handleCancel = () => {
     setLocalPrototype(prototype)
     setIsEditing(false)
+    setError('')
   }
 
   const handleChange = (field: keyof Prototype, value: any) => {
@@ -189,7 +205,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
     try {
       setIsDeleting(true)
       await deletePrototypeService(prototype.id)
-      await refetchModelPrototypes()
+      await invalidatePrototypeListQueries(queryClient)
       navigate(`/model/${model?.id}/library`)
     } catch (error) {
       console.error('Failed to delete prototype:', error)
@@ -220,18 +236,19 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
   return (
     <div className="flex flex-col h-full w-full">
       <div className="flex flex-col h-full w-full bg-background rounded-lg overflow-y-auto">
-        <div className="flex flex-col h-full w-full pt-6 bg-background px-2">
-          <div className="flex mr-4 mb-3 justify-between items-center">
+        <div className="flex flex-col h-full w-full pt-6 bg-background px-6">
+          {/* Header */}
+          <div className="flex mb-3 justify-between items-center">
             {isEditing ? (
               <>
                 <h2 className="text-lg font-semibold text-primary">
                   Editing Prototype
                 </h2>
-                <div className="flex space-x-2 mr-2">
+                <div className="flex space-x-2">
                   <Button variant="outline" onClick={handleCancel} size="sm">
                     Cancel
                   </Button>
-                  <Button onClick={handleSave} size="sm" disabled={isSaving}>
+                  <Button onClick={handleSave} size="sm" disabled={isSaving || isDuplicatePrototypeName}>
                     {isSaving ? 'Saving...' : 'Save'}
                   </Button>
                 </div>
@@ -242,12 +259,12 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                   {localPrototype.name}
                 </h2>
                 <div className="grow" />
-                {isAuthorized && (
+                {editable && (
                   <div className="flex items-center gap-2">
                     {isAdmin && (
                       <Button
                         onClick={updateEditorChoice}
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         title={`${prototype?.editors_choice ? 'Unmark' : 'Mark'} as Editor Choice`}
                       >
@@ -260,53 +277,55 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                     )}
                     <Button
                       onClick={() => setIsEditing(true)}
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
+                      data-id="btn-edit-prototype-info"
                     >
-                      <TbEdit className="w-4 h-4 mr-1" /> Edit
+                      <TbEdit className="w-4 h-4" /> Edit
                     </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className={cn(
-                            isEditing && 'pointer-events-none opacity-50',
-                          )}
-                        >
-                          {!isDeleting && !isEditing && !isSaving && (
-                            <TbDotsVertical className="size-4" />
-                          )}
-                          {isSaving && (
-                            <div className="flex items-center">
-                              <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                              Saving...
-                            </div>
-                          )}
-                          {isDeleting && (
-                            <div className="flex items-center">
-                              <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                              Deleting...
-                            </div>
-                          )}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => downloadPrototypeZip(prototype)}
-                        >
-                          <TbDownload className="w-4 h-4 mr-2" />
-                          Export Prototype
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => setConfirmPopupOpen(true)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <TbTrashX className="w-4 h-4 mr-2" />
-                          Delete Prototype
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button
+                      onClick={() => downloadPrototypeZip(prototype)}
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        isEditing && 'pointer-events-none opacity-50',
+                      )}
+                      disabled={isDeleting || isEditing || isSaving}
+                    >
+                      {isSaving ? (
+                        <div className="flex items-center">
+                          <TbLoader className="w-4 h-4 animate-spin" />
+                          Saving...
+                        </div>
+                      ) : (
+                        <>
+                          <TbDownload className="w-4 h-4" />
+                          Export
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={() => setConfirmPopupOpen(true)}
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        'text-destructive hover:text-destructive',
+                        isEditing && 'pointer-events-none opacity-50',
+                      )}
+                      disabled={isDeleting || isEditing || isSaving}
+                    >
+                      {isDeleting ? (
+                        <div className="flex items-center">
+                          <TbLoader className="w-4 h-4 animate-spin" />
+                          Deleting...
+                        </div>
+                      ) : (
+                        <>
+                          <TbTrashX className="w-4 h-4" />
+                          Delete
+                        </>
+                      )}
+                    </Button>
                     <DaConfirmPopup
                       onConfirm={handleDeletePrototype}
                       title="Delete Prototype"
@@ -321,18 +340,19 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
               </div>
             )}
           </div>
-          <div className="flex w-full">
-            <div className="flex-1 h-fit relative">
-              <DaImage
-                src={
-                  localPrototype.image_file
-                    ? localPrototype.image_file
-                    : '/imgs/default_prototype_cover.jpg'
-                }
-                className="w-full object-cover max-h-[400px] aspect-video rounded-xl border shadow"
-                alt={localPrototype.name}
-              />
-              {isAuthorized && (
+          {/* Content */}
+          <div className="flex w-full gap-6">
+            {/* Image */}
+            <div className="flex-1 relative">
+              <div className="relative w-full aspect-video max-h-[400px] overflow-hidden rounded-xl border shadow bg-muted">
+                <DaImage
+                  src={localPrototype.image_file}
+                  fallbackSrc={defaultPrototypeImage}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  alt={localPrototype.name}
+                />
+              </div>
+              {editable && (
                 <DaImportFile
                   onFileChange={handlePrototypeImageChange}
                   accept=".png, .jpg, .jpeg, .gif, .webp"
@@ -357,7 +377,8 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                 </DaImportFile>
               )}
             </div>
-            <div className="flex flex-1 h-full px-4 ml-4">
+            {/* Properties */}
+            <div className="flex flex-1 h-full">
               {isEditing ? (
                 <div className="flex flex-col w-full gap-4">
                   <div className="flex flex-col gap-2">
@@ -366,7 +387,17 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                       id="prototype-name"
                       value={localPrototype.name}
                       onChange={(e) => handleChange('name', e.target.value)}
+                      className={error ? 'border-secondary' : ''}
                     />
+                    {isDuplicatePrototypeName && (
+                      <DaDuplicateNameHint
+                        message={`The prototype name '${localPrototype.name}' is already in use for model '${model?.name}'`}
+                        suggestedName={suggestedPrototypeName}
+                        onApplySuggestion={(name) => handleChange('name', name)}
+                        className="mt-2"
+                      />
+                    )}
+                    {error && !isDuplicatePrototypeName && <p className="mt-2 text-sm text-secondary">{error}</p>}
                   </div>
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="problem">Problem</Label>
@@ -432,7 +463,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                       value={localPrototype.state || 'development'}
                       onValueChange={(value) => handleChange('state', value)}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full" data-id="prototype-status-select">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

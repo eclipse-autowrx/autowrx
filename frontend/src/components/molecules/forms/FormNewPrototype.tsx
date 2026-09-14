@@ -1,0 +1,647 @@
+// Copyright (c) 2025 Eclipse Foundation.
+//
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
+import { Button } from '@/components/atoms/button'
+import DaCheckbox from '@/components/atoms/DaCheckbox'
+import DaFileUploadButton from '@/components/atoms/DaFileUploadButton'
+import { Input } from '@/components/atoms/input'
+import { DaText } from '@/components/atoms/DaText'
+import { Label } from '@/components/atoms/label'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/atoms/select'
+import { useToast } from '@/components/molecules/toaster/use-toast'
+import default_journey from '@/data/default_journey'
+import { listProjectTemplates } from '@/services/projectTemplate.service'
+import { useListModelPrototypes, invalidatePrototypeListQueries } from '@/hooks/usePrototypeQueries'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import {
+    getDefaultDashboardCfg,
+    parseProjectTemplates,
+} from '@/utils/projectTemplate'
+import useListVSSVersions from '@/hooks/useListVSSVersions'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
+import { addLog } from '@/services/log.service'
+import { createModelService, listModelsLite, listModelsPage } from '@/services/model.service'
+import { listModelTemplates } from '@/services/modelTemplate.service'
+import { visibilityFromModelTemplate } from '@/utils/modelVisibility'
+import { createPrototypeService } from '@/services/prototype.service'
+import { ModelLite, Prototype } from '@/types/model.type'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { isAxiosError } from 'axios'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { TbLoader } from 'react-icons/tb'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+
+
+interface FormNewPrototypeProps {
+    onClose?: () => void
+    code?: string
+    widget_config?: string
+    buttonText?: string
+    onModelChange?: (modelId: string | null) => void
+    /** Fired when creating a new model so the parent can preview the selected template layout. */
+    onTemplatePreviewChange?: (config: Record<string, any> | null) => void
+    onSuccess?: (modelId: string, prototypeId: string, prototypeName: string) => void
+}
+
+type ModelSelection =
+    | { type: 'existing'; modelId: string }
+    | { type: 'new' }
+
+
+const FormNewPrototype = ({
+    onClose,
+    code,
+    widget_config,
+    buttonText,
+    onModelChange,
+    onTemplatePreviewChange,
+    onSuccess,
+}: FormNewPrototypeProps) => {
+    const navigate = useNavigate()
+    const queryClient = useQueryClient()
+    const [searchParams] = useSearchParams()
+    const { toast } = useToast()
+    const { data: currentUser, isLoading: isCurrentUserLoading } = useSelfProfileQuery()
+    const { data: urlModel, isLoading: isUrlModelLoading } = useCurrentModel()
+    const urlParamModelId = searchParams.get('model_id')
+
+    const { data: projectTemplatesData, isLoading: isLoadingTemplates } = useQuery({
+        queryKey: ['project-templates-list'],
+        queryFn: () => listProjectTemplates({ limit: 100, page: 1, visibility: 'public' }),
+    })
+
+    const templateOptions = useMemo(
+        () => parseProjectTemplates(projectTemplatesData?.results ?? []),
+        [projectTemplatesData],
+    )
+
+    const [selectedTemplateId, setSelectedTemplateId] = useState<string>('')
+
+    useEffect(() => {
+        if (templateOptions.length && !selectedTemplateId) {
+            setSelectedTemplateId(templateOptions[0].id)
+        }
+    }, [templateOptions, selectedTemplateId])
+
+    const { data: ownedModelsData, isLoading: isFetchingOwnedModels } = useQuery({
+        queryKey: ['listModelLiteOwned', currentUser?.id],
+        queryFn: () => listModelsLite({ created_by: currentUser!.id }),
+        enabled: !!currentUser?.id,
+    })
+
+    const { data: contributedModelsData, isLoading: isFetchingContributedModels } = useQuery({
+        queryKey: ['listModelLiteContributed', currentUser?.id],
+        queryFn: () => listModelsLite({ is_contributor: true }),
+        enabled: !!currentUser?.id,
+    })
+
+    const { data: editableModelsData, isLoading: isFetchingEditableModels } = useQuery({
+        queryKey: ['listModelLiteEditable', currentUser?.id],
+        queryFn: () => listModelsPage({ visibility: 'editable', state: 'released' }),
+        enabled: !!currentUser?.id,
+    })
+
+    const allModels = useMemo(() => {
+        const owned = ownedModelsData?.results ?? []
+        const contributed = contributedModelsData?.results ?? []
+        const editable = editableModelsData?.results ?? []
+        const byId = new Map<string, ModelLite>()
+        ;[...owned, ...contributed, ...editable].forEach((model) => byId.set(model.id, model))
+        return { results: Array.from(byId.values()) }
+    }, [ownedModelsData?.results, contributedModelsData?.results, editableModelsData?.results])
+
+    const isFetchingModels =
+        isCurrentUserLoading ||
+        isFetchingOwnedModels ||
+        isFetchingContributedModels ||
+        isFetchingEditableModels
+
+    const resolvedDefaultSelection = useMemo((): ModelSelection | null => {
+        if (isFetchingModels) return null
+
+        const models = allModels.results
+
+        if (urlParamModelId) {
+            const urlMatch = models.find((m) => m.id === urlParamModelId)
+            if (urlMatch) return { type: 'existing', modelId: urlMatch.id }
+            if (isUrlModelLoading) return null
+            if (urlModel) return { type: 'existing', modelId: urlModel.id }
+        }
+
+        if (models.length > 0) {
+            return { type: 'existing', modelId: models[models.length - 1].id }
+        }
+
+        if (!urlParamModelId) return { type: 'new' }
+
+        return null
+    }, [
+        isFetchingModels,
+        allModels.results,
+        urlParamModelId,
+        isUrlModelLoading,
+        urlModel,
+    ])
+
+    const [userSelection, setUserSelection] = useState<ModelSelection | null>(null)
+    const activeSelection = userSelection ?? resolvedDefaultSelection
+    const isModelSelectorReady = activeSelection !== null
+    const isCreatingNewModel = activeSelection?.type === 'new'
+    const selectedModelId =
+        activeSelection?.type === 'existing' ? activeSelection.modelId : ''
+
+    const [prototypeName, setPrototypeName] = useState('')
+    const [newModelName, setNewModelName] = useState('')
+    const [newModelApiVersion, setNewModelApiVersion] = useState('v4.1')
+    const [newModelApiDataUrl, setNewModelApiDataUrl] = useState<string | undefined>(undefined)
+    const [newModelTemplateId, setNewModelTemplateId] = useState<string | null>(null)
+    const [uploading, setUploading] = useState(false)
+    const [signalExploration, setSignalExploration] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState('')
+
+    // Keep stable refs so initialization effects don't re-run on parent re-renders.
+    const onModelChangeRef = useRef(onModelChange)
+    useEffect(() => { onModelChangeRef.current = onModelChange })
+    const onTemplatePreviewChangeRef = useRef(onTemplatePreviewChange)
+    useEffect(() => { onTemplatePreviewChangeRef.current = onTemplatePreviewChange })
+    const hasInitialized = useRef(false)
+
+    const { data: vssVersions } = useListVSSVersions()
+    const { data: templatesData } = useQuery({
+        queryKey: ['model-templates'],
+        queryFn: () => listModelTemplates({ limit: 100, page: 1 }),
+        enabled: isCreatingNewModel,
+    })
+
+    const defaultTemplate = useMemo(
+        () => templatesData?.results?.find((t) => t.is_default),
+        [templatesData],
+    )
+
+    // Auto-select default template when templates load
+    useEffect(() => {
+        if (defaultTemplate && newModelTemplateId === null) {
+            setNewModelTemplateId(defaultTemplate.id)
+        }
+    }, [defaultTemplate]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Preview the selected (or default) template layout while creating a new model.
+    useEffect(() => {
+        if (!isCreatingNewModel) {
+            onTemplatePreviewChangeRef.current?.(null)
+            return
+        }
+        const selected =
+            templatesData?.results?.find((t) => t.id === newModelTemplateId) ??
+            defaultTemplate ??
+            null
+        onTemplatePreviewChangeRef.current?.(selected?.config ?? null)
+    }, [isCreatingNewModel, newModelTemplateId, templatesData, defaultTemplate])
+
+    const { data: fetchedPrototypes } = useListModelPrototypes(
+        isCreatingNewModel ? '' : selectedModelId,
+    )
+
+    // Sync URL when defaulting to last model or create-new (skip when URL already has model_id).
+    useEffect(() => {
+        if (hasInitialized.current || !resolvedDefaultSelection) return
+
+        if (!urlParamModelId) {
+            if (resolvedDefaultSelection.type === 'new') {
+                onModelChangeRef.current?.(null)
+            } else {
+                onModelChangeRef.current?.(resolvedDefaultSelection.modelId)
+                onTemplatePreviewChangeRef.current?.(null)
+            }
+        }
+        hasInitialized.current = true
+    }, [resolvedDefaultSelection, urlParamModelId])
+
+    const existingPrototypeNames = useMemo(
+        () => (!isCreatingNewModel && selectedModelId ? fetchedPrototypes?.map((p: Prototype) => p.name) ?? [] : []),
+        [fetchedPrototypes, isCreatingNewModel, selectedModelId],
+    )
+
+    const { isDuplicate: isDuplicatePrototypeName, suggestedName: suggestedPrototypeName } =
+        useDuplicateNameCheck(prototypeName, existingPrototypeNames)
+
+    const ownedModelNames = useMemo(
+        () => ownedModelsData?.results?.map((m) => m.name) ?? [],
+        [ownedModelsData],
+    )
+
+    const [debouncedModelName, setDebouncedModelName] = useState('')
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedModelName(newModelName), 300)
+        return () => clearTimeout(timer)
+    }, [newModelName])
+
+    const { isDuplicate: isDuplicateModelName, suggestedName: suggestedModelName } =
+        useDuplicateNameCheck(debouncedModelName, ownedModelNames)
+
+    const disabled =
+        loading ||
+        uploading ||
+        isLoadingTemplates ||
+        (templateOptions.length > 0 && !selectedTemplateId) ||
+        !prototypeName.trim() ||
+        (isCreatingNewModel ? !newModelName.trim() || isDuplicateModelName : !selectedModelId) ||
+        isDuplicatePrototypeName
+
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        setLoading(true)
+        setError('')
+
+        try {
+            let modelId: string
+
+            if (isCreatingNewModel) {
+                if (!newModelName.trim()) throw new Error('Please enter a model name')
+                const selectedModelTemplate = templatesData?.results?.find(
+                    (t) => t.id === newModelTemplateId,
+                )
+                const newModelBody: any = {
+                    main_api: 'Vehicle',
+                    name: newModelName.trim(),
+                    api_version: newModelApiVersion,
+                    model_template_id: newModelTemplateId || null,
+                }
+                if (selectedModelTemplate) {
+                    newModelBody.visibility = visibilityFromModelTemplate(selectedModelTemplate)
+                }
+                if (newModelApiDataUrl) newModelBody.api_data_url = newModelApiDataUrl
+                modelId = await createModelService(newModelBody)
+            } else {
+                if (!selectedModelId) throw new Error('Please select a model')
+                modelId = selectedModelId
+            }
+
+            const selectedTemplate = templateOptions.find((t) => t.id === selectedTemplateId)
+
+            const body = {
+                model_id: modelId,
+                name: prototypeName.trim(),
+                language: selectedTemplate?.language ?? 'python',
+                state: 'development',
+                apis: { VSC: [], VSS: [] },
+                code: code ?? selectedTemplate?.code ?? '',
+                complexity_level: 3,
+                customer_journey: selectedTemplate?.customer_journey?.trim()
+                    ? selectedTemplate.customer_journey
+                    : default_journey,
+                description: { problem: '', says_who: '', solution: '', status: '' },
+                image_file: '/imgs/default_prototype_cover.jpg',
+                skeleton: '{}',
+                tags: [],
+                widget_config: widget_config
+                    ?? selectedTemplate?.widget_config
+                    ?? getDefaultDashboardCfg(selectedTemplate?.language ?? 'python')
+                    ?? '[]',
+                autorun: true,
+                extend: { signal_exploration: signalExploration },
+            }
+
+            const response = await createPrototypeService(body)
+
+            await addLog({
+                name: `New prototype '${prototypeName}'`,
+                description: `Prototype '${prototypeName}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
+                type: 'new-prototype',
+                create_by: currentUser?.id ?? '',
+                ref_id: response.id,
+                ref_type: 'prototype',
+                parent_id: modelId,
+            })
+
+            toast({
+                description: `Prototype "${prototypeName}" created successfully`,
+                duration: 3000,
+            })
+
+            await invalidatePrototypeListQueries(queryClient)
+
+            if (onSuccess) {
+                onSuccess(modelId, response.id, prototypeName.trim())
+            } else {
+                navigate(`/model/${modelId}/library/prototype/${response.id}`)
+            }
+        } catch (err) {
+            if (isAxiosError(err)) {
+                setError(err.response?.data?.message || 'Something went wrong')
+            } else if (err instanceof Error) {
+                setError(err.message)
+            } else {
+                setError('Something went wrong')
+            }
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const modelList = useMemo(() => {
+        const models = allModels.results
+        if (urlModel && !models.some((m) => m.id === urlModel.id)) {
+            return [
+                ...models,
+                {
+                    id: urlModel.id,
+                    name: urlModel.name,
+                    visibility: urlModel.visibility,
+                    model_home_image_file: urlModel.model_home_image_file || '',
+                    created_by: urlModel.created_by?.id || '',
+                    tags: urlModel.tags,
+                },
+            ]
+        }
+        return models
+    }, [allModels.results, urlModel])
+
+    return (
+        <form
+            onSubmit={handleSubmit}
+            className="flex flex-col"
+        >
+            {/* Model selector */}
+            {!isModelSelectorReady ? (
+                <div className="mt-4 flex flex-col gap-1.5">
+                    <Label>Model</Label>
+                    <div className="flex h-10 border px-2 rounded-md shadow-sm items-center">
+                        <TbLoader className="size-4 animate-spin mr-2" /> Loading models...
+                    </div>
+                </div>
+            ) : (
+                <div className="mt-4 flex flex-col gap-1.5">
+                    <Label>Model</Label>
+                    <Select
+                        value={isCreatingNewModel ? 'new' : selectedModelId}
+                        onValueChange={(value) => {
+                            setError('')
+                            if (value === 'new') {
+                                setUserSelection({ type: 'new' })
+                                onModelChange?.(null)
+                                // Template preview is applied by the create-mode effect once templates load.
+                            } else {
+                                setUserSelection({ type: 'existing', modelId: value })
+                                onModelChange?.(value)
+                                onTemplatePreviewChange?.(null)
+                            }
+                        }}
+                    >
+                        <SelectTrigger className="w-full">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="w-[var(--radix-select-trigger-width)]">
+                            <SelectItem value="new">+ Create New Model</SelectItem>
+                            {modelList.map((model: ModelLite) => (
+                                <SelectItem key={model.id} value={model.id}>
+                                    {model.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+
+            {isCreatingNewModel && (
+                <div className="mt-4 flex flex-col gap-3 border rounded-lg p-3">
+                    {/* Model Name */}
+                    <div className="flex flex-col gap-1.5">
+                        <Label>Model Name *</Label>
+                        <Input
+                            name="newModelName"
+                            value={newModelName}
+                            onChange={(e) => {
+                            setNewModelName(e.target.value)
+                            setError('')
+                            }}
+                            placeholder="Model name"
+                        />
+                        {isDuplicateModelName && (
+                            <DaDuplicateNameHint
+                                message="A model with this name already exists"
+                                suggestedName={suggestedModelName}
+                                onApplySuggestion={(name) => {
+                                setNewModelName(name)
+                                setError('')
+                                }}
+                            />
+                        )}
+                    </div>
+
+                    {/* Signal */}
+                    <div className="flex flex-col gap-1.5">
+                        <Label>Signal *</Label>
+                        <div className="border rounded-lg p-2">
+                            <div className="flex items-stretch gap-2">
+                                {!newModelApiDataUrl && (
+                                    <>
+                                        <div className="flex flex-col gap-1 flex-1">
+                                            <p className="text-xs text-muted-foreground">VSS version</p>
+                                            <Select
+                                                value={newModelApiVersion}
+                                                onValueChange={setNewModelApiVersion}
+                                            >
+                                                <SelectTrigger className="w-full h-9">
+                                                    <SelectValue placeholder="Select VSS version" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {vssVersions && Array.isArray(vssVersions) ? (
+                                                        vssVersions.map((v: any) => (
+                                                            <SelectItem key={v.name} value={v.name}>
+                                                                COVESA VSS {v.name}
+                                                            </SelectItem>
+                                                        ))
+                                                    ) : (
+                                                        <>
+                                                            <SelectItem value="v5.0">COVESA VSS v5.0</SelectItem>
+                                                            <SelectItem value="v4.1">COVESA VSS v4.1</SelectItem>
+                                                            <SelectItem value="v4.0">COVESA VSS v4.0</SelectItem>
+                                                            <SelectItem value="v3.1">COVESA VSS v3.1</SelectItem>
+                                                        </>
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <span className="text-xs text-muted-foreground self-center shrink-0">or</span>
+                                    </>
+                                )}
+                                <div className="flex flex-col gap-1 flex-1">
+                                    <p className="text-xs text-muted-foreground">Upload file</p>
+                                    <DaFileUploadButton
+                                        onStartUpload={() => setUploading(true)}
+                                        onFileUpload={(url) => {
+                                            setNewModelApiDataUrl(url)
+                                            setUploading(false)
+                                        }}
+                                        label="Upload"
+                                        className="w-full"
+                                        accept=".json"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Template */}
+                    <div className="flex flex-col gap-1.5">
+                        <Label>
+                            {defaultTemplate ? 'Template' : 'Start from Template (Optional)'}
+                        </Label>
+                        <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                            {!defaultTemplate && (
+                                <div
+                                    onClick={() => setNewModelTemplateId(null)}
+                                    className={`flex items-center gap-2 p-2 border rounded-lg cursor-pointer transition-colors ${newModelTemplateId === null
+                                        ? 'border-primary bg-primary/5'
+                                        : 'border-input hover:border-primary/50'
+                                        }`}
+                                >
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-medium">Start from scratch</p>
+                                    </div>
+                                    <input
+                                        type="radio"
+                                        readOnly
+                                        checked={newModelTemplateId === null}
+                                        className="w-3.5 h-3.5 text-primary"
+                                    />
+                                </div>
+                            )}
+                            {templatesData?.results?.map((template) => (
+                                <div
+                                    key={template.id}
+                                    onClick={() => setNewModelTemplateId(template.id)}
+                                    className={`flex items-center gap-2 p-2 border rounded-lg cursor-pointer transition-colors ${newModelTemplateId === template.id
+                                        ? 'border-primary bg-primary/5'
+                                        : 'border-input hover:border-primary/50'
+                                        }`}
+                                >
+                                    <div className="w-8 h-8 rounded border border-input bg-background flex items-center justify-center shrink-0 overflow-hidden">
+                                        <img
+                                            src={template.image || '/imgs/plugin.png'}
+                                            alt={template.name}
+                                            className="w-full h-full object-contain p-0.5"
+                                        />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-medium truncate">{template.name}</p>
+                                    </div>
+                                    <input
+                                        type="radio"
+                                        readOnly
+                                        checked={newModelTemplateId === template.id}
+                                        className="w-3.5 h-3.5 text-primary shrink-0"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="mt-4 flex flex-col gap-1.5">
+                <Label>Prototype Name *</Label>
+                <Input
+                    name="prototypeName"
+                    value={prototypeName}
+                    onChange={(e) => {
+                        setPrototypeName(e.target.value)
+                        setError('')
+                    }}
+                    placeholder="Prototype Name"
+                    data-id="prototype-name-input"
+                    autoFocus
+                />
+            </div>
+            {isDuplicatePrototypeName && (
+                <DaDuplicateNameHint
+                    message="A prototype with this name already exists"
+                    suggestedName={suggestedPrototypeName}
+                    onApplySuggestion={(name) => {
+                        setPrototypeName(name)
+                        setError('')
+                    }}
+                />
+            )}
+
+            {(isLoadingTemplates || templateOptions.length > 0) &&
+                (isLoadingTemplates ? (
+                    <div className="mt-4 flex flex-col gap-1.5">
+                        <Label>Prototype Template *</Label>
+                        <div className="flex h-10 border px-2 rounded-md shadow-sm items-center">
+                            <TbLoader className="size-4 animate-spin mr-2" /> Loading
+                            templates...
+                        </div>
+                    </div>
+                ) : (
+                    <div className="mt-4 flex flex-col gap-1.5">
+                        <Label>Prototype Template *</Label>
+                        <Select
+                            value={selectedTemplateId}
+                            onValueChange={setSelectedTemplateId}
+                        >
+                            <SelectTrigger
+                                className="w-full"
+                                data-id="project-template-select"
+                            >
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="w-[var(--radix-select-trigger-width)]">
+                                {templateOptions.map((t) => (
+                                    <SelectItem key={t.id} value={t.id}>
+                                        {t.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                ))}
+
+            <div className="mt-4 select-none">
+                <DaCheckbox
+                    checked={signalExploration}
+                    onChange={() => setSignalExploration((prev) => !prev)}
+                    label="Enable Signal Exploration"
+                />
+                <DaText variant="small" className="text-gray-500 ml-6 text-sm">
+                    Generate custom signals based on your requirements
+                </DaText>
+            </div>
+
+
+            {error && !isDuplicatePrototypeName && (
+                <DaText variant="small" className="mt-4 text-red-500">
+                    {error}
+                </DaText>
+            )}
+
+            <Button
+                disabled={disabled}
+                type="submit"
+                className="mt-8 w-full"
+            >
+                {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
+                {buttonText ?? 'Confirm'}
+            </Button>
+
+
+        </form>
+    )
+}
+
+export default FormNewPrototype

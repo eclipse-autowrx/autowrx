@@ -25,21 +25,31 @@ import {
   TbMenu2,
   TbPalette,
   TbApps,
+  TbFileCode,
 } from 'react-icons/tb'
 import usePermissionHook from '@/hooks/usePermissionHook.ts'
 import { PERMISSIONS } from '@/const/permission.ts'
-// import DaGlobalSearch from '../molecules/DaGlobalSearch'
+import DaGlobalSearch from '../molecules/DaGlobalSearch'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 // import useCurrentModel from '@/hooks/useCurrentModel'
 import { IoIosHelpBuoy } from 'react-icons/io'
 import config from '@/configs/config'
 import LearningIntegration from './LearningIntegration'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 // import useLastAccessedModel from '@/hooks/useLastAccessedModel'
 import { useSiteConfig } from '@/utils/siteConfig'
 import { Button } from '../atoms/button'
+import { Wrench } from 'lucide-react'
+import DOMPurify from 'dompurify'
+import useAuthStore from '@/stores/authStore'
+import {
+  partitionNavBarActions,
+  getNavBarActionOpenTarget,
+  getNavBarActionUrl,
+  type NavBarAction,
+} from '@/components/molecules/NavBarActionsEditor'
 
 const SimpleSwitch = ({
   checked,
@@ -50,30 +60,56 @@ const SimpleSwitch = ({
 }) => (
   <button
     type="button"
-    className={`${
-      checked ? 'bg-blue-600' : 'bg-gray-200'
-    } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+    className={`${checked ? 'bg-blue-600' : 'bg-gray-200'
+      } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
     role="switch"
     aria-checked={checked}
     onClick={() => onChange(!checked)}
   >
     <span
       aria-hidden="true"
-      className={`${
-        checked ? 'translate-x-5' : 'translate-x-0'
-      } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+      className={`${checked ? 'translate-x-5' : 'translate-x-0'
+        } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
     />
   </button>
 )
 
-const NavigationBar = ({}) => {
-  const { data: user } = useSelfProfileQuery()
+const NavigationBar = ({ }) => {
+  const { data: user, isLoading, isFetching } = useSelfProfileQuery()
+  const authBootstrapped = useAuthStore((state) => state.authBootstrapped)
+  const isResolvingAuth = !authBootstrapped || (!user && (isLoading || isFetching))
   // const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
   const [learningMode, setIsLearningMode] = useState(false)
   const siteTitle = useSiteConfig('SITE_TITLE', 'AutoWRX')
   const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
   const enableLearningMode = useSiteConfig('ENABLE_LEARNING_MODE', false)
+  const navBarActions = useSiteConfig('NAV_BAR_ACTIONS', [])
+  const { left: leftNavBarActions, right: rightNavBarActions } = useMemo(
+    () => partitionNavBarActions(Array.isArray(navBarActions) ? navBarActions : []),
+    [navBarActions],
+  )
+  const allowNonAdminAddonConfig = useSiteConfig(
+    'ALLOW_NON_ADMIN_ADDON_CONFIG',
+    true,
+  )
+  const toolsMenuItems = useMemo(() => {
+    if (isAuthorized) {
+      return [
+        { to: '/manage-users', icon: TbUsers, label: 'Manage Users' },
+        { to: '/manage-features', icon: TbStack2, label: 'Manage Features' },
+        { to: '/admin/site-config', icon: TbSettings, label: 'Site Config' },
+        { to: '/admin/plugins', icon: TbApps, label: 'Plugins' },
+        { to: '/admin/templates', icon: TbPalette, label: 'Model Templates' },
+        { to: '/admin/dashboard-templates', icon: TbBuildingWarehouse, label: 'Dashboard Templates' },
+        { to: '/admin/project-templates', icon: TbFileCode, label: 'Prototype Templates' },
+      ]
+    }
+    if (allowNonAdminAddonConfig) {
+      return [{ to: '/me/plugins', icon: TbApps, label: 'Plugins' }]
+    }
+    return []
+  }, [isAuthorized, allowNonAdminAddonConfig])
 
   useEffect(() => {
     if (siteTitle) {
@@ -83,10 +119,73 @@ const NavigationBar = ({}) => {
 
   // const { lastAccessedModel } = useLastAccessedModel()
 
+  const renderNavBarAction = (action: NavBarAction, index: number) => {
+    const actionType = action.type || 'link'
+
+    if (actionType === 'search') {
+      return (
+        <DaGlobalSearch
+          key={index}
+          trigger={
+            <button
+              type="button"
+              className="da-primary-nav-action h-9 w-9 flex items-center justify-center cursor-pointer rounded-md transition-colors hover:bg-muted dark:hover:bg-muted/50"
+              title={action.placeholder || action.label || 'Search'}
+            >
+              {action.icon ? (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(action.icon, {
+                      USE_PROFILES: { svg: true, svgFilters: true }
+                    })
+                  }}
+                  className="size-5 flex items-center justify-center"
+                />
+              ) : (
+                <TbZoom className="size-5" />
+              )}
+            </button>
+          }
+        />
+      )
+    }
+
+    const openTarget = getNavBarActionOpenTarget(action)
+    const href = getNavBarActionUrl(action)
+
+    return (
+      <a
+        key={index}
+        href={href}
+        target={openTarget}
+        {...(openTarget === '_blank' ? { rel: 'noopener noreferrer' } : {})}
+        className="da-primary-nav-action flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium transition-colors hover:bg-muted dark:hover:bg-muted/50"
+        title={action.label}
+      >
+        {action.icon && (
+          <div
+            dangerouslySetInnerHTML={{
+              __html: DOMPurify.sanitize(action.icon, {
+                USE_PROFILES: { svg: true, svgFilters: true }
+              })
+            }}
+            className="w-6 h-6 flex items-center justify-center"
+          />
+        )}
+        {action.label && <span className="ml-1">{action.label}</span>}
+      </a>
+    )
+  }
+
   return (
-    <header className="flex items-center w-full py-1 px-3 border-2">
+    <header className="da-primary-nav-bar flex items-center w-full py-1.5 px-4 bg-background border-2">
       <Link to="/" className="shrink-0">
-        <img src={logoUrl} alt="Logo" className="h-7" />
+        <img
+          src={logoUrl}
+          alt="Logo"
+          className="da-primary-nav-logo"
+          style={{ height: '28px' }}
+        />
       </Link>
 
       {config && config.enableBranding && (
@@ -102,6 +201,12 @@ const NavigationBar = ({}) => {
         </div>
       )}
 
+      {leftNavBarActions.length > 0 && (
+        <div className="ml-4 flex items-center gap-2 shrink-0">
+          {leftNavBarActions.map(renderNavBarAction)}
+        </div>
+      )}
+
       <div className="flex-1 min-w-0"></div>
 
       {enableLearningMode && (
@@ -110,13 +215,19 @@ const NavigationBar = ({}) => {
           <SimpleSwitch
             checked={learningMode}
             onChange={(v) => {
-              if (v && !user) {
+              if (v && (!user || isResolvingAuth)) {
                 alert('Please Sign in to use learning mode')
                 return
               }
               setIsLearningMode(v)
             }}
           />
+        </div>
+      )}
+
+      {rightNavBarActions.length > 0 && (
+        <div className="mr-2 flex items-center gap-2">
+          {rightNavBarActions.map(renderNavBarAction)}
         </div>
       )}
 
@@ -129,68 +240,33 @@ const NavigationBar = ({}) => {
         </Link>
       )} */}
 
-      {user && (
+      {!isResolvingAuth && user && (
         <div className="flex items-center shrink-0">
-          {/* <DaGlobalSearch>
-            <DaButton
-              variant="outline-nocolor"
-              className="w-[140px] flex items-center justify-start! border-gray-300! shadow-lg"
-            >
-              <TbZoom className="size-5 mr-2" />
-              Search
-            </DaButton>
-          </DaGlobalSearch>{' '} */}
-          {isAuthorized && (
+          {toolsMenuItems.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="size-10">
-                  <TbMenu2 className="size-5" />
+                <Button
+                  variant="ghost"
+                  className="da-primary-nav-action"
+                >
+                  <Wrench />
+                  {isAuthorized ? 'Admin Tools' : 'Tools'}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-42 text-sm font-medium"
+                className="w-52 text-sm font-medium"
               >
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/manage-users"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <TbUsers className="text-base" /> Manage Users
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/manage-features"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <TbStack2 className="text-base" /> Manage Features
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/admin/site-config"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <TbSettings className="text-base" /> Site Config
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/admin/plugins"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <TbApps className="text-base" /> Plugins
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/admin/templates"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <TbPalette className="text-base" /> Templates
-                  </Link>
-                </DropdownMenuItem>
+                {toolsMenuItems.map((item) => (
+                  <DropdownMenuItem key={item.to} asChild>
+                    <Link
+                      to={item.to}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <item.icon className="text-base" /> {item.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -220,7 +296,7 @@ const NavigationBar = ({}) => {
       )}
 
       {learningMode && <LearningIntegration requestClose={() => setIsLearningMode(false)} />}
-      {!user && <div className="shrink-0"><DaNavUser /></div>}
+      {(isResolvingAuth || !user) && <div className="shrink-0"><DaNavUser /></div>}
     </header>
   )
 }

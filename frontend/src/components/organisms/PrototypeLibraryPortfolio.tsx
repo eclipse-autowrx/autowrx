@@ -19,7 +19,7 @@ import {
 } from 'chart.js'
 import ChartDataLabels from 'chartjs-plugin-datalabels'
 import useCurrentModel from '@/hooks/useCurrentModel'
-import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
 import { listPrototypeFeedback } from '@/services/feedback.service'
 import { Spinner } from '../atoms/spinner'
 import { getCSSVariable } from '@/lib/utils'
@@ -130,10 +130,9 @@ const PrototypeLibraryPortfolio = () => {
             retItem.x = prototype.portfolio?.needs_addressed ?? 0
             retItem.y = prototype.portfolio?.relevance ?? 0
             retItem.r =
-              ((prototype.portfolio?.needs_addressed ??
-                0 + prototype.portfolio?.relevance ??
-                0 + prototype.portfolio?.easy_to_use ??
-                0) /
+              (((prototype.portfolio?.needs_addressed ?? 0) +
+                (prototype.portfolio?.relevance ?? 0) +
+                (prototype.portfolio?.easy_to_use ?? 0)) /
                 3) *
               5
           }
@@ -220,15 +219,15 @@ const PrototypeLibraryPortfolio = () => {
         },
         backgroundColor: (context) =>
           context.dataIndex === hoveredIndex
-            ? 'hsl(var(--primary))'
-            : 'rgba(255, 255, 255, 0.5)',
-        borderColor: 'hsl(var(--border))',
+            ? `hsl(${getCSSVariable('--primary')})`
+            : '#f3f4f6',
+        borderColor: '#d1d5db',
         borderRadius: 4,
         borderWidth: 1,
         color: (context) =>
           context.dataIndex === hoveredIndex
-            ? '#FFFFFF'
-            : 'hsl(var(--muted-foreground))',
+            ? '#ffffff'
+            : '#374151',
         font: {
           size: 12,
           weight: 'normal',

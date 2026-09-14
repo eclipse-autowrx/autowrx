@@ -5,7 +5,7 @@
 | GET | /vss | None | List available VSS versions. |
 | GET | /vss/:name | None | Get VSS by version name. |
 | POST | / | Required | Create API definition. |
-| GET | /:id | Optional (strictAuth=false) | Get API definition by ID. |
+| GET | /:id | Optional (when PUBLIC_VIEWING enabled) | Get API definition by ID. |
 | PATCH | /:id | Required | Update API definition. |
 | DELETE | /:id | Required | Delete API definition. |
 | GET | /model_id/:modelId | None | Get APIs by model ID. |

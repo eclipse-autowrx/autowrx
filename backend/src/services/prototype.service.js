@@ -16,6 +16,53 @@ const config = require('../config/config');
 const logger = require('../config/logger');
 const modelService = require('./model.service');
 const _ = require('lodash');
+const { publiclyVisibleVisibilities } = require('../config/enums');
+
+/**
+ * Strip trailing number suffix from a prototype name.
+ * e.g. "test_2" → "test", "test" → "test"
+ * @param {string} name
+ * @returns {string}
+ */
+const stripTrailingNumber = (name) => {
+  return name.replace(/_\d+$/, '');
+};
+
+/**
+ * Generate up to 1 available prototype name suggestion for a model.  
+ * @param {string} modelId
+ * @param {string} baseName
+ * @returns {Promise<string[]>}
+ */
+const getSuggestedNames = async (modelId, baseName) => {
+  // Try clean sequential names first (user-friendly)
+  for (let counter = 1; counter <= 50; counter++) {
+    const candidateName = `${baseName}_${counter}`;
+    const exists = await Prototype.existsPrototypeInModel(modelId, candidateName);
+    if (!exists) {
+      return [candidateName];
+    }
+  }
+  // Fallback: timestamp (guaranteed unique, but unlikely to ever reach here)
+  return [`${baseName}_${Date.now()}`];
+};
+
+/**
+ * Handle duplicate prototype name error with suggestions.
+ * @param {string} modelId
+ * @param {string} prototypeName
+ * @param {string} userId
+ * @throws {ApiError}
+ */
+const throwDuplicateNameError = async (modelId, prototypeName, userId) => {
+  const model = await modelService.getModelById(modelId, userId);
+  const baseName = stripTrailingNumber(prototypeName);
+  const suggestions = await getSuggestedNames(modelId, baseName);
+  throw new ApiError(
+    httpStatus.BAD_REQUEST,
+    `The prototype name '${prototypeName}' is already in use for model '${model.name}'. Please choose another name like: ${suggestions.join(', ')}.`
+  );
+};
 
 /**
  *
@@ -25,10 +72,7 @@ const _ = require('lodash');
  */
 const createPrototype = async (userId, prototypeBody) => {
   if (await Prototype.existsPrototypeInModel(prototypeBody.model_id, prototypeBody.name)) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      `Duplicate prototype name '${prototypeBody.name}' in model ${prototypeBody.model_id}`
-    );
+    await throwDuplicateNameError(prototypeBody.model_id, prototypeBody.name, userId);
   }
 
   if (prototypeBody.extend && typeof prototypeBody.extend === 'string') {
@@ -65,10 +109,7 @@ const createPrototype = async (userId, prototypeBody) => {
 const bulkCreatePrototypes = async (userId, prototypes) => {
   for (const prototype of prototypes) {
     if (await Prototype.existsPrototypeInModel(prototype.model_id, prototype.name)) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        `Duplicate prototype name '${prototype.name}' in model ${prototype.model_id}`
-      );
+      await throwDuplicateNameError(prototype.model_id, prototype.name, userId);
     }
   }
 
@@ -92,12 +133,31 @@ const bulkCreatePrototypes = async (userId, prototypes) => {
  * @returns {Promise<QueryResult>}
  */
 const queryPrototypes = async (filter, options) => {
+  const defaultSort = 'editors_choice:desc,createdAt:asc';
+  const requestedSort = options?.sortBy;
+  const requestedParts = requestedSort
+    ? requestedSort
+        .split(',')
+        .map((part) => part.trim())
+        .filter(Boolean)
+    : [];
+  const nameSort = requestedParts.find((part) => part.startsWith('name:'));
+
+  const resolvedSort = nameSort
+    ? [
+        nameSort,
+        ...defaultSort.split(','),
+        ...requestedParts.filter((part) => part !== nameSort),
+      ].join(',')
+    : requestedSort
+      ? [defaultSort, requestedSort].join(',')
+      : defaultSort;
+
   const prototypes = await Prototype.paginate(filter, {
     ...options,
-    // Default sort by editors_choice and createdAt
-    sortBy: options?.sortBy
-      ? ['editors_choice:desc,createdAt:asc', options.sortBy].join(',')
-      : 'editors_choice:desc,createdAt:asc',
+    // Default sort by editors_choice and createdAt, except name sort is promoted
+    // to primary to support correct alphabetical paging.
+    sortBy: resolvedSort,
   });
   return prototypes;
 };
@@ -145,10 +205,7 @@ const updatePrototypeById = async (id, updateBody, actionOwner) => {
   }
 
   if (updateBody.name && (await Prototype.existsPrototypeInModel(prototype.model_id, updateBody.name, id))) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      `Duplicate prototype name '${updateBody.name}' in model ${prototype.model_id}`
-    );
+    await throwDuplicateNameError(prototype.model_id, updateBody.name, actionOwner);
   }
 
   if (updateBody.extend && typeof updateBody.extend === 'string') {
@@ -228,7 +285,7 @@ const listRecentPrototypes = async (userId) => {
   });
 
   const prototypes = await Prototype.find({ _id: { $in: Array.from(prototypeMap.keys()) } })
-    .select('name model_id description image_file executed_turns')
+    .select('name model_id description image_file executed_turns code')
     .populate('model', 'name visibility')
     .populate('created_by', 'name image_file');
 
@@ -265,7 +322,7 @@ const executeCode = async (id, _) => {
 const listPopularPrototypes = async () => {
   const publicModelIds = (
     await modelService.getModels({
-      visibility: 'public',
+      visibility: { $in: publiclyVisibleVisibilities },
     })
   ).map((model) => String(model._id));
   return Prototype.find({
@@ -274,7 +331,7 @@ const listPopularPrototypes = async () => {
   })
     .sort({ executed_turns: -1 })
     .limit(8)
-    .select('name model_id description image_file executed_turns')
+    .select('name model_id description image_file executed_turns code')
     .populate('model', 'name visibility')
     .populate('created_by', 'name image_file');
 };

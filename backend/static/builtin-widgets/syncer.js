@@ -210,6 +210,11 @@ window.addEventListener("message", function (e) {
           appendLog(payload.log)
         }
         break;
+      case "app-running-state":
+        if (onAppRunningStateChanged != undefined) {
+          onAppRunningStateChanged(!!payload.isRunning)
+        }
+        break;
       default:
         break;
     }

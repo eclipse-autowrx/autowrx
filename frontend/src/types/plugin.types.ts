@@ -7,7 +7,14 @@
 // SPDX-License-Identifier: MIT
 
 import type { Model, Prototype } from './model.type'
-import type { VehicleAPI, CVI, ExtendedApi, ExtendedApiCreate, ExtendedApiRet } from './api.type'
+import type {
+  VehicleAPI,
+  CVI,
+  ExtendedApi,
+  ExtendedApiCreate,
+  ExtendedApiRet,
+} from './api.type'
+import type { Asset, QueryAssetsParams } from './asset.type'
 import type { List } from './common.type'
 
 /**
@@ -119,6 +126,27 @@ export interface PluginAPI {
   getRuntimeApiValues?: () => Record<string, any>
 
   // ========================================
+  // Navigation
+  // ========================================
+
+  /**
+   * Navigate to a specific prototype tab
+   * @param tab Built-in tab key ('view', 'journey', 'code', 'dashboard') or 'plug' for custom plugin tabs
+   * @param pluginSlug Required when tab is 'plug' — the plugin slug to activate
+   *
+   * @example
+   * // Navigate to the code tab
+   * api.setActiveTab?.('code')
+   *
+   * // Navigate to a custom plugin tab
+   * api.setActiveTab?.('plug', 'my-plugin-slug')
+   *
+   * // Navigate to dashboard
+   * api.setActiveTab?.('dashboard')
+   */
+  setActiveTab?: (tab: string, pluginSlug?: string) => void
+
+  // ========================================
   // Wishlist API Operations (Custom/Extended APIs)
   // ========================================
 
@@ -152,7 +180,10 @@ export interface PluginAPI {
    *   datatype: 'double'
    * })
    */
-  updateWishlistApi?: (id: string, data: Partial<ExtendedApiCreate>) => Promise<Partial<ExtendedApiCreate>>
+  updateWishlistApi?: (
+    id: string,
+    data: Partial<ExtendedApiCreate>,
+  ) => Promise<Partial<ExtendedApiCreate>>
 
   /**
    * Delete a wishlist API
@@ -184,6 +215,130 @@ export interface PluginAPI {
    * const wishlistApis = await api.listWishlistApis()
    */
   listWishlistApis?: (model_id?: string) => Promise<List<ExtendedApi>>
+
+  // ========================================
+  // Asset Operations
+  // ========================================
+
+  /**
+   * List assets owned by or shared with the current user
+   * @param params Optional filter parameters (e.g. type: 'HARDWARE_KIT,CLOUD_RUNTIME')
+   * @returns Promise resolving to an array of assets
+   *
+   * @example
+   * const assets = await api.listAssets({ type: 'HARDWARE_KIT,CLOUD_RUNTIME' })
+   */
+  listAssets?: (params?: Pick<QueryAssetsParams, 'type' | 'name'>) => Promise<Asset[]>
+
+  /**
+   * Create a new asset
+   * @param payload Asset creation data
+   * @returns Promise resolving to the created asset
+   *
+   * @example
+   * const asset = await api.createAsset({ name: 'My Kit', type: 'HARDWARE_KIT', data: '' })
+   */
+  createAsset?: (payload: { name: string; type: string; data?: string }) => Promise<Asset>
+
+  /**
+   * Update an existing asset by ID
+   * @param assetId The asset ID to update
+   * @param payload Partial asset data to update
+   * @returns Promise resolving to the updated asset
+   *
+   * @example
+   * await api.updateAsset('asset-id-123', { name: 'New Name', type: 'HARDWARE_KIT' })
+   */
+  updateAsset?: (assetId: string, payload: { name?: string; type?: string; data?: string }) => Promise<Asset>
+
+  /**
+   * Delete an asset by ID
+   * @param assetId The asset ID to delete
+   * @returns Promise resolving when deleted
+   *
+   * @example
+   * await api.deleteAsset('asset-id-123')
+   */
+  deleteAsset?: (assetId: string) => Promise<void>
+
+  /**
+   * Search for a user by email address
+   * @param email The email to search for
+   * @returns Promise resolving to the found user, or null if not found
+   */
+  searchUserByEmail?: (email: string) => Promise<{ id: string; name: string; email?: string; image_file?: string } | null>
+
+  /**
+   * Get the list of users who have access to an asset
+   * @param assetId The asset ID
+   * @returns Promise resolving to an array of users with access
+   */
+  getAssetUsers?: (assetId: string) => Promise<Array<{ id: string; name: string; email?: string; image_file?: string; forbid_remove?: boolean }>>
+
+  /**
+   * Share an asset with a user (grants read access)
+   * @param assetId The asset ID
+   * @param userId The user ID to grant access to
+   */
+  shareAsset?: (assetId: string, userId: string) => Promise<void>
+
+  /**
+   * Remove a user's access to an asset
+   * @param assetId The asset ID
+   * @param userId The user ID to revoke access from
+   */
+  removeAssetAccess?: (assetId: string, userId: string) => Promise<void>
+
+  // ========================================
+  // File Operations
+  // ========================================
+
+  /**
+   * Upload a file to the server
+   * @param file The file to upload
+   * @returns Promise resolving to an object containing the uploaded file's URL
+   *
+   * @example
+   * const file = new File(['content'], 'example.txt', { type: 'text/plain' })
+   * const result = await api.uploadFile(file)
+   * console.log(result.url) // URL to access the uploaded file
+   */
+  uploadFile?: (file: File) => Promise<{ url: string }>
+
+  // ========================================
+  // Kit / Runtime Operations
+  // ========================================
+
+  /**
+   * Fetch the signal mapping file from a connected hardware kit
+   * @param kitName The kit asset name (e.g., 'Kit-MyDevice')
+   * @returns Promise resolving to the signal-config.json content as a string
+   */
+  fetchSignalMapping?: (kitName: string) => Promise<string>
+
+  /**
+   * Replace the signal mapping on a connected hardware kit and rebuild the vehicle model
+   * Writes signal-config.json, then sends the current vehicle model's VSS and triggers a rebuild
+   * @param kitName The kit asset name (e.g., 'Kit-MyDevice')
+   * @param fileContent The signal mapping file content as a string
+   * @returns Promise resolving when the operations are dispatched
+   */
+  replaceSignalMapping?: (kitName: string, fileContent: string) => Promise<void>
+
+  /**
+   * Fetch the VSS (vss.json) file from a connected hardware kit
+   * @param kitName The kit asset name (e.g., 'Kit-MyDevice')
+   * @returns Promise resolving to the vss.json content as a string
+   */
+  fetchVss?: (kitName: string) => Promise<string>
+
+  /**
+   * Replace the VSS file on a connected hardware kit and trigger a vehicle model rebuild
+   * @param kitName The kit asset name (e.g., 'Kit-MyDevice')
+   * @param vssContent The vss.json content as a string
+   * @returns Promise resolving when the operations are dispatched
+   */
+  replaceVss?: (kitName: string, vssContent: string) => Promise<void>
 }
 
 /**
@@ -195,6 +350,12 @@ export interface PluginPageProps {
    * Can contain model, prototype, or other contextual data
    */
   data?: any
+
+  /**
+   * Whether the plugin data is editable by the current user
+   * Controlled by WRITE_MODEL permission on the host side
+   */
+  editable?: boolean
 
   /**
    * Plugin configuration settings

@@ -25,7 +25,7 @@ import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { createExtendedApi } from '@/services/extendedApis.service'
 import useModelStore from '@/stores/modelStore'
-import shallow from 'zustand/shallow'
+import { shallow } from 'zustand/shallow'
 
 interface FormCreateWishlistApiProps {
   onClose: () => void

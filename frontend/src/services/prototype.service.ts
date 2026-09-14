@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -9,6 +9,32 @@
 import { List } from '@/types/common.type'
 import { serverAxios, cacheAxios } from './base'
 import { Prototype } from '@/types/model.type'
+
+export const PROTOTYPE_LIST_CARD_FIELDS = [
+  'model_id',
+  'name',
+  'visibility',
+  'image_file',
+  'id',
+  'created_at',
+  'created_by',
+  'tags',
+  'state',
+  'code',
+  'executed_turns',
+].join(',')
+
+const PROTOTYPE_LIST_DEFAULT_FIELDS = [
+  'model_id',
+  'name',
+  'visibility',
+  'image_file',
+  'id',
+  'created_at',
+  'created_by',
+  'tags',
+  'state',
+].join(',')
 
 export const listPopularPrototypes = async (): Promise<Prototype[]> => {
   const response = await serverAxios.get('/prototypes/popular')
@@ -20,35 +46,51 @@ export const listRecentPrototypes = async (): Promise<Prototype[]> => {
   return response.data
 }
 
-export const listAllPrototypes = async (): Promise<List<Prototype>> => {
+export const listPrototypesPaged = async (params: {
+  page: number
+  limit: number
+  sortBy?: string
+  created_by?: string
+  fields?: string
+}): Promise<List<Prototype>> => {
+  const requestParams = {
+    fields: params.fields ?? PROTOTYPE_LIST_DEFAULT_FIELDS,
+    ...params,
+  }
+
+  try {
+    const response = await serverAxios.get<List<Prototype>>('/prototypes', {
+      params: requestParams,
+    })
+    return response.data
+  } catch (error) {
+    console.error(`[listPrototypesPaged] Request failed:`, error)
+    throw error
+  }
+}
+
+export const listAllPrototypesFiltered = async (params?: {
+  created_by?: string
+  fields?: string
+}): Promise<Prototype[]> => {
   let page = 1
-  const limit = 12
-  let allResults: Prototype[] = []
+  const limit = 50
+  const allResults: Prototype[] = []
   let totalPages = 1
-  const addedIds = new Set<string>() // To track added prototype IDs, BE have duplicate data
+  const addedIds = new Set<string>()
 
   do {
     const response = await serverAxios.get<List<Prototype>>('/prototypes', {
       params: {
-        fields: [
-          'model_id',
-          'name',
-          'visibility',
-          'image_file',
-          'id',
-          'created_at',
-          'created_by',
-          'tags',
-          'state',
-        ].join(','),
+        fields: params?.fields ?? PROTOTYPE_LIST_DEFAULT_FIELDS,
+        ...(params?.created_by ? { created_by: params.created_by } : {}),
         page,
         limit,
       },
     })
 
     response.data.results.forEach((prototype) => {
-      if (addedIds.has(prototype.id)) {
-      } else {
+      if (!addedIds.has(prototype.id)) {
         addedIds.add(prototype.id)
         allResults.push(prototype)
       }
@@ -57,6 +99,12 @@ export const listAllPrototypes = async (): Promise<List<Prototype>> => {
     totalPages = response.data.totalPages
     page++
   } while (page <= totalPages)
+
+  return allResults
+}
+
+export const listAllPrototypes = async (): Promise<List<Prototype>> => {
+  const allResults = await listAllPrototypesFiltered()
 
   return {
     results: allResults,
@@ -72,12 +120,59 @@ export const getPrototype = async (prototype_id: string) => {
   return (await serverAxios.get<Prototype>(`/prototypes/${prototype_id}`)).data
 }
 
+/** UI sort labels that can be expressed as API `sortBy`. */
+export const PROTOTYPE_LIBRARY_SORT_BY: Record<string, string> = {
+  Newest: 'createdAt:desc',
+  Oldest: 'createdAt:asc',
+  'Name A-Z': 'name:asc',
+  'Name Z-A': 'name:desc',
+}
+
+export const listModelPrototypesPaged = async (params: {
+  model_id: string
+  page: number
+  limit: number
+  sortBy?: string
+  name?: string
+  fields?: string
+}): Promise<List<Prototype>> => {
+  const response = await serverAxios.get<List<Prototype>>('/prototypes', {
+    params: {
+      fields: params.fields ?? PROTOTYPE_LIST_CARD_FIELDS,
+      model_id: params.model_id,
+      page: params.page,
+      limit: params.limit,
+      ...(params.sortBy ? { sortBy: params.sortBy } : {}),
+      ...(params.name ? { name: params.name } : {}),
+    },
+  })
+  return response.data
+}
+
 export const listModelPrototypes = async (model_id: string) => {
-  return (
-    await serverAxios.get<List<Prototype>>(
-      `/prototypes?model_id=${model_id}&limit=50`,
-    )
-  ).data.results
+  let page = 1
+  const limit = 50
+  const allResults: Prototype[] = []
+  let totalPages = 1
+  const addedIds = new Set<string>()
+
+  do {
+    const response = await serverAxios.get<List<Prototype>>('/prototypes', {
+      params: { model_id, page, limit },
+    })
+
+    response.data.results.forEach((prototype) => {
+      if (!addedIds.has(prototype.id)) {
+        addedIds.add(prototype.id)
+        allResults.push(prototype)
+      }
+    })
+
+    totalPages = response.data.totalPages
+    page++
+  } while (page <= totalPages)
+
+  return allResults
 }
 
 export const createPrototypeService = async (prototype: any) => {

@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -25,7 +25,7 @@ router
       optional: (req) => req.authConfig.PUBLIC_VIEWING,
     }),
     validate(modelValidation.listModels),
-    modelController.listModels
+    modelController.listModels,
   );
 
 router.route('/all').get(
@@ -33,7 +33,15 @@ router.route('/all').get(
     optional: (req) => req.authConfig.PUBLIC_VIEWING,
   }),
   validate(modelValidation.listAllModels),
-  modelController.listAllModels
+  modelController.listAllModels,
+);
+
+router.route('/stats').post(
+  auth({
+    optional: (req) => req.authConfig.PUBLIC_VIEWING,
+  }),
+  validate(modelValidation.listModelStats),
+  modelController.listModelStatsByIds,
 );
 
 router
@@ -43,19 +51,19 @@ router
       optional: (req) => req.authConfig.PUBLIC_VIEWING,
     }),
     validate(modelValidation.getModel),
-    modelController.getModel
+    modelController.getModel,
   )
   .patch(
     auth(),
     checkPermission(PERMISSIONS.WRITE_MODEL),
     validate(modelValidation.updateModel),
-    modelController.updateModel
+    modelController.updateModel,
   )
   .delete(
     auth(),
     checkPermission(PERMISSIONS.WRITE_MODEL),
     validate(modelValidation.deleteModel),
-    modelController.deleteModel
+    modelController.deleteModel,
   );
 
 router
@@ -67,10 +75,12 @@ router.route('/:id/api').get(
     optional: (req) => req.authConfig.PUBLIC_VIEWING,
   }),
   validate(modelValidation.getApiByModelId),
-  modelController.getComputedVSSApi
+  modelController.getComputedVSSApi,
 );
 
-router.route('/:id/api/:apiName').get(auth({ optional: (req) => req.authConfig.PUBLIC_VIEWING }), modelController.getApiDetail);
+router
+  .route('/:id/api/:apiName')
+  .get(auth({ optional: (req) => req.authConfig.PUBLIC_VIEWING }), modelController.getApiDetail);
 
 router
   .route('/:id/permissions')
@@ -78,13 +88,13 @@ router
     auth(),
     checkPermission(PERMISSIONS.WRITE_MODEL),
     validate(modelValidation.addAuthorizedUser),
-    modelController.addAuthorizedUser
+    modelController.addAuthorizedUser,
   )
   .delete(
     auth(),
     checkPermission(PERMISSIONS.WRITE_MODEL),
     validate(modelValidation.deleteAuthorizedUser),
-    modelController.deleteAuthorizedUser
+    modelController.deleteAuthorizedUser,
   );
 
 module.exports = router;

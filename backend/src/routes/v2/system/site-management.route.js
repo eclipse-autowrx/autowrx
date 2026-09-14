@@ -58,10 +58,19 @@ router.post('/bulk-upsert',
   siteConfigController.bulkUpsertSiteConfigs
 );
 
+// Restore configs from deployment snapshot
+router.post('/restore-snapshot',
+  validate(siteConfigValidation.restoreSiteConfigSnapshot),
+  siteConfigController.restoreSiteConfigSnapshot
+);
+
 // Global CSS admin endpoints
 router.get('/global-css', siteConfigController.getGlobalCss);
 router.put('/global-css', siteConfigController.updateGlobalCss);
 router.post('/global-css/restore-default', siteConfigController.restoreDefaultGlobalCss);
+
+// Test email endpoint
+router.post('/email/test', siteConfigController.sendTestEmail);
 
 // Individual config operations by key (MUST come before /:scope/:target_id to avoid route conflict)
 router

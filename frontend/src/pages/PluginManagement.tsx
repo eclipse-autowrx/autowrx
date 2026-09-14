@@ -12,30 +12,65 @@ import PrototypePluginSection from '@/components/organisms/PrototypePluginSectio
 import CustomApiSchemaSection from '@/components/organisms/CustomApiSchemaSection'
 import CustomApiSetSection from '@/components/organisms/CustomApiSetSection'
 import DeployPluginSection from '@/components/organisms/DeployPluginSection'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
+import { useSiteConfig } from '@/utils/siteConfig'
+
+type PluginSection = 'prototype' | 'vehicle-api-schema' | 'vehicle-api' | 'deploy'
 
 const PluginManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
+  const customApiSetsEnabled = !useSiteConfig('DISABLE_CUSTOM_API_SETS', false)
 
   // Get initial section from URL or default to 'prototype'
-  const getSectionFromUrl = (): 'prototype' | 'vehicle-api-schema' | 'vehicle-api' | 'deploy' => {
+  const getSectionFromUrl = (): PluginSection => {
     const section = searchParams.get('section')
     if (section === 'prototype' || section === 'vehicle-api-schema' || section === 'vehicle-api' || section === 'deploy') {
+      // Redirect away from custom API set sections when the feature is disabled
+      if (
+        !customApiSetsEnabled &&
+        (section === 'vehicle-api' || section === 'vehicle-api-schema')
+      ) {
+        return 'prototype'
+      }
       return section
     }
     return 'prototype'
   }
 
-  const [activeTab, setActiveTab] = useState<'prototype' | 'vehicle-api-schema' | 'vehicle-api' | 'deploy'>(
-    getSectionFromUrl(),
-  )
+  const [activeTab, setActiveTab] = useState<PluginSection>(getSectionFromUrl())
+
+  // If custom API sets are disabled while on a related section, fall back to prototype
+  useEffect(() => {
+    if (
+      !customApiSetsEnabled &&
+      (activeTab === 'vehicle-api' || activeTab === 'vehicle-api-schema')
+    ) {
+      setActiveTab('prototype')
+    }
+  }, [customApiSetsEnabled, activeTab])
 
   // Update URL when activeTab changes
   useEffect(() => {
     setSearchParams({ section: activeTab }, { replace: true })
   }, [activeTab, setSearchParams])
 
-  const handleTabChange = (tab: 'prototype' | 'vehicle-api-schema' | 'vehicle-api' | 'deploy') => {
+  const handleTabChange = (tab: PluginSection) => {
     setActiveTab(tab)
+  }
+
+  if (!isAuthorized) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold text-foreground">Access denied</h1>
+          <p className="mt-2 text-base text-muted-foreground">
+            You do not have permission to manage plugins.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -80,28 +115,32 @@ const PluginManagement: React.FC = () => {
                       : 'text-foreground hover:bg-muted'
                   }`}
                 >
-                  Deploy Plugin
+                  Deployment Plugin
                 </button>
-                <button
-                  onClick={() => handleTabChange('vehicle-api-schema')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === 'vehicle-api-schema'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-muted'
-                  }`}
-                >
-                  Vehicle API Schema
-                </button>
-                <button
-                  onClick={() => handleTabChange('vehicle-api')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === 'vehicle-api'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-muted'
-                  }`}
-                >
-                  Vehicle API
-                </button>
+                {customApiSetsEnabled && (
+                  <>
+                    <button
+                      onClick={() => handleTabChange('vehicle-api-schema')}
+                      className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === 'vehicle-api-schema'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-foreground hover:bg-muted'
+                      }`}
+                    >
+                      Vehicle API Schema
+                    </button>
+                    <button
+                      onClick={() => handleTabChange('vehicle-api')}
+                      className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === 'vehicle-api'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-foreground hover:bg-muted'
+                      }`}
+                    >
+                      Vehicle API
+                    </button>
+                  </>
+                )}
               </nav>
             </div>
           </div>
@@ -112,8 +151,12 @@ const PluginManagement: React.FC = () => {
               {/* Conditionally render only the active section */}
               {activeTab === 'prototype' && <PrototypePluginSection />}
               {activeTab === 'deploy' && <DeployPluginSection />}
-              {activeTab === 'vehicle-api-schema' && <CustomApiSchemaSection />}
-              {activeTab === 'vehicle-api' && <CustomApiSetSection />}
+              {customApiSetsEnabled && activeTab === 'vehicle-api-schema' && (
+                <CustomApiSchemaSection />
+              )}
+              {customApiSetsEnabled && activeTab === 'vehicle-api' && (
+                <CustomApiSetSection />
+              )}
             </div>
           </div>
         </div>

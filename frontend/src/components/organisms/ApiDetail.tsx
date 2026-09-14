@@ -203,6 +203,7 @@ const ApiDetail = ({
   }, [apiDetails?.custom_properties])
 
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
+  const [actionMenuOpen, setActionMenuOpen] = useState(false)
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -232,7 +233,7 @@ const ApiDetail = ({
                 (api) => api?.name === apiDetails?.name,
               )) &&
             isAuthorized && (
-              <DropdownMenu>
+              <DropdownMenu open={actionMenuOpen} onOpenChange={setActionMenuOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="default" size="sm">
                     <div className="text-sm font-medium">Signal Action</div>
@@ -240,11 +241,21 @@ const ApiDetail = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setActionMenuOpen(false)
+                      setIsEditing(true)
+                    }}
+                  >
                     <TbEdit className="mr-2 h-5 w-5" />
                     <div className="text-sm font-medium">Edit Signal</div>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setConfirmPopupOpen(true)}>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setActionMenuOpen(false)
+                      setConfirmPopupOpen(true)
+                    }}
+                  >
                     <TbTrash className="mr-2 h-5 w-5" />
                     <div className="text-sm font-medium">Delete Signal</div>
                   </DropdownMenuItem>
@@ -261,7 +272,7 @@ const ApiDetail = ({
           </DaConfirmPopup>
           <div
             className={cn(
-              'hidden h-8 items-center rounded-md px-2 xl:flex',
+              'h-8 items-center rounded-md px-2 xl:flex',
               bgClass,
             )}
           >
@@ -308,9 +319,9 @@ const ApiDetail = ({
         />
       </div>
       {!forceSimpleMode && model && model.id && (
-        <div ref={discussionsRef} className="flex h-full">
+        <div ref={discussionsRef} className="flex w-full h-full">
           <DaDiscussions
-            className="h-full min-w-[0px] pb-2"
+            className="h-full min-w-[0px] w-full pb-2"
             refId={`${model.id}-${apiDetails.name}`}
             refType="api"
           />

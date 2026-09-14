@@ -212,6 +212,30 @@ const createSSOUser = async (graphData) => {
   return createUser(userBody);
 };
 
+/**
+ * Upsert a user from platform-injected identity headers.
+ * @param {{ email: string, providerUserId?: string, name: string, provider: string }} identity
+ * @returns {Promise<import('../models/user.model').User>}
+ */
+const upsertPlatformUser = async ({ email, providerUserId, name, provider }) => {
+  const update = {
+    $set: {
+      name,
+      provider,
+      ...(providerUserId && { provider_user_id: providerUserId }),
+    },
+    $setOnInsert: {
+      email_verified: true,
+    },
+  };
+
+  return User.findOneAndUpdate({ email: email.toLowerCase() }, update, {
+    upsert: true,
+    new: true,
+    setDefaultsOnInsert: true,
+  });
+};
+
 module.exports = {
   createUser,
   queryUsers,
@@ -221,4 +245,5 @@ module.exports = {
   deleteUserById,
   updateSSOUser,
   createSSOUser,
+  upsertPlatformUser,
 };

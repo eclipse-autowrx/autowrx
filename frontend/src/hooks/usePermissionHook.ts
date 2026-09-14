@@ -8,11 +8,19 @@
 
 import { checkPermissionService } from '@/services/permission.service.ts'
 import { useQuery } from '@tanstack/react-query'
+import useAuthStore from '@/stores/authStore'
 
 const usePermissionHook = (...params: [string, string?][]) => {
+  const [authBootstrapped, accessToken, storeUser] = useAuthStore((state) => [
+    state.authBootstrapped,
+    state.access?.token,
+    state.user,
+  ])
+
   const { data } = useQuery({
     queryKey: ['permissions', params],
     queryFn: () => checkPermissionService(params),
+    enabled: authBootstrapped && (!!accessToken || !!storeUser) && params.length > 0,
   })
   return data || Array(params.length).fill(false)
 }

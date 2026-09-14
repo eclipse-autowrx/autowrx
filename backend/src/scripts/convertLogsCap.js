@@ -20,8 +20,13 @@ async function setLogsCap() {
     const collInfo = await db.listCollections({ name }).next();
 
     if (!collInfo) {
-      await db.createCollection(name, { capped: true, size: max });
-      return logger.info(`Created capped collection ${name} with ${max} bytes`);
+      try {
+        await db.createCollection(name, { capped: true, size: max });
+        return logger.info(`Created capped collection ${name} with ${max} bytes`);
+      } catch (createErr) {
+        // autoCreate race: Mongoose created the collection between our listCollections check and here
+        if (createErr.codeName !== 'NamespaceExists') throw createErr;
+      }
     }
 
     const stats = await db.command({ collStats: name });

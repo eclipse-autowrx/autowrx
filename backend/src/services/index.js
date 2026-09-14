@@ -10,7 +10,6 @@ module.exports.authService = require('./auth.service');
 module.exports.emailService = require('./email.service');
 module.exports.tokenService = require('./token.service');
 module.exports.userService = require('./user.service');
-module.exports.tagService = require('./tag.service');
 module.exports.modelService = require('./model.service');
 module.exports.prototypeService = require('./prototype.service');
 module.exports.apiService = require('./api.service');
@@ -28,6 +27,9 @@ module.exports.siteConfigService = require('./siteConfig.service');
 module.exports.ssoService = require('./sso.service');
 module.exports.pluginService = require('./plugin.service');
 module.exports.modelTemplateService = require('./modelTemplate.service');
+module.exports.dashboardTemplateService = require('./dashboardTemplate.service');
+module.exports.projectTemplateService = require('./projectTemplate.service');
 module.exports.customApiSchemaService = require('./customApiSchema.service');
 module.exports.customApiSetService = require('./customApiSet.service');
+module.exports.serviceTokenService = require('./serviceToken.service');
 // Inventory services removed

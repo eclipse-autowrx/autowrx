@@ -28,6 +28,9 @@ const PERMISSIONS = {
   READ_ASSET: 'readAsset',
   WRITE_ASSET: 'writeAsset',
 
+  // generative AI
+  GENERATIVE_AI: 'generativeAI',
+
   // deploy hardware
   DEPLOY_HARDWARE: 'deployHardware',
 
@@ -43,6 +46,7 @@ const PERMISSIONS_DESCRIPTION = {
   [PERMISSIONS.ADMIN]: 'Manage users',
   [PERMISSIONS.READ_MODEL]: 'Read model',
   [PERMISSIONS.WRITE_MODEL]: 'Write model',
+  [PERMISSIONS.GENERATIVE_AI]: 'Generative AI',
   [PERMISSIONS.DEPLOY_HARDWARE]: 'Deploy hardware',
   [PERMISSIONS.LEARNING_MODE]: 'Learning Mode',
   [PERMISSIONS.AI_AGENT]: 'AI Agent',
@@ -62,9 +66,10 @@ const ROLES = {
     not_feature: true,
   },
   model_member: {
-    permissions: [PERMISSIONS.READ_MODEL, PERMISSIONS.WRITE_MODEL],
+    // Reader: can only read models (no write/update/delete or manage collaborators)
+    permissions: [PERMISSIONS.READ_MODEL],
     ref: 'model_member',
-    name: 'Model member',
+    name: 'Model reader',
     not_feature: true,
   },
   admin: {
@@ -75,10 +80,16 @@ const ROLES = {
       PERMISSIONS.UNLIMITED_MODEL,
       PERMISSIONS.READ_ASSET,
       PERMISSIONS.WRITE_ASSET,
+      PERMISSIONS.GENERATIVE_AI,
       PERMISSIONS.DEPLOY_HARDWARE,
     ],
     ref: 'admin',
     name: 'Admin',
+  },
+  generative_ai_role: {
+    permissions: [PERMISSIONS.GENERATIVE_AI],
+    ref: 'generative_ai_role',
+    name: 'Generative AI',
   },
   read_asset: {
     permissions: [PERMISSIONS.READ_ASSET],

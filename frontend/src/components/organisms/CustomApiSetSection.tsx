@@ -53,6 +53,7 @@ const CustomApiSetSection: React.FC = () => {
   const [editingItemsInstanceId, setEditingItemsInstanceId] = useState<string | null>(null)
   const [isSchemaFormOpen, setIsSchemaFormOpen] = useState(false)
   const [editingSchema, setEditingSchema] = useState<CustomApiSchema | undefined>()
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [importFile, setImportFile] = useState<File | null>(null)
   const [importInstanceName, setImportInstanceName] = useState('')
@@ -398,7 +399,10 @@ const CustomApiSetSection: React.FC = () => {
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
+                    <DropdownMenu
+                      open={openMenuId === set.id}
+                      onOpenChange={(open) => setOpenMenuId(open ? set.id : null)}
+                    >
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="ghost"
@@ -412,6 +416,7 @@ const CustomApiSetSection: React.FC = () => {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           onClick={() => {
+                            setOpenMenuId(null)
                             setEditingSet(set)
                             setIsFormOpen(true)
                           }}
@@ -421,21 +426,30 @@ const CustomApiSetSection: React.FC = () => {
                           Edit Metadata
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => setEditingItemsInstanceId(set.id)}
+                          onClick={() => {
+                            setOpenMenuId(null)
+                            setEditingItemsInstanceId(set.id)
+                          }}
                           disabled={isDeleting === set.id}
                         >
                           <TbPencil className="h-4 w-4 mr-2" />
                           Edit Child APIs
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleExport(set)}
+                          onClick={() => {
+                            setOpenMenuId(null)
+                            handleExport(set)
+                          }}
                           disabled={isDeleting === set.id}
                         >
                           <TbDownload className="h-4 w-4 mr-2" />
                           Export
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleDelete(set)}
+                          onClick={() => {
+                            setOpenMenuId(null)
+                            handleDelete(set)
+                          }}
                           disabled={isDeleting === set.id}
                           className="text-destructive focus:text-destructive"
                         >

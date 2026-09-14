@@ -16,13 +16,13 @@ import {
   DaBreadcrumbSeparator,
 } from '@/components/atoms/DaBreadcrumb'
 import useCurrentModel from '@/hooks/useCurrentModel'
-// import useCurrentPrototype from '@/hooks/useCurrentPrototype'
+import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 
 const breadcrumbNames: { [key: string]: string } = {
   home: 'Home',
   model: 'Vehicle Models',
-  library: 'Prototype Library',
-  prototype: 'Vehicle Prototypes',
+  library: 'Prototypes',
+  prototype: 'Prototypes',
   api: 'Vehicle API',
   architecture: 'Vehicle Architecture',
   genai: 'Vehicle App Generator',
@@ -30,7 +30,7 @@ const breadcrumbNames: { [key: string]: string } = {
 
 const DaBreadcrumbBar = () => {
   const { data: model } = useCurrentModel()
-  // const { data: prototype } = useCurrentPrototype()
+  const { data: prototype } = useCurrentPrototype()
   const location = useLocation()
   const [breadcrumbs, setBreadcrumbs] = useState<JSX.Element[]>([])
 
@@ -68,7 +68,9 @@ const DaBreadcrumbBar = () => {
 
     const paths: { path: string; name: string; key: string }[] = []
 
-    if (pathnames[0] === 'model') {
+    const isNewPrototypeRoute = pathnames[0] === 'new-prototype'
+
+    if (pathnames[0] === 'model' || isNewPrototypeRoute) {
       paths.push({
         path: '/model',
         name: breadcrumbNames['model'],
@@ -77,7 +79,7 @@ const DaBreadcrumbBar = () => {
     }
 
     if (model) {
-      if (model && pathnames[1] === model.id) {
+      if (isNewPrototypeRoute || pathnames[1] === model.id) {
         paths.push({
           path: `/model/${model.id}`,
           name: model.name,
@@ -85,21 +87,20 @@ const DaBreadcrumbBar = () => {
         })
       }
 
-      if (pathnames.includes('prototype')) {
+      if (pathnames.includes('prototype') || isNewPrototypeRoute) {
         paths.push({
           path: `/model/${model.id}/library`,
           name: breadcrumbNames['library'],
           key: 'library',
         })
 
-        // Uncomment when prototype hook is available
-        // if (prototype && prototype.id && pathnames.includes('prototype')) {
-        //   paths.push({
-        //     path: `/model/${model.id}/library/prototype/${prototype.id}`,
-        //     name: prototype.name,
-        //     key: prototype.id,
-        //   })
-        // }
+        if (prototype && prototype.id) {
+          paths.push({
+            path: `/model/${model.id}/library/prototype/${prototype.id}`,
+            name: prototype.name,
+            key: prototype.id,
+          })
+        }
       }
     }
 
@@ -193,7 +194,7 @@ const DaBreadcrumbBar = () => {
       )
     })
     setBreadcrumbs(breadcrumbList)
-  }, [location.pathname, model])
+  }, [location.pathname, model, prototype])
 
   return (
     <div className="flex h-[52px] w-full justify-between">

@@ -38,6 +38,7 @@ const CustomApiSchemaSection: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingApi, setEditingApi] = useState<CustomApiSchema | undefined>()
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [importFile, setImportFile] = useState<File | null>(null)
   const [importName, setImportName] = useState('')
@@ -296,7 +297,10 @@ const CustomApiSchemaSection: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex ml-4">
-                    <DropdownMenu>
+                    <DropdownMenu
+                      open={openMenuId === api.id}
+                      onOpenChange={(open) => setOpenMenuId(open ? api.id : null)}
+                    >
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="ghost"
@@ -309,21 +313,30 @@ const CustomApiSchemaSection: React.FC = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() => handleEdit(api)}
+                          onClick={() => {
+                            setOpenMenuId(null)
+                            handleEdit(api)
+                          }}
                           disabled={isDeleting === api.id}
                         >
                           <TbPencil className="h-4 w-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleExport(api)}
+                          onClick={() => {
+                            setOpenMenuId(null)
+                            handleExport(api)
+                          }}
                           disabled={isDeleting === api.id}
                         >
                           <TbDownload className="h-4 w-4 mr-2" />
                           Export
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleDelete(api)}
+                          onClick={() => {
+                            setOpenMenuId(null)
+                            handleDelete(api)
+                          }}
                           disabled={isDeleting === api.id}
                           className="text-destructive focus:text-destructive"
                         >

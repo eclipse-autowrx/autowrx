@@ -34,9 +34,9 @@ This project serves as the backend for the playground, offering endpoints for:
 
 ### Running the Application
 
-- **Development Mode**: See the [Development Guide](../development-guide.md) in the project root for local development setup (recommended: run services directly, not in Docker).
+- **Development Mode**: See the [Development Guide](../docs/getting-started/development-guide.md) in the project root for local development setup (recommended: run services directly, not in Docker).
 
-- **Production Mode**: See the [Instance Setup Guide](../instance-setup/) in the `instance-setup/` directory for production deployment using Docker Compose.
+- **Production Mode**: See the [Instance Setup Guide](../instance-setup) in the `instance-setup/` directory for production deployment using Docker Compose.
 
 ###
 
@@ -85,8 +85,6 @@ The API is available under the `/v2` prefix. Key endpoints include:
 | --------------------------------------- | ----------------------------------------------------------------------------------------- | -------- | ------------------------------------- | --------------------------------------------- |
 | `NAME`                                   | Environment type for the application (e.g., prod, dev, test). Is used for container names | Yes      | None                                  | `dev`                                         |
 | `PORT`                                  | Port on which the application runs                                                        | No       | 8080                                  | `8080`                                        |
-| `KONG_PROXY_PORT`                       | Port for Kong proxy service                                                               | Yes      | None                                  | `9800`                                        |
-| `KONG_NGINX_WORKER_PROCESSES`           | Number of Nginx worker processes for Kong                                                 | No       | auto                                  | `2`                                           |
 | `MONGODB_URL`                           | MongoDB connection URL                                                                    | Yes      | None                                  | `mongodb://playground-db:27017/playground-be` |
 | `DB_CONTAINER_NAME`                     | Name of the database container                                                            | Yes      | None                                  | `${NAME}-playground-db`                        |
 | `CORS_ORIGIN`                           | Regex for allowed CORS origins                                                            | No       | `localhost:\\d+,127\\.0\\.0\\.1:\\d+` | `localhost:\\d+,127\\.0\\.0\\.1:\\d+`         |                                                          | Yes      | None                                  | `https://<your_domain>/api/upload`            |
@@ -97,7 +95,13 @@ The API is available under the `/v2` prefix. Key endpoints include:
 | `JWT_VERIFY_EMAIL_EXPIRATION_MINUTES`   | Minutes after which verify email tokens expire                                            | No       | `10`                                  | `10`                                          |
 | `JWT_COOKIE_NAME`                       | Name of the cookie storing the refresh token                                              | No       | `token`                               | `refresh-token`                               |
 | `JWT_COOKIE_DOMAIN`                     | Domain for the JWT cookie (used in production)                                            | No       | `''`                                  | `yourdomain.com`                              |
-| `AUTH_URL`                              | URL for the authentication service                                                        | No       | None                                  | `auth_service_url`                            |
+| `AUTH_PROVIDER`                         | Authentication provider: `jwt` (default) or `platform` (header-based)                     | No       | `jwt`                                 | `platform`                                    |
+| `AUTH_PLATFORM_NAME`                    | Provider name stored on `user.provider` when using platform auth                          | No       | `Platform`                            | `Calponia`                                    |
+| `AUTH_PLATFORM_HEADERS`                 | JSON map of identity field to request header name (required when `AUTH_PROVIDER=platform`) | No       | None                                  | `{"email":"x-calponia-user-email",...}`       |
+| `AUTH_URL`                              | URL for the authentication service (**deprecated**; use `AUTH_PROVIDER=platform`)         | No       | None                                  | `auth_service_url`                            |
+| `GENAI_URL`                             | Deprecated GenAI proxy sidecar URL                                             | No       | None                                  | `http://genai-proxy:8080`                     |
+| `EXTERNAL_GENAI_URL`                    | External GenAI service base URL (plugin `/v2/genai/*` routes)                | No       | None                                  | `http://genai:8080`                           |
+| `EXTERNAL_GENAI_DEVICE_TOKEN`           | Device token for external GenAI API                                            | No       | None                                  | `your-device-token`                           |
 | `CACHE_URL`                             | URL for the cache service                                                                 | No       | None                                  | `your_cache_url`                              |
 | `LOG_URL`                               | URL for the logging service                                                               | No       | None                                  | `your_log_url`                                |
 | `CLIENT_BASE_URL`                       | Base URL for the client application                                                       | No       | `http://localhost:3000`               | `your_client_base_url`                        |
@@ -106,7 +110,7 @@ The API is available under the `/v2` prefix. Key endpoints include:
 | `EMAIL_ENDPOINT_URL`                    | Endpoint URL for the email service (default: Brevo)                                       | No       | None                                  | `email_api_endpoint_url`                      |
 | `GITHUB_CLIENT_ID`                      | Client ID for GitHub OAuth authentication                                                 | No       | None                                  | `github_client_id`                            |
 | `GITHUB_CLIENT_SECRET`                  | Client secret for GitHub OAuth authentication                                             | No       | None                                  | `github_client_secret`                        |
-| `ADMIN_EMAILS`                          | Comma-separated list of admin email addresses. Use for auto provisioning admin users.     | No       | None                                  | `admin1@example.com,admin2@example.com`       |
+| `ADMIN_EMAILS`                          | Comma- or semicolon-separated list of admin emails. Use for auto provisioning admin users. | No       | None                                  | `admin1@example.com;admin2@example.com`       |
 | `ADMIN_PASSWORD`                        | Password for admin access                                                                 | No       | None                                  | `admin_password`                              |
 | `LOGS_MAX_SIZE`                         | Maximum size of change logs in megabytes                                                  | No       | `100`                                 | `100`                                         |
 

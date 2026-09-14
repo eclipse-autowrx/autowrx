@@ -14,18 +14,24 @@ type RuntimeState = {
   apisValue?: {}
   traceVars?: {}
   appLog?: string
+  activeRuntimeName?: string
+  isAppRunning: boolean
 }
 
 type Actions = {
   setActiveApis: (_: any) => void
   setAppLog: (log: string) => void
   setTraceVars: (_: any) => void
+  setActiveRuntimeName: (name: string | undefined) => void
+  setIsAppRunning: (isRunning: boolean) => void
 }
 
 const useRuntimeStore = createWithEqualityFn<RuntimeState & Actions>()(
   immer((set) => ({
     apisValue: [],
     appLog: "",
+    activeRuntimeName: undefined,
+    isAppRunning: false,
     setAppLog: (log) => {
       set((state) => {
         state.appLog = log
@@ -38,7 +44,15 @@ const useRuntimeStore = createWithEqualityFn<RuntimeState & Actions>()(
     setTraceVars: (values) =>
       set((state) => {
         state.traceVars = values
-      })
+      }),
+    setActiveRuntimeName: (name) =>
+      set((state) => {
+        state.activeRuntimeName = name
+      }),
+    setIsAppRunning: (isRunning) =>
+      set((state) => {
+        state.isAppRunning = isRunning
+      }),
   }))
 )
 

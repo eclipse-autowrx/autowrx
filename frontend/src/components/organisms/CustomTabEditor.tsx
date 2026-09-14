@@ -6,33 +6,57 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { FC, useState, useEffect } from 'react'
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
+import { Button } from '@/components/atoms/button'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/atoms/dialog'
-import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
-import { Checkbox } from '@/components/atoms/checkbox'
-import { 
-  TbGripVertical, 
-  TbPencil, 
-  TbTrash, 
-  TbCheck, 
-  TbX,
-  TbRoute,
-  TbMapPin,
+import { Spinner } from '@/components/atoms/spinner'
+import ActionButtonsTab from '@/components/organisms/ActionButtonsTab'
+import ModelTabListEditor, {
+  applyModelTabAddonSelect,
+  ModelTabAddonSelectDialog,
+  ModelTabListEditorHandle,
+} from '@/components/molecules/ModelTabListEditor'
+import {
+  hasIncompleteModelTabs,
+  sanitizeModelTabsForSave,
+} from '@/lib/modelTabUtils'
+import { listPlugins, type Plugin } from '@/services/plugin.service'
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  DropResult,
+} from '@hello-pangea/dnd'
+import { useQuery } from '@tanstack/react-query'
+import DOMPurify from 'dompurify'
+import { FC, useEffect, useRef, useState } from 'react'
+import { MdOutlineDoubleArrow } from 'react-icons/md'
+import {
+  TbCheck,
   TbCode,
-  TbGauge,
-  TbPuzzle,
   TbEye,
-  TbEyeOff
+  TbEyeOff,
+  TbGauge,
+  TbGripVertical,
+  TbLayoutSidebar,
+  TbListCheck,
+  TbMapPin,
+  TbMessagePlus,
+  TbPencil,
+  TbPuzzle,
+  TbRoute,
+  TbSearch,
+  TbTrash,
+  TbX,
 } from 'react-icons/tb'
+import { toast } from 'react-toastify'
 
 export interface CustomTab {
   label: string
@@ -41,19 +65,94 @@ export interface CustomTab {
 
 export interface TabConfig {
   type: 'builtin' | 'custom'
-  key?: string  // For builtin: 'overview' | 'journey' | 'code' | 'dashboard'
+  key?: string // For builtin: 'overview' | 'journey' | 'code' | 'dashboard'
   label: string
-  plugin?: string  // For custom tabs only
-  hidden?: boolean  // If true, tab is hidden (not allowed for Overview)
+  plugin?: string // For custom tabs only
+  hidden?: boolean // If true, tab is hidden
+  iconSvg?: string
+  builtin?: string
+  variant?: 'tab' | 'primary' | 'outline' | 'ghost'
+  openMode?: 'dialog' | 'page'
+  hideIcon?: boolean
+  corners?: 'none' | 'round' | 'full'
+  /** For builtin staging: plugin slug to render as the full staging page instead of the default table */
+  renderPlugin?: string
 }
+
+export interface StagingConfig {
+  label?: string
+  hideIcon?: boolean
+  hidden?: boolean
+  iconSvg?: string
+  variant?: 'tab' | 'primary' | 'outline' | 'ghost'
+  corners?: 'none' | 'round' | 'full'
+  /** Plugin slug to render as the full staging page instead of the default table */
+  renderPlugin?: string
+}
+
+export interface RightNavPluginButton {
+  builtin?: 'staging' // Marks the built-in staging button item
+  plugin?: string // Plugin slug (required for plugin-type items)
+  label?: string
+  iconSvg?: string
+  hideIcon?: boolean // For staging: whether to hide the icon
+  variant?: 'tab' | 'primary' | 'outline' | 'ghost'
+  openMode?: 'dialog' | 'page'
+  hidden?: boolean
+  corners?: 'none' | 'round' | 'full'
+  /** For builtin staging: plugin slug to render as the full staging page instead of the default table */
+  renderPlugin?: string
+}
+
+export const DEFAULT_STAGING_RIGHT_NAV_BUTTON: RightNavPluginButton = {
+  builtin: 'staging',
+  label: 'Staging',
+}
+
+export function ensureStagingRightNavButton(
+  buttons: RightNavPluginButton[] = [],
+  stagingConfig?: StagingConfig,
+): RightNavPluginButton[] {
+  if (buttons.some((b) => b.builtin === 'staging')) return buttons
+  return [
+    {
+      ...DEFAULT_STAGING_RIGHT_NAV_BUTTON,
+      label: stagingConfig?.label || DEFAULT_STAGING_RIGHT_NAV_BUTTON.label,
+      iconSvg: stagingConfig?.iconSvg,
+      hideIcon: stagingConfig?.hideIcon,
+      variant: stagingConfig?.variant,
+      corners: stagingConfig?.corners,
+      hidden: stagingConfig?.hidden,
+      renderPlugin: stagingConfig?.renderPlugin,
+    },
+    ...buttons,
+  ]
+}
+
+export type TabsBorderRadius = 'none' | 'round' | 'full'
 
 interface CustomTabEditorProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   tabs: TabConfig[]
-  onSave: (updatedTabs: TabConfig[]) => Promise<void>
+  onSave: (
+    updatedTabs: TabConfig[],
+    updatedSidebarPlugin?: string | null,
+    updatedTabsVariant?: string | null,
+    updatedRightNavButtons?: RightNavPluginButton[] | null,
+    updatedTabsBorderRadius?: TabsBorderRadius | null,
+  ) => Promise<void>
+  sidebarPlugin?: string
+  stagingConfig?: StagingConfig
+  rightNavButtons?: RightNavPluginButton[]
+  /** Global style variant for all prototype tab buttons ('tab' | 'primary' | 'outline' | 'ghost') */
+  tabsVariant?: string
+  /** Border radius for tab buttons ('none' | 'small' | 'medium' | 'large' | 'full') */
+  tabsBorderRadius?: TabsBorderRadius
   title?: string
   description?: string
+  /** 'full' = prototype layout editor with internal tabs; 'model' = simplified model tab list */
+  mode?: 'full' | 'model'
 }
 
 const CustomTabEditor: FC<CustomTabEditorProps> = ({
@@ -61,22 +160,81 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   onOpenChange,
   tabs,
   onSave,
-  title = 'Manage Custom Tabs',
-  description = 'Edit, reorder, and remove custom tabs',
+  sidebarPlugin,
+  stagingConfig,
+  rightNavButtons,
+  tabsVariant,
+  tabsBorderRadius,
+  title = 'Customize Prototype Layout',
+  description = 'Configure tabs, appearance, sidebar, and action buttons',
+  mode = 'full',
 }) => {
+  const isModelMode = mode === 'model'
   const [localTabs, setLocalTabs] = useState<TabConfig[]>(tabs)
+  const modelTabListRef = useRef<ModelTabListEditorHandle>(null)
+  const [addonSelectOpen, setAddonSelectOpen] = useState(false)
+  const [changingPluginIndex, setChangingPluginIndex] = useState<number | null>(
+    null,
+  )
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [editingLabel, setEditingLabel] = useState<string>('')
+  const [editingIconSvg, setEditingIconSvg] = useState<string>('')
   const [isSaving, setIsSaving] = useState(false)
+  const [activeDialogTab, setActiveDialogTab] = useState<
+    'tabs' | 'style' | 'sidebar' | 'actions'
+  >('tabs')
+  const [localTabsVariant, setLocalTabsVariant] = useState<string>(
+    tabsVariant || 'tab',
+  )
+  const [localTabsBorderRadius, setLocalTabsBorderRadius] =
+    useState<TabsBorderRadius>(tabsBorderRadius || 'round')
+  const [localRightNavPlugins, setLocalRightNavPlugins] = useState<
+    RightNavPluginButton[]
+  >(() => ensureStagingRightNavButton(rightNavButtons, stagingConfig))
+  // Sidebar plugin state
+  const [localSidebarPlugin, setLocalSidebarPlugin] = useState<string | null>(
+    sidebarPlugin || null,
+  )
+  const [showSidebarPluginPicker, setShowSidebarPluginPicker] = useState(false)
+  const [sidebarSearchTerm, setSidebarSearchTerm] = useState('')
+
+  // Fetch plugins for plugin pickers
+  const { data: pluginsData, isLoading: pluginsLoading } = useQuery({
+    queryKey: ['plugins'],
+    queryFn: () => listPlugins({ page: 1, limit: 100 }),
+    enabled:
+      open &&
+      (activeDialogTab === 'sidebar' || activeDialogTab === 'actions'),
+  })
 
   // Update local tabs when dialog opens or tabs change
   useEffect(() => {
     if (open) {
       setLocalTabs(tabs)
+      setLocalSidebarPlugin(sidebarPlugin || null)
+      setLocalTabsVariant(tabsVariant || 'tab')
+      setLocalTabsBorderRadius(tabsBorderRadius || 'round')
+      setLocalRightNavPlugins(
+        ensureStagingRightNavButton(rightNavButtons, stagingConfig),
+      )
+      setActiveDialogTab('tabs')
       setEditingIndex(null)
       setEditingLabel('')
+      setEditingIconSvg('')
+      setShowSidebarPluginPicker(false)
+      setSidebarSearchTerm('')
+      setAddonSelectOpen(false)
+      setChangingPluginIndex(null)
     }
-  }, [open, tabs])
+  }, [
+    open,
+    tabs,
+    sidebarPlugin,
+    stagingConfig,
+    tabsVariant,
+    tabsBorderRadius,
+    rightNavButtons,
+  ])
 
   // Get icon for builtin tabs
   const getBuiltinIcon = (key?: string) => {
@@ -89,6 +247,10 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
         return <TbCode className="w-4 h-4" />
       case 'dashboard':
         return <TbGauge className="w-4 h-4" />
+      case 'feedback':
+        return <TbMessagePlus className="w-4 h-4" />
+      case 'flow':
+        return <MdOutlineDoubleArrow className="w-4 h-4" />
       default:
         return <TbPuzzle className="w-4 h-4" />
     }
@@ -107,6 +269,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   const handleStartEdit = (index: number) => {
     setEditingIndex(index)
     setEditingLabel(localTabs[index].label)
+    setEditingIconSvg(localTabs[index].iconSvg || '')
   }
 
   const handleSaveEdit = () => {
@@ -115,16 +278,19 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
       updatedTabs[editingIndex] = {
         ...updatedTabs[editingIndex],
         label: editingLabel.trim(),
+        iconSvg: editingIconSvg.trim() || undefined,
       }
       setLocalTabs(updatedTabs)
       setEditingIndex(null)
       setEditingLabel('')
+      setEditingIconSvg('')
     }
   }
 
   const handleCancelEdit = () => {
     setEditingIndex(null)
     setEditingLabel('')
+    setEditingIconSvg('')
   }
 
   const handleRemove = (index: number) => {
@@ -138,23 +304,76 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   const handleToggleHidden = (index: number) => {
     const updatedTabs = [...localTabs]
     const tab = updatedTabs[index]
-    
-    // Don't allow hiding Overview tab
-    if (tab.type === 'builtin' && tab.key === 'overview') {
-      return
-    }
-    
     updatedTabs[index] = {
       ...tab,
-      hidden: !tab.hidden
+      hidden: !tab.hidden,
     }
     setLocalTabs(updatedTabs)
   }
 
   const handleSave = async () => {
+    if (isModelMode) {
+      const flushedTabs = modelTabListRef.current?.flushPendingEdit()
+      if (flushedTabs === null) {
+        toast.error(
+          'All custom tabs must have a plugin and label before saving.',
+        )
+        return
+      }
+      const tabsToSave = flushedTabs ?? localTabs
+      if (hasIncompleteModelTabs(tabsToSave)) {
+        toast.error(
+          'All custom tabs must have a plugin and label before saving.',
+        )
+        return
+      }
+
+      setIsSaving(true)
+      try {
+        await onSave(sanitizeModelTabsForSave(tabsToSave))
+        onOpenChange(false)
+      } catch (error) {
+        console.error('Failed to save tabs:', error)
+      } finally {
+        setIsSaving(false)
+      }
+      return
+    }
+
     setIsSaving(true)
     try {
-      await onSave(localTabs)
+
+      const sidebarChanged = localSidebarPlugin !== (sidebarPlugin || null)
+      const variantChanged = localTabsVariant !== (tabsVariant || 'tab')
+      const borderRadiusChanged =
+        localTabsBorderRadius !== (tabsBorderRadius || 'round')
+      const mergedRightNav: RightNavPluginButton[] = [...localRightNavPlugins]
+      const originalRightNav = ensureStagingRightNavButton(
+        rightNavButtons,
+        stagingConfig,
+      )
+      const rightNavChanged =
+        JSON.stringify(localRightNavPlugins) !==
+        JSON.stringify(originalRightNav)
+      await onSave(
+        localTabs,
+        sidebarChanged ? localSidebarPlugin : undefined,
+        variantChanged
+          ? localTabsVariant !== 'tab'
+            ? localTabsVariant
+            : null
+          : undefined,
+        rightNavChanged
+          ? mergedRightNav.length
+            ? mergedRightNav
+            : null
+          : undefined,
+        borderRadiusChanged
+          ? localTabsBorderRadius !== 'round'
+            ? localTabsBorderRadius
+            : null
+          : undefined,
+      )
       onOpenChange(false)
     } catch (error) {
       console.error('Failed to save tabs:', error)
@@ -165,212 +384,653 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
 
   const handleCancel = () => {
     setLocalTabs(tabs) // Reset to original
+    setLocalSidebarPlugin(sidebarPlugin || null)
+    setLocalTabsVariant(tabsVariant || 'tab')
+    setLocalTabsBorderRadius(tabsBorderRadius || 'round')
+    setLocalRightNavPlugins(
+      ensureStagingRightNavButton(rightNavButtons, stagingConfig),
+    )
     setEditingIndex(null)
     setEditingLabel('')
+    setEditingIconSvg('')
+    setShowSidebarPluginPicker(false)
+    setAddonSelectOpen(false)
+    setChangingPluginIndex(null)
     onOpenChange(false)
   }
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
+  const handleRequestAddonSelect = (index: number | null) => {
+    setChangingPluginIndex(index)
+    setAddonSelectOpen(true)
+  }
 
-        <div className="flex flex-col gap-4 py-4">
-          {localTabs.length > 0 ? (
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId="custom-tabs" renderClone={(provided, snapshot, rubric) => {
-                const tab = localTabs[rubric.source.index]
-                return (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    style={{
-                      ...provided.draggableProps.style,
-                    }}
-                    className="flex items-center gap-3 p-4 border border-border rounded bg-background shadow-lg opacity-90"
-                  >
-                    <TbGripVertical className="w-5 h-5 text-muted-foreground" />
-                    {tab?.type === 'builtin' && (
-                      <div className="text-muted-foreground">
-                        {getBuiltinIcon(tab.key)}
-                      </div>
-                    )}
-                    <div className="flex-1 flex flex-col gap-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {tab?.label}
-                      </p>
-                      <p className="text-xs text-muted-foreground font-mono truncate">
-                        {tab?.type === 'builtin' ? `builtin: ${tab.key}` : `plugin: ${tab.plugin}`}
-                      </p>
+  const handleModelAddonSelect = (plugin: Plugin, label: string) => {
+    const result = applyModelTabAddonSelect(
+      localTabs,
+      plugin,
+      label,
+      changingPluginIndex,
+    )
+    if (result === 'duplicate') {
+      toast.info('This addon is already added to model tabs')
+      return
+    }
+    setLocalTabs(result)
+    setAddonSelectOpen(false)
+    setChangingPluginIndex(null)
+  }
+
+  // Get the selected sidebar plugin details
+  const selectedSidebarPluginData = pluginsData?.results?.find(
+    (p) => p.slug === localSidebarPlugin,
+  )
+
+  // Filter plugins for sidebar picker
+  const filteredSidebarPlugins =
+    pluginsData?.results?.filter(
+      (plugin) =>
+        plugin.name.toLowerCase().includes(sidebarSearchTerm.toLowerCase()) ||
+        plugin.slug?.toLowerCase().includes(sidebarSearchTerm.toLowerCase()) ||
+        plugin.description
+          ?.toLowerCase()
+          .includes(sidebarSearchTerm.toLowerCase()),
+    ) ?? []
+
+  const renderTabList = (showInstructionText: boolean) => (
+    <>
+      {showInstructionText && (
+        <p className="text-sm text-muted-foreground mb-2">
+          Configure which tabs appear in the prototype tab bar, their order,
+          labels, and visibility.
+        </p>
+      )}
+      {localTabs.length > 0 ? (
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable
+            droppableId="custom-tabs"
+            renderClone={(provided, snapshot, rubric) => {
+              const tab = localTabs[rubric.source.index]
+              return (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.draggableProps}
+                  {...provided.dragHandleProps}
+                  style={{
+                    ...provided.draggableProps.style,
+                  }}
+                  className="flex items-center gap-3 p-4 border border-border rounded bg-background shadow-lg opacity-90"
+                >
+                  <TbGripVertical className="w-5 h-5 text-muted-foreground" />
+                  {tab?.type === 'builtin' && (
+                    <div className="text-muted-foreground">
+                      {getBuiltinIcon(tab.key)}
                     </div>
+                  )}
+                  <div className="flex-1 flex flex-col gap-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {tab?.label}
+                    </p>
+                    <p className="text-xs text-muted-foreground font-mono truncate">
+                      {tab?.type === 'builtin'
+                        ? `builtin: ${tab.key}`
+                        : `plugin: ${tab.plugin}`}
+                    </p>
                   </div>
-                )
-              }}>
-                {(provided, snapshot) => (
-                  <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    className="flex flex-col gap-2"
-                  >
-                    {localTabs.map((tab, index) => {
-                      const draggableId = tab.type === 'builtin' ? `builtin-${tab.key}` : `custom-${tab.plugin}`
-                      return (
-                        <Draggable key={draggableId} draggableId={draggableId} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              className={`flex items-center gap-3 p-4 border border-border rounded bg-background ${
-                                snapshot.isDragging ? 'opacity-40' : ''
-                              } ${tab.hidden ? 'opacity-60' : ''}`}
-                            >
-                              {/* Drag Handle */}
-                              <div
-                                {...provided.dragHandleProps}
-                                className="flex items-center justify-center text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
-                              >
-                                <TbGripVertical className="w-5 h-5" />
-                              </div>
+                </div>
+              )
+            }}
+          >
+            {(provided, snapshot) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="flex flex-col gap-2"
+              >
+                {localTabs.map((tab, index) => {
+                  const draggableId =
+                    tab.type === 'builtin'
+                      ? `builtin-${tab.key}`
+                      : `custom-${tab.plugin}`
+                  return (
+                    <Draggable
+                      key={draggableId}
+                      draggableId={draggableId}
+                      index={index}
+                    >
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={`flex items-center gap-3 p-4 border border-border rounded bg-background ${
+                            snapshot.isDragging ? 'opacity-40' : ''
+                          } ${tab.hidden ? 'opacity-60' : ''}`}
+                        >
+                          <div
+                            {...provided.dragHandleProps}
+                            className="flex items-center justify-center text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
+                          >
+                            <TbGripVertical className="w-5 h-5" />
+                          </div>
 
-                              {/* Icon for builtin tabs */}
-                              {tab.type === 'builtin' && (
-                                <div className="text-muted-foreground">
-                                  {getBuiltinIcon(tab.key)}
+                          {tab.iconSvg ? (
+                            <span
+                              className="inline-flex size-5 [&>svg]:w-full [&>svg]:h-full"
+                              dangerouslySetInnerHTML={{
+                                __html: DOMPurify.sanitize(tab.iconSvg, {
+                                  USE_PROFILES: {
+                                    svg: true,
+                                    svgFilters: true,
+                                  },
+                                }),
+                              }}
+                            />
+                          ) : (
+                            tab.type === 'builtin' && (
+                              <div className="text-muted-foreground">
+                                {getBuiltinIcon(tab.key)}
+                              </div>
+                            )
+                          )}
+
+                          <div className="flex-1 flex flex-col gap-1 min-w-0">
+                            {editingIndex === index ? (
+                              <div className="flex flex-col gap-2">
+                                <Label
+                                  htmlFor={`edit-label-${index}`}
+                                  className="text-xs"
+                                >
+                                  Tab Label
+                                </Label>
+                                <Input
+                                  id={`edit-label-${index}`}
+                                  value={editingLabel}
+                                  onChange={(e) =>
+                                    setEditingLabel(e.target.value)
+                                  }
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveEdit()
+                                    if (e.key === 'Escape') handleCancelEdit()
+                                  }}
+                                  className="text-sm"
+                                  autoFocus
+                                />
+                                <Label
+                                  htmlFor={`edit-svg-${index}`}
+                                  className="text-xs mt-1"
+                                >
+                                  Custom Icon (SVG)
+                                </Label>
+                                <div className="flex gap-2 items-start">
+                                  <textarea
+                                    id={`edit-svg-${index}`}
+                                    value={editingIconSvg}
+                                    onChange={(e) =>
+                                      setEditingIconSvg(e.target.value)
+                                    }
+                                    placeholder='<svg xmlns="...">...</svg>'
+                                    className="text-xs font-mono flex-1 min-h-15 resize-y rounded border border-input bg-background px-2 py-1.5 outline-none focus:ring-1 focus:ring-ring"
+                                    spellCheck={false}
+                                  />
                                 </div>
-                              )}
-
-                              {/* Content */}
-                              <div className="flex-1 flex flex-col gap-1 min-w-0">
-                                {editingIndex === index ? (
-                                  <div className="flex flex-col gap-2">
-                                    <Label htmlFor={`edit-label-${index}`} className="text-xs">
-                                      Tab Label
-                                    </Label>
-                                    <Input
-                                      id={`edit-label-${index}`}
-                                      value={editingLabel}
-                                      onChange={(e) => setEditingLabel(e.target.value)}
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter') handleSaveEdit()
-                                        if (e.key === 'Escape') handleCancelEdit()
-                                      }}
-                                      className="text-sm"
-                                      autoFocus
-                                    />
-                                  </div>
-                                ) : (
-                                  <>
-                                    <div className="flex items-center gap-2">
-                                      <p className="text-sm font-medium text-foreground truncate">
-                                        {tab.label}
-                                      </p>
-                                      {tab.type === 'builtin' && (
-                                        <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded">
-                                          Built-in
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground font-mono truncate">
-                                      {tab.type === 'builtin' ? `builtin: ${tab.key}` : `plugin: ${tab.plugin}`}
-                                    </p>
-                                  </>
-                                )}
                               </div>
+                            ) : (
+                              <>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-medium text-foreground truncate">
+                                    {tab.label}
+                                  </p>
+                                  {tab.type === 'builtin' && (
+                                    <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded">
+                                      Built-in
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-muted-foreground font-mono truncate">
+                                  {tab.type === 'builtin'
+                                    ? `builtin: ${tab.key}`
+                                    : `plugin: ${tab.plugin}`}
+                                </p>
+                              </>
+                            )}
+                          </div>
 
-                              {/* Visibility Toggle */}
-                              <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleToggleHidden(index)}
+                              className="h-8 w-8"
+                              title={tab.hidden ? 'Show tab' : 'Hide tab'}
+                            >
+                              {tab.hidden ? (
+                                <TbEyeOff className="w-4 h-4 text-muted-foreground" />
+                              ) : (
+                                <TbEye className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {editingIndex === index ? (
+                              <>
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => handleToggleHidden(index)}
+                                  onClick={handleSaveEdit}
                                   className="h-8 w-8"
-                                  disabled={tab.type === 'builtin' && tab.key === 'overview'}
-                                  title={tab.hidden ? 'Show tab' : 'Hide tab'}
                                 >
-                                  {tab.hidden ? (
-                                    <TbEyeOff className="w-4 h-4 text-muted-foreground" />
-                                  ) : (
-                                    <TbEye className="w-4 h-4" />
-                                  )}
+                                  <TbCheck className="w-4 h-4 text-green-600" />
                                 </Button>
-                              </div>
-
-                              {/* Actions */}
-                              <div className="flex items-center gap-2">
-                                {editingIndex === index ? (
-                                  <>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={handleSaveEdit}
-                                      className="h-8 w-8"
-                                    >
-                                      <TbCheck className="w-4 h-4 text-green-600" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={handleCancelEdit}
-                                      className="h-8 w-8"
-                                    >
-                                      <TbX className="w-4 h-4 text-muted-foreground" />
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => handleStartEdit(index)}
-                                      className="h-8 w-8"
-                                    >
-                                      <TbPencil className="w-4 h-4" />
-                                    </Button>
-                                    {tab.type === 'custom' && (
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => handleRemove(index)}
-                                        className="h-8 w-8 text-destructive hover:text-destructive"
-                                      >
-                                        <TbTrash className="w-4 h-4" />
-                                      </Button>
-                                    )}
-                                  </>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={handleCancelEdit}
+                                  className="h-8 w-8"
+                                >
+                                  <TbX className="w-4 h-4 text-muted-foreground" />
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleStartEdit(index)}
+                                  className="h-8 w-8"
+                                >
+                                  <TbPencil className="w-4 h-4" />
+                                </Button>
+                                {tab.type === 'custom' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleRemove(index)}
+                                    className="h-8 w-8 text-destructive hover:text-destructive"
+                                  >
+                                    <TbTrash className="w-4 h-4" />
+                                  </Button>
                                 )}
-                              </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </Draggable>
+                  )
+                })}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      ) : (
+        <div className="flex items-center justify-center p-8 border border-dashed border-border rounded">
+          <p className="text-sm text-muted-foreground">
+            No custom tabs added yet
+          </p>
+        </div>
+      )}
+    </>
+  )
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent
+          className={
+            isModelMode
+              ? 'max-w-2xl flex flex-col'
+              : 'max-w-2xl h-[80vh] flex flex-col'
+          }
+        >
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
+          </DialogHeader>
+
+          {isModelMode ? (
+            <div className="py-4">
+              <ModelTabListEditor
+                key={
+                  open
+                    ? 'modeltablisteditor-open'
+                    : 'modeltablisteditor-closed'
+                }
+                ref={modelTabListRef}
+                tabs={localTabs}
+                onTabsChange={setLocalTabs}
+                showHeader={false}
+                onRequestAddonSelect={handleRequestAddonSelect}
+              />
+            </div>
+          ) : (
+          <>
+        {/* Internal Tab Switcher */}
+        <div className="flex border-b border-border -mx-6 px-6">
+          <button
+            onClick={() => setActiveDialogTab('tabs')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeDialogTab === 'tabs'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <TbPuzzle className="w-4 h-4" />
+            Tab Bar
+          </button>
+          <button
+            onClick={() => setActiveDialogTab('style')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeDialogTab === 'style'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <TbEye className="w-4 h-4" />
+            Appearance
+          </button>
+          <button
+            onClick={() => setActiveDialogTab('sidebar')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeDialogTab === 'sidebar'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <TbLayoutSidebar className="w-4 h-4" />
+            Sidebar Panel
+          </button>
+          <button
+            onClick={() => setActiveDialogTab('actions')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeDialogTab === 'actions'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <TbListCheck className="w-4 h-4" />
+            Action Buttons
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-4 py-4 overflow-y-auto flex-1">
+          {/* Sidebar Panel Tab */}
+          {activeDialogTab === 'sidebar' && (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-muted-foreground">
+                Select a plugin to display in a collapsible panel on the left
+                side of the prototype view.
+              </p>
+
+              {localSidebarPlugin && !showSidebarPluginPicker ? (
+                <div className="flex items-center gap-3 p-3 border border-border rounded bg-accent/50">
+                  <TbPuzzle className="w-5 h-5 text-muted-foreground shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {selectedSidebarPluginData?.name || localSidebarPlugin}
+                    </p>
+                    <p className="text-xs text-muted-foreground font-mono truncate">
+                      plugin: {localSidebarPlugin}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowSidebarPluginPicker(true)}
+                    className="h-8 w-8"
+                    title="Change plugin"
+                  >
+                    <TbPencil className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setLocalSidebarPlugin(null)
+                      setShowSidebarPluginPicker(false)
+                    }}
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    title="Remove sidebar plugin"
+                  >
+                    <TbTrash className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : showSidebarPluginPicker ? (
+                <div className="flex flex-col gap-2 border border-border rounded p-3">
+                  <div className="relative">
+                    <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Search plugins..."
+                      value={sidebarSearchTerm}
+                      onChange={(e) => setSidebarSearchTerm(e.target.value)}
+                      className="pl-10 text-sm"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="flex flex-col max-h-48 overflow-y-auto">
+                    {pluginsLoading ? (
+                      <div className="flex items-center justify-center p-4">
+                        <Spinner size={20} />
+                      </div>
+                    ) : filteredSidebarPlugins.length === 0 ? (
+                      <p className="text-xs text-muted-foreground p-4 text-center">
+                        {sidebarSearchTerm
+                          ? 'No plugins found'
+                          : 'No plugins available'}
+                      </p>
+                    ) : (
+                      filteredSidebarPlugins.map((plugin) => (
+                        <button
+                          key={plugin.id}
+                          onClick={() => {
+                            setLocalSidebarPlugin(plugin.slug)
+                            setShowSidebarPluginPicker(false)
+                            setSidebarSearchTerm('')
+                          }}
+                          className="flex items-center gap-3 p-2 hover:bg-accent rounded transition-colors text-left"
+                        >
+                          {plugin.image ? (
+                            <img
+                              src={plugin.image}
+                              alt={plugin.name}
+                              className="w-8 h-8 rounded object-cover shrink-0"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
+                              <span className="text-xs text-muted-foreground">
+                                {plugin.name.charAt(0).toUpperCase()}
+                              </span>
                             </div>
                           )}
-                        </Draggable>
-                      )
-                    })}
-                    {provided.placeholder}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {plugin.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground font-mono truncate">
+                              {plugin.slug}
+                            </p>
+                          </div>
+                        </button>
+                      ))
+                    )}
                   </div>
-                )}
-              </Droppable>
-            </DragDropContext>
-          ) : (
-            <div className="flex items-center justify-center p-8 border border-dashed border-border rounded">
-              <p className="text-sm text-muted-foreground">No custom tabs added yet</p>
+                  <div className="flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setShowSidebarPluginPicker(false)
+                        setSidebarSearchTerm('')
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-fit"
+                  onClick={() => setShowSidebarPluginPicker(true)}
+                >
+                  <TbPuzzle className="w-4 h-4 mr-2" />
+                  Set Sidebar Plugin
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Action Buttons Tab */}
+          {activeDialogTab === 'actions' && (
+            <ActionButtonsTab
+              pluginsData={pluginsData}
+              pluginsLoading={pluginsLoading}
+              localRightNavPlugins={localRightNavPlugins}
+              setLocalRightNavPlugins={setLocalRightNavPlugins}
+            />
+          )}
+
+          {/* Tab Bar Tab */}
+          {activeDialogTab === 'tabs' && renderTabList(true)}
+
+          {/* Appearance Tab */}
+          {activeDialogTab === 'style' && (
+            <div className="flex flex-col gap-6">
+              <p className="text-sm text-muted-foreground">
+                Choose the visual style for all tab bar buttons.
+              </p>
+              <div className="gap-y-6 gap-x-4 grid grid-cols-[auto_1fr]">
+                <Label className="text-xs w-20 shrink-0 text-foreground mt-1">
+                  Style
+                </Label>
+                <div className="flex flex-col gap-3 flex-1">
+                  <div className="flex flex-wrap gap-2">
+                    {(['tab', 'primary', 'outline', 'ghost'] as const).map(
+                      (v) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setLocalTabsVariant(v)}
+                          className={`px-3 py-1 text-xs rounded border capitalize transition-colors ${
+                            localTabsVariant === v
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'bg-background text-foreground border-border hover:bg-accent'
+                          }`}
+                        >
+                          {v}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                </div>
+
+                {/* Border Radius */}
+                <Label className="text-xs w-20 shrink-0 text-foreground mt-1">
+                  Corners
+                </Label>
+                <div className="flex flex-col gap-3 flex-1">
+                  <div className="flex flex-wrap gap-2">
+                    {(
+                      [
+                        { value: 'none', label: 'Square' },
+                        { value: 'round', label: 'Round' },
+                        { value: 'full', label: 'Pill' },
+                      ] as const
+                    ).map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setLocalTabsBorderRadius(opt.value)}
+                        className={`px-3 py-1 text-xs rounded border transition-colors ${
+                          localTabsBorderRadius === opt.value
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-background text-foreground border-border hover:bg-accent'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Preview */}
+                <Label className="text-xs w-20 shrink-0 text-foreground mt-1">
+                  Preview
+                </Label>
+
+                <div className="relative flex items-center min-h-12 border-2 border-dashed border-muted-foreground/30 rounded-lg px-4 py-3 bg-muted/50 gap-1">
+                  <span className="absolute -top-2.5 left-3 px-1.5 text-[10px] font-medium text-muted-foreground bg-background rounded">
+                    Preview
+                  </span>
+                  {(['Overview', 'Code', 'Plugin'] as const).map((lbl, i) => {
+                    const isActive = i === 0
+                    const base =
+                      'flex items-center text-xs font-semibold px-2.5 py-1 transition-colors pointer-events-none'
+                    const radiusClass =
+                      localTabsBorderRadius === 'none'
+                        ? 'rounded-none'
+                        : localTabsBorderRadius === 'full'
+                          ? 'rounded-full'
+                          : 'rounded-md'
+                    let cls = ''
+                    if (localTabsVariant === 'primary') {
+                      cls = isActive
+                        ? `${base} bg-primary text-primary-foreground ${radiusClass}`
+                        : `${base} text-muted-foreground ${radiusClass}`
+                    } else if (localTabsVariant === 'outline') {
+                      cls = isActive
+                        ? `${base} border border-primary text-primary ${radiusClass}`
+                        : `${base} border border-transparent text-muted-foreground ${radiusClass}`
+                    } else if (localTabsVariant === 'ghost') {
+                      cls = isActive
+                        ? `${base} bg-accent text-foreground ${radiusClass}`
+                        : `${base} text-muted-foreground ${radiusClass}`
+                    } else {
+                      cls = isActive
+                        ? `${base} border-b-2 border-primary text-primary h-full`
+                        : `${base} border-b-2 border-transparent text-muted-foreground h-full`
+                    }
+                    return (
+                      <span key={lbl} className={cls}>
+                        {lbl}
+                      </span>
+                    )
+                  })}
+                </div>
+              </div>
             </div>
           )}
         </div>
+          </>
+        )}
 
-        {/* Footer Actions */}
-        <div className="flex items-center justify-end gap-2 pt-4 border-t border-border">
-          <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          {/* Footer Actions */}
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-border">
+            <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {isModelMode && (
+        <ModelTabAddonSelectDialog
+          open={addonSelectOpen}
+          onOpenChange={(nextOpen) => {
+            setAddonSelectOpen(nextOpen)
+            if (!nextOpen) setChangingPluginIndex(null)
+          }}
+          tabs={localTabs}
+          changingPluginIndex={changingPluginIndex}
+          onSelect={handleModelAddonSelect}
+        />
+      )}
+    </>
   )
 }
 

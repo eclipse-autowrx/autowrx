@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -24,7 +24,7 @@ router
       optional: (req) => req.authConfig.PUBLIC_VIEWING,
     }),
     validate(prototypeValidation.listPrototypes),
-    prototypeController.listPrototypes
+    prototypeController.listPrototypes,
   );
 
 router
@@ -36,7 +36,7 @@ router.route('/popular').get(
   auth({
     optional: (req) => req.authConfig.PUBLIC_VIEWING,
   }),
-  prototypeController.listPopularPrototypes
+  prototypeController.listPopularPrototypes,
 );
 
 router
@@ -46,19 +46,19 @@ router
       optional: (req) => req.authConfig.PUBLIC_VIEWING,
     }),
     validate(prototypeValidation.getPrototype),
-    prototypeController.getPrototype
+    prototypeController.getPrototype,
   )
   .patch(
     auth(),
-    checkPermission(PERMISSIONS.READ_MODEL),
+    checkPermission(PERMISSIONS.WRITE_MODEL),
     validate(prototypeValidation.updatePrototype),
-    prototypeController.updatePrototype
+    prototypeController.updatePrototype,
   )
   .delete(
     auth(),
-    checkPermission(PERMISSIONS.READ_MODEL),
+    checkPermission(PERMISSIONS.WRITE_MODEL),
     validate(prototypeValidation.deletePrototype),
-    prototypeController.deletePrototype
+    prototypeController.deletePrototype,
   );
 
 router.route('/:id/execute-code').post(auth(), validate(prototypeValidation.executeCode), prototypeController.executeCode);

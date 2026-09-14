@@ -3,13 +3,13 @@
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | POST | / | Required | Create a prototype. |
-| GET | / | Optional (strictAuth=false) | List prototypes. |
+| GET | / | Optional (when PUBLIC_VIEWING enabled) | List prototypes. |
 | POST | /bulk | Required | Bulk create prototypes. |
 | GET | /recent | Required | List recent prototypes. |
-| GET | /popular | Optional (strictAuth=false) | List popular prototypes. |
-| GET | /:id | Optional (strictAuth=false) | Get prototype by ID. |
-| PATCH | /:id | Required + READ_MODEL | Update prototype. |
-| DELETE | /:id | Required + READ_MODEL | Delete prototype. |
+| GET | /popular | Optional (when PUBLIC_VIEWING enabled) | List popular prototypes. |
+| GET | /:id | Optional (when PUBLIC_VIEWING enabled) | Get prototype by ID. |
+| PATCH | /:id | Required + WRITE_MODEL | Update prototype. |
+| DELETE | /:id | Required + WRITE_MODEL | Delete prototype. |
 | POST | /:id/execute-code | Required | Execute code for a prototype. |
 
 ### Data Model

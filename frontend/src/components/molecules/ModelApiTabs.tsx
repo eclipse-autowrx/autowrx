@@ -9,16 +9,19 @@
 import { FC, useMemo } from 'react'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import { useParams } from 'react-router-dom'
-import { TbApi, TbPlus } from 'react-icons/tb'
+import { TbApi, TbFileImport, TbPlus } from 'react-icons/tb'
 import { Button } from '@/components/atoms/button'
 import { useQuery } from '@tanstack/react-query'
 import { getCustomApiSetById } from '@/services/customApiSet.service'
+import { ConfiguredPlugin } from '@/hooks/useConfiguredPlugins'
 
 interface ModelApiTabsProps {
   customApiSetIds?: string[]
   onAddInstance?: () => void
   isModelOwner?: boolean
   covesaApiCount?: number // Count of COVESA APIs
+  enableCustomApiSets?: boolean
+  plugins?: ConfiguredPlugin[]
 }
 
 const ModelApiTabs: FC<ModelApiTabsProps> = ({
@@ -26,12 +29,19 @@ const ModelApiTabs: FC<ModelApiTabsProps> = ({
   onAddInstance,
   isModelOwner = false,
   covesaApiCount = 0,
+  enableCustomApiSets = true,
+  plugins = [],
 }) => {
-  const { model_id, instance_id } = useParams<{ model_id: string; instance_id?: string }>()
+  const { model_id, instance_id, plugin_slug } = useParams<{
+    model_id: string
+    instance_id?: string
+    plugin_slug?: string
+  }>()
 
   // Normalize IDs to strings (handle MongoDB ObjectIds that might be objects)
   // Use useMemo to ensure stable reference and prevent unnecessary re-renders
   const normalizedIds = useMemo(() => {
+    if (!enableCustomApiSets) return []
     return customApiSetIds
       .map((id: any) => {
         if (typeof id === 'string') return id
@@ -41,7 +51,7 @@ const ModelApiTabs: FC<ModelApiTabsProps> = ({
       .filter((id): id is string => {
         return !!id && typeof id === 'string' && id !== '[object Object]' && id !== 'undefined' && id !== 'null'
       })
-  }, [customApiSetIds])
+  }, [customApiSetIds, enableCustomApiSets])
 
   // Fetch set data for tabs
   const setQueries = useQuery({
@@ -52,13 +62,14 @@ const ModelApiTabs: FC<ModelApiTabsProps> = ({
       )
       return sets
     },
-    enabled: normalizedIds.length > 0,
+    enabled: enableCustomApiSets && normalizedIds.length > 0,
   })
 
-  const sets = setQueries.data || []
+  const sets = enableCustomApiSets ? setQueries.data || [] : []
 
   // Determine active tab
-  const isCovesaActive = !instance_id || instance_id === 'covesa'
+  const isCovesaActive =
+    !plugin_slug && (!instance_id || instance_id === 'covesa')
 
   return (
     <>
@@ -78,7 +89,8 @@ const ModelApiTabs: FC<ModelApiTabsProps> = ({
       </DaTabItem>
 
       {/* Dynamic set tabs */}
-      {sets.map((set) => {
+      {enableCustomApiSets &&
+        sets.map((set) => {
         // Ensure set.id is a string for comparison and navigation
         const setId: any = set.id
         const setIdString = typeof setId === 'string' 
@@ -105,8 +117,20 @@ const ModelApiTabs: FC<ModelApiTabsProps> = ({
         )
       })}
 
+      {/* Plugin tabs */}
+      {plugins.map((p) => (
+        <DaTabItem
+          key={`plugin-${p.plugin}`}
+          active={plugin_slug === p.plugin}
+          to={`/model/${model_id}/api/plugin/${p.plugin}`}
+        >
+          <TbFileImport className="w-5 h-5 mr-2" />
+          {p.label}
+        </DaTabItem>
+      ))}
+
       {/* Plus button to add new instance */}
-      {isModelOwner && onAddInstance && (
+      {enableCustomApiSets && isModelOwner && onAddInstance && (
         <div className="flex w-fit h-full items-center">
           <Button
             variant="ghost"

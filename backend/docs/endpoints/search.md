@@ -2,9 +2,9 @@
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| GET | / | Optional (strictAuth=false) | Full-text search across resources. |
-| GET | /email/:email | Optional (strictAuth=false) | Search user by email. |
-| GET | /prototypes/by-signal/:signal | Optional (strictAuth=false) | Search prototypes by signal. |
+| GET | / | Optional (when PUBLIC_VIEWING enabled) | Full-text search across resources. |
+| GET | /email/:email | Optional (when PUBLIC_VIEWING enabled) | Search user by email. |
+| GET | /prototypes/by-signal/:signal | Optional (when PUBLIC_VIEWING enabled) | Search prototypes by signal. |
 
 ### Data Model
 
@@ -24,11 +24,25 @@ SearchResult:
     parameters:
       - in: query
         name: q
+        required: true
         schema:
           type: string
+      - in: query
+        name: sortBy
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          default: 10
+      - in: query
+        name: page
+        schema:
+          type: integer
     responses:
       '200':
-        description: Search results
+        description: Search results (paginated)
 
 /v2/search/email/{email}:
   get:

@@ -3,14 +3,15 @@
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | POST | / | Required | Create a model. |
-| GET | / | Optional (strictAuth=false) | List models (paginated). |
-| GET | /all | Optional (strictAuth=false) | List all models (unpaginated/expanded). |
-| GET | /:id | Optional (strictAuth=false) | Get model by ID. |
+| GET | / | Optional (when PUBLIC_VIEWING enabled) | List models (paginated). |
+| GET | /all | Optional (when PUBLIC_VIEWING enabled) | List all models (unpaginated/expanded). |
+| GET | /:id | Optional (when PUBLIC_VIEWING enabled) | Get model by ID. |
+| POST | /stats | Optional (when PUBLIC_VIEWING enabled) | Get model stats summary by IDs (body `{ ids: [modelId,…] }`). |
 | PATCH | /:id | Required + WRITE_MODEL | Update model. |
 | DELETE | /:id | Required + WRITE_MODEL | Delete model. |
 | POST | /:id/replace-api | Required + WRITE_MODEL | Replace model API definition. |
-| GET | /:id/api | Optional (strictAuth=false) | Get computed VSS API for model. |
-| GET | /:id/api/:apiName | Optional (strictAuth=false) | Get specific API details by name. |
+| GET | /:id/api | Optional (when PUBLIC_VIEWING enabled) | Get computed VSS API for model. |
+| GET | /:id/api/:apiName | Optional (when PUBLIC_VIEWING enabled) | Get specific API details by name. |
 | POST | /:id/permissions | Required + WRITE_MODEL | Add authorized user. |
 | DELETE | /:id/permissions | Required + WRITE_MODEL | Remove authorized user. |
 
@@ -197,19 +198,46 @@ Model:
           schema:
             $ref: '#/components/schemas/AddAuthorizedUserRequest'
     responses:
-      '200':
+      '201':
         description: Added
   delete:
-    summary: Remove authorized user
+    summary: Remove authorized user (query params, not body)
     security:
       - bearerAuth: []
+    parameters:
+      - in: query
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: role
+        required: true
+        schema:
+          type: string
+    responses:
+      '204':
+        description: Removed
+
+/v2/models/stats:
+  post:
+    summary: Get model stats summary by IDs
+    security:
+      - bearerAuth: []   # optional under PUBLIC_VIEWING
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/DeleteAuthorizedUserRequest'
+            type: object
+            required: [ids]
+            properties:
+              ids:
+                type: array
+                items:
+                  type: string
+                minItems: 1
     responses:
-      '204':
-        description: Removed
+      '200':
+        description: '{ statsById: { [modelId]: { ...stats } } }'
 ```

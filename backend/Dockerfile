@@ -1,6 +1,6 @@
 # Stage 1: Build Frontend using build-frontend.sh script
 # Use BUILDPLATFORM for frontend builder since it produces architecture-agnostic static files
-FROM --platform=$BUILDPLATFORM node:20-alpine AS frontend-builder
+FROM --platform=$BUILDPLATFORM node:22-alpine AS frontend-builder
 WORKDIR /app
 
 # Install bash (needed for build script)
@@ -23,7 +23,7 @@ COPY build-frontend.sh ./
 RUN chmod +x build-frontend.sh && ./build-frontend.sh
 
 # Stage 2: Build Backend (only backend code, no frontend source)
-FROM node:20-alpine
+FROM node:22-alpine
 
 # Install Python and build tools needed for native dependencies (bufferutil, utf-8-validate)
 RUN apk add --no-cache python3 make g++
@@ -39,7 +39,20 @@ RUN yarn install --frozen-lockfile --production
 # Remove build tools to reduce image size (optional, but keeps python3 for runtime if needed)
 RUN apk del make g++
 
+# Remove the npm CLI bundled in the base image and the yarn download cache.
+# Nothing at runtime uses npm (CMD runs node via yarn), and npm ships its own
+# vendored copies of tar/pacote/sigstore/brace-expansion/ip-address/picomatch
+# that trip CVE scanners even though the app never loads them.
+RUN rm -rf /usr/local/lib/node_modules/npm \
+           /usr/local/bin/npm /usr/local/bin/npx \
+           /usr/local/share/.cache/yarn \
+           /opt/yarn-v*/lib/cli.js.map
+
 COPY --chown=node:node backend/ .
+
+# Create data directory for VSS files (will be populated by setupScheduledCheck on startup)
+# This ensures the directory exists even if files haven't been downloaded yet
+RUN mkdir -p data && chown -R node:node data
 
 # Copy frontend build into backend static folder
 COPY --from=frontend-builder --chown=node:node /app/backend/static/frontend-dist ./static/frontend-dist

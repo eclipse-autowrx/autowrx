@@ -6,11 +6,14 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { isAxiosError } from 'axios'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Spinner } from '@/components/atoms/spinner'
 import DaImportFile from '@/components/atoms/DaImportFile'
+import { DaImage } from '@/components/atoms/DaImage'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,10 +30,13 @@ import {
   getComputedAPIs,
   updateModelService,
 } from '@/services/model.service'
+import {
+  hasSyncWarningHeader,
+  SYNC_WARNING_REDIRECT_DELAY_MS,
+} from '@/utils/syncWarning'
 import { uploadFileService } from '@/services/upload.service'
 import { convertJSONToProperty } from '@/lib/vehiclePropertyUtils'
 import {
-  TbDotsVertical,
   TbDownload,
   TbEdit,
   TbFileExport,
@@ -45,20 +51,41 @@ import { PERMISSIONS } from '@/data/permission'
 import { cn } from '@/lib/utils'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { listModelsLite } from '@/services/model.service'
+import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import { useDefaultModelImage } from '@/utils/siteConfig'
+import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
+import { useToast } from '@/components/molecules/toaster/use-toast'
+import { ModelVisibility } from '@/types/model.type'
+import { MODEL_VISIBILITY_OPTIONS } from '@/utils/modelVisibility'
+
+const getCreatedById = (createdBy: any): string =>
+  typeof createdBy === 'object' ? createdBy?.id ?? '' : createdBy ?? ''
 
 interface VisibilityControlProps {
-  initialVisibility: 'public' | 'private' | undefined
-  onVisibilityChange: (newVisibility: 'public' | 'private') => void
+  initialVisibility: ModelVisibility | undefined
+  onVisibilityChange: (newVisibility: ModelVisibility) => void
+  canEdit: boolean
 }
 
 const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
   initialVisibility,
   onVisibilityChange,
+  canEdit,
 }) => {
-  const [visibility, setVisibility] = useState(initialVisibility)
+  const [visibility, setVisibility] = useState<ModelVisibility>(
+    initialVisibility || 'private',
+  )
 
-  const toggleVisibility = () => {
-    const newVisibility = visibility === 'public' ? 'private' : 'public'
+  useEffect(() => {
+    setVisibility(initialVisibility || 'private')
+  }, [initialVisibility])
+
+  const selectedOption = MODEL_VISIBILITY_OPTIONS.find(
+    (option) => option.value === visibility,
+  )
+
+  const handleUpdate = (newVisibility: ModelVisibility) => () => {
     setVisibility(newVisibility)
     onVisibilityChange(newVisibility)
   }
@@ -67,18 +94,43 @@ const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
     <div className="flex justify-between items-center border p-2 mt-3 rounded-lg">
       <p className="text-base font-medium text-muted-foreground">
         Visibility:{' '}
-        <span className="text-secondary capitalize font-medium">
-          {visibility}
+        <span
+          className={cn(
+            'capitalize font-medium',
+            visibility === 'public' && 'text-secondary',
+            visibility === 'editable' && 'text-primary',
+          )}
+        >
+          {selectedOption?.label ?? visibility}
         </span>
       </p>
-      <Button
-        onClick={toggleVisibility}
-        variant="outline"
-        size="sm"
-        className="text-primary"
-      >
-        Change to {visibility === 'public' ? 'private' : 'public'}
-      </Button>
+      {canEdit && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="text-primary">
+              Change visibility
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {MODEL_VISIBILITY_OPTIONS.map((option) => (
+              <DropdownMenuItem
+                key={option.value}
+                onClick={handleUpdate(option.value)}
+              >
+                <span
+                  className={cn(
+                    'text-sm font-normal',
+                    option.value === 'public' && 'text-secondary',
+                    option.value === 'editable' && 'text-primary',
+                  )}
+                >
+                  {option.label}
+                </span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   )
 }
@@ -86,8 +138,13 @@ const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
 const DaStateControl: React.FC<{
   initialState: string
   onStateChange: (value: string) => void
-}> = ({ initialState, onStateChange }) => {
+  canEdit: boolean
+}> = ({ initialState, onStateChange, canEdit }) => {
   const [state, setState] = useState(initialState)
+
+  useEffect(() => {
+    setState(initialState)
+  }, [initialState])
 
   const handleUpdate = (newState: string) => async () => {
     setState(newState)
@@ -108,43 +165,70 @@ const DaStateControl: React.FC<{
           {state}
         </span>
       </p>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="text-primary">
-            Change state
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem onClick={handleUpdate('draft')}>
-            Draft
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleUpdate('released')}>
-            <span className="text-secondary">Released</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleUpdate('blocked')}>
-            <span className="text-destructive">Blocked</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {canEdit && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="text-primary">
+              Change state
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={handleUpdate('draft')}>
+              <span className="text-sm font-normal">Draft</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleUpdate('released')}>
+              <span className="text-sm font-normal text-secondary">Released</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleUpdate('blocked')}>
+              <span className="text-sm font-normal text-destructive">Blocked</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   )
 }
 
 const PageModelDetail = () => {
   const [model] = useModelStore((state) => [state.model as Model])
+  const { toast } = useToast()
   const [imageError, setImageError] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isEditingName, setIsEditingName] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
+  const defaultModelImage = useDefaultModelImage()
 
   const [newName, setNewName] = useState(model?.name ?? '')
+  const [nameError, setNameError] = useState('')
   const { refetch } = useCurrentModel()
+  const queryClient = useQueryClient()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
 
   const { data: currentUser } = useSelfProfileQuery()
+
+  // Fetch the model list lazily — only when the user opens the rename input
+  const { data: modelList } = useQuery({
+    queryKey: ['listModelLite', currentUser?.id],
+    queryFn: () => listModelsLite({ created_by: currentUser!.id }),
+    enabled: isEditingName && !!currentUser?.id,
+  })
+
+  const ownedModelNames = useMemo(
+    () =>
+      modelList?.results
+        ?.filter((m) => getCreatedById(m.created_by) === currentUser?.id)
+        .map((m) => m.name) ?? [],
+    [modelList, currentUser],
+  )
+
+  const { isDuplicate: isDuplicateName, suggestedName } = useDuplicateNameCheck(
+    newName,
+    ownedModelNames,
+    model?.name,
+  )
 
   const handleAvatarChange = async (file: File) => {
     if (!model || !model.id) return
@@ -163,20 +247,25 @@ const PageModelDetail = () => {
   }
 
   const handleNameSave = async () => {
-    if (!model || !model.id) return
+    if (!model || !model.id || !newName.trim()) return
+    setNameError('')
     try {
-      await updateModelService(model.id, { name: newName })
+      await updateModelService(model.id, { name: newName.trim() })
       await refetch()
       setIsEditingName(false)
     } catch (error) {
-      console.error('Failed to update model name:', error)
+      if (isAxiosError(error) && error.response?.status === 409) {
+        setNameError(error.response.data?.message || 'A model with this name already exists')
+      } else {
+        console.error('Failed to update model name:', error)
+      }
     }
   }
 
   const handleDeleteModel = async () => {
     try {
       setIsDeleting(true)
-      await deleteModelService(model.id)
+      const response = await deleteModelService(model.id)
       addLog({
         name: `User ${currentUser?.email} deleted model '${model.name}'`,
         description: `User ${currentUser?.email} deleted model '${model.name}' with id ${model.id}`,
@@ -185,6 +274,9 @@ const PageModelDetail = () => {
         ref_id: model.id,
         ref_type: 'model',
       })
+      if (hasSyncWarningHeader(response.headers)) {
+        await new Promise((resolve) => setTimeout(resolve, SYNC_WARNING_REDIRECT_DELAY_MS))
+      }
       window.location.href = '/model'
     } catch (error) {
       console.error('Failed to delete model:', error)
@@ -195,7 +287,7 @@ const PageModelDetail = () => {
 
   if (!model || !model.id) {
     return (
-      <div className="h-full w-full p-4 bg-background rounded-lg flex items-center justify-center">
+      <div className="h-full w-full p-4 bg-background da-page-model-detail rounded-lg flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Spinner size={32} />
           <p className="text-base text-muted-foreground">Loading model...</p>
@@ -205,18 +297,29 @@ const PageModelDetail = () => {
   }
 
   return (
-    <div className="flex flex-col bg-background p-4 h-full rounded-md overflow-auto">
+    <div className="flex flex-col bg-background da-page-model-detail p-4 h-full rounded-md overflow-auto">
       <div className="flex h-fit pb-3">
         <div className="flex w-full justify-between items-center">
           <div className="flex items-center">
             <div className="flex flex-col items-center space-y-2">
               {isEditingName ? (
-                <div className="flex items-center h-[36px]">
+                <div className="flex flex-col gap-1">
                   <Input
                     value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
+                    onChange={(e) => { setNewName(e.target.value); setNameError('') }}
                     className="h-8 min-w-[300px]"
                   />
+                  {isDuplicateName && (
+                    <DaDuplicateNameHint
+                      message="A model with this name already exists"
+                      suggestedName={suggestedName}
+                      onApplySuggestion={(name) => { setNewName(name); setNameError('') }}
+                      className="mt-2"
+                    />
+                  )}
+                  {nameError && !isDuplicateName && (
+                    <p className="text-sm text-secondary mt-2">{nameError}</p>
+                  )}
                 </div>
               ) : (
                 <h1 className="text2xl font-semibold text-primary w-full">
@@ -227,10 +330,10 @@ const PageModelDetail = () => {
           </div>
         </div>
         {isAuthorized && (
-          <div className="flex">
+          <div className="flex gap-2">
             {!isEditingName ? (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 className="justify-start"
                 onClick={() => {
@@ -242,7 +345,7 @@ const PageModelDetail = () => {
                 Edit
               </Button>
             ) : (
-              <div className="flex items-center space-x-2 mr-1">
+              <div className="flex items-center space-x-2 mr-1 h-fit">
                 <Button
                   variant="outline"
                   size="sm"
@@ -256,88 +359,109 @@ const PageModelDetail = () => {
                   size="sm"
                   className="w-16"
                   onClick={handleNameSave}
+                  disabled={!newName.trim() || isDuplicateName}
                 >
                   Save
                 </Button>
               </div>
             )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    'flex w-fit space-x-3',
-                    isEditingName && 'pointer-events-none opacity-50',
-                  )}
-                >
-                  {!isDeleting && !isExporting && !isDownloading && (
-                    <TbDotsVertical className="size-4" />
-                  )}
-
-                  {isDeleting && (
-                    <div className="flex items-center">
-                      <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                      Deleting Model...
-                    </div>
-                  )}
-                  {isExporting && (
-                    <div className="flex items-center">
-                      <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                      Exporting Model...
-                    </div>
-                  )}
-                  {isDownloading && (
-                    <div className="flex items-center">
-                      <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                      Downloading Signal Data...
-                    </div>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={async () => {
-                    if (!model) return
-                    setIsExporting(true)
-                    try {
-                      await downloadModelZip(model)
-                    } catch (e) {
-                      console.error(e)
-                    }
-                    setIsExporting(false)
-                  }}
-                >
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                'flex w-fit space-x-3',
+                isEditingName && 'pointer-events-none opacity-50',
+              )}
+              onClick={async () => {
+                if (!model) return
+                setIsExporting(true)
+                try {
+                  await downloadModelZip(model)
+                } catch (e) {
+                  console.error(e)
+                  toast({
+                    title: 'Export failed',
+                    description:
+                      'Could not export this model. Please try again.',
+                    variant: 'destructive',
+                  })
+                }
+                setIsExporting(false)
+              }}
+              disabled={isDeleting || isExporting || isDownloading || isEditingName}
+            >
+              {isExporting ? (
+                <div className="flex items-center">
+                  <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                  Exporting Model...
+                </div>
+              ) : (
+                <>
                   <TbFileExport className="w-4 h-4 mr-1" />
-                  Export Model
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={async () => {
-                    if (!model) return
-                    try {
-                      const data = await getComputedAPIs(model.id)
-                      const link = document.createElement('a')
-                      link.href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 4))}`
-                      link.download = `${model.name}_vss.json`
-                      document.body.appendChild(link)
-                      link.click()
-                      document.body.removeChild(link)
-                    } catch (e) {
-                      console.error(e)
-                    } finally {
-                      setIsDownloading(false)
-                    }
-                  }}
-                >
+                  Export
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                'flex w-fit space-x-3',
+                isEditingName && 'pointer-events-none opacity-50',
+              )}
+              onClick={async () => {
+                if (!model) return
+                setIsDownloading(true)
+                try {
+                  const data = await getComputedAPIs(model.id)
+                  const link = document.createElement('a')
+                  link.href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 4))}`
+                  link.download = `${model.name}_vss.json`
+                  document.body.appendChild(link)
+                  link.click()
+                  document.body.removeChild(link)
+                } catch (e) {
+                  console.error(e)
+                } finally {
+                  setIsDownloading(false)
+                }
+              }}
+              disabled={isDeleting || isExporting || isDownloading || isEditingName}
+            >
+              {isDownloading ? (
+                <div className="flex items-center">
+                  <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                  Downloading Signal Data...
+                </div>
+              ) : (
+                <>
                   <TbDownload className="w-4 h-4 mr-1" />
-                  Download Vehicle API JSON file
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setConfirmPopupOpen(true)}>
+                  Download
+                </>
+              )}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              className={cn(
+                'flex w-fit space-x-3',
+                isEditingName && 'pointer-events-none opacity-50',
+              )}
+              onClick={() => setConfirmPopupOpen(true)}
+              disabled={isDeleting || isExporting || isDownloading || isEditingName}
+            >
+              {isDeleting ? (
+                <div className="flex items-center">
+                  <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                  Deleting Model...
+                </div>
+              ) : (
+                <>
                   <TbTrashX className="w-4 h-4 mr-1" />
-                  Delete Model
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  Delete
+                </>
+              )}
+            </Button>
             <DaConfirmPopup
               onConfirm={handleDeleteModel}
               title="Delete Model"
@@ -354,11 +478,12 @@ const PageModelDetail = () => {
       <div className="flex">
         <div className="grid gap-4 grid-cols-12 w-full overflow-auto">
           <div className="col-span-6 flex flex-col overflow-y-auto">
-            <div className="flex w-full relative overflow-hidden">
-              <img
-                className="w-full object-cover max-h-[500px] aspect-video rounded-lg border"
+            <div className="relative w-full aspect-video max-h-[500px] overflow-hidden rounded-lg border bg-muted">
+              <DaImage
                 src={model.model_home_image_file}
+                fallbackSrc={defaultModelImage}
                 alt={model.name}
+                className="absolute inset-0 h-full w-full object-cover"
               />
               {isAuthorized && (
                 <DaImportFile
@@ -387,38 +512,40 @@ const PageModelDetail = () => {
             </div>
           </div>
           <div className="col-span-6">
-            {isAuthorized && (
-              <>
-                <DaVehicleProperties
-                  key={model.id}
-                  category={
-                    model.vehicle_category ? model.vehicle_category : ''
-                  }
-                  properties={convertJSONToProperty(model.property) ?? []}
-                />
+            <>
+              <DaVehicleProperties
+                key={model.id}
+                category={model.vehicle_category ? model.vehicle_category : ''}
+                properties={convertJSONToProperty(model.property) ?? []}
+                canEdit={isAuthorized}
+              />
 
-                <DaVisibilityControl
-                  initialVisibility={model.visibility}
-                  onVisibilityChange={(newVisibility) => {
-                    updateModelService(model.id, {
-                      visibility: newVisibility,
-                    })
-                  }}
-                />
+              <DaVisibilityControl
+                initialVisibility={model.visibility}
+                onVisibilityChange={async (newVisibility) => {
+                  await updateModelService(model.id, {
+                    visibility: newVisibility,
+                  })
+                  await refetch()
+                  await queryClient.invalidateQueries({ queryKey: ['modelsList'], refetchType: 'all' })
+                }}
+                canEdit={isAuthorized}
+              />
 
-                <DaStateControl
-                  initialState={model.state || ''}
-                  onStateChange={async (state) => {
-                    await updateModelService(model.id, {
-                      state: (state || 'draft') as Model['state'],
-                    })
-                    await refetch()
-                  }}
-                />
+              <DaStateControl
+                initialState={model.state || ''}
+                onStateChange={async (state) => {
+                  await updateModelService(model.id, {
+                    state: (state || 'draft') as Model['state'],
+                  })
+                  await refetch()
+                  await queryClient.invalidateQueries({ queryKey: ['modelsList'], refetchType: 'all' })
+                }}
+                canEdit={isAuthorized}
+              />
 
-                <DaContributorList className="mt-3" />
-              </>
-            )}
+              {isAuthorized && <DaContributorList className="mt-3" canEdit={true} />}
+            </>
           </div>
         </div>
       </div>

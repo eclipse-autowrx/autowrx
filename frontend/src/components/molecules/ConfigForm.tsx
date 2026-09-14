@@ -62,7 +62,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    
+
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({ ...prev, [name]: checked }));
@@ -84,15 +84,18 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
     setValueError('');
   };
 
-  const parseValue = (value: string, type: string): any => {
+  const parseValue = (value: any, type: string): any => {
     try {
       switch (type) {
         case 'number':
           return parseFloat(value);
         case 'boolean':
-          return value.toLowerCase() === 'true';
+          if (typeof value === 'boolean') return value;
+          return String(value).toLowerCase() === 'true';
         case 'object':
         case 'array':
+          // JsonEditor already passes parsed objects — only parse if it's a string
+          if (value !== null && typeof value === 'object') return value;
           return JSON.parse(value);
         case 'date':
           return new Date(value).toISOString();
@@ -106,14 +109,19 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const parsedValue = parseValue(formData.value, valueType);
       
-      const configData = {
+      const configData: any = {
         ...formData,
         value: parsedValue,
       };
+
+      // Strip target_id when empty — backend forbids it for site scope
+      if (!configData.target_id) {
+        delete configData.target_id;
+      }
 
       await onSave(configData);
     } catch (error) {
@@ -176,6 +184,22 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
           />
         );
       default: // string
+        // Secret fields use a password input — values are write-only
+        if (formData.secret) {
+          return (
+            <div className="relative">
+              <Input
+                type="password"
+                name="value"
+                value={formData.value}
+                onChange={(e) => handleValueChange(e.target.value)}
+                placeholder={config ? 'Enter new value (leave empty to keep current)' : 'Enter secret value'}
+                className="pr-9"
+                autoComplete="new-password"
+              />
+            </div>
+          );
+        }
         return (
           <Textarea
             name="value"

@@ -13,23 +13,41 @@ import { Spinner } from '@/components/atoms/spinner'
 import { loginService } from '@/services/auth.service'
 import { addLog } from '@/services/log.service'
 import { isAxiosError } from 'axios'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { TbAt, TbLock } from 'react-icons/tb'
 import SSOHandler from '../SSOHandler'
 import config from '@/configs/config'
 import { useAuthConfigs } from '@/hooks/useAuthConfigs'
 import { useSSOProviders } from '@/hooks/useSSOProviders'
+import { useQueryClient } from '@tanstack/react-query'
+import useAuthStore from '@/stores/authStore'
 
 interface FormSignInProps {
   setAuthType: (type: 'sign-in' | 'register' | 'forgot') => void
 }
 
 const FormSignIn = ({ setAuthType }: FormSignInProps) => {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [ssoLoading, setSSOLoading] = useState<string | null>(null)
   const [error, setError] = useState<string>('')
+  const queryClient = useQueryClient()
+  const [setUser, setOpenLoginDialog] = useAuthStore((state) => [
+    state.setUser,
+    state.setOpenLoginDialog,
+  ])
   const { authConfigs } = useAuthConfigs()
   const { providers: ssoProviders } = useSSOProviders()
+
+  useEffect(() => {
+    const err = searchParams.get('error')
+    if (err) {
+      setError(decodeURIComponent(err))
+      setSearchParams({}, { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const signIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -39,8 +57,15 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
         e.currentTarget.email.value,
         e.currentTarget.password.value,
       ]
-      await loginService(email, password)
-      window.location.href = window.location.href
+      const authResponse = await loginService(email, password)
+
+      if (authResponse?.user && authResponse?.tokens?.access) {
+        setUser(authResponse.user, authResponse.tokens.access)
+        queryClient.setQueryData(['getSelf'], authResponse.user)
+      }
+
+      setOpenLoginDialog(false)
+      setError('')
     } catch (error) {
       if (isAxiosError(error)) {
         setError(error.response?.data.message || 'Something went wrong')

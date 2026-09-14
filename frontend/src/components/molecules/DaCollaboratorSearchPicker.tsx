@@ -101,7 +101,7 @@ const DaCollaboratorSearchPicker = ({
           </span>
 
           {matchedSelectedUsers.length > 0 && (
-            <div className="-mx-5 w-[calc(100%+40px)]">
+              <div className="w-full px-2">
               {matchedSelectedUsers.map((user) => (
                 <DaUserInviteItem
                   key={user.id}
@@ -140,7 +140,7 @@ const DaCollaboratorSearchPicker = ({
             People with access
           </span>
 
-          <div className="-mx-5">
+          <div className="w-full px-2">
             {matchedInvitedUsers.map((user) => (
               <DaUserInviteItem
                 accessLevel={user.access_level}

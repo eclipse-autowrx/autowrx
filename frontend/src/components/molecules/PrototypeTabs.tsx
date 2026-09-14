@@ -8,18 +8,26 @@
 
 import { FC } from 'react'
 import DaTabItem from '@/components/atoms/DaTabItem'
-import { useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import {
   TbCode,
   TbGauge,
   TbMapPin,
+  TbMessagePlus,
   TbRoute,
 } from 'react-icons/tb'
-import { TabConfig } from '@/components/organisms/CustomTabEditor'
+import { TabConfig, TabsBorderRadius } from '@/components/organisms/CustomTabEditor'
+import { renderTabIcon, tabItemClasses } from '@/lib/tabUtils'
+import { cn } from '@/lib/utils'
 
 interface PrototypeTabsProps {
   tabs?: TabConfig[]
+  /** Global visual style for all tab buttons. Defaults to 'tab' (bottom-border style). */
+  tabsVariant?: string
+  /** Border radius for tab buttons. Defaults to 'medium'. */
+  tabsBorderRadius?: TabsBorderRadius
 }
+
 
 // Default builtin tabs
 const DEFAULT_BUILTIN_TABS: TabConfig[] = [
@@ -27,6 +35,7 @@ const DEFAULT_BUILTIN_TABS: TabConfig[] = [
   { type: 'builtin', key: 'journey', label: 'Customer Journey' },
   { type: 'builtin', key: 'code', label: 'SDV Code' },
   { type: 'builtin', key: 'dashboard', label: 'Dashboard' },
+  { type: 'builtin', key: 'feedback', label: 'Feedback' },
 ]
 
 // Migration helper: convert old format to new format
@@ -41,12 +50,17 @@ export const migrateTabConfig = (oldTabs?: Array<{ label: string; plugin: string
     return oldTabs as TabConfig[]
   }
 
-  // Old format: prepend default builtin tabs
-  const customTabs: TabConfig[] = oldTabs.map(tab => ({
-    type: 'custom',
-    label: tab.label,
-    plugin: tab.plugin,
-  }))
+  // Old format: prepend default builtin tabs.
+  // Entries with an empty plugin string were originally builtin tabs whose type/key metadata
+  // was lost during serialization (e.g. saved by an older version of TemplateForm that stripped
+  // TabConfig fields). They carry no actionable info, so we skip them to avoid ghost custom tabs.
+  const customTabs: TabConfig[] = oldTabs
+    .filter(tab => !!tab.plugin)
+    .map(tab => ({
+      type: 'custom',
+      label: tab.label,
+      plugin: tab.plugin,
+    }))
 
   return [...DEFAULT_BUILTIN_TABS, ...customTabs]
 }
@@ -56,8 +70,11 @@ export const getTabConfig = (tabs?: any[]): TabConfig[] => {
   return migrateTabConfig(tabs)
 }
 
-const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs }) => {
+const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRadius }) => {
   const { model_id, prototype_id, tab } = useParams()
+  const [searchParams] = useSearchParams()
+  const variant = tabsVariant || 'tab'
+  const borderRadius = tabsBorderRadius || 'round'
 
   // Get tabs with migration
   const tabConfigs = getTabConfig(tabs)
@@ -65,44 +82,68 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs }) => {
   // Filter out hidden tabs
   const visibleTabs = tabConfigs.filter(t => !t.hidden)
 
+  // The first visible tab is the default when no tab is in the URL
+  const firstVisibleTab = visibleTabs[0]
+
   return (
     <>
       {visibleTabs.map((tabConfig, index) => {
         if (tabConfig.type === 'builtin') {
-          // Render builtin tabs
           const { key, label } = tabConfig
           let route = ''
-          let icon = null
+          let defaultIcon: React.ReactNode = null
           let dataId = ''
 
           switch (key) {
             case 'overview':
               route = `/model/${model_id}/library/prototype/${prototype_id}/view`
-              icon = <TbRoute className="w-5 h-5 mr-2" />
+              defaultIcon = <TbRoute className="w-5 h-5 mr-2" />
               break
             case 'journey':
               route = `/model/${model_id}/library/prototype/${prototype_id}/journey`
-              icon = <TbMapPin className="w-5 h-5 mr-2" />
+              defaultIcon = <TbMapPin className="w-5 h-5 mr-2" />
               dataId = 'tab-journey'
+              break
+            case 'feedback':
+              route = `/model/${model_id}/library/prototype/${prototype_id}/feedback`
+              defaultIcon = <TbMessagePlus className="w-5 h-5 mr-2" />
+              dataId = 'tab-feedback'
               break
             case 'code':
               route = `/model/${model_id}/library/prototype/${prototype_id}/code`
-              icon = <TbCode className="w-5 h-5 mr-2" />
+              defaultIcon = <TbCode className="w-5 h-5 mr-2" />
               dataId = 'tab-code'
               break
             case 'dashboard':
               route = `/model/${model_id}/library/prototype/${prototype_id}/dashboard`
-              icon = <TbGauge className="w-5 h-5 mr-2" />
+              defaultIcon = <TbGauge className="w-5 h-5 mr-2" />
               dataId = 'tab-dashboard'
               break
             default:
               return null
           }
 
-          // Determine if tab is active
           const isActive =
-            (key === 'overview' && (!tab || tab === 'view')) ||
+            ((!tab || tab === 'view') && firstVisibleTab?.type === 'builtin' && firstVisibleTab?.key === key) ||
             (tab === key)
+
+          const icon = renderTabIcon(tabConfig, defaultIcon)
+
+          if (variant !== 'tab') {
+            return (
+              <Link
+                key={`builtin-${key}`}
+                to={route}
+                data-id={dataId}
+                className={cn(
+                  tabItemClasses(variant, isActive, false, borderRadius),
+                  'da-prototype-tab',
+                )}
+              >
+                {icon}{label}
+              </Link>
+            )
+          }
 
           return (
             <DaTabItem
@@ -110,23 +151,40 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs }) => {
               active={isActive}
               to={route}
               dataId={dataId}
+              className="da-prototype-tab"
             >
-              {icon}
-              {label}
+              {icon}{label}
             </DaTabItem>
           )
         } else {
-          // Render custom tabs
           const { label, plugin } = tabConfig
-          const isActive = tab === 'plug' && window.location.search.includes(`plugid=${plugin}`)
+          const isActive = tab === 'plug' && searchParams.get('plugid') === plugin
+          const icon = renderTabIcon(tabConfig, null)
+          const to = `/model/${model_id}/library/prototype/${prototype_id}/plug?plugid=${plugin}`
+
+          if (variant !== 'tab') {
+            return (
+              <Link
+                key={`custom-${plugin}-${index}`}
+                to={to}
+                className={cn(
+                  tabItemClasses(variant, isActive, false, borderRadius),
+                  'da-prototype-tab',
+                )}
+              >
+                {icon}{label}
+              </Link>
+            )
+          }
 
           return (
             <DaTabItem
               key={`custom-${plugin}-${index}`}
               active={isActive}
-              to={`/model/${model_id}/library/prototype/${prototype_id}/plug?plugid=${plugin}`}
+              to={to}
+              className="da-prototype-tab"
             >
-              {label}
+              {icon}{label}
             </DaTabItem>
           )
         }
@@ -136,4 +194,3 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs }) => {
 }
 
 export default PrototypeTabs
-

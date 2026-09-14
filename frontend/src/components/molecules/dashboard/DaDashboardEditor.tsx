@@ -21,17 +21,20 @@ import {
   TbSelector,
   TbCopy,
   TbCopyPlus,
+  TbShoppingCart,
+  TbLayoutGrid,
 } from 'react-icons/tb'
-import { TbShoppingCart, TbLayoutGrid } from 'react-icons/tb'
 import { BsStars } from 'react-icons/bs'
 import BUILT_IN_WIDGETS, {
   BUILT_IN_EMBEDDED_WIDGETS,
 } from '@/data/builtinWidgets'
 import DaTooltip from '@/components/molecules/DaTooltip'
 import config from '@/configs/config'
-import { isContinuousRectangle, doesOverlap, calculateSpans, parseWidgetConfig } from '@/lib/utils'
+import { isContinuousRectangle, doesOverlap, calculateSpans, parseWidgetConfig, parseCvi } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { WidgetConfig } from '@/types/widget.type'
+import { VehicleApi } from '@/types/model.type'
+import { CVI_v4_1 } from '@/data/CVI_v4.1'
 import DaDialog from '@/components/molecules/DaDialog'
 import CodeEditor from '@/components/molecules/CodeEditor'
 import useModelStore from '@/stores/modelStore'
@@ -46,6 +49,24 @@ import DaWidgetList from '@/components/molecules/widgets/DaWidgetList'
 import useListMarketplaceWidgets from '@/hooks/useListMarketplaceWidgets'
 import { Input } from '@/components/atoms/input'
 import ModelApiList from '@/components/organisms/ModelApiList'
+import { getUsedVehicleApiNames, getUsedVehicleApis, applySyncWithCodeToOptions } from '@/hooks/useUsedVehicleApisFromCode'
+
+// Parse CVI once at module level — used as fallback API list when no model is loaded (e.g. template manager)
+let _defaultApis: VehicleApi[] | null = null
+const getDefaultApis = (): VehicleApi[] => {
+  if (!_defaultApis) {
+    try {
+      const parsed = parseCvi(JSON.parse(CVI_v4_1))
+      _defaultApis = parsed.map((item: any) => {
+        const parts = item.name.split('.')
+        return { ...item, shortName: parts.length > 1 ? '.' + parts.slice(1).join('.') : item.name }
+      })
+    } catch {
+      _defaultApis = []
+    }
+  }
+  return _defaultApis
+}
 
 interface DaDashboardWidgetEditorProps {
   widgetEditorPopupState: [
@@ -155,16 +176,21 @@ const DaDashboardWidgetEditor = ({
         )
         delete options.iconURL
         delete options.url
-      } catch (e) {}
+      } catch (e) { }
+      const usedApiNames = getUsedVehicleApiNames(
+        localPrototype.code,
+        activeModelApis,
+      )
+      applySyncWithCodeToOptions(options, usedApiNames)
       setOptionStr(JSON.stringify(options, null, 4))
     }
-  }, [selectedWidget])
+  }, [selectedWidget, localPrototype.code, activeModelApis])
 
   useEffect(() => {
     if (isWizard) {
       setLocalPrototype(prototypeData)
     } else {
-      setLocalPrototype(prototype)
+      setLocalPrototype(prototype ?? { code: '' })
     }
   }, [prototype, prototypeData, isWizard])
 
@@ -174,15 +200,10 @@ const DaDashboardWidgetEditor = ({
       !activeModelApis ||
       activeModelApis.length === 0
     ) {
+      setUsedAPIs([])
       return
     }
-    let newUsedAPIsList = [] as string[]
-    activeModelApis.forEach((item) => {
-      if (localPrototype.code && localPrototype.code.includes(item.shortName)) {
-        newUsedAPIsList.push(item)
-      }
-    })
-    setUsedAPIs(newUsedAPIsList)
+    setUsedAPIs(getUsedVehicleApis(localPrototype.code, activeModelApis))
   }, [localPrototype.code, activeModelApis])
 
   const copyAllSignals = () => {
@@ -215,7 +236,7 @@ const DaDashboardWidgetEditor = ({
     >
       <div className="flex flex-col w-full h-full">
         <div className="flex relative w-full justify-between items-center mb-2">
-          <div className="flex-1"></div>
+          <div className="font-semibold text-slate-800">Options</div>
           {usedAPIs && usedAPIs.length > 0 && (
             <div ref={dropdownRef} className="flex flex-col relative">
               <div className="flex w-full justify-end">
@@ -267,10 +288,9 @@ const DaDashboardWidgetEditor = ({
           )}
         </div>
 
-        <div className="flex grow overflow-auto">
-          <div className="grow">
-            <div className="overflow-auto h-[220px] max-h-[262px]">
-              <div className="font-semibold text-slate-800">Options</div>
+        <div className="flex gap-4 h-110 overflow-hidden">
+          <div className="grow flex flex-col min-h-0 pt-3">
+            <div className="flex-1 min-h-0 overflow-auto rounded border border-border">
               <CodeEditor
                 language="json"
                 editable={true}
@@ -278,11 +298,11 @@ const DaDashboardWidgetEditor = ({
                 setCode={(e) => {
                   setOptionStr(e)
                 }}
-                onBlur={() => {}}
+                onBlur={() => { }}
               />
             </div>
 
-            <div className="py-2 flex items-center">
+            <div className="py-2 flex items-center shrink-0">
               <div className="font-semibold text-slate-800">Boxes:</div>
               <div className="w-full pl-2">
                 <Input
@@ -293,7 +313,7 @@ const DaDashboardWidgetEditor = ({
                 />
               </div>
             </div>
-            <div className="py-2 flex items-center">
+            <div className="py-2 flex items-center shrink-0">
               <div className="font-semibold text-slate-800">URL/Path:</div>
               <div className="w-full pl-2">
                 <Input
@@ -305,8 +325,8 @@ const DaDashboardWidgetEditor = ({
               </div>
             </div>
           </div>
-          <div className="min-w-[500px] max-h-[400px] overflow-auto">
-            <ModelApiList />
+          <div className="min-w-[500px] h-full overflow-auto">
+            <ModelApiList fallbackApis={getDefaultApis()} />
           </div>
         </div>
 
@@ -327,12 +347,12 @@ const DaDashboardWidgetEditor = ({
               let newOption = {} as any
               try {
                 newOption = JSON.parse(optionStr)
-              } catch (err) {}
+              } catch (err) { }
 
               let widget = {} as any
               try {
                 widget = JSON.parse(selectedWidget)
-              } catch (err) {}
+              } catch (err) { }
 
               // Check if this is a built-in widget (has a non-empty path)
               const isBuiltInWidget = widget.path && widget.path.trim() !== ''
@@ -349,7 +369,7 @@ const DaDashboardWidgetEditor = ({
               widget.options = newOption
               try {
                 widget.boxes = JSON.parse(boxes)
-              } catch (err) {}
+              } catch (err) { }
               handleUpdateWidget(JSON.stringify(widget, null, 4))
               codeEditorPopup[1](false)
             }}
@@ -375,21 +395,21 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
   popupState,
   targetSelectionCells,
 }) => {
-  const [prototype] = useModelStore(
-    (state: any) => [state.prototype as Prototype],
+  const [prototype, activeModelApis] = useModelStore(
+    (state: any) => [state.prototype as Prototype, state.activeModelApis],
     shallow,
   )
   const { data: user } = useSelfProfileQuery()
   const { data: marketWidgets } = useListMarketplaceWidgets()
   const modalRef = useRef<HTMLDivElement>(null)
   const buildinWidgets = BUILT_IN_WIDGETS
-  let [renderWidgets, setRenderWidgets] = useState<any[]>([])
-  let [activeTab, setActiveTab] = useState<'builtin' | 'market' | 'genAI'>(
+  const [renderWidgets, setRenderWidgets] = useState<any[]>([])
+  const [activeTab, setActiveTab] = useState<'builtin' | 'market' | 'genAI'>(
     'builtin',
   )
 
-  let [activeWidget, setActiveWidget] = useState<any>(null)
-  let [pickedCells, setPickedCells] = useState<any[]>([])
+  const [activeWidget, setActiveWidget] = useState<any>(null)
+  const [pickedCells, setPickedCells] = useState<any[]>([])
   const [optionsStr, setOptionStr] = useState<string>('')
   const [projectCreating, setProjectCreating] = useState<boolean>(false)
 
@@ -430,7 +450,16 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
         // Fallback to activeWidget.options or empty object
         options = activeWidget.options ? JSON.parse(JSON.stringify(activeWidget.options)) : {}
       }
-      
+
+      const usedApiNames = getUsedVehicleApiNames(
+        prototype?.code,
+        activeModelApis,
+      )
+      if (activeWidget.plugin === 'Builtin') {
+        options.syncWithCode = true
+      }
+      applySyncWithCodeToOptions(options, usedApiNames)
+
       if (activeTab === 'market') {
         options['iconURL'] = activeWidget.icon
       }
@@ -550,7 +579,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
           if (a.weight > b.weight) return 1
           return 0
         })
-      } catch (e) {}
+      } catch (e) { }
     }
 
     setRenderWidgets(widgets)
@@ -776,10 +805,8 @@ const DaDashboardEditor = ({
   }
 
   useEffect(() => {
-    ;(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 3000))
-      setWarningMessage(null)
-    })()
+    const timer = setTimeout(() => setWarningMessage(null), 3000)
+    return () => clearTimeout(timer)
   }, [warningMessage])
 
   const handleAddWidget = () => {
@@ -893,13 +920,13 @@ const DaDashboardEditor = ({
           'group relative flex cursor-pointer select-none border border-gray-300 text-gray-700 text-sm',
           `col-span-${colSpan} row-span-${rowSpan}`,
           selectedWidgetIndex === index &&
-            '!border-primary !bg-gray-100 !text-primary',
+          '!border-primary !bg-gray-100 !text-primary',
           'bg-gray-100 hover:bg-gray-100',
         )}
         key={`${index}-${cell}`}
         onClick={() => handleWidgetClick(index)}
       >
-        <div className="absolute right-1 top-1 hidden w-fit rounded bg-white group-hover:block">
+        <div className="absolute right-1 top-1 z-10 w-fit rounded bg-white opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto">
           <div className="flex items-center">
             <DaTooltip tooltipMessage="Delete widget">
               <Button
@@ -949,8 +976,8 @@ const DaDashboardEditor = ({
                   widgetConfig.options && widgetConfig.options.iconURL
                     ? widgetConfig.options.iconURL
                     : buildinWidgets.find(
-                        (widget) => widget.widget === widgetConfig?.widget,
-                      )?.icon
+                      (widget) => widget.widget === widgetConfig?.widget,
+                    )?.icon
                 if (imageUrl) {
                   return (
                     <img
@@ -968,11 +995,11 @@ const DaDashboardEditor = ({
             </div>
             <div className="w-full pt-2 text-center !text-xs font-semibold">
               {widgetConfig.options?.url &&
-              widgetConfig.options.url.includes('/store-be/')
+                widgetConfig.options.url.includes('/store-be/')
                 ? widgetConfig.options.url
-                    .split('/store-be/')[1]
-                    .split('/')[0]
-                    .replace(/%20/g, ' ')
+                  .split('/store-be/')[1]
+                  .split('/')[0]
+                  .replace(/%20/g, ' ')
                 : widgetConfig.widget}
             </div>
           </div>
@@ -1093,7 +1120,7 @@ const DaDashboardEditor = ({
   }
 
   return (
-    <div className="flex w-full flex-col h-full items-center justify-start p-0">
+    <div className="flex w-full flex-col h-full items-center justify-start p-0 flex-1">
       <div
         className={cn(
           'grid w-full grid-cols-5 grow grid-rows-2 border border-gray-300',
@@ -1103,11 +1130,6 @@ const DaDashboardEditor = ({
       >
         {widgetGrid()}
       </div>
-      {editable && (
-        <span className="py-2 text-sm font-semibold text-orange-500">
-          Click on empty cell to place new widget
-        </span>
-      )}
       {warningMessage && (
         <div className="mt-3 flex w-fit select-none items-center justify-center rounded border border-gray-200 px-2 py-1 shadow-sm">
           <TbExclamationMark className="mr-1 flex h-5 w-5 text-orange-500" />

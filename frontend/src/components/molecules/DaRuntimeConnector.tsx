@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { forwardRef, useState, useEffect, useImperativeHandle } from 'react'
+import { forwardRef, useState, useEffect, useImperativeHandle, useRef, useMemo } from 'react'
 import useRuntimeStore from '@/stores/runtimeStore'
 import { shallow } from 'zustand/shallow'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
@@ -14,6 +14,8 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useAssets } from '@/hooks/useAssets'
 
 import { io } from 'socket.io-client'
+import { useSiteConfig } from '@/utils/siteConfig'
+import { parseReadFileReply, prepareKitFileContentForWrite } from '@/utils/kitReply'
 
 export interface Runtime {
   desc: string
@@ -27,9 +29,11 @@ export interface Runtime {
 
 interface KitConnectProps {
   kitServerUrl?: string
+  socketIoConfig?: Record<string, any>
   hideLabel?: boolean
-  targetPrefix: string
+  targetPrefix: string | string[]
   usedAPIs: string[]
+  forceKitId?: string
   onActiveRtChanged?: (newActiveKitId: string | undefined) => void
   onLoadedMockSignals?: (signals: []) => void
   onNewLog?: (log: string) => void
@@ -37,8 +41,12 @@ interface KitConnectProps {
   onAppRunningStateChanged?: (isRunning: boolean) => void
   onRuntimeInfoReceived?: (payload: any) => void
   onDeployResponse?: (log: string, isDone: boolean) => void
+  onReadFileResponse?: (filePath: string, fileContent: string) => void
   isDeployMode?: boolean
 }
+
+const TAB_HEARTBEAT_MS = 2 * 1000
+const DEFAULT_TICKER_MS = 30 * 1000
 
 const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
   (
@@ -46,13 +54,16 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       hideLabel = false,
       targetPrefix = 'runtime-',
       kitServerUrl,
+      socketIoConfig,
       usedAPIs,
+      forceKitId,
       onActiveRtChanged,
       onLoadedMockSignals,
       onNewLog,
       onAppRunningStateChanged,
       onRuntimeInfoReceived,
       onDeployResponse,
+      onReadFileResponse,
       isDeployMode = false,
     },
     ref,
@@ -62,12 +73,70 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const [allRuntimes, setAllRuntimes] = useState<any>([])
     const [ticker, setTicker] = useState(0)
 
+    const socketioRef = useRef<any>(null)
+    const activeRtIdRef = useRef<string | undefined>('')
+    const forceKitIdRef = useRef<string | undefined>(forceKitId)
+    const wasDisconnectedRef = useRef<boolean>(false)
+    const hasLoadedKitListRef = useRef<boolean>(false)
+    socketioRef.current = socketio
+    activeRtIdRef.current = activeRtId
+    forceKitIdRef.current = forceKitId
+
     const [rawApisPackage, setRawApisPackage] = useState<any>(null)
     const { data: prototype } = useCurrentPrototype()
     const { data: currentUser } = useSelfProfileQuery()
+    const currentUserRef = useRef(currentUser)
+    currentUserRef.current = currentUser
     const { useFetchAssets } = useAssets()
     const { data: assets } = useFetchAssets()
+
+    // Read RUNTIME_SERVER_CONFIG from site config as fallback for socketIoConfig
+    const runtimeServerConfigRaw = useSiteConfig('RUNTIME_SERVER_CONFIG', '')
+    const siteConfigSocketIoConfig = useMemo(() => {
+      if (!runtimeServerConfigRaw) return {}
+      try {
+        const parsed =
+          typeof runtimeServerConfigRaw === 'string'
+            ? JSON.parse(runtimeServerConfigRaw)
+            : runtimeServerConfigRaw
+        return typeof parsed === 'object' && parsed !== null ? parsed : {}
+      } catch {
+        return {}
+      }
+    }, [runtimeServerConfigRaw])
+
+    // Use prop socketIoConfig, fallback to site config
+    const effectiveSocketIoConfig = useMemo(() => {
+      return socketIoConfig || siteConfigSocketIoConfig || {}
+    }, [socketIoConfig, siteConfigSocketIoConfig])
+
     const [renderRuntimes, setRenderRuntimes] = useState<Runtime[]>([])
+    const [hasLoadedKitList, setHasLoadedKitList] = useState(false)
+    hasLoadedKitListRef.current = hasLoadedKitList
+    const [kitListRequestTime, setKitListRequestTime] = useState<number | null>(null)
+    const [kitListRequestTimeout, setKitListRequestTimeout] = useState(false)
+    const [socketConnectionTimeout, setSocketConnectionTimeout] = useState(false)
+    const kitListTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const socketConnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const prevActiveRtIdRef = useRef<string | undefined>('')
+
+    const getSelectedKitId = (): string | undefined => {
+      if (forceKitId) return forceKitId
+      return activeRtId
+    }
+
+    const emitRuntimeInfoForSelectedKit = (sock: any) => {
+      const kitId = getSelectedKitId()
+      if (!kitId) return
+      const rt = renderRuntimes.find(
+        (r: Runtime) => r.kit_id.toLowerCase() === kitId.toLowerCase(),
+      )
+      if (rt && !rt.is_online) return
+      sock.emit('messageToKit', {
+        cmd: 'get-runtime-info',
+        to_kit_id: kitId,
+      })
+    }
 
     useImperativeHandle(ref, () => {
       return {
@@ -83,41 +152,76 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         writeVarsValue,
         revertToDefaultVehicleModel,
         builldVehicleModel,
-        getRuntimeInfo
+        getRuntimeInfo,
+        readFile,
+        writeFile,
       }
     })
 
-    const [apisValue, setActiveApis, setTraceVars, setAppLog] = useRuntimeStore(
-      (state) => [state.apisValue, state.setActiveApis, state.setTraceVars, state.setAppLog],
+    const [apisValue, setActiveApis, setTraceVars, setAppLog, setIsAppRunning] = useRuntimeStore(
+      (state) => [state.apisValue, state.setActiveApis, state.setTraceVars, state.setAppLog, state.setIsAppRunning],
       shallow,
     )
 
     useEffect(() => {
       if (rawApisPackage) {
-        if (activeRtId && activeRtId==rawApisPackage?.kit_id) {
+        if (activeRtId && activeRtId == rawApisPackage?.kit_id) {
           setActiveApis(rawApisPackage?.result || {})
         }
       }
     }, [rawApisPackage])
 
     useEffect(() => {
-      let timer = setInterval(() => {
+      const intervalMs = forceKitId ? TAB_HEARTBEAT_MS : DEFAULT_TICKER_MS
+      const timer = setInterval(() => {
         setTicker((oldTicker) => oldTicker + 1)
-      }, 30 * 1000)
+      }, intervalMs)
       return () => {
-        if (timer) clearInterval(timer)
+        clearInterval(timer)
       }
-    }, [])
+    }, [forceKitId])
 
     useEffect(() => {
-      if (activeRtId && usedAPIs && usedAPIs.length > 0) {
-        socketio?.emit('messageToKit', {
+      if (activeRtId && socketio) {
+        socketio.emit('messageToKit', {
           cmd: 'subscribe_apis',
           to_kit_id: activeRtId,
           apis: usedAPIs || [],
+          username: currentUser?.name || 'anonymous',
+          user_id: currentUser?.id || 'anonymous',
+          subscribed_at: Date.now(),
         })
       }
-    }, [ticker, activeRtId, usedAPIs])
+    }, [ticker, activeRtId, usedAPIs, socketio, currentUser?.id, currentUser?.name])
+
+    useEffect(() => {
+      if (!forceKitId) return
+      if (!socketio) return
+      emitRuntimeInfoForSelectedKit(socketio)
+    }, [ticker, forceKitId, socketio, renderRuntimes])
+
+    useEffect(() => {
+      if (!forceKitId) return
+      if (!socketio || !currentUser?.id) return
+      emitRuntimeInfoForSelectedKit(socketio)
+    }, [forceKitId, currentUser?.id, socketio, renderRuntimes.length])
+
+    useEffect(() => {
+      if (forceKitId) {
+        setActiveRtId(forceKitId)
+      }
+    }, [forceKitId, socketio])
+
+    useEffect(() => {
+      const prev = prevActiveRtIdRef.current
+      if (prev && prev !== activeRtId && socketio) {
+        socketio.emit('messageToKit', {
+          cmd: 'unsubscribe_apis',
+          to_kit_id: prev,
+        })
+      }
+      prevActiveRtIdRef.current = activeRtId
+    }, [activeRtId, socketio])
 
     useEffect(() => {
       if (!socketio) return
@@ -135,18 +239,17 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         setAppLog(`Run app\r\n`)
       }
       let cmd = "run_python_app"
-      if(prototype?.language == "python") {
+      if (prototype?.language == "python") {
         cmd = "run_python_app"
-      } else if(prototype?.language == "rust") {
+      } else if (prototype?.language == "rust") {
         cmd = "run_rust_app"
-      } else if(prototype?.language == "cpp") {
+      } else if (prototype?.language == "cpp") {
         cmd = "run_cpp_app"
       }
       let watch_vars = ""
-      if(prototype?.extend?.watch_vars && Array.isArray(prototype?.extend?.watch_vars)){
-        watch_vars = prototype?.extend?.watch_vars.map((v:any) => v.name).join(', ') || ''
+      if (prototype?.extend?.watch_vars && Array.isArray(prototype?.extend?.watch_vars)) {
+        watch_vars = prototype?.extend?.watch_vars.map((v: any) => v.name).join(', ') || ''
       }
-      console.log(`watch_vars`, watch_vars)
       socketio?.emit('messageToKit', {
         cmd: cmd,
         to_kit_id: activeRtId,
@@ -277,21 +380,67 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       })
     }
 
+    const readFile = (filePath: string) => {
+      socketio?.emit('messageToKit', {
+        cmd: 'read-file',
+        to_kit_id: activeRtId,
+        data: '',
+        file_path: filePath,
+        prototype: {
+          name: prototype?.name || 'no-name',
+          id: prototype?.id || 'no-id',
+        },
+        username: currentUser?.name || 'no',
+      })
+    }
+
+    const writeFile = (filePath: string, fileContent: string) => {
+      socketio?.emit('messageToKit', {
+        cmd: 'write-file',
+        to_kit_id: activeRtId,
+        prototype: {
+          name: prototype?.name || 'no-name',
+          id: prototype?.id || 'no-id',
+        },
+        username: currentUser?.name || 'no',
+        file_path: filePath,
+        file_content: prepareKitFileContentForWrite(fileContent),
+        data: '',
+      })
+    }
+
     useEffect(() => {
       if (onActiveRtChanged) {
         onActiveRtChanged(activeRtId)
       }
 
-      if(activeRtId) {
+      if (activeRtId && !forceKitId) {
         getRuntimeInfo()
       }
 
-    }, [activeRtId])
+    }, [activeRtId, forceKitId])
 
     useEffect(() => {
       if (!kitServerUrl) return
-      setSocketIo(io(kitServerUrl))
-    }, [kitServerUrl])
+      // Reset timeout flags when starting a new connection
+      if (forceKitId) {
+        setSocketConnectionTimeout(false)
+        setKitListRequestTimeout(false)
+
+        // Set socket connection timeout (if not connected within 10 seconds, mark as unreachable)
+        if (socketConnectTimeoutRef.current) {
+          clearTimeout(socketConnectTimeoutRef.current)
+        }
+        socketConnectTimeoutRef.current = setTimeout(() => {
+          console.warn('[DaRuntimeConnector] Socket connection timeout (10s) - kit-manager server unreachable')
+          setSocketConnectionTimeout(true)
+        }, 10000)
+      }
+
+      setSocketIo(io(kitServerUrl, effectiveSocketIoConfig))
+      // Only re-create socket if kitServerUrl changes, not if config changes
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [kitServerUrl, JSON.stringify(socketIoConfig)])
 
     useEffect(() => {
       if (!socketio) return
@@ -334,12 +483,22 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [activeRtId])
 
     const onConnected = () => {
+      // Clear socket connection timeout since we successfully connected
+      if (socketConnectTimeoutRef.current) {
+        clearTimeout(socketConnectTimeoutRef.current)
+        socketConnectTimeoutRef.current = null
+      }
+      setSocketConnectionTimeout(false)
       registerClient()
       setTimeout(() => {
-        if (activeRtId) {
-          socketio?.emit('messageToKit', {
-            cmd: 'list-all-kits',
-          })
+        if (activeRtIdRef.current || forceKitIdRef.current) {
+          const needsRefresh = wasDisconnectedRef.current
+          const alreadyHaveList = hasLoadedKitListRef.current
+          // Only request kit list if we don't have it yet or we just disconnected
+          if (!alreadyHaveList || needsRefresh) {
+            requestKitList({ resetLoaded: true })
+            wasDisconnectedRef.current = false
+          }
         }
       }, 1000)
       if (usedAPIs) {
@@ -348,33 +507,94 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }
 
     const registerClient = () => {
-      socketio?.emit('register_client', {
-        username: 'test',
-        user_id: 'test',
+      const user = currentUserRef.current
+      socketioRef.current?.emit('register_client', {
+        // Name/id only — Kit-Manager exposes CLIENTS via public GET /listAllClient
+        username: user?.name || 'test',
+        user_id: user?.id || 'test',
         domain: 'domain',
       })
     }
 
     const unregisterClient = () => {
-      socketio?.emit('unregister_client', {})
+      socketioRef.current?.emit('unregister_client', {})
     }
 
-    const onDisconnect = () => {}
+    useEffect(() => {
+      if (!socketioRef.current?.connected) return
+      registerClient()
+    }, [currentUser?.id, currentUser?.name])
+
+    const requestKitList = (options?: { resetLoaded?: boolean }) => {
+      const sock = socketioRef.current
+      if (!sock?.connected) return
+      if (options?.resetLoaded) {
+        setHasLoadedKitList(false)
+        hasLoadedKitListRef.current = false
+      }
+      setKitListRequestTimeout(false)
+      setKitListRequestTime(Date.now())
+      if (kitListTimeoutRef.current) {
+        clearTimeout(kitListTimeoutRef.current)
+      }
+      kitListTimeoutRef.current = setTimeout(() => {
+        console.warn('[DaRuntimeConnector] list-all-kits request timeout (8s) - kit-manager may be unreachable')
+        setKitListRequestTimeout(true)
+      }, 8000)
+      sock.emit('list-all-kits')
+    }
+
+    useEffect(() => {
+      if (!forceKitId || !socketio?.connected) return
+      requestKitList()
+    }, [ticker, forceKitId, socketio])
+
+    const onDisconnect = (reason?: string) => {
+      wasDisconnectedRef.current = true
+      if (forceKitId) {
+        setHasLoadedKitList(false)
+        hasLoadedKitListRef.current = false
+        setKitListRequestTimeout(false)
+        if (kitListTimeoutRef.current) {
+          clearTimeout(kitListTimeoutRef.current)
+          kitListTimeoutRef.current = null
+        }
+      }
+    }
 
     const onGetAllKitData = (data: any) => {
+      // Clear the timeout since we got a response
+      if (kitListTimeoutRef.current) {
+        clearTimeout(kitListTimeoutRef.current)
+        kitListTimeoutRef.current = null
+      }
+
+      setHasLoadedKitList(true)
+      hasLoadedKitListRef.current = true
+      setKitListRequestTimeout(false)
       const getLastPart = (kit_id: string) => {
         const parts = kit_id.split('-')
         return parts[parts.length - 1]
       }
+     
+      // If forceKitId is set, include all runtimes (even offline) so we can show their status
+      // Otherwise, filter for online runtimes only
       let kits = [...data].filter((kit: any) => {
-        return kit.is_online
+        return forceKitId ? true : kit.is_online
       })
 
-      let sortedKits = kits.filter((rt) =>
-        rt.kit_id
-          .toLowerCase()
-          .startsWith(targetPrefix ? targetPrefix.toLowerCase() : 'runtime-'),
-      )
+
+      let sortedKits = kits.filter((rt) => {
+        // If forceKitId is set, bypass prefix filter and include all runtimes
+        if (forceKitId) {
+          return true
+        }
+        const kitIdLower = rt.kit_id.toLowerCase()
+        if (Array.isArray(targetPrefix)) {
+          return targetPrefix.some(prefix => kitIdLower.startsWith(prefix.toLowerCase()))
+        }
+        return kitIdLower.startsWith(targetPrefix ? targetPrefix.toLowerCase() : 'runtime-')
+      })
 
       sortedKits.sort((a, b) => {
         if (a.is_online !== b.is_online) {
@@ -395,10 +615,17 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       })
 
       setAllRuntimes(sortedKits)
+
+      if (forceKitId) {
+        emitRuntimeInfoForSelectedKit(socketio)
+      }
     }
 
     const onBroadCastToClient = (payload: any) => {
       if (!payload) return
+      if (['report-runtime-state', 'get-runtime-info'].includes(payload.cmd)) {
+        onRuntimeStateResponse(payload)
+      }
     }
 
     const onKitReply = (payload: any) => {
@@ -426,7 +653,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           if (onNewLog) {
             onNewLog(`Exit code ${payload.code}\r\n`)
           }
-          if(onAppRunningStateChanged){
+          setIsAppRunning(false)
+          if (onAppRunningStateChanged) {
             onAppRunningStateChanged(false)
           }
         } else {
@@ -456,7 +684,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         }
       }
 
-      if(payload.cmd == 'trace_vars'){
+      if (payload.cmd == 'trace_vars') {
         let data = payload.data
         setTraceVars(data || {})
       }
@@ -481,12 +709,20 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         onNewLog(payload.data)
       }
 
-      if (['get-runtime-info', 'report-runtime-state'].includes(payload.cmd) && onNewLog) {
+      if (['get-runtime-info', 'report-runtime-state'].includes(payload.cmd)) {
         onRuntimeStateResponse(payload)
+      }
+
+      if (payload.cmd === 'read-file' && onReadFileResponse) {
+        const reply = parseReadFileReply(payload)
+        if (reply && !reply.hasError) {
+          onReadFileResponse(reply.filePath, reply.content)
+        }
       }
     }
 
     useEffect(() => {
+      if (forceKitId) return
       if (renderRuntimes && renderRuntimes.length > 0) {
         if (activeRtId) return
         let onlineRuntimes = renderRuntimes.filter(
@@ -528,16 +764,16 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           }
         }
       } else {
-        let publicRuntimes = allRuntimes.filter((rt:any) => rt.name.toLowerCase().startsWith('runtime-public-') || rt.name.toLowerCase().startsWith('runtime-shared-'))
-        
+        let publicRuntimes = allRuntimes.filter((rt: any) => rt.name.toLowerCase().startsWith('runtime-public-') || rt.name.toLowerCase().startsWith('runtime-shared-'))
+
         let myRuntimes = []
-        if(Array.isArray(assets)) {
-          let runtimesAssets = assets.filter((a:any) => a.type == 'CLOUD_RUNTIME') || []
-          let myRuntimeNames = runtimesAssets.map((asset:any) => asset.name.toLowerCase())
-          myRuntimes = allRuntimes.filter((rt:any) => {
+        if (Array.isArray(assets)) {
+          let runtimesAssets = assets.filter((a: any) => a.type == 'CLOUD_RUNTIME') || []
+          let myRuntimeNames = runtimesAssets.map((asset: any) => asset.name.toLowerCase())
+          myRuntimes = allRuntimes.filter((rt: any) => {
             let result = false
             myRuntimeNames.forEach((myRtName: string) => {
-              if(rt.name.toLowerCase().startsWith(`${myRtName}`)){
+              if (rt.name.toLowerCase().startsWith(`${myRtName}`)) {
                 result = true
               }
             })
@@ -545,13 +781,13 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           })
         }
 
-        if(myRuntimes.length>=3) {
+        if (myRuntimes.length >= 3) {
           setRenderRuntimes([...new Set([...myRuntimes])])
         } else {
-          let freeRuntimes = publicRuntimes.sort((a:any, b:any) => {
+          let freeRuntimes = publicRuntimes.sort((a: any, b: any) => {
             return a.noRunner - b.noRunner
           })
-          setRenderRuntimes([...new Set([...myRuntimes, ...freeRuntimes.slice(0, 3-myRuntimes.length)])])
+          setRenderRuntimes([...new Set([...myRuntimes, ...freeRuntimes.slice(0, 3 - myRuntimes.length)])])
         }
 
       }
@@ -560,19 +796,82 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const onRuntimeStateResponse = (payload: any) => {
       let newRunningState = false
 
-      if(payload.data && payload.data.lsOfRunner && payload.data.lsOfRunner.length > 0){
-        let myRunners = payload.data.lsOfRunner.filter((runner:any) => runner.request_from == socketio?.id)
-        if(myRunners.length > 0){
+      if (payload.data && payload.data.lsOfRunner && payload.data.lsOfRunner.length > 0) {
+        let myRunners = payload.data.lsOfRunner.filter((runner: any) => runner.request_from == socketio?.id)
+        if (myRunners.length > 0) {
           newRunningState = true
         }
       }
 
-      if(onAppRunningStateChanged){
-        onAppRunningStateChanged(newRunningState)
+      if (newRunningState) {
+        setIsAppRunning(true)
+        if (onAppRunningStateChanged) {
+          onAppRunningStateChanged(true)
+        }
       }
-      if(onRuntimeInfoReceived) {
+      if (onRuntimeInfoReceived) {
         onRuntimeInfoReceived(payload.data)
       }
+    }
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+      return () => {
+        if (kitListTimeoutRef.current) {
+          clearTimeout(kitListTimeoutRef.current)
+          kitListTimeoutRef.current = null
+        }
+        if (socketConnectTimeoutRef.current) {
+          clearTimeout(socketConnectTimeoutRef.current)
+          socketConnectTimeoutRef.current = null
+        }
+      }
+    }, [])
+
+    if (forceKitId) {
+      let statusIcon = '🟡'
+      let statusText = 'Connecting...'
+
+      // Check if socket connection timed out (socket itself couldn't connect)
+      if (socketConnectionTimeout) {
+        statusIcon = '⚪'
+        statusText = 'Unreachable'
+      }
+      // Check if kit list request timed out (kit-manager unreachable)
+      else if (kitListRequestTimeout) {
+        statusIcon = '⚪'
+        statusText = 'Unreachable'
+      }
+      // Check if socket is connected and kit list is loaded
+      else if (!socketio?.connected || !hasLoadedKitList) {
+        statusIcon = '🟡'
+        statusText = 'Connecting...'
+      } else {
+        // Socket is connected and kit list is loaded, now check the specific runtime
+        const rt = allRuntimes.find(
+          (r: Runtime) => r.kit_id.toLowerCase() === forceKitId.toLowerCase(),
+        )
+        if (!rt) {
+          // Runtime not found in the list at all
+          statusIcon = '⚪'
+          statusText = 'Unreachable'
+        } else if (!rt.is_online) {
+          // Runtime found but is offline
+          statusIcon = '🔴'
+          statusText = 'Disconnected'
+        } else {
+          // Runtime found and is online
+          statusIcon = '🟢'
+          statusText = 'Connected'
+        }
+      }
+
+      return (
+        <div className="flex items-center text-xs gap-1.5">
+          <span>{statusIcon}</span>
+          <span>{statusText}</span>
+        </div>
+      )
     }
 
     return (

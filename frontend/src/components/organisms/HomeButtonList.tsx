@@ -9,10 +9,9 @@
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DaDialog from '../molecules/DaDialog'
 import { DaActionCard } from '../molecules/DaActionCard'
 import { FaCar } from 'react-icons/fa'
-import FormCreateModel from '../molecules/forms/FormCreateModel'
+import CreateNewModelDialog from '../molecules/CreateNewModelDialog'
 import { TbCode, TbPackageImport } from 'react-icons/tb'
 // import FormCreatePrototype from '../molecules/forms/FormCreatePrototype'
 // import FormImportPrototype from '../molecules/forms/FormImportPrototype'
@@ -49,7 +48,7 @@ const HomeButtonList = ({ items, requiredLogin }: HomeButtonListProps) => {
           {items?.map((button, index) => {
             if (button.type === 'new-model')
               return (
-                <DaDialog
+                <CreateNewModelDialog
                   key={index}
                   trigger={
                     <DaActionCard
@@ -63,9 +62,7 @@ const HomeButtonList = ({ items, requiredLogin }: HomeButtonListProps) => {
                       className="w-full"
                     />
                   }
-                >
-                  <FormCreateModel />
-                </DaDialog>
+                />
               )
 
             if (button.type === 'new-prototype')

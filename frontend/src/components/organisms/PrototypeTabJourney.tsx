@@ -15,10 +15,9 @@ import {
 } from 'react-icons/tb'
 import DaTableEditor from '../molecules/DaCustomerJourneyTable'
 import useCurrentModel from '@/hooks/useCurrentModel'
-import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
-import usePermissionHook from '@/hooks/usePermissionHook'
-import { PERMISSIONS } from '@/data/permission'
+import useCanEditPrototype from '@/hooks/useCanEditPrototype'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { addLog } from '@/services/log.service'
 import { Button } from '@/components/atoms/button'
@@ -37,9 +36,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
     model?.id || '',
   )
   const { refetch: refetchCurrentPrototype } = useCurrentPrototype()
-  const [isAuthorized] = usePermissionHook(
-    [PERMISSIONS.READ_MODEL, model?.id],
-  )
+  const editable = useCanEditPrototype(prototype)
   const [isSaving, setIsSaving] = useState(false)
 
   const { data: currentUser } = useSelfProfileQuery()
@@ -97,14 +94,15 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
   return (
     <div className="flex flex-col h-full w-full">
       <div className="flex flex-col h-full w-full bg-background overflow-y-auto">
-        <div className="flex flex-col h-full w-full pt-6 bg-background px-2">
-          <div className="flex mr-4 mb-3 justify-between items-center">
+        <div className="flex flex-col h-full w-full pt-6 bg-background px-6">
+          {/* Header */}
+          <div className="flex mb-3 justify-between items-center">
             {isEditing ? (
               <>
                 <h2 className="text-lg font-semibold text-primary">
                   Editing Prototype
                 </h2>
-                <div className="flex space-x-2 mr-2">
+                <div className="flex space-x-2">
                   <Button
                     data-id='prototype-cancel-button'
                     variant="outline"
@@ -128,7 +126,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                   {localPrototype.name}
                 </h2>
                 <div className="grow" />
-                {isAuthorized && (
+                {editable && (
                   <>
                     <Button
                       onClick={() => setIsEditing(true)}
@@ -138,12 +136,12 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                     >
                       {isSaving ? (
                         <>
-                          <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                          <TbLoader className="w-4 h-4 animate-spin" />
                           Saving...
                         </>
                       ) : (
                         <>
-                          <TbEdit className="w-4 h-4 mr-1" /> Edit
+                          <TbEdit className="w-4 h-4" /> Edit
                         </>
                       )}
                     </Button>
@@ -152,6 +150,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
               </div>
             )}
           </div>
+          {/* Content */}
           <div className="flex flex-col w-full items-center justify-center py-8 space-y-8">
             <h3 className="text-lg font-semibold text-primary">
               Customer Journey

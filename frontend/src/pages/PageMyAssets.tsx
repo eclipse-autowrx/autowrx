@@ -8,8 +8,11 @@
 
 import { useEffect, useState } from 'react'
 import { useAssets } from '@/hooks/useAssets.ts'
-import { TbTrash, TbPencil, TbShare, TbPlug, TbPlus } from 'react-icons/tb'
+import { useSiteConfig } from '@/utils/siteConfig'
+import { TbTrash, TbPencil, TbShare, TbPlus, TbDeviceDesktopCog } from 'react-icons/tb'
+import FormHardwareKitManager from '@/components/organisms/FormHardwareKitManager'
 import DaDialog from '@/components/molecules/DaDialog'
+import DaConfirmPopup from '@/components/molecules/DaConfirmPopup'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import {
@@ -85,7 +88,7 @@ const PythonGenAIEditor = ({ dataStr, onDataChange }: iPropGenAIPython) => {
       setMethod(data.method || '')
       setUrl(data.url || '')
       setAccessToken(data.accessToken || '')
-    } catch (e) {}
+    } catch (e) { }
   }, [dataStr])
 
   const onUrlChange = (value: string) => {
@@ -192,17 +195,19 @@ const PythonGenAIEditor = ({ dataStr, onDataChange }: iPropGenAIPython) => {
         </div>
       </div>
 
-      <div className="flex items-center space-x-2 mt-4">
-        <label className="text-sm w-20">Access Token *</label>
-        <div className="grow">
-          <Textarea
-            value={accessToken}
-            onChange={(e) => onAccessTokenChange(e.target.value)}
-            className="flex grow text-[14px]! leading-tight!"
-          />
-          <div className=" text-sm mt-1 text-foreground">
-            * Notice: This token will be sent in the Authorization header.
+      <div className="mt-4">
+        <div className="flex items-center space-x-2">
+          <label className="text-sm w-20">Access Token *</label>
+          <div className="grow">
+            <Textarea
+              value={accessToken}
+              onChange={(e) => onAccessTokenChange(e.target.value)}
+              className="flex grow text-[14px]! leading-tight!"
+            />
           </div>
+        </div>
+        <div className="text-sm mt-1 text-foreground">
+          * Notice: This token will be sent in the Authorization header.
         </div>
       </div>
 
@@ -237,11 +242,10 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
   const [dataStr, setDataStr] = useState<any>('')
   const { createAsset, updateAsset } = useAssets()
   const { toast } = useToast()
-
-  // const ASSET_TYPES = [
-  //     { name: 'CLOUD_RUNTIME', helperText: "Runtime on cloud to execute your app" },
-  //     { name: 'HARDWARE_KIT', helperText: "Hardware setup to get deploy app" }
-  // ]
+  const enabledAssetTypes = useSiteConfig('USER_ASSET_TYPES', ['CLOUD_RUNTIME', 'HARDWARE_KIT', 'GENAI-PYTHON']) as string[]
+  const visibleBareTypes = ASSET_BARE_TYPES.filter(
+    (t) => enabledAssetTypes.includes(t.value),
+  )
 
   // const [readOnlyUsers, setReadOnlyUsers] = useState<any[]>([])
 
@@ -252,39 +256,41 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
   }, [asset])
 
   return (
-    <div className="flex flex-col w-[540px] px-4">
-      <h2 className="text-xl font-semibold">Edit Asset</h2>
+    <div className="flex flex-col w-full min-w-[400px] max-w-[540px]">
       <div className="w-full min-h-[200px]">
         <div className="flex items-center space-x-2 mt-4">
           <label className="text-sm w-20">Name *</label>
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="flex grow text-[14px]"
-          />
+          <div className="grow">
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full text-[14px]"
+            />
+          </div>
         </div>
 
         <div className="flex items-center space-x-2 mt-4">
           <label className="text-sm w-20">Type *</label>
           <div className="grow">
             <Select
-              defaultValue="CLOUD_RUNTIME"
               value={type}
               onValueChange={(value: string) => setType(value)}
             >
               <SelectTrigger className="h-10 border border-gray-200 shadow-none! text-[14px]">
-                <SelectValue />
+                <SelectValue>
+                  {visibleBareTypes.find((t) => t.value === type)?.name ?? type}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {ASSET_BARE_TYPES &&
-                  ASSET_BARE_TYPES.map((type: any, tIndex: number) => (
+                {visibleBareTypes &&
+                  visibleBareTypes.map((type: any, tIndex: number) => (
                     <SelectItem key={tIndex} value={type.value}>
-                      <div className="flex flex-col">
+                      <div className="flex flex-col py-1">
                         <span className="text-sm text-foreground">
-                          {type.value}
+                          {type.name}
                         </span>
                         {type.helperText && (
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-xs text-muted-foreground">
                             {type.helperText}
                           </span>
                         )}
@@ -380,9 +386,20 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
 const PageMyAssets = () => {
   const { useFetchAssets, deleteAsset } = useAssets()
   const { data: assets, isLoading } = useFetchAssets()
+  const { toast } = useToast()
   const [activeAsset, setActiveAsset] = useState<any>()
+  const [assetToDelete, setAssetToDelete] = useState<any>()
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const editDialogState = useState<boolean>(false)
   const shareDialogState = useState<boolean>(false)
+  const kitManagerDialogState = useState<boolean>(false)
+  const isDeleting = deleteAsset.isPending
+  const actionsDisabled = isDeleting || confirmDeleteOpen
+
+  const enabledAssetTypes = useSiteConfig('USER_ASSET_TYPES', ['CLOUD_RUNTIME', 'HARDWARE_KIT', 'GENAI-PYTHON']) as string[]
+  const visibleAssetTypes = ASSET_TYPES.filter(
+    (t) => t.value === 'all' || enabledAssetTypes.includes(t.value),
+  )
 
   const [activeTab, setActiveTab] = useState(ASSET_TYPES[0].value)
   const [filteredAssets, setFilteredAssets] = useState([])
@@ -402,11 +419,45 @@ const PageMyAssets = () => {
     )
   }, [activeTab, assets])
 
+  useEffect(() => {
+    if (!confirmDeleteOpen) {
+      setAssetToDelete(undefined)
+    }
+  }, [confirmDeleteOpen])
+
+  const handleDeleteAsset = async () => {
+    if (!assetToDelete?.id) {
+      throw new Error('No asset selected for deletion')
+    }
+
+    const deletedName = assetToDelete.name
+    try {
+      await deleteAsset.mutateAsync(assetToDelete.id)
+      toast({
+        title: 'Asset removed',
+        description: `"${deletedName}" was removed from your assets.`,
+        duration: 3000,
+      })
+    } catch (err) {
+      console.error('Error deleting asset:', err)
+      toast({
+        title: 'Failed to remove asset',
+        description: (
+          <span className="text-sm text-red-500">
+            Could not remove the asset. Please try again.
+          </span>
+        ),
+        duration: 3000,
+      })
+      throw err
+    }
+  }
+
   return (
-    <div className="flex w-full h-full bg-slate-200 p-2">
-      <div className="flex w-full h-full justify-center bg-white rounded-xl ">
-        <div className="flex flex-col w-full max-w-[70vw] xl:max-w-[60vw] 2xl:max-w-[50vw]">
-          <div className="flex flex-col items-center container mt-6 w-full">
+    <div className="flex w-full h-full min-h-0 bg-slate-200 p-2">
+      <div className="flex flex-col w-full h-full min-h-0 bg-white rounded-xl ">
+        <div className="flex flex-col h-full min-h-0 w-full max-w-[70vw] xl:max-w-[60vw] 2xl:max-w-[50vw] mx-auto">
+          <div className="flex flex-col flex-1 min-h-0 items-center container mt-6 w-full pb-4">
             <div className="flex w-full justify-between">
               <h1 className="text-xl font-semibold text-foreground">
                 My Assets
@@ -432,6 +483,7 @@ const PageMyAssets = () => {
             <DaDialog
               open={editDialogState[0]}
               onOpenChange={editDialogState[1]}
+              dialogTitle={activeAsset?.id ? 'Edit Asset' : 'Create New Asset'}
             >
               <EditAssetDialog
                 asset={activeAsset}
@@ -459,6 +511,35 @@ const PageMyAssets = () => {
               />
             </DaDialog>
 
+            <DaDialog
+              open={kitManagerDialogState[0]}
+              onOpenChange={kitManagerDialogState[1]}
+              className="h-fit overflow-auto max-w-[80dvw]"
+            >
+              <FormHardwareKitManager
+                kitId={activeAsset?.id}
+                kitName={activeAsset?.name}
+                onCancel={() => {
+                  kitManagerDialogState[1](false)
+                }}
+              />
+            </DaDialog>
+
+            <DaConfirmPopup
+              title="Remove asset"
+              label={
+                assetToDelete?.type === 'CLOUD_RUNTIME'
+                  ? `Remove "${assetToDelete.name}" from your assets? This will not delete the runtime on the server.`
+                  : `Remove "${assetToDelete?.name ?? ''}" from your assets? This action cannot be undone.`
+              }
+              confirmLabel="Remove"
+              confirmingLabel="Removing..."
+              onConfirm={handleDeleteAsset}
+              state={[confirmDeleteOpen, setConfirmDeleteOpen]}
+            >
+              <span />
+            </DaConfirmPopup>
+
             {isLoading && (
               <div className="w-full flex py-4 justify-center items-center">
                 Loading...
@@ -471,7 +552,7 @@ const PageMyAssets = () => {
                   {(() => {
                     const assetCounts: { [key: string]: number } = {}
                     if (assets) {
-                      ASSET_TYPES.forEach((type) => {
+                      visibleAssetTypes.forEach((type) => {
                         if (type.value === 'all') {
                           assetCounts[type.value] = assets.length
                         } else {
@@ -482,16 +563,15 @@ const PageMyAssets = () => {
                       })
                     }
 
-                    return ASSET_TYPES.map((type) => (
+                    return visibleAssetTypes.map((type) => (
                       <div
                         key={type.value}
                         className={`
                                     px-4 py-2 cursor-pointer text-lg font-semibold
-                                    ${
-                                      activeTab === type.value
-                                        ? 'border-b-2 border-primary text-primary'
-                                        : 'text-foreground hover:text-primary/80'
-                                    }
+                                    ${activeTab === type.value
+                            ? 'border-b-2 border-primary text-primary'
+                            : 'text-foreground hover:text-primary/80'
+                          }
                                 `}
                         onClick={() => setActiveTab(type.value)}
                       >
@@ -504,7 +584,7 @@ const PageMyAssets = () => {
                   })()}
                 </div>
 
-                <div className="mt-2 w-full px-4">
+                <div className="mt-2 w-full px-4 flex flex-col flex-1 min-h-0">
                   <div
                     className="flex w-full items-center text-muted-foreground font-semibold text-sm
                                         py-1 border-b border-muted-foreground"
@@ -514,7 +594,7 @@ const PageMyAssets = () => {
                     <div className="w-[220px] min-w-[220px]">Actions</div>
                   </div>
 
-                  <div className="overflow-auto h-full">
+                  <div className="flex-1 min-h-0 overflow-y-auto">
                     {(!assets || assets.length == 0) && (
                       <div className="w-full py-4 italic text-slate-500 text-center">
                         You have no asset
@@ -534,8 +614,20 @@ const PageMyAssets = () => {
                             {asset.type}
                           </div>
                           <div className="w-[220px] min-w-[220px] flex space-x-4">
+                            {asset.type === 'HARDWARE_KIT' && (
+                              <TbDeviceDesktopCog
+                                className={`text-muted-foreground hover:opacity-60 ${actionsDisabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}
+                                size={22}
+                                onClick={() => {
+                                  setActiveAsset(
+                                    JSON.parse(JSON.stringify(asset)),
+                                  )
+                                  kitManagerDialogState[1](true)
+                                }}
+                              />
+                            )}
                             <TbPencil
-                              className="text-muted-foreground cursor-pointer hover:opacity-60"
+                              className={`text-muted-foreground hover:opacity-60 ${actionsDisabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}
                               size={22}
                               onClick={() => {
                                 setActiveAsset(
@@ -545,7 +637,7 @@ const PageMyAssets = () => {
                               }}
                             />
                             <TbShare
-                              className="text-muted-foreground cursor-pointer hover:opacity-60"
+                              className={`text-muted-foreground hover:opacity-60 ${actionsDisabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}
                               size={22}
                               onClick={() => {
                                 setActiveAsset(
@@ -555,18 +647,11 @@ const PageMyAssets = () => {
                               }}
                             />
                             <TbTrash
-                              className="text-red-500 cursor-pointer hover:opacity-60"
+                              className={`text-red-500 hover:opacity-60 ${actionsDisabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}
                               size={22}
-                              onClick={async () => {
-                                if (
-                                  !confirm(
-                                    `Confirm delete asset '${asset.name}'?`,
-                                  ) ||
-                                  !asset.id
-                                ) {
-                                  return
-                                }
-                                await deleteAsset.mutateAsync(asset.id)
+                              onClick={() => {
+                                setAssetToDelete(asset)
+                                setConfirmDeleteOpen(true)
                               }}
                             />
                           </div>

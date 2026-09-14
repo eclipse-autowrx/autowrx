@@ -1,13 +1,13 @@
 ## MongoDB Collections
 
-A concise overview of all collections used by the backend and their roles.
+A concise overview of the collections used by the backend and their roles. (See `backend/src/models/index.js` for the authoritative list of registered models.)
 
 ### users
 - Identity of end users (name, email, password/SSO fields, profile info).
 - Source of truth for authentication subjects (`sub` in JWT access/refresh).
 
 ### tokens
-- Persists refresh, reset-password, and verify-email JWTs (access tokens are not stored).
+- Persists refresh, reset-password, and verify-email tokens (access tokens are not stored).
 - Enables refresh rotation, logout revocation, and one-time token flows.
 
 ### roles
@@ -34,31 +34,32 @@ A concise overview of all collections used by the backend and their roles.
 - Extends base API with additional fields (datatype, unit, constraints, wishlist, etc.).
 - Unique per `(apiName, model)`.
 
-### issues
-- Links to `extendedapis` to track external or review issues (`link`).
-
 ### assets
 - Binary/structured asset metadata with `type`, arbitrary `data`, and `created_by`.
 
 ### discussions
 - Threaded comments tied to a `ref` and `ref_type` with optional `parent` for nesting.
 
-### schemas (inventory)
-- Inventory schema definitions (name, description, serialized schema).
+### feedbacks
+- Feedback/interview records (`avg_score`, sub-scores, `interviewee`) tied to a `ref`/`model_id`.
 
-### relations (inventory)
-- Relation definitions between inventory schemas (type, cardinality, properties).
+### plugins
+- Loadable UI plugins: `name`, `slug` (unique), `url`, `is_internal`, `config`, `type` (`prototype_function`/`deploy`).
 
-### instances (inventory)
-- Concrete instances of an inventory `schema` with serialized `data`.
+### siteconfigs
+- Site/user/model/prototype/api-scoped configuration (`key`, `scope`, `target_id`, `value`, `secret`, `valueType`); unique on `(key, scope, target_id)`. Backs feature flags, theming, auth configs.
+- Audit/restore is backed by `siteconfigsnapshots` + `siteconfigsnapshotmetas`.
 
-### instancerelations (inventory)
-- Links between inventory `instances` under a `relation`, with optional `metadata`.
+### changelogs
+- Capped collection; audit trail (`action` CREATE/UPDATE/DELETE, `changes`, `ref`), written by the `captureChange` Mongoose plugin.
 
-### plugina pis
-- Schema definitions for API sets (Tree, List, Graph types). Admin-defined templates that specify the structure and validation rules for API sets. Each schema defines attributes, relationships (for graph type), and tree configuration (for tree type).
+### customapischemas
+- Admin-defined schemas for custom API sets (Tree / List / Graph types). Defines `schema`, `relationships` (graph), `tree_config` (tree), `display_mapping`, `id_format`. (Previously named "PluginAPI".)
 
-### pluginapiinstances
-- API set instances with scope-based access. Actual data instances following PluginAPI schemas. Can be system-scoped (shared, created by admin) or user-scoped (private, created by user). Stores complete API sets in a single document with items array containing all API nodes/endpoints.
+### customapisets
+- Instances of a `CustomApiSchema` with scope-based access (`system` / `user`). Stores a complete API set in one document (`data.items[]`). (Previously named "PluginApiInstance".)
 
+### modeltemplates / dashboardtemplates / projecttemplates
+- Reusable model/dashboard/project scaffolds with `visibility` and template-specific config.
 
+> Inventory collections (`schemas`, `relations`, `instances`, `instancerelations`) and an `issues` collection previously existed but have been removed — see the `// Inventory models removed` note in `models/index.js`.

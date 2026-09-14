@@ -2,6 +2,18 @@
 
 This guide helps you deploy a new AutoWRX production instance using Docker Compose.
 
+## Backup & restore utilities
+
+Two companion scripts live alongside `up.sh` / `down.sh`:
+
+- **`./backup.sh`** — dumps the MongoDB database (`backups/mongo-<ts>.archive.gz`) and archives the upload/plugin data (`backups/data-<ts>.tar.gz`). Flags: `--db` / `--data` to scope, `-y` to skip the confirmation prompt. Backups are never auto-deleted.
+- **`./restore.sh`** — restores from those files (most recent by default, or `--mongo <file>` / `--data <file>`). The database is restored with `--drop`, the data directories are overwritten, the app container is stopped during restore and restarted after. Requires typing `RESTORE` in capitals to proceed.
+
+Notes:
+
+- On MongoDB 7 images the database tools are not bundled — both scripts detect the tools mount (`/opt/dbtools`, see the commented volume in `docker-compose.prod.yml`) and explain the one-time setup if it is missing.
+- Restore replaces post-backup data. Take a fresh `./backup.sh` first if the current state matters.
+
 ## Prerequisites
 
 - Docker and Docker Compose installed
@@ -26,7 +38,7 @@ If you don’t want to clone the repo, you can download the instance setup files
 wget https://github.com/eclipse-autowrx/autowrx/releases/latest/download/docker-compose.prod.yml
 
 # Option B: download the full instance-setup package from the latest release (recommended)
-# NOTE: Replace TAG below if you want to pin to a specific version (e.g., TAG=v3.0.0)
+# NOTE: Replace TAG below if you want to pin to a specific version (e.g., TAG=v2026.06.30)
 TAG=latest
 wget https://github.com/eclipse-autowrx/autowrx/releases/download/${TAG}/instance-setup-${TAG}.tar.gz
 tar -xzf instance-setup-${TAG}.tar.gz
@@ -141,6 +153,26 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 - **MongoDB data**: Stored in Docker volume `autowrx-dbdata`
 - **Uploads**: Stored in `./data/upload` (configurable via `UPLOAD_PATH_HOST`)
 - **Plugins**: Stored in `./data/plugin` (configurable via `PLUGIN_PATH_HOST`)
+- **Global CSS**: Stored in `./data/global.css` (configurable via `GLOBAL_CSS_PATH_HOST`). Admins can edit via the UI; changes persist across container rebuilds.
+- **Builtin Widgets**: Bundled inside the Docker image by default. To override with custom widgets from the host, see [Custom Builtin Widgets](#custom-builtin-widgets) below.
+
+## Custom Builtin Widgets
+
+By default, builtin widgets are bundled inside the Docker image. If you want to override them with custom widgets from the host (e.g., to persist or customize widgets across updates), use the provided override file:
+
+```bash
+docker compose -f docker-compose.prod.yml -f docker-compose.widgets.yml --env-file .env.prod up -d
+```
+
+This mounts `./data/builtin-widgets` (or the path set in `BUILTIN_WIDGETS_PATH_HOST`) into the container, replacing the image's built-in widgets.
+
+**Note:** The bind mount overlays the container directory entirely. If `./data/builtin-widgets/` is empty, the container will see an empty directory. Make sure to populate it with your widget files before starting.
+
+To go back to the default image widgets, simply omit the override file:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+```
 
 ## Configuration Options
 
@@ -178,7 +210,7 @@ See `.env.prod.sample` for all available configuration options:
 - [ ] Set up SSL/TLS (via reverse proxy like Nginx)
 - [ ] Regular backups of MongoDB volume
 
-## Next Steps
+## Out of scope
 
 - Set up a reverse proxy (Nginx/Traefik) for SSL/TLS
 - Configure domain DNS
@@ -187,4 +219,4 @@ See `.env.prod.sample` for all available configuration options:
 
 ---
 
-**Note:** For development setup, see the [Development Guide](../development-guide.md) in the project root.
+**Note:** For development setup, see the [Development Guide](../docs/getting-started/development-guide.md) in the project root.

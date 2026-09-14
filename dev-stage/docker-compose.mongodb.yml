@@ -1,0 +1,22 @@
+# MongoDB for Dev Stage Testing
+# Usage: docker compose -f docker-compose.mongodb.yml up -d
+
+services:
+  mongodb-dev:
+    container_name: autowrx-dev-mongodb
+    image: mongo:4.4.6-bionic
+    ports:
+      - "27020:27017"
+    volumes:
+      - autowrx-dev-dbdata:/data/db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')", "--quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  autowrx-dev-dbdata:
+    name: autowrx-dev-dbdata

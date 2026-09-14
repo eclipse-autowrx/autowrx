@@ -20,6 +20,8 @@ export interface Plugin {
   type?: 'prototype_function' | 'deploy' | string
   createdAt: string
   updatedAt: string
+  created_by?: string
+  updated_by?: string
 }
 
 export interface Paged<T> {
@@ -32,6 +34,12 @@ export interface Paged<T> {
 
 export const listPlugins = (params?: any): Promise<Paged<Plugin>> =>
   serverAxios.get('/system/plugin', { params }).then((r) => r.data)
+
+export const listAdminPlugins = (params?: any): Promise<Paged<Plugin>> =>
+  serverAxios.get('/system/plugin/admin', { params }).then((r) => r.data)
+
+export const listMyPlugins = (params?: any): Promise<Paged<Plugin>> =>
+  serverAxios.get('/system/plugin/mine', { params }).then((r) => r.data)
 
 export const getPluginById = (id: string): Promise<Plugin> =>
   serverAxios.get(`/system/plugin/id/${id}`).then((r) => r.data)
@@ -55,9 +63,9 @@ export const uploadInternalZip = (
   const fd = new FormData()
   fd.append('file', file)
   return serverAxios
-    .post(`/system/plugin/upload/${slug}`, fd, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
+    // IMPORTANT: do not set Content-Type manually for FormData in the browser.
+    // Axios will set the correct multipart boundary; overriding can cause intermittent failures.
+    .post(`/system/plugin/upload/${slug}`, fd)
     .then((r) => r.data)
 }
 

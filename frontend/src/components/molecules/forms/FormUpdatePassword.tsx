@@ -69,9 +69,6 @@ const FormUpdatePassword = ({}) => {
       onSubmit={resetPassword}
       className="flex flex-col bg-background"
     >
-      {/* Title */}
-      <h2 className="text-lg font-semibold text-primary">Change Password</h2>
-
       {changed ? (
         <>
           <p className="text-base mt-4">

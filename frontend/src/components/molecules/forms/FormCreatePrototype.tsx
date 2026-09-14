@@ -9,17 +9,22 @@
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
 import { createPrototypeService } from '@/services/prototype.service'
 import { useToast } from '../toaster/use-toast'
-import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import {
+  invalidatePrototypeListQueries,
+  useListModelPrototypes,
+} from '@/hooks/usePrototypeQueries'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { isAxiosError } from 'axios'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useNavigate, useLocation } from 'react-router-dom'
 import useListModelContribution from '@/hooks/useListModelContribution'
+import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
 import {
   Select,
   SelectContent,
@@ -28,12 +33,18 @@ import {
   SelectValue,
 } from '@/components/atoms/select'
 import { Model, ModelLite, ModelCreate } from '@/types/model.type'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Spinner } from '@/components/atoms/spinner'
 import { CVI } from '@/data/CVI'
-import { createModelService } from '@/services/model.service'
+import { createModelService, listModelsLite } from '@/services/model.service'
 import { cn } from '@/lib/utils'
 import default_journey from '@/data/default_journey'
-import { SAMPLE_PROJECTS } from '@/data/sampleProjects'
+import { getConfig } from '@/utils/siteConfig'
+import { listProjectTemplates } from '@/services/projectTemplate.service'
+import {
+  getDefaultDashboardCfg,
+  parseProjectTemplates,
+} from '@/utils/projectTemplate'
 
 interface FormCreatePrototypeProps {
   onClose?: () => void
@@ -53,92 +64,11 @@ interface FormCreatePrototypeProps {
 const initialState = {
   prototypeName: '',
   modelName: '',
-  language: SAMPLE_PROJECTS[0].language || '',
-  code: SAMPLE_PROJECTS[0].data || '',
+  language: '',
+  code: '',
   cvi: JSON.stringify(CVI),
   mainApi: 'Vehicle',
 }
-
-const DEFAULT_DASHBOARD_CFG = `{
-  "autorun": false,
-  "widgets": [
-    {
-      "plugin": "Builtin",
-      "widget": "Embedded-Widget",
-      "options": {
-        "api": "Vehicle.Body.Lights.Beam.Low.IsOn",
-        "defaultImgUrl": "https://bestudio.digitalauto.tech/project/Ml2Sc9TYoOHc/light_off.png",
-        "displayExactMatch": true,
-        "valueMaps": [
-          {
-            "value": true,
-            "imgUrl": "https://bestudio.digitalauto.tech/project/Ml2Sc9TYoOHc/light_on.png"
-          },
-          {
-            "value": false,
-            "imgUrl": "https://bestudio.digitalauto.tech/project/Ml2Sc9TYoOHc/light_off.png"
-          }
-        ],
-        "url": "https://store-be.digitalauto.tech/data/store-be/Image%20by%20Signal%20value/latest/index/index.html",
-        "iconURL": "https://upload.digitalauto.tech/data/store-be/3c3685b3-0b58-4f75-820e-9af0180cf3f0.png"
-      },
-      "boxes": [
-        2,
-        3,
-        7,
-        8
-      ],
-      "path": ""
-    },
-    {
-      "plugin": "Builtin",
-      "widget": "Embedded-Widget",
-      "options": {
-        "url": "https://store-be.digitalauto.tech/data/store-be/Terminal/latest/terminal/index.html",
-        "iconURL": "https://upload.digitalauto.tech/data/store-be/e991ea29-5fbf-42e9-9d3d-cceae23600f0.png"
-      },
-      "boxes": [
-        1,
-        6
-      ],
-      "path": ""
-    },
-    {
-      "plugin": "Builtin",
-      "widget": "Embedded-Widget",
-      "options": {
-        "api": "Vehicle.Body.Lights.Beam.Low.IsOn",
-        "lineColor": "#005072",
-        "dataUpdateInterval": "1000",
-        "maxDataPoints": "30",
-        "url": "https://store-be.digitalauto.tech/data/store-be/Chart%20Signal%20Widget/latest/index/index.html",
-        "iconURL": "https://upload.digitalauto.tech/data/store-be/f25ceb29-b9e8-470e-897a-4d843e16a0cf.png"
-      },
-      "boxes": [
-        4,
-        5
-      ],
-      "path": ""
-    },
-    {
-      "plugin": "Builtin",
-      "widget": "Embedded-Widget",
-      "options": {
-        "apis": [
-          "Vehicle.Body.Lights.Beam.Low.IsOn"
-        ],
-        "vss_json": "https://bewebstudio.digitalauto.tech/data/projects/sHQtNwric0H7/vss_rel_4.0.json",
-        "url": "https://store-be.digitalauto.tech/data/store-be/Signal%20List%20Settable/latest/table-settable/index.html",
-        "iconURL": "https://upload.digitalauto.tech/data/store-be/dccabc84-2128-4e5d-9e68-bc20333441c4.png"
-      },
-      "boxes": [
-        9,
-        10
-      ],
-      "path": ""
-    }
-  ]
-}`
 
 const FormCreatePrototype = ({
   onClose,
@@ -159,39 +89,80 @@ const FormCreatePrototype = ({
   const { data: contributionModels, isLoading: isFetchingModelContribution } =
     useListModelContribution()
   const [localModel, setLocalModel] = useState<ModelLite>()
-  const { refetch } = useListModelPrototypes(
-    currentModel ? currentModel.id : '',
+  const { data: existingPrototypes } = useListModelPrototypes(
+    localModel?.id || '',
   )
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { toast } = useToast()
 
   const { data: currentUser } = useSelfProfileQuery()
 
-  const [projectTemplate, setProjectTemplate] = useState<string>('')
+  const { data: remoteTemplatesData, isLoading: isLoadingTemplates } = useQuery({
+    queryKey: ['project-templates-list'],
+    queryFn: () => listProjectTemplates({ limit: 100, page: 1, visibility: 'public' }),
+  })
+
+  const templateOptions = useMemo(
+    () => parseProjectTemplates(remoteTemplatesData?.results ?? []),
+    [remoteTemplatesData],
+  )
+
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('')
+
+  useEffect(() => {
+    if (templateOptions.length && !selectedTemplateId) {
+      const first = templateOptions[0]
+      setSelectedTemplateId(first.id)
+      setData((prev) => ({ ...prev, code: first.code, language: first.language }))
+    }
+  }, [templateOptions, selectedTemplateId])
+
+  const [debouncedPrototypeName, setDebouncedPrototypeName] = useState('')
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedPrototypeName(data.prototypeName), 300)
+    return () => clearTimeout(timer)
+  }, [data.prototypeName])
+
+  const existingPrototypeNames = useMemo(
+    () => (localModel ? existingPrototypes?.map((p: any) => p.name) ?? [] : []),
+    [existingPrototypes, localModel],
+  )
+
+  const { isDuplicate: isDuplicatePrototypeName, suggestedName: suggestedPrototypeName } =
+    useDuplicateNameCheck(debouncedPrototypeName, existingPrototypeNames)
+
+  const { data: ownedModelsData } = useQuery({
+    queryKey: ['listModelLiteOwned', currentUser?.id],
+    queryFn: () => listModelsLite({ created_by: currentUser!.id }),
+    enabled: !!currentUser?.id && !localModel,
+  })
+
+  const ownedModelNames = useMemo(
+    () => ownedModelsData?.results?.map((m) => m.name) ?? [],
+    [ownedModelsData],
+  )
+
+  const [debouncedModelName, setDebouncedModelName] = useState('')
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedModelName(data.modelName), 300)
+    return () => clearTimeout(timer)
+  }, [data.modelName])
+
+  const { isDuplicate: isDuplicateModelName, suggestedName: suggestedModelName } =
+    useDuplicateNameCheck(debouncedModelName, ownedModelNames)
 
   const handleChange = (name: keyof typeof data, value: string | number) => {
     setData((prev) => ({ ...prev, [name]: value }))
+    setError('')
   }
 
-  const onTemplateChange = (v: string) => {
-    const template = SAMPLE_PROJECTS.find((project) => project.label === v)
-    let code = ''
-    let language = ''
+  const onTemplateChange = (templateId: string) => {
+    const template = templateOptions.find((t) => t.id === templateId)
     if (template) {
-      if (typeof template.data === 'string') {
-        code = template.data
-        language = template.language
-      } else {
-        code = JSON.stringify(template.data)
-        language = template.language
-      }
-      setData((prev) => ({ ...prev, code: code, language: language }))
+      setData((prev) => ({ ...prev, code: template.code, language: template.language }))
+      setSelectedTemplateId(templateId)
     }
-  }
-
-  const getDefaultDashboardCfg = (lang: string) => {
-    if (lang == 'rust') return `{"autorun": false, "widgets": [] }`
-    return DEFAULT_DASHBOARD_CFG
   }
 
   const createNewPrototype = async (e: FormEvent<HTMLFormElement>) => {
@@ -221,26 +192,38 @@ const FormCreatePrototype = ({
         throw new Error('Model data is missing')
       }
 
+      const defaultPrototypeImage = await getConfig(
+        'DEFAULT_PROTOTYPE_IMAGE',
+        'site',
+        undefined,
+        '/imgs/default_prototype_cover.jpg',
+      )
+
+      const selectedTemplate = templateOptions.find((t) => t.id === selectedTemplateId)
+      const language = data.language || selectedTemplate?.language || 'python'
+
       const body = {
         model_id: modelId,
         name: data.prototypeName,
-        language: data.language,
+        language,
         state: 'development',
         apis: { VSC: [], VSS: [] },
         code: data.code,
         complexity_level: 3,
-        customer_journey: default_journey,
+        customer_journey: selectedTemplate?.customer_journey?.trim()
+          ? selectedTemplate.customer_journey
+          : default_journey,
         description: {
           problem: '',
           says_who: '',
           solution: '',
           status: '',
         },
-        image_file: '/imgs/default_prototype_cover.jpg',
+        image_file: defaultPrototypeImage || '/imgs/default_prototype_cover.jpg',
         skeleton: '{}',
         tags: [],
         widget_config:
-          widget_config || getDefaultDashboardCfg(data.language) || '[]',
+          widget_config || selectedTemplate?.widget_config || getDefaultDashboardCfg(language) || '[]',
         autorun: true,
       }
 
@@ -279,8 +262,7 @@ const FormCreatePrototype = ({
       // Reset form data
       setData(initialState)
 
-      // Refetch data
-      await refetch()
+      await invalidatePrototypeListQueries(queryClient)
     } catch (error) {
       if (isAxiosError(error)) {
         setError(error.response?.data?.message || 'Something went wrong')
@@ -315,7 +297,15 @@ const FormCreatePrototype = ({
   }, [contributionModels, isFetchingModelContribution, currentModel])
 
   useEffect(() => {
-    if (loading || (!localModel && !data.modelName) || !data.prototypeName) {
+    if (
+      loading ||
+      isLoadingTemplates ||
+      (templateOptions.length > 0 && !selectedTemplateId) ||
+      (!localModel && !data.modelName) ||
+      !data.prototypeName ||
+      isDuplicatePrototypeName ||
+      (!localModel && isDuplicateModelName)
+    ) {
       setDisabled(true)
     } else setDisabled(false)
     if (onPrototypeChange) {
@@ -333,17 +323,22 @@ const FormCreatePrototype = ({
         })
       }
     }
-  }, [loading, localModel, data.modelName, data.prototypeName])
+  }, [
+    loading,
+    isLoadingTemplates,
+    selectedTemplateId,
+    localModel,
+    data.modelName,
+    data.prototypeName,
+    isDuplicatePrototypeName,
+    isDuplicateModelName,
+  ])
 
   return (
     <form
       onSubmit={createNewPrototype}
       className="flex flex-col bg-background"
     >
-      <h2 className="text-lg font-semibold text-primary">
-        {title ?? 'New Prototype'}
-      </h2>
-
       {!currentModel &&
         (contributionModels && !isFetchingModelContribution && localModel ? (
           <div className="flex flex-col mt-4">
@@ -351,6 +346,7 @@ const FormCreatePrototype = ({
             <Select
               defaultValue={localModel.id}
               onValueChange={(e: string) => {
+                setError('')
                 const selectedModel = contributionModels.results.find(
                   (model: ModelLite) => model.id === e,
                 )
@@ -386,6 +382,13 @@ const FormCreatePrototype = ({
               placeholder="Model name"
               className="bg-background"
             />
+            {isDuplicateModelName && (
+              <DaDuplicateNameHint
+                message="A model with this name already exists"
+                suggestedName={suggestedModelName}
+                onApplySuggestion={(name) => handleChange('modelName', name)}
+              />
+            )}
           </div>
         ))}
 
@@ -398,36 +401,54 @@ const FormCreatePrototype = ({
           placeholder="Name"
           data-id="prototype-name-input"
         />
+        {isDuplicatePrototypeName && (
+          <DaDuplicateNameHint
+            message={`The prototype name '${data.prototypeName}' is already in use for model '${localModel?.name ?? data.modelName}'`}
+            suggestedName={suggestedPrototypeName}
+            onApplySuggestion={(name) => handleChange('prototypeName', name)}
+            className="mt-2"
+          />
+        )}
+        {error && !isDuplicatePrototypeName && (
+          <p className="mt-2 text-sm text-secondary">{error}</p>
+        )}
       </div>
 
-      <div className="flex flex-col mt-4">
-        <Label className="mb-2">Project Template *</Label>
-        <Select
-          defaultValue={SAMPLE_PROJECTS[0].label}
-          onValueChange={(v: string) => {
-            onTemplateChange(v)
-          }}
-        >
-          <SelectTrigger data-id="prototype-language-select" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {SAMPLE_PROJECTS.map((project) => (
-              <SelectItem key={project.label} value={project.label}>
-                {project.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+      {(isLoadingTemplates || templateOptions.length > 0) && (
+        <div className="flex flex-col mt-4">
+          <Label className="mb-2">Prototype Template *</Label>
+          {isLoadingTemplates ? (
+            <p className="flex items-center text-sm text-muted-foreground h-9">
+              <Spinner className="mr-1 h-4 w-4" />
+              Loading templates...
+            </p>
+          ) : (
+            <Select
+              value={selectedTemplateId}
+              onValueChange={(v: string) => {
+                onTemplateChange(v)
+              }}
+            >
+              <SelectTrigger data-id="project-template-select" className="w-full">
+                <SelectValue placeholder="Select a template" />
+              </SelectTrigger>
+              <SelectContent>
+                {templateOptions.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+      )}
 
       <Button
         disabled={disabled}
         type="submit"
         data-id="btn-create-prototype"
-        className={cn('mt-8 w-full', hideCreateButton && 'hidden')}
+        className={cn('mt-8 w-full da-form-create-prototype-submit', hideCreateButton && 'hidden')}
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
         {buttonText ?? 'Create Prototype'}

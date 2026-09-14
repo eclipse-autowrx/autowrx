@@ -6,12 +6,18 @@
 //
 // SPDX-License-Identifier: MIT
 
+import { User } from './user.type'
+
 export type Token = {
   token: string
   expires: string
 }
 
 export type AuthToken = {
+  user: User
+  tokens: {
+    access: Token
+    refresh: Token
+  }
   access: Token
-  tokens: any
 }

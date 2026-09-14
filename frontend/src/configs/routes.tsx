@@ -12,15 +12,22 @@ import SuspenseProvider from '@/providers/SuspenseProvider'
 import { RouteConfig } from '@/types/common.type.ts'
 import PageUserProfile from '@/pages/PageUserProfile.tsx'
 import PageMyAssets from '@/pages/PageMyAssets.tsx'
+import PageHealth from '@/pages/PageHealth.tsx'
 import PageNotFound from '@/pages/PageNotFound.tsx'
 import PageTest from '@/pages/PageTest.tsx'
 import SiteConfigManagement from '@/pages/SiteConfigManagement.tsx'
+import PagePrivacyPolicy from '@/pages/PagePrivacyPolicy.tsx'
 import PluginList from '@/pages/PluginList.tsx'
 import PluginManagement from '@/pages/PluginManagement.tsx'
 import TemplateManager from '@/pages/TemplateManager.tsx'
+import DashboardTemplateManager from '@/pages/DashboardTemplateManager.tsx'
+import ProjectTemplateManager from '@/pages/ProjectTemplateManager.tsx'
 import PageTestPlugin from '@/pages/PageTestPlugin.tsx'
-import PageModelList from '@/pages/PageModelList.tsx'
+const PageModelList = lazy(() =>
+  retry(() => import('@/pages/PageModelList')),
+)
 import ModelDetailLayout from '@/layouts/ModelDetailLayout.tsx'
+import NewPrototypeLayout from '@/layouts/NewPrototypeLayout.tsx'
 import PageModelDetail from '@/pages/PageModelDetail.tsx'
 import PageHome from '@/pages/PageHome.tsx'
 import PagePrototypeLibrary from '@/pages/PagePrototypeLibrary.tsx'
@@ -139,6 +146,32 @@ const routesConfig: RouteConfig[] = [
             ],
           },
           {
+            path: '/health',
+            children: [
+              {
+                index: true,
+                element: (
+                  <SuspenseProvider>
+                    <PageHealth />
+                  </SuspenseProvider>
+                ),
+              },
+            ],
+          },
+          {
+            path: '/new-prototype',
+            children: [
+              {
+                index: true,
+                element: (
+                  <SuspenseProvider>
+                    <NewPrototypeLayout />
+                  </SuspenseProvider>
+                ),
+              },
+            ],
+          },
+          {
             path: '/manage-users',
             children: [
               {
@@ -207,6 +240,32 @@ const routesConfig: RouteConfig[] = [
                 ],
               },
               {
+                path: 'dashboard-templates',
+                children: [
+                  {
+                    index: true,
+                    element: (
+                      <SuspenseProvider>
+                        <DashboardTemplateManager />
+                      </SuspenseProvider>
+                    ),
+                  },
+                ],
+              },
+              {
+                path: 'project-templates',
+                children: [
+                  {
+                    index: true,
+                    element: (
+                      <SuspenseProvider>
+                        <ProjectTemplateManager />
+                      </SuspenseProvider>
+                    ),
+                  },
+                ],
+              },
+              {
                 path: 'manage-users',
                 children: [
                   {
@@ -222,7 +281,7 @@ const routesConfig: RouteConfig[] = [
             ],
           },
           {
-            path: '/plugins',
+            path: '/me/plugins',
             children: [
               {
                 index: true,
@@ -353,6 +412,14 @@ const routesConfig: RouteConfig[] = [
                 ),
               },
               {
+                path: 'api/plugin/:plugin_slug',
+                element: (
+                  <SuspenseProvider>
+                    <PageVehicleApi />
+                  </SuspenseProvider>
+                ),
+              },
+              {
                 path: 'plugin',
                 element: (
                   <SuspenseProvider>
@@ -425,19 +492,19 @@ const routesConfig: RouteConfig[] = [
       //     },
       //   ],
       // },
-      // {
-      //   path: '/privacy-policy',
-      //   children: [
-      //     {
-      //       index: true,
-      //       element: (
-      //         <SuspenseProvider>
-      //           <PagePrivacyPolicy />
-      //         </SuspenseProvider>
-      //       ),
-      //     },
-      //   ],
-      // },
+      {
+        path: '/privacy-policy',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PagePrivacyPolicy />
+              </SuspenseProvider>
+            ),
+          },
+        ],
+      },
       // {
       //   path: '/auth/:provider/success',
       //   element: <PageAuthSuccess />,

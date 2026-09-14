@@ -16,6 +16,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/a
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { EXCLUDED_FROM_SITE_CONFIG_KEYS } from '@/pages/SiteConfigManagement'
+import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
+import { reloadSoon, restoreConfigsFromSnapshot } from '@/utils/siteConfigAdmin'
 
 const SecretConfigSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
@@ -64,7 +66,7 @@ const SecretConfigSection: React.FC = () => {
       if (config.id) {
         await configManagementService.deleteConfigById(config.id)
         toast({ title: 'Deleted', description: `Config "${config.key}" deleted. Reloading page...` })
-        
+
         // Reload page to show changes immediately
         setTimeout(() => {
           window.location.href = window.location.href
@@ -85,12 +87,19 @@ const SecretConfigSection: React.FC = () => {
       setIsLoading(true)
       if (editingConfig?.id) {
         await configManagementService.updateConfigById(editingConfig.id, config)
+        pushSiteConfigEdit({
+          key: config.key,
+          valueBefore: editingConfig.value,
+          valueAfter: config.value,
+          valueType: config.valueType,
+          section: 'secrets',
+        })
         toast({ title: 'Updated', description: `Config "${config.key}" updated. Reloading page...` })
       } else {
         await configManagementService.createConfig({ ...config, secret: true })
         toast({ title: 'Created', description: `Config "${config.key}" created. Reloading page...` })
       }
-      
+
       // Reload page to show changes immediately
       setTimeout(() => {
         window.location.href = window.location.href
@@ -111,33 +120,16 @@ const SecretConfigSection: React.FC = () => {
   }
 
   const handleFactoryReset = async () => {
-    if (!window.confirm('Reset all secret configs to factory defaults? This cannot be undone.')) return
+    if (!window.confirm('Restore all secret configs to the deployment snapshot? This will overwrite your current secret values.')) return
 
     try {
       setIsLoading(true)
-      // Delete all secret configs
-      const allConfigs = await configManagementService.getConfigs({
-        secret: true,
-        scope: 'site',
-        limit: 100,
-      })
 
-      for (const config of allConfigs.results || []) {
-        try {
-          if (config.id) {
-            await configManagementService.deleteConfigById(config.id)
-          }
-        } catch (e) {
-          console.warn('Failed to delete config', config.key, e)
-        }
-      }
+      await restoreConfigsFromSnapshot({ secret: true })
 
-      toast({ title: 'Reset', description: 'Secret configs reset to factory defaults. Reloading page...' })
-      
-      // Reload page to show changes immediately
-      setTimeout(() => {
-        window.location.href = window.location.href
-      }, 800)
+      toast({ title: 'Restored', description: 'Secret configs restored from deployment snapshot. Reloading page...' })
+
+      reloadSoon()
     } catch (err) {
       toast({
         title: 'Reset failed',
@@ -160,14 +152,20 @@ const SecretConfigSection: React.FC = () => {
               Manage sensitive configuration values (admin only)
             </p>
           </div>
-          <Button
-            onClick={handleFactoryReset}
-            variant="destructive"
-            size="sm"
-            disabled={isLoading}
-          >
-            Factory Reset
-          </Button>
+
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setIsFormOpen(true)} size="sm" disabled={isLoading}>
+              + Add Secret
+            </Button>
+            <Button
+              onClick={handleFactoryReset}
+              variant="outline"
+              size="sm"
+              disabled={isLoading}
+            >
+              Restore default
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -181,7 +179,9 @@ const SecretConfigSection: React.FC = () => {
             configs={configs}
             onEdit={handleEditConfig}
             onDelete={handleDeleteConfig}
+            showDelete
             isLoading={isLoading}
+            historySection="secrets"
           />
         )}
       </div>

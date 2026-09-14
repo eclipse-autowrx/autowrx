@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/components/atoms/button'
 import {
   DropdownMenu,
@@ -28,6 +28,39 @@ interface DaActionButtonsProps {
   variant?: 'default' | 'outline' | 'ghost' | 'secondary' | 'destructive'
   size?: 'default' | 'sm' | 'lg' | 'icon' | 'icon-sm' | 'icon-lg'
   className?: string
+}
+
+const ActionDropdown: React.FC<{
+  actions: ActionButtonItem[]
+  variant: DaActionButtonsProps['variant']
+  size: DaActionButtonsProps['size']
+}> = ({ actions, variant, size }) => {
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  return (
+    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button variant={variant} size={size}>
+          <TbDotsVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {actions.map((action, index) => (
+          <DropdownMenuItem
+            key={index}
+            onClick={() => {
+              setMenuOpen(false)
+              action.onClick()
+            }}
+            disabled={action.disabled}
+          >
+            {action.icon && <span className="mr-2">{action.icon}</span>}
+            <div className="text-sm font-medium">{action.label}</div>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }
 
 const DaActionButtons: React.FC<DaActionButtonsProps> = ({
@@ -91,25 +124,7 @@ const DaActionButtons: React.FC<DaActionButtonsProps> = ({
         {firstAction.icon}
         <div className="text-sm font-medium">{firstAction.label}</div>
       </Button>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant={variant} size={size}>
-            <TbDotsVertical className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {restActions.map((action, index) => (
-            <DropdownMenuItem
-              key={index}
-              onClick={action.onClick}
-              disabled={action.disabled}
-            >
-              {action.icon && <span className="mr-2">{action.icon}</span>}
-              <div className="text-sm font-medium">{action.label}</div>
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <ActionDropdown actions={restActions} variant={variant} size={size} />
     </div>
   )
 }

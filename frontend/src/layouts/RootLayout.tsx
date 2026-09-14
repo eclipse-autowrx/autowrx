@@ -6,18 +6,19 @@
 //
 // SPDX-License-Identifier: MIT
 
-import useSelfProfileQuery from '@/hooks/useSelfProfile.ts'
 import { Link, Outlet } from 'react-router-dom'
 import { Toaster } from '@/components/molecules/toaster/toaster'
-import { Suspense, lazy, useEffect, useMemo } from 'react'
+import { Suspense, useEffect, useMemo, useRef } from 'react'
 import DaBreadcrumbBar from '@/components/molecules/DaBreadcrumbBar'
 import { useLocation } from 'react-router-dom'
 import config from '@/configs/config'
 import routesConfig from '@/configs/routes'
 import { RouteConfig } from '@/types/common.type.ts'
-import { retry } from '@/lib/retry.ts'
 import useGlobalStore from '@/stores/globalStore.ts'
 import ActiveObjectManagement from '@/components/organisms/ActiveObjectManagement.tsx'
+import packageInfo from '@/../package.json'
+import axios from 'axios'
+import useAuthStore from '@/stores/authStore.ts'
 
 // const ActiveObjectManagement = lazy(() =>
 //   retry(() => import('@/components/organisms/ActiveObjectManagement')),
@@ -26,6 +27,7 @@ import ActiveObjectManagement from '@/components/organisms/ActiveObjectManagemen
 //   retry(() => import('@/components/organisms/NavigationBar.tsx')),
 // )
 import { NavigationBar } from '@/components/organisms/NavigationBar.tsx'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 const traverse = (
   route: RouteConfig,
@@ -59,7 +61,46 @@ const RootLayout = () => {
   //   console.log(`isChatShowed`, isChatShowed)
   // }, [isChatShowed])
 
-  const { data: currentUser } = useSelfProfileQuery()
+  const bootstrappingRef = useRef(false)
+  const [authBootstrapped, setAuthBootstrapped, setAccess, setUser] = useAuthStore((state) => [
+    state.authBootstrapped,
+    state.setAuthBootstrapped,
+    state.setAccess,
+    state.setUser,
+  ])
+
+  useEffect(() => {
+    if (authBootstrapped || bootstrappingRef.current) {
+      return
+    }
+
+    bootstrappingRef.current = true
+
+    const refreshAxios = axios.create({
+      baseURL: `${config.serverBaseUrl}/${config.serverVersion}`,
+      withCredentials: true,
+    })
+
+    refreshAxios
+      .post('/auth/refresh-tokens', {})
+      .then((res) => {
+        const access = res?.data?.access
+        const user = res?.data?.user
+        if (access?.token) {
+          setAccess(access)
+        } else if (user) {
+          setUser(user, null)
+        }
+      })
+      .catch(() => {
+        // No refresh cookie or refresh rejected; treat as signed out.
+      })
+      .finally(() => {
+        setAuthBootstrapped(true)
+        bootstrappingRef.current = false
+      })
+  }, [authBootstrapped, setAccess, setAuthBootstrapped, setUser])
+  const privacyPolicyUrl = useSiteConfig('PRIVACY_POLICY_URL', '')
 
   const pathsWithoutBreadcrumb = useMemo(
     () => getPathsWithoutBreadcrumb(routesConfig),
@@ -68,36 +109,25 @@ const RootLayout = () => {
 
   return <>
 
-    <div className={`flex h-screen flex-col ${isChatShowed && 'pr-[430px]'}`}>
+    <div className={`flex h-screen flex-col da-root-layout ${isChatShowed && 'pr-[430px]'}`}>
       <Suspense>
         <ActiveObjectManagement />
       </Suspense>
       <Suspense>
         <NavigationBar />
         {!pathsWithoutBreadcrumb.has(location.pathname) && (
-          <div className="flex items-center justify-between bg-primary h-[52px] px-4">
+          <div className="flex items-center justify-between bg-primary h-[52px] px-4 da-secondary-nav-bar">
             <DaBreadcrumbBar />
           </div>
         )}
       </Suspense>
 
-      <div className="h-full overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto da-root-layout-main">
         <Outlet />
       </div>
 
       {config && config.instance !== 'digitalauto' && (
-        <div className="flex w-full sticky bottom-0 right-0 z-10 bg-slate-900 px-4 py-0.5 text-end text-xs text-white">
-          {config.showPrivacyPolicy && (
-            <Link
-              to="/privacy-policy"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:underline flex h-fit"
-            >
-              Privacy Policy
-            </Link>
-          )}
-          <div className="grow" />
+        <div className="flex w-full justify-center sticky bottom-0 right-0 z-10 bg-gray-100 da-root-layout-footer px-4 py-1 text-xs border-t gap-5">
           <a
             href="https://www.digital.auto/"
             target="_blank"
@@ -106,6 +136,19 @@ const RootLayout = () => {
           >
             Powered by digital.auto
           </a>
+          {privacyPolicyUrl && (
+            <Link
+              to={privacyPolicyUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="hover:underline flex h-fit"
+            >
+              Privacy Policy
+            </Link>
+          )}
+          {packageInfo.version && <span>
+            Version {packageInfo.version}
+          </span>}
         </div>
       )}
 

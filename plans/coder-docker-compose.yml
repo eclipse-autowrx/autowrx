@@ -1,0 +1,68 @@
+services:
+  coder-init:
+    # Init container to fix volume permissions
+    image: alpine:latest
+    user: "0:0"
+    volumes:
+      - coder_data:/home/coder/.config
+    command: sh -c "mkdir -p /home/coder/.config && chown -R 1000:1000 /home/coder/.config && chmod -R 755 /home/coder/.config"
+    restart: "no"
+
+  coder:
+    # This is the Coder Control Plane
+    image: ghcr.io/coder/coder:latest
+    container_name: coder
+    depends_on:
+      - coder-init
+    environment:
+      # The URL where users access the dashboard
+      - CODER_ACCESS_URL=http://localhost:7080
+      # Address to listen on inside the container
+      - CODER_HTTP_ADDRESS=0.0.0.0:7080
+      # Allow iframe embedding from your domain
+      - CODER_BROWSER_ONLY=true
+    ports:
+      - "7080:7080"
+    volumes:
+      # Critical: Mount the docker socket so Coder can spawn sibling containers
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Persist Coder's internal database
+      - coder_data:/home/coder/.config
+    group_add:
+      - "0" # Add root group for docker socket access
+    restart: unless-stopped
+    networks:
+      - coder_network
+
+  gitea:
+    # Gitea Git server for internal repositories
+    image: gitea/gitea:latest
+    container_name: gitea
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__database__DB_TYPE=sqlite3
+      - GITEA__database__PATH=/data/gitea/gitea.db
+      - GITEA__server__DOMAIN=localhost
+      - GITEA__server__HTTP_PORT=3000
+      - GITEA__server__ROOT_URL=http://localhost:3000
+      - GITEA__security__INSTALL_LOCK=true
+      - GITEA__service__DISABLE_REGISTRATION=true
+    ports:
+      - "3000:3000"
+      - "2222:22"
+    volumes:
+      - gitea_data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    networks:
+      - coder_network
+
+volumes:
+  coder_data:
+  gitea_data:
+
+networks:
+  coder_network:
+    driver: bridge

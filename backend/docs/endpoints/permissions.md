@@ -44,14 +44,9 @@ Role:
 
 /v2/permissions:
   get:
-    summary: List permissions
+    summary: List all permissions/feature roles (no filtering)
     security:
       - bearerAuth: []
-    parameters:
-      - in: query
-        name: userId
-        schema:
-          type: string
     responses:
       '200':
         description: Permissions
@@ -66,35 +61,42 @@ Role:
           schema:
             $ref: '#/components/schemas/AssignRoleRequest'
     responses:
-      '200':
+      '201':
         description: Assigned
   delete:
-    summary: Remove role from user
+    summary: Remove role from user (query params, not body)
     security:
       - bearerAuth: []
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/RemoveRoleRequest'
+    parameters:
+      - in: query
+        name: user
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: role
+        required: true
+        schema:
+          type: string
     responses:
       '204':
         description: Removed
 
 /v2/permissions/has-permission:
   get:
-    summary: Check if current user has a permission
+    summary: Check if current user has permission(s)
     security:
       - bearerAuth: []
     parameters:
       - in: query
-        name: permission
+        name: permissions
+        required: true
         schema:
           type: string
+        description: Comma-separated; each entry is `permission` or `permission:resourceId`.
     responses:
       '200':
-        description: Result
+        description: boolean[] in the same order
 
 /v2/permissions/roles:
   get:
@@ -107,15 +109,10 @@ Role:
 
 /v2/permissions/users-by-roles:
   get:
-    summary: List users by roles (admin)
+    summary: List users grouped by role (admin; no query filter)
     security:
       - bearerAuth: []
-    parameters:
-      - in: query
-        name: role
-        schema:
-          type: string
     responses:
       '200':
-        description: Users
+        description: Users grouped by role
 ```

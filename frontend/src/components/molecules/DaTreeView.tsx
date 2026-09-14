@@ -19,27 +19,42 @@ import useCurrentModelApi from '@/hooks/useCurrentModelApi'
 
 export interface TreeNode {
   name: string
-  type: 'branch'
+  type: 'branch' | 'sensor' | 'actuator'
   path: string
   children: TreeNode[]
 }
 
 const buildTreeNode = (name: string, path: string, node: Branch): TreeNode => {
+  const children = node.children
+    ? Object.entries(node.children)
+        // Include branches, sensors, and actuators (exclude attributes)
+        .filter(([sub_node_name, node]) => ['branch', 'sensor', 'actuator'].includes(node.type))
+        // Sort: branches first, then sensors/actuators, both alphabetically within their group
+        .sort(([nameA, nodeA], [nameB, nodeB]) => {
+          const typeA = nodeA.type || 'branch'
+          const typeB = nodeB.type || 'branch'
+          
+          // Branches come first
+          if (typeA === 'branch' && typeB !== 'branch') return -1
+          if (typeA !== 'branch' && typeB === 'branch') return 1
+          
+          // Within same type group, sort alphabetically
+          return nameA.localeCompare(nameB)
+        })
+        .map(([sub_node_name, node]) =>
+          buildTreeNode(
+            sub_node_name,
+            path === '' ? name : `${path}.${name}`,
+            node as Branch,
+          ),
+        )
+    : []
+  
   return {
     name,
     type: node.type || 'branch',
     path,
-    children: node.children
-      ? Object.entries(node.children)
-          .filter(([sub_node_name, node]) => node.type === 'branch')
-          .map(([sub_node_name, node]) =>
-            buildTreeNode(
-              sub_node_name,
-              path === '' ? name : `${path}.${name}`,
-              node as Branch,
-            ),
-          )
-      : [],
+    children,
   }
 }
 
@@ -64,22 +79,22 @@ const RenderRectSvgNode = (
     'aiot-green': '#aebd38',
   }
 
-  const nodeWidth = 8 * node.name.length + 45
+  // Calculate width accounting for " >" indicator on branches (only if branch has children)
+  const nameWidth = 8 * node.name.length
+  const hasChildren = node.children && node.children.length > 0
+  const indicatorWidth = node.type === 'branch' && hasChildren ? 15 : 0
+  const nodeWidth = nameWidth + indicatorWidth + 45
+  
   return (
     <g>
       <g
         onClick={() => {
-          const cviLink = `/api/${(node as TreeNode).path}.${node.name}`
-          const fullLink =
-            prototype_id === ''
-              ? `/model/${model.id}${cviLink}/`
-              : `/model/${model.id}/library/prototype/${prototype_id}/view${cviLink}/`
-
-          if (['sensor', 'actuator', 'attribute'].includes(node.type)) {
-            navigate(fullLink)
-            onNodeClick?.()
+          // Only toggle expand/collapse, don't navigate for sensors/actuators
+          // Branches can be clicked to navigate via the green circle button
+          if (node.type === 'branch') {
+            toggleNode()
           }
-          toggleNode()
+          // Sensors and actuators don't navigate - they're leaf nodes
         }}
       >
         {
@@ -91,7 +106,7 @@ const RenderRectSvgNode = (
               x={-50}
               rx={10}
               strokeWidth="0"
-              style={{ fill: collapsed ? 'white' : COLORS[node.type] }}
+              style={{ fill: collapsed && node.type !== 'branch' ? COLORS[node.type] : collapsed ? 'white' : COLORS[node.type] }}
             />
             <foreignObject width={nodeWidth} height={40} y={-20} x={-50}>
               <div
@@ -101,10 +116,11 @@ const RenderRectSvgNode = (
                   justifyContent: 'center',
                   height: '100%',
                   width: '100%',
-                  color: collapsed ? 'rgb(131 148 154)' : 'white',
+                  color: collapsed && node.type !== 'branch' ? 'white' : collapsed ? 'rgb(131 148 154)' : 'white',
                 }}
               >
                 {node.name}
+                {node.type === 'branch' && node.children && node.children.length > 0 && ' >'}
               </div>
             </foreignObject>
           </>
@@ -119,14 +135,15 @@ const RenderRectSvgNode = (
           strokeWidth={3}
           stroke={'white'}
           onClick={() => {
-            const cviLink =
+            // Use correct path with /api/covesa/ prefix
+            const apiPath =
               node.path === ''
-                ? `/api/${node.name}`
-                : `/api/${node.path}.${node.name}`
+                ? node.name
+                : `${node.path}.${node.name}`
             const fullLink =
               prototype_id === ''
-                ? `/model/${model.id}${cviLink}/`
-                : `/model/${model.id}/library/prototype/${prototype_id}/view${cviLink}/`
+                ? `/model/${model.id}/api/covesa/${apiPath}`
+                : `/model/${model.id}/library/prototype/${prototype_id}/view/api/${apiPath}/`
 
             navigate(fullLink)
             onNodeClick?.()

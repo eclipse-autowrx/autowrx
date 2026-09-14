@@ -2,7 +2,7 @@
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| GET | / | Optional (strictAuth=false) + Admin | List change logs. |
+| GET | / | Optional (when PUBLIC_VIEWING enabled) + Admin | List change logs. |
 
 ### Data Model
 

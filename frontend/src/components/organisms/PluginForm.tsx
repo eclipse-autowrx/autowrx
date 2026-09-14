@@ -106,7 +106,8 @@ const PluginForm = ({
 
   useEffect(() => {
     try {
-      setJsonText(JSON.stringify(form.config || {}, null, 2))
+      const config = initial?.config ?? {}
+      setJsonText(JSON.stringify(config, null, 2))
       setJsonError(null)
     } catch {
       setJsonText('{}')
@@ -119,7 +120,7 @@ const PluginForm = ({
   const save = useMutation({
     mutationFn: async () => {
       // Parse latest JSON text regardless of editor blur
-      let parsedConfig: any = form.config
+      let parsedConfig: any = jsonText
       try {
         parsedConfig = JSON.parse(jsonText || '{}')
         setJsonError(null)
@@ -289,6 +290,7 @@ const PluginForm = ({
               <div className="space-y-2 flex items-center gap-2">
                 <DaImportFile
                   accept=".zip"
+                  disabled={!form.name || doUpload.isPending}
                   onFileChange={async (file) => {
                     setZip(file)
                     try {

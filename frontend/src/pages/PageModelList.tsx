@@ -1,210 +1,480 @@
 // Copyright (c) 2025 Eclipse Foundation.
 //
 // This program and the accompanying materials are made available under the
-// terms of the MIT License which is available at
-// https://opensource.org/licenses/MIT.
+// terms of the MIT License which is available at https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/atoms/button'
+import { Input } from '@/components/atoms/input'
+import { Label } from '@/components/atoms/label'
 import { HiPlus } from 'react-icons/hi'
+import { TbLoader, TbPackageExport, TbRefresh, TbSearch } from 'react-icons/tb'
 import DaDialog from '@/components/molecules/DaDialog'
-import FormCreateModel from '@/components/molecules/forms/FormCreateModel'
-import { TbLoader, TbPackageExport } from 'react-icons/tb'
+import CreateNewModelDialog from '@/components/molecules/CreateNewModelDialog'
 import DaImportFile from '@/components/atoms/DaImportFile'
-import { zipToModel } from '@/lib/zipUtils'
+import { buildPrototypeImportPayload, zipToModel } from '@/lib/zipUtils'
 import { createModelService } from '@/services/model.service'
 import { createPrototypeService } from '@/services/prototype.service'
-import { ModelCreate, Prototype } from '@/types/model.type'
+import { uploadFileService } from '@/services/upload.service'
+import { ModelCreate, ModelLite, Prototype } from '@/types/model.type'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import useAuthStore from '@/stores/authStore'
 import { addLog } from '@/services/log.service'
+import { getConfig } from '@/utils/siteConfig'
+import { useToast } from '@/components/molecules/toaster/use-toast'
 import { useNavigate } from 'react-router-dom'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import DaSkeletonGrid from '@/components/molecules/DaSkeletonGrid'
 import { Skeleton } from '@/components/atoms/skeleton'
 import DaModelItem from '@/components/molecules/DaModelItem'
 import { Link } from 'react-router-dom'
-import { ModelLite } from '@/types/model.type'
 import useListAllModels from '@/hooks/useListAllModel'
+import { TbLock } from 'react-icons/tb'
+import { useAuthConfigs } from '@/hooks/useAuthConfigs'
+import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
+import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import { isAxiosError } from 'axios'
+import { invalidatePrototypeListQueries } from '@/hooks/usePrototypeQueries'
+
+type ModelTab = 'myModel' | 'myContribution' | 'public'
+
+const stripExtendedApisForImport = (apis: unknown[]) =>
+  apis.map((api) => {
+    if (!api || typeof api !== 'object') return api
+    const { id, _id, model, created_at, updated_at, __v, ...rest } =
+      api as Record<string, unknown>
+    return rest
+  })
+
+/** Empty string / whitespace → null (custom model); preserve explicit null. */
+const normalizeApiVersion = (value: unknown): string | null => {
+  if (value == null) return null
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed || null
+}
 
 const PageModelList = () => {
   const navigate = useNavigate()
+  const { toast } = useToast()
   const [isImporting, setIsImporting] = useState(false)
+  const [pendingImport, setPendingImport] = useState<any | null>(null)
+  const [importNameDialogOpen, setImportNameDialogOpen] = useState(false)
+  const [importModelName, setImportModelName] = useState('')
+  const [importNameError, setImportNameError] = useState('')
+  const { data: user, isLoading: isUserLoading } = useSelfProfileQuery()
+  const { authBootstrapped, setOpenLoginDialog } = useAuthStore()
+  const { authConfigs } = useAuthConfigs()
 
-  const { data: user, isLoading: userLoading } = useSelfProfileQuery()
-
-  // Single hook that returns all model types
-  // This query should run even for unauthenticated users (backend supports PUBLIC_VIEWING)
-  const {
-    data,
-    isLoading,
-    error,
-    refetch: refetchAllModels,
-  } = useListAllModels()
-
-  // Log errors for debugging
-  if (error) {
-    console.error('[PageModelList] Error loading models:', error)
-  }
-
-  // In case `data` isn't ready, destructure safely
-  const {
-    ownedModels = [],
-    contributedModels = [],
-    publicReleasedModels = [],
-  } = data || {}
-
-  // Overlap filtering
-  const userOwnedIds = ownedModels.map((m) => m.id)
-  const userContributedIds = contributedModels.map((m) => m.id)
-
-  // Remove any public models that the user owns or contributes to
-  const filteredPublic = !user
-    ? publicReleasedModels
-    : publicReleasedModels.filter(
-        (m) =>
-          !userOwnedIds.includes(m.id) && !userContributedIds.includes(m.id),
-      )
-
-  // Remove from 'my contributions' any that are actually owned
-  const filteredContributions = contributedModels.filter(
-    (m) => !userOwnedIds.includes(m.id),
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeSection, setActiveSection] = useState<ModelTab>(
+    user ? 'myModel' : 'public',
   )
 
-  // Refs for scrolling
-  const myModelRef = useRef<HTMLDivElement>(null)
-  const myContributionRef = useRef<HTMLDivElement>(null)
+  const queryClient = useQueryClient()
+
+  const {
+    ownedModels,
+    contributedModels,
+    publicReleasedModels,
+    totalResults,
+    isLoading,
+    error,
+    refetch,
+    isFetchingNextPage,
+  } = useListAllModels()
+
+  const filterModels = useCallback(
+    (models: ModelLite[]) => {
+      if (!searchQuery.trim()) return models
+      const q = searchQuery.toLowerCase()
+      return models.filter((m) => m.name?.toLowerCase().includes(q))
+    },
+    [searchQuery],
+  )
+
+  const ownedModelNames = useMemo(
+    () => ownedModels.map((model) => model.name).filter(Boolean),
+    [ownedModels],
+  )
+
+  const {
+    isDuplicate: isDuplicateImportModelName,
+    suggestedName: suggestedImportModelName,
+  } = useDuplicateNameCheck(importModelName, ownedModelNames)
+
+  useEffect(() => {
+    if (!user) setActiveSection('public')
+  }, [user])
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const myModelsRef = useRef<HTMLDivElement>(null)
+  const myContribRef = useRef<HTMLDivElement>(null)
   const publicRef = useRef<HTMLDivElement>(null)
 
-  // If user not logged in, default tab is "public"
-  const [activeTab, setActiveTab] = useState<
-    'myModel' | 'myContribution' | 'public'
-  >(user ? 'myModel' : 'public')
+  const sectionRefByTab = useMemo(
+    () => ({
+      myModel: myModelsRef,
+      myContribution: myContribRef,
+      public: publicRef,
+    }),
+    [],
+  )
 
-  // Handle tab click -> scroll to respective section
-  const handleTabClick = (tab: 'myModel' | 'myContribution' | 'public') => {
-    setActiveTab(tab)
-    switch (tab) {
-      case 'myModel':
-        myModelRef.current?.scrollIntoView({ behavior: 'smooth' })
-        break
-      case 'myContribution':
-        myContributionRef.current?.scrollIntoView({ behavior: 'smooth' })
-        break
-      case 'public':
-        publicRef.current?.scrollIntoView({ behavior: 'smooth' })
-        break
-    }
-  }
+  const scrollToSection = useCallback(
+    (tab: ModelTab) => {
+      const el = sectionRefByTab[tab]?.current
+      if (!el) return
+      setActiveSection(tab)
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    },
+    [sectionRefByTab],
+  )
 
-  const handleImportModelZip = async (file: File) => {
-    const model = await zipToModel(file)
-    if (model) {
-      setIsImporting(true)
-      await createNewModel(model)
-    }
-  }
+  const handleRetry = useCallback(async () => {
+    await refetch()
+  }, [refetch])
 
-  const createNewModel = async (importedModel: any) => {
-    if (!importedModel || !importedModel.model) return
-    try {
-      const newModel: ModelCreate = {
-        custom_apis: importedModel.model.custom_apis
-          ? JSON.stringify(importedModel.model.custom_apis)
-          : 'Empty',
-        cvi: importedModel.model.cvi,
-        main_api: importedModel.model.main_api || 'Vehicle',
-        model_home_image_file:
-          importedModel.model.model_home_image_file ||
-          '/ref/E-Car_Full_Vehicle.png',
-        model_files: importedModel.model.model_files || {},
-        name: importedModel.model.name || 'New Imported Model',
-        extended_apis: importedModel.model.extended_apis || [],
-        api_version: importedModel.model.api_version || 'v4.1',
-        visibility: 'private',
-      }
+  const handleTabClick = useCallback(
+    (tab: ModelTab) => {
+      setSearchQuery('')
+      scrollToSection(tab)
+    },
+    [scrollToSection],
+  )
 
-      const createdModel = await createModelService(newModel)
+  const resetImportNameDialog = useCallback(() => {
+    setPendingImport(null)
+    setImportModelName('')
+    setImportNameError('')
+    setImportNameDialogOpen(false)
+  }, [])
 
-      // Log
-      addLog({
-        name: `New model '${createdModel.name}' with visibility: ${createdModel.visibility}`,
-        description: `New model '${createdModel.name}' was created by ${
-          user?.email || user?.name || user?.id
-        }`,
-        type: 'new-model',
-        create_by: user?.id!,
-        ref_id: createdModel.id,
-        ref_type: 'model',
-      })
+  const openImportNameDialog = useCallback(
+    (importedModel: any, preferredName?: string, errorMessage?: string) => {
+      const originalName = importedModel?.model?.name || 'New Imported Model'
+      setPendingImport(importedModel)
+      setImportModelName(preferredName?.trim() || originalName)
+      setImportNameError(errorMessage || '')
+      setImportNameDialogOpen(true)
+    },
+    [],
+  )
 
-      // Prototypes if any
-      if (importedModel.prototypes.length > 0) {
-        const prototypePromises = importedModel.prototypes.map(
-          async (proto: Partial<Prototype>) => {
-            const newPrototype: Partial<Prototype> = {
-              state: proto.state || 'development',
-              apis: {
-                VSS: [],
-                VSC: [],
-              },
-              code: proto.code || '',
-              widget_config: proto.widget_config || '{}',
-              description: proto.description,
-              tags: proto.tags || [],
-              image_file: proto.image_file,
-              model_id: createdModel,
-              name: proto.name,
-              complexity_level: proto.complexity_level || '3',
-              customer_journey: proto.customer_journey || '{}',
-              portfolio: proto.portfolio || {},
-            }
-            return createPrototypeService(newPrototype)
-          },
+  const createNewModel = useCallback(
+    async (importedModel: any, overrideName?: string) => {
+      if (!importedModel?.model) return
+      try {
+        // Prefer zip-embedded image, then metadata URL, then site default
+        let modelHomeImageUrl: string | undefined
+        if (importedModel.modelHomeImageFile instanceof File) {
+          try {
+            const { url } = await uploadFileService(
+              importedModel.modelHomeImageFile,
+            )
+            modelHomeImageUrl = url
+          } catch (uploadErr) {
+            console.error('Failed to upload model home image:', uploadErr)
+          }
+        }
+        if (!modelHomeImageUrl) {
+          const metadataImage = importedModel.model.model_home_image_file
+          if (
+            typeof metadataImage === 'string' &&
+            metadataImage.trim() &&
+            !metadataImage.startsWith('/ref/')
+          ) {
+            modelHomeImageUrl = metadataImage
+          }
+        }
+        if (!modelHomeImageUrl) {
+          modelHomeImageUrl = await getConfig(
+            'DEFAULT_MODEL_IMAGE',
+            'site',
+            undefined,
+            '/imgs/default-model-image.png',
+          )
+        }
+
+        const modelName =
+          overrideName?.trim() ||
+          importedModel.model.name ||
+          'New Imported Model'
+        const apiVersion = normalizeApiVersion(
+          importedModel.model.api_version,
         )
-        await Promise.all(prototypePromises)
+        const newModel: ModelCreate = {
+          main_api: importedModel.model.main_api || 'Vehicle',
+          model_home_image_file: modelHomeImageUrl,
+          model_files: importedModel.model.model_files || {},
+          name: modelName,
+          visibility: 'private',
+          ...(importedModel.model.custom_template != null && {
+            custom_template: importedModel.model.custom_template,
+          }),
+        }
+
+        if (apiVersion == null) {
+          // Custom VSS: re-upload exported tree via api_data_url (same as
+          // FormCreateModel upload). Backend processApiDataUrl rebuilds
+          // extended_apis; do not send truncated zip extended_apis.
+          const cvi =
+            typeof importedModel.model.cvi === 'string'
+              ? importedModel.model.cvi
+              : JSON.stringify(importedModel.model.cvi ?? {})
+          const vssFile = new File([cvi], 'vss.json', {
+            type: 'application/json',
+          })
+          const { url } = await uploadFileService(vssFile)
+          newModel.api_data_url = url
+          newModel.api_version = null
+        } else {
+          // COVESA: base tree from api_version; wishlist from extended_apis.
+          newModel.custom_apis = importedModel.model.custom_apis
+            ? JSON.stringify(importedModel.model.custom_apis)
+            : 'Empty'
+          newModel.cvi = importedModel.model.cvi
+          newModel.extended_apis = stripExtendedApisForImport(
+            importedModel.model.extended_apis || [],
+          )
+          newModel.api_version = apiVersion
+        }
+
+        const createdModelId = await createModelService(newModel)
+
+        addLog({
+          name: `New model '${modelName}' with visibility: private`,
+          description: `New model '${modelName}' was created by ${
+            user?.email || user?.name || user?.id
+          }`,
+          type: 'new-model',
+          create_by: user?.id!,
+          ref_id: createdModelId,
+          ref_type: 'model',
+        })
+
+        if (importedModel.prototypes?.length > 0) {
+          await Promise.all(
+            importedModel.prototypes.map(async (proto: Partial<Prototype>) => {
+              const newPrototype = buildPrototypeImportPayload(
+                proto,
+                createdModelId,
+              )
+              return createPrototypeService(newPrototype)
+            }),
+          )
+          await invalidatePrototypeListQueries(queryClient)
+        }
+
+        await refetch()
+        queryClient.invalidateQueries({
+          queryKey: ['modelsList', user?.id ?? 'anonymous'],
+        })
+        resetImportNameDialog()
+        navigate(`/model/${createdModelId}`)
+      } catch (err) {
+        console.error('Error creating model from zip: ', err)
+        if (isAxiosError(err) && err.response?.status === 409) {
+          openImportNameDialog(
+            importedModel,
+            overrideName?.trim() ||
+              importedModel.model?.name ||
+              'New Imported Model',
+            err.response.data?.message || 'A model with this name already exists',
+          )
+          return
+        }
+        toast({
+          title: 'Import failed',
+          description:
+            'Could not create the model from this zip. Check the file and try again.',
+          variant: 'destructive',
+        })
+      } finally {
+        setIsImporting(false)
       }
+    },
+    [user, refetch, navigate, queryClient, toast, openImportNameDialog, resetImportNameDialog],
+  )
 
-      // Refetch model list and navigate
-      await refetchAllModels()
-      navigate(`/model/${createdModel}`)
-    } catch (err) {
-      console.error('Error creating model from zip: ', err)
-    } finally {
-      setIsImporting(false)
+  const handleConfirmImportName = useCallback(async () => {
+    if (!pendingImport || !importModelName.trim() || isDuplicateImportModelName) {
+      return
     }
-  }
+    setImportNameError('')
+    setIsImporting(true)
+    await createNewModel(pendingImport, importModelName.trim())
+  }, [
+    pendingImport,
+    importModelName,
+    isDuplicateImportModelName,
+    createNewModel,
+  ])
 
-  // Tabs
-  const tabItems = user
-    ? [
-        { title: 'My Models', value: 'myModel', count: ownedModels.length },
+  const handleImportModelZip = useCallback(
+    async (file: File) => {
+      const model = await zipToModel(file)
+      if (model) {
+        const proposedName = model.model?.name || 'New Imported Model'
+        const duplicate = ownedModelNames.some(
+          (name) => name.toLowerCase() === proposedName.toLowerCase(),
+        )
+        if (duplicate) {
+          const existing = new Set(ownedModelNames.map((name) => name.toLowerCase()))
+          let suggestedName = proposedName
+          if (existing.has(proposedName.toLowerCase())) {
+            const match = proposedName.match(/^(.*?)_(\d+)$/)
+            const base = match ? match[1] : proposedName
+            let counter = match ? parseInt(match[2], 10) + 1 : 1
+            suggestedName = `${base}_${counter}`
+            while (existing.has(suggestedName.toLowerCase())) {
+              counter++
+              suggestedName = `${base}_${counter}`
+            }
+          }
+          openImportNameDialog(
+            model,
+            proposedName,
+            'A model with this name already exists',
+          )
+          return
+        }
+
+        setIsImporting(true)
+        await createNewModel(model)
+      } else {
+        toast({
+          title: 'Import failed',
+          description: 'Invalid or unreadable model zip file.',
+          variant: 'destructive',
+        })
+      }
+    },
+    [createNewModel, toast, ownedModelNames, openImportNameDialog],
+  )
+
+  const tabItems = useMemo(() => {
+    if (user) {
+      return [
+        {
+          title: 'My Models',
+          value: 'myModel' as const,
+          count: ownedModels.length,
+        },
         {
           title: 'My Contributions',
-          value: 'myContribution',
-          count: filteredContributions.length,
+          value: 'myContribution' as const,
+          count: contributedModels.length,
         },
-        { title: 'Public', value: 'public', count: filteredPublic.length },
+        {
+          title: 'Public',
+          value: 'public' as const,
+          count: publicReleasedModels.length,
+        },
       ]
-    : [{ title: 'Public', value: 'public', count: filteredPublic.length }]
+    }
+    return [
+      {
+        title: 'Public',
+        value: 'public' as const,
+        count: publicReleasedModels.length,
+      },
+    ]
+  }, [
+    user,
+    ownedModels.length,
+    contributedModels.length,
+    publicReleasedModels.length,
+  ])
+
+  useEffect(() => {
+    const targets: Array<{ tab: ModelTab; el: HTMLElement | null }> = [
+      { tab: 'myModel', el: myModelsRef.current },
+      { tab: 'myContribution', el: myContribRef.current },
+      { tab: 'public', el: publicRef.current },
+    ].filter((t) => !!t.el && (user || t.tab === 'public')) as any
+
+    if (!targets.length) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const intersecting = entries.filter((e) => e.isIntersecting)
+        if (!intersecting.length) return
+
+        const visibleSorted = intersecting.sort(
+          (a, b) =>
+            (a.boundingClientRect.top ?? 0) - (b.boundingClientRect.top ?? 0),
+        )
+        const top = visibleSorted[0]
+        if (!top?.target) return
+        const foundTop = targets.find((t) => t.el === top.target)
+        if (foundTop) {
+          setActiveSection(foundTop.tab)
+        }
+      },
+      {
+        root: null,
+        rootMargin: '0px 0px -40% 0px',
+        threshold: 0,
+      },
+    )
+
+    targets.forEach((t) => t.el && observer.observe(t.el))
+    return () => observer.disconnect()
+  }, [user])
+
+  // Auth gate: when the user is not signed in, show a friendly message
+  // instead of the model list and offer a button to open the global login dialog.
+  // We wait for `authBootstrapped` so we don't flash this gate while the
+  // initial token refresh is still in flight.
+  if (authBootstrapped && !isUserLoading && !user && !authConfigs.PUBLIC_VIEWING) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full min-h-[60vh] px-6 text-center">
+        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+          <TbLock className="w-8 h-8 text-primary" />
+        </div>
+        <h2 className="text-2xl font-semibold text-foreground">
+          Sign in required
+        </h2>
+        <p className="mt-2 max-w-md text-sm text-muted-foreground">
+          You need to be signed in to browse and manage Vehicle Models.
+          Please sign in to continue.
+        </p>
+        <div className="flex gap-3 mt-6">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setOpenLoginDialog(true)}
+          >
+            Sign In
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate('/')}>
+            Back to Home
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="flex flex-col w-full h-full relative">
-      {/* Tabs Bar */}
-      <div className="sticky top-0 flex min-h-[52px] border-b border-muted-foreground/50 bg-background z-50">
-        {isLoading ? (
+    <div className="flex flex-col w-full h-full relative da-page-model-list">
+      <div className="sticky top-0 flex min-h-[52px] border-b border-muted-foreground/50 bg-background da-page-model-list-tab-bar z-50">
+        {isLoading && totalResults === 0 ? (
           <div className="flex items-center h-full space-x-6 px-4">
             {tabItems.map((_, index) => (
               <Skeleton key={index} className="w-[100px] h-6" />
             ))}
           </div>
         ) : (
-          tabItems.map((tab, index) => (
+          tabItems.filter((tab) => tab.count > 0 || isLoading).map((tab) => (
             <DaTabItem
-              key={index}
-              active={activeTab === tab.value}
-              onClick={() => handleTabClick(tab.value as typeof activeTab)}
+              key={tab.value}
+              active={activeSection === tab.value}
+              onClick={() => handleTabClick(tab.value as ModelTab)}
             >
               {tab.title}
               <div className="flex min-w-5 px-1.5 py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
@@ -215,136 +485,184 @@ const PageModelList = () => {
         )}
       </div>
 
-      <div className="flex w-full h-[calc(100%-52px)] items-start bg-slate-200 p-2">
-        <div className="flex flex-col w-full h-full bg-background rounded-lg overflow-y-auto">
+      <div className="flex w-full h-[calc(100%-52px)] items-start bg-slate-200 da-page-model-list-frame p-2">
+        <div
+          ref={scrollContainerRef}
+          className="flex flex-col w-full h-full bg-background da-page-model-list-content rounded-lg overflow-y-auto"
+        >
           <div className="flex flex-col w-full h-full container px-4 pb-6">
-            {user && (
-              <div className="flex flex-col w-full h-fit pt-6" ref={myModelRef}>
-                <div className="flex w-full items-center justify-between mb-4">
-                  <p className="text-sm font-medium text-primary">
+            {error && (
+              <div className="flex flex-col items-center justify-center gap-3 py-12">
+                <p className="text-base text-destructive font-medium">
+                  Something went wrong. Please try again.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRetry}
+                  className="gap-2"
+                >
+                  <TbRefresh className="text-lg" />
+                  Retry
+                </Button>
+              </div>
+            )}
+            {!error && (
+              <>
+                <div className="pt-6 pb-2 flex items-center justify-between">
+                  <p className="text-sm text-primary">
                     Select a vehicle model to start
                   </p>
-                  <div className="flex">
-                    {!isImporting ? (
-                      <DaImportFile
-                        accept=".zip"
-                        onFileChange={handleImportModelZip}
-                      >
-                        <Button variant="outline" size="sm" className="mr-2">
-                          <TbPackageExport className="mr-1 text-lg" /> Import
-                          Model
-                        </Button>
-                      </DaImportFile>
-                    ) : (
-                      <p className="flex items-center text-base text-muted-foreground mr-2">
-                        <TbLoader className="animate-spin text-lg mr-2" />
-                        Importing model ...
-                      </p>
-                    )}
-                    <DaDialog
-                      trigger={
-                        <Button
-                          variant="default"
-                          size="sm"
-                          data-id="btn-open-form-create"
+                  {user && (
+                    <div className="flex items-center gap-2">
+                      {!isImporting ? (
+                        <DaImportFile
+                          accept=".zip"
+                          onFileChange={handleImportModelZip}
                         >
-                          <HiPlus className="mr-1 text-lg" />
-                          Create New Model
-                        </Button>
-                      }
-                    >
-                      <FormCreateModel />
-                    </DaDialog>
-                  </div>
-                </div>
+                          <Button variant="outline" size="sm">
+                            <TbPackageExport className="mr-1 text-lg" /> Import
+                            Model
+                          </Button>
+                        </DaImportFile>
+                      ) : (
+                        <p className="flex items-center text-sm text-muted-foreground">
+                          <TbLoader className="animate-spin text-lg mr-2" />
+                          Importing model ...
+                        </p>
+                      )}
 
-                {/* My Models */}
-                {ownedModels.length > 0 && (
-                  <div className="pt-6 h-fit">
-                    <h2 className="text-base font-semibold text-primary">
-                      My Models
-                    </h2>
-                    <DaSkeletonGrid
-                      maxItems={{ sm: 1, md: 2, lg: 3, xl: 3 }}
-                      className="mt-2"
-                      itemWrapperClassName="w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6"
-                      primarySkeletonClassName="h-[270px]"
-                      secondarySkeletonClassName="hidden"
-                      data={ownedModels}
-                      isLoading={isLoading}
-                      emptyText="No models found. Please create a new model."
-                      emptyContainerClassName="h-[50%]"
-                    >
-                      <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3 pb-4 mt-2">
-                        {ownedModels.map((model: ModelLite, index: number) => (
-                          <Link key={index} to={`/model/${model.id}`}>
-                            <DaModelItem
-                              model={model}
-                              className="my_model_grid_item"
+                      <CreateNewModelDialog
+                        open={createDialogOpen}
+                        onOpenChange={setCreateDialogOpen}
+                        trigger={
+                          <Button
+                            variant="default"
+                            size="sm"
+                            data-id="btn-open-form-create"
+                          >
+                            <HiPlus className="mr-1 text-lg" />
+                            Create New Model
+                          </Button>
+                        }
+                      />
+
+                      <DaDialog
+                        open={importNameDialogOpen}
+                        onOpenChange={(open) => {
+                          if (!open) resetImportNameDialog()
+                        }}
+                        dialogTitle="Import Model"
+                        description="Please choose a name for the imported model."
+                        hideHeaderDivider
+                        preventOutsideClose={isImporting}
+                        className="w-115 max-w-[calc(100vw-40px)]"
+                        footer={
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={resetImportNameDialog}
+                              disabled={isImporting}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => void handleConfirmImportName()}
+                              disabled={
+                                isImporting ||
+                                !importModelName.trim() ||
+                                isDuplicateImportModelName
+                              }
+                            >
+                              {isImporting ? (
+                                <TbLoader className="mr-1 text-lg animate-spin" />
+                              ) : null}
+                              Import
+                            </Button>
+                          </>
+                        }
+                      >
+                        <div className="flex flex-col gap-1.5">
+                          <Label>Model Name</Label>
+                          <Input
+                            value={importModelName}
+                            onChange={(e) => {
+                              setImportModelName(e.target.value)
+                              setImportNameError('')
+                            }}
+                            onKeyDown={(e) =>
+                              e.key === 'Enter' && void handleConfirmImportName()
+                            }
+                            placeholder="Model name"
+                            disabled={isImporting}
+                            autoFocus
+                          />
+                          {(importNameError || isDuplicateImportModelName) && (
+                            <DaDuplicateNameHint
+                              message={
+                                importNameError ||
+                                'A model with this name already exists'
+                              }
+                              suggestedName={suggestedImportModelName}
+                              onApplySuggestion={(name) => {
+                                setImportModelName(name)
+                                setImportNameError('')
+                              }}
                             />
-                          </Link>
-                        ))}
+                          )}
+                        </div>
+                      </DaDialog>
+                    </div>
+                  )}
+                </div>
+                {user && (filterModels(ownedModels).length > 0 || isLoading) && (
+                  <ModelSection
+                    title="My Models"
+                    models={filterModels(ownedModels)}
+                    isLoading={isLoading && ownedModels.length === 0}
+                    emptyText=""
+                    sectionRef={myModelsRef}
+                  />
+                )}
+
+                {user && (filterModels(contributedModels).length > 0 || isLoading) && (
+                  <ModelSection
+                    title="My Contributions"
+                    models={filterModels(contributedModels)}
+                    isLoading={isLoading && contributedModels.length === 0}
+                    emptyText=""
+                    sectionRef={myContribRef}
+                  />
+                )}
+
+                {(filterModels(publicReleasedModels).length > 0 || isLoading) && (
+                <ModelSection
+                  title="Public"
+                  models={filterModels(publicReleasedModels)}
+                  isLoading={isLoading && publicReleasedModels.length === 0}
+                  emptyText=""
+                  headerExtras={
+                    !user ? (
+                      <div className="relative w-full max-w-sm">
+                        <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder="Search models..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-9"
+                          data-id="model-search-input"
+                        />
                       </div>
-                    </DaSkeletonGrid>
-                  </div>
+                    ) : undefined
+                  }
+                  sectionRef={publicRef}
+                />
                 )}
-              </div>
+              </>
             )}
-
-            {user && filteredContributions.length > 0 && (
-              <div ref={myContributionRef} className="pt-6">
-                <h2 className="text-base font-semibold text-primary">
-                  My Contributions
-                </h2>
-                <DaSkeletonGrid
-                  maxItems={{ sm: 1, md: 2, lg: 3, xl: 3 }}
-                  className="mt-2"
-                  itemWrapperClassName="w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6"
-                  primarySkeletonClassName="h-[270px]"
-                  secondarySkeletonClassName="hidden"
-                  data={filteredContributions}
-                  isLoading={isLoading}
-                  emptyText="No contributions found."
-                  emptyContainerClassName="h-[50%]"
-                >
-                  <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3 pb-4 mt-2">
-                    {filteredContributions.map(
-                      (model: ModelLite, index: number) => (
-                        <Link key={index} to={`/model/${model.id}`}>
-                          <DaModelItem model={model} />
-                        </Link>
-                      ),
-                    )}
-                  </div>
-                </DaSkeletonGrid>
-              </div>
-            )}
-
-            {/* Public Models */}
-            <div ref={publicRef} className="py-6">
-              <h2 className="text-base font-semibold text-primary">Public</h2>
-              <DaSkeletonGrid
-                maxItems={{ sm: 1, md: 2, lg: 3, xl: 3 }}
-                className="mt-2"
-                itemWrapperClassName="w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6"
-                primarySkeletonClassName="h-[270px]"
-                secondarySkeletonClassName="hidden"
-                data={filteredPublic}
-                isLoading={isLoading}
-                emptyText="No public models found."
-                emptyContainerClassName="h-[50%]"
-              >
-                {filteredPublic.length > 0 && (
-                  <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3 pb-4 mt-2">
-                    {filteredPublic.map((model: ModelLite, index: number) => (
-                      <Link key={index} to={`/model/${model.id}`}>
-                        <DaModelItem model={model} />
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </DaSkeletonGrid>
-            </div>
           </div>
         </div>
       </div>
@@ -353,3 +671,57 @@ const PageModelList = () => {
 }
 
 export default PageModelList
+
+type ModelSectionProps = {
+  title: string
+  models: ModelLite[]
+  isLoading: boolean
+  emptyText: string
+  emptyAction?: React.ReactNode
+  headerExtras?: React.ReactNode
+  sectionRef: React.RefObject<HTMLDivElement>
+}
+
+const ModelSection = ({
+  title,
+  models,
+  isLoading,
+  emptyText,
+  emptyAction,
+  headerExtras,
+  sectionRef,
+}: ModelSectionProps) => {
+  return (
+    <section className="py-6">
+      <div ref={sectionRef} className="scroll-mt-20 h-px" />
+
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <h2 className="text-base font-semibold text-primary">{title}</h2>
+        {headerExtras}
+      </div>
+
+      <DaSkeletonGrid
+        maxItems={{ sm: 1, md: 2, lg: 3, xl: 3 }}
+        className="mt-2"
+        itemWrapperClassName="w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6"
+        primarySkeletonClassName="h-[270px]"
+        secondarySkeletonClassName="hidden"
+        data={models}
+        isLoading={isLoading}
+        emptyText={emptyText}
+        emptyContainerClassName="h-[50%]"
+        emptyAction={emptyAction}
+      >
+        {models.length > 0 && (
+          <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3 pb-4">
+            {models.map((model: ModelLite) => (
+              <Link key={model.id} to={`/model/${model.id}`}>
+                <DaModelItem model={model} className="my_model_grid_item" />
+              </Link>
+            ))}
+          </div>
+        )}
+      </DaSkeletonGrid>
+    </section>
+  )
+}

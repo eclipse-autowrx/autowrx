@@ -1,0 +1,234 @@
+name: Deploy Dev Stage
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_type:
+        description: 'Deploy type'
+        required: true
+        type: choice
+        options:
+          - branch
+          - pr
+        default: 'branch'
+      branch_name:
+        description: 'Branch name (if deploy_type is branch)'
+        required: false
+        type: string
+        default: 'main'
+      pr_number:
+        description: 'PR number (if deploy_type is pr)'
+        required: false
+        type: string
+        default: ''
+      skip_frontend_build:
+        description: 'Skip frontend build (faster if only backend changes)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  DEPLOY_DIR: /opt/dev/autowrx
+  PM2_APP_NAME: autowrx-dev-stage
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    
+    steps:
+      - name: Display deployment info
+        run: |
+          echo "=========================================="
+          echo "  AutoWRX Dev Stage Deployment"
+          echo "=========================================="
+          echo "Deploy type: ${{ github.event.inputs.deploy_type }}"
+          if [ "${{ github.event.inputs.deploy_type }}" == "branch" ]; then
+            echo "Branch: ${{ github.event.inputs.branch_name }}"
+          else
+            echo "PR: #${{ github.event.inputs.pr_number }}"
+          fi
+          echo "Skip frontend build: ${{ github.event.inputs.skip_frontend_build }}"
+          echo "Deploy directory: $DEPLOY_DIR"
+          echo "=========================================="
+
+      - name: Validate inputs
+        run: |
+          if [ "${{ github.event.inputs.deploy_type }}" == "pr" ] && [ -z "${{ github.event.inputs.pr_number }}" ]; then
+            echo "Error: PR number is required when deploy_type is 'pr'"
+            exit 1
+          fi
+
+      - name: Stop current PM2 process
+        working-directory: ${{ env.DEPLOY_DIR }}
+        continue-on-error: true
+        run: |
+          echo "Stopping current PM2 process..."
+          cd backend
+          pm2 stop $PM2_APP_NAME 2>/dev/null || true
+          pm2 delete $PM2_APP_NAME 2>/dev/null || true
+
+      - name: Fetch latest changes
+        working-directory: ${{ env.DEPLOY_DIR }}
+        run: |
+          echo "Fetching latest changes from remote..."
+          git fetch --all --prune
+
+      - name: Checkout branch
+        if: github.event.inputs.deploy_type == 'branch'
+        working-directory: ${{ env.DEPLOY_DIR }}
+        run: |
+          BRANCH="${{ github.event.inputs.branch_name }}"
+          echo "Checking out branch: $BRANCH"
+          
+          # Clean any local changes
+          git reset --hard
+          git clean -fd
+          
+          # Checkout and pull the branch
+          git checkout "$BRANCH"
+          git pull origin "$BRANCH"
+          
+          echo "Current commit:"
+          git log -1 --oneline
+
+      - name: Checkout PR
+        if: github.event.inputs.deploy_type == 'pr'
+        working-directory: ${{ env.DEPLOY_DIR }}
+        run: |
+          PR_NUMBER="${{ github.event.inputs.pr_number }}"
+          echo "Checking out PR #$PR_NUMBER"
+          
+          # Clean any local changes
+          git reset --hard
+          git clean -fd
+          
+          # Fetch PR head
+          git fetch origin pull/$PR_NUMBER/head:pr-$PR_NUMBER
+          git checkout pr-$PR_NUMBER
+          
+          echo "Current commit:"
+          git log -1 --oneline
+
+      - name: Install backend dependencies
+        working-directory: ${{ env.DEPLOY_DIR }}/backend
+        run: |
+          echo "Installing backend dependencies..."
+          yarn install
+
+      - name: Install frontend dependencies
+        if: github.event.inputs.skip_frontend_build != 'true'
+        working-directory: ${{ env.DEPLOY_DIR }}/frontend
+        run: |
+          echo "Installing frontend dependencies..."
+          yarn install
+
+      - name: Build frontend
+        if: github.event.inputs.skip_frontend_build != 'true'
+        working-directory: ${{ env.DEPLOY_DIR }}/frontend
+        run: |
+          echo "Building frontend..."
+          yarn build
+          
+          echo "Frontend build completed. Contents of backend/static/frontend-dist:"
+          ls -la ../backend/static/frontend-dist/ | head -20
+
+      - name: Verify environment file
+        working-directory: ${{ env.DEPLOY_DIR }}/backend
+        run: |
+          if [ ! -f ".env" ]; then
+            echo "Error: .env file not found in backend directory"
+            echo "Please create it from dev-stage/.env.dev-stage.sample"
+            exit 1
+          fi
+          echo "Environment file found"
+
+      - name: Start backend with PM2
+        working-directory: ${{ env.DEPLOY_DIR }}/backend
+        run: |
+          echo "Starting backend in production mode..."
+          
+          # Create PM2 ecosystem config for dev-stage
+          cat > ecosystem.dev-stage.json << 'EOF'
+          {
+            "apps": [
+              {
+                "name": "autowrx-dev-stage",
+                "script": "src/index.js",
+                "instances": 1,
+                "autorestart": true,
+                "watch": false,
+                "time": true,
+                "env": {
+                  "NODE_ENV": "production"
+                }
+              }
+            ]
+          }
+          EOF
+          
+          pm2 start ecosystem.dev-stage.json
+          
+          echo "Waiting for service to start..."
+          sleep 5
+
+      - name: Health check
+        run: |
+          echo "Performing health check..."
+          
+          # Get port from .env or use default
+          PORT=$(grep -E "^PORT=" $DEPLOY_DIR/backend/.env | cut -d'=' -f2 || echo "3202")
+          
+          MAX_RETRIES=10
+          RETRY_INTERVAL=3
+          
+          for i in $(seq 1 $MAX_RETRIES); do
+            if curl -sf "http://localhost:$PORT/" > /dev/null 2>&1; then
+              echo "✓ Service is healthy on port $PORT"
+              break
+            fi
+            
+            if [ $i -eq $MAX_RETRIES ]; then
+              echo "✗ Health check failed after $MAX_RETRIES attempts"
+              echo "PM2 logs:"
+              pm2 logs --nostream --lines 30
+              exit 1
+            fi
+            
+            echo "Attempt $i/$MAX_RETRIES - waiting..."
+            sleep $RETRY_INTERVAL
+          done
+
+      - name: Display deployment result
+        run: |
+          PORT=$(grep -E "^PORT=" $DEPLOY_DIR/backend/.env | cut -d'=' -f2 || echo "3202")
+          
+          echo ""
+          echo "=========================================="
+          echo "  Deployment Successful!"
+          echo "=========================================="
+          echo ""
+          echo "Service running on port: $PORT"
+          echo ""
+          echo "Current branch/commit:"
+          cd $DEPLOY_DIR && git log -1 --format='%h %s'
+          echo ""
+          echo "PM2 status:"
+          pm2 status
+          echo ""
+          echo "Access via Nginx at your configured domain"
+          echo "(e.g., https://test.digital.auto)"
+          echo "=========================================="
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "=========================================="
+          echo "  Deployment Failed!"
+          echo "=========================================="
+          echo ""
+          echo "Check the logs above for details."
+          echo ""
+          echo "To manually debug:"
+          echo "  cd $DEPLOY_DIR"
+          echo "  pm2 logs"
+          echo "=========================================="

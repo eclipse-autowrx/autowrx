@@ -9,7 +9,8 @@ This document describes the server middlewares, their purpose, configuration, in
 - Options:
   - `optional` (boolean, default: false): when true, missing/invalid auth will not block the request; `req.user` may be undefined.
 - Behavior:
-  - If `config.services.auth.url` is set, forwards the incoming request (headers and body) to that URL to validate and get the user, sanitizes the user object, and sets `req.user`.
+  - If `AUTH_PROVIDER=platform`, resolves the user from configured platform headers via `platformAuth.service` and sets `req.user`.
+  - Else if `config.services.auth.url` is set (deprecated), forwards the incoming request (headers and body) to that URL to validate and get the user, sanitizes the user object, and sets `req.user`.
   - Otherwise uses `passport.authenticate('jwt')` to validate the bearer token and set `req.user`.
   - On failure: throws 401 unless `optional=true` (then calls next without user).
 
@@ -41,6 +42,7 @@ This document describes the server middlewares, their purpose, configuration, in
   - Max: 20 requests per window
   - `skipSuccessfulRequests: true`
 - Typical use: wrap auth/login endpoints to mitigate brute-force attempts.
+- ⚠️ **Not currently applied:** `authLimiter` is defined and exported but is not wired into any route in `src/routes/` or `src/app.js`, so auth endpoints are effectively unrate-limited today. This is a known gap (see `docs/architecture/auth-security.md` §7).
 
 ### error (Error conversion and handling)
 
@@ -55,5 +57,5 @@ This document describes the server middlewares, their purpose, configuration, in
 ### Notes
 
 - All thrown errors use `ApiError` and will be handled by the error pipeline.
-- For optional auth, routes should pass `auth({ optional: true })` when public read is allowed under `strictAuth=false`.
+- For optional auth, routes pass `auth({ optional: (req) => req.authConfig.PUBLIC_VIEWING })` so public read is allowed when the `PUBLIC_VIEWING` site auth config is enabled (the `STRICT_AUTH` env var is only the fallback when the DB config has no value).
 

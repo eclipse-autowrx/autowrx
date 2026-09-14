@@ -60,6 +60,18 @@ export interface BulkUpsertRequest {
   configs: CreateConfigRequest[];
 }
 
+export interface RestoreSiteConfigSnapshotRequest {
+  keys?: string[];
+  categories?: string[];
+  secret?: boolean;
+}
+
+export interface RestoreSiteConfigSnapshotResponse {
+  restored: number;
+  keys: string[];
+  source?: 'snapshot' | 'predefined' | 'mixed' | 'none';
+}
+
 class ConfigManagementService {
   private baseUrl = '/site-config';
 
@@ -171,6 +183,13 @@ class ConfigManagementService {
 
   async bulkUpsertConfigs(request: BulkUpsertRequest): Promise<Config[]> {
     const response = await serverAxios.post(`${this.baseUrl}/bulk-upsert`, request);
+    return response.data;
+  }
+
+  async restoreSiteConfigSnapshot(
+    params: RestoreSiteConfigSnapshotRequest,
+  ): Promise<RestoreSiteConfigSnapshotResponse> {
+    const response = await serverAxios.post(`${this.baseUrl}/restore-snapshot`, params);
     return response.data;
   }
 

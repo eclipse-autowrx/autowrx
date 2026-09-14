@@ -56,6 +56,8 @@ const DaManageUserAction = ({
         <DaDialog
           open={open}
           onOpenChange={setOpen}
+          dialogTitle={user ? 'Update User' : 'Create User'}
+          className="max-h-[90vh]"
           trigger={
             <Button onClick={() => setOpen(true)} variant="ghost" size="sm">
               <TbPencil className="w-5 h-5" />

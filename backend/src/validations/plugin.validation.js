@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -15,7 +15,13 @@ const createPlugin = {
     image: Joi.string().allow(''),
     description: Joi.string().allow(''),
     is_internal: Joi.boolean().required(),
-    url: Joi.string().uri().when('is_internal', { is: true, then: Joi.string().allow(''), otherwise: Joi.required() }),
+    // For internal plugins we store a relative path like `/plugin/slug/index.js`,
+    // so only enforce full URI format for external (non-internal) plugins.
+    url: Joi.when('is_internal', {
+      is: true,
+      then: Joi.string().allow(''),
+      otherwise: Joi.string().uri().required(),
+    }),
     config: Joi.any(),
     type: Joi.string().valid('prototype_function', 'deploy').allow(null, ''),
   }),
@@ -66,7 +72,7 @@ const updatePlugin = {
 
 const uploadInternal = {
   params: Joi.object().keys({
-    slug: Joi.string().required(),
+    slug: Joi.string().required().custom(slug),
   }),
 };
 
@@ -78,5 +84,3 @@ module.exports = {
   updatePlugin,
   uploadInternal,
 };
-
-

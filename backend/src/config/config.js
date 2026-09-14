@@ -43,7 +43,10 @@ const envVarsSchema = Joi.object()
     // Cache service URL
     CACHE_URL: Joi.string().description('Cache base url'),
     // Auth service
-    AUTH_URL: Joi.string().description('Auth service url'),
+    AUTH_URL: Joi.string().description('Auth service url (deprecated; use AUTH_PROVIDER=platform)'),
+    AUTH_PROVIDER: Joi.string().valid('jwt', 'platform').default('jwt').description('Authentication provider'),
+    AUTH_PLATFORM_NAME: Joi.string().default('Platform').description('Provider name stored on user.provider'),
+    AUTH_PLATFORM_HEADERS: Joi.string().description('JSON map of identity field to request header name'),
     // Email URL
     EMAIL_URL: Joi.string().description('URL to your custom email service'),
     EMAIL_API_KEY: Joi.string().description('API key for default email service (Brevo)'),
@@ -55,6 +58,17 @@ const envVarsSchema = Joi.object()
     OPENAI_API_KEY: Joi.string().description('OpenAI API key'),
     OPENAI_ENDPOINT_URL: Joi.string().description('OpenAI endpoint url'),
     STRICT_AUTH: Joi.boolean().description('Strict auth'),
+    // GenAI service (deprecated sidecar proxy target)
+    GENAI_URL: Joi.string().description('Deprecated GenAI proxy sidecar URL; use EXTERNAL_GENAI_* instead'),
+    EXTERNAL_GENAI_URL: Joi.string().uri().description('External GenAI service base URL'),
+    EXTERNAL_GENAI_DEVICE_TOKEN: Joi.string().description('Device token for external GenAI service authentication'),
+    EXTERNAL_SYNC_DEVICE_TOKEN: Joi.string().allow('').description('Device token for external data sync authentication'),
+    EXTERNAL_SYNC_MODEL_URL: Joi.string().uri().description('Base URL for external model/data sync API'),
+    EXTERNAL_SYNC_USE_PROXY: Joi.boolean()
+      .default(false)
+      .description('When true, outbound sync uses HTTP_PROXY/HTTPS_PROXY; default false for docker-internal targets like genai'),
+    // Kit server
+    KIT_SERVER_URL: Joi.string().description('Kit server url'),
     // Admin emails
     ADMIN_EMAILS: Joi.string().description('Admin emails'),
     ADMIN_PASSWORD: Joi.string().description('Admin password'),
@@ -71,10 +85,60 @@ if (error) {
   throw new Error(`Config validation error: ${error.message}`);
 }
 
+let platformHeaders = {};
+if (envVars.AUTH_PLATFORM_HEADERS) {
+  try {
+    platformHeaders = JSON.parse(envVars.AUTH_PLATFORM_HEADERS);
+  } catch (e) {
+    throw new Error('Config validation error: AUTH_PLATFORM_HEADERS must be valid JSON');
+  }
+  if (typeof platformHeaders !== 'object' || platformHeaders === null || Array.isArray(platformHeaders)) {
+    throw new Error('Config validation error: AUTH_PLATFORM_HEADERS must be a JSON object');
+  }
+}
+
+if (envVars.AUTH_PROVIDER === 'platform' && !platformHeaders.email) {
+  throw new Error(
+    'Config validation error: AUTH_PLATFORM_HEADERS must include an "email" key when AUTH_PROVIDER is platform'
+  );
+}
+
+// Shared by CORS and by anything that redirects based on a caller-supplied origin
+// (OAuth/SSO return URLs). Same allowlist, same CORS_ORIGINS patterns, so a host
+// that isn't trusted for CORS isn't trusted as a redirect target either.
+const isAllowedOrigin = (origin) => {
+  if (!origin) {
+    return false;
+  }
+
+  const corsOriginsPatterns = envVars.CORS_ORIGINS.split(',')
+    .map((pattern) => pattern.trim())
+    .filter(Boolean);
+
+  const allowedOrigins = [];
+  corsOriginsPatterns.forEach((pattern) => {
+    try {
+      allowedOrigins.push(new RegExp(`^http://${pattern}$`));
+      allowedOrigins.push(new RegExp(`^https://${pattern}$`));
+    } catch (e) {
+      console.error(`Invalid CORS origin pattern: ${pattern}`, e);
+    }
+  });
+
+  return allowedOrigins.some((pattern) => pattern.test(origin));
+};
+
 const config = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
   strictAuth: envVars.STRICT_AUTH,
+  auth: {
+    provider: envVars.AUTH_PROVIDER,
+    platform: {
+      name: envVars.AUTH_PLATFORM_NAME,
+      headers: platformHeaders,
+    },
+  },
   mongoose: {
     url: envVars.MONGODB_URL + (envVars.NODE_ENV === 'test' ? '-test' : ''),
     options: {},
@@ -116,25 +180,8 @@ const config = {
       if (!origin) {
         return callback(null, true);
       }
-      
-      // Parse CORS_ORIGINS from environment variable (comma-separated regex patterns)
-      const corsOriginsPatterns = envVars.CORS_ORIGINS.split(',').map(pattern => pattern.trim()).filter(Boolean);
-      
-      // Build allowed origins list with both http and https for each pattern
-      const allowedOrigins = [];
-      corsOriginsPatterns.forEach(pattern => {
-        try {
-          allowedOrigins.push(new RegExp(`^http://${pattern}$`));
-          allowedOrigins.push(new RegExp(`^https://${pattern}$`));
-        } catch (e) {
-          console.error(`Invalid CORS origin pattern: ${pattern}`, e);
-        }
-      });
-      
-      // Check if origin matches any of the allowed patterns
-      const isAllowed = allowedOrigins.some(pattern => pattern.test(origin));
-      
-      if (isAllowed) {
+
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
       } else {
         console.log(`CORS blocked origin: ${origin}`);
@@ -142,6 +189,7 @@ const config = {
       }
     },
   },
+  isAllowedOrigin,
   constraints: {
     model: {
       maximumAuthorizedUsers: 1000,
@@ -167,6 +215,25 @@ const config = {
       apiKey: envVars.EMAIL_API_KEY,
       endpointUrl: envVars.EMAIL_ENDPOINT_URL, // This is the endpoint URL for the default email service: Brevo
     },
+    genAI: {
+      url: envVars.GENAI_URL,
+      external: {
+        urls: {
+          default: envVars.EXTERNAL_GENAI_URL,
+        },
+        deviceToken: envVars.EXTERNAL_GENAI_DEVICE_TOKEN,
+      },
+    },
+    sync: {
+      external: {
+        deviceToken: envVars.EXTERNAL_SYNC_DEVICE_TOKEN,
+        modelUrl: envVars.EXTERNAL_SYNC_MODEL_URL,
+        useProxy: envVars.EXTERNAL_SYNC_USE_PROXY,
+      },
+    },
+    kitServer: {
+      url: envVars.KIT_SERVER_URL,
+    },
     log: {
       url: envVars.LOG_URL,
     },
@@ -182,7 +249,10 @@ const config = {
   sso: {
     msGraphMeEndpoint: 'https://graph.microsoft.com/v1.0/me',
   },
-  adminEmails: envVars.ADMIN_EMAILS?.split(',') || [],
+  adminEmails:
+    envVars.ADMIN_EMAILS?.split(/[;,]/)
+      .map((email) => email.trim())
+      .filter(Boolean) || [],
   adminPassword: envVars.ADMIN_PASSWORD,
   logsMaxSize: envVars.LOGS_MAX_SIZE,
   fileUpload: {

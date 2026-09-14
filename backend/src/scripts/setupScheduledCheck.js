@@ -35,13 +35,29 @@ const updateVSS = async (releases) => {
   try {
     fs.writeFileSync(path.join(__dirname, '../../data/vss.json'), JSON.stringify(releases, null, 2));
     logger.info('Updated VSS version list');
-    logger.info('Downloading VSS versions data');
-    const promises = releases.map((release) =>
-      fileService.downloadFile(release.browser_download_url, path.join(__dirname, `../../data/${release.name}.json`))
-    );
-    await Promise.all(promises);
-    logger.info('Downloaded VSS versions data');
+    logger.info(`Downloading VSS versions data for ${releases.length} versions`);
+    
+    // Download files with individual error handling so one failure doesn't stop others
+    const downloadPromises = releases.map(async (release) => {
+      const filePath = path.join(__dirname, `../../data/${release.name}.json`);
+      try {
+        await fileService.downloadFile(release.browser_download_url, filePath);
+        // Verify file was actually downloaded
+        if (fs.existsSync(filePath)) {
+          logger.info(`Successfully downloaded ${release.name}.json`);
+        } else {
+          logger.warn(`Download reported success but file ${release.name}.json not found`);
+        }
+      } catch (error) {
+        logger.error(`Failed to download ${release.name}.json from ${release.browser_download_url}: ${error.message}`);
+        // Continue with other downloads even if this one fails
+      }
+    });
+    
+    await Promise.allSettled(downloadPromises);
+    logger.info('Completed VSS versions data download (some may have failed)');
   } catch (error) {
+    logger.error(`Error in updateVSS: ${error.message}`);
     logger.error(error);
   }
 };
@@ -65,6 +81,14 @@ const checkUpdateVSS = async () => {
           published_at: release.published_at,
           browser_download_url: release.assets?.find((asset) => asset.name.endsWith('.json'))?.browser_download_url,
         };
+      })
+      ?.filter((release) => {
+        // Only include releases that have a valid download URL
+        if (!release.browser_download_url) {
+          logger.warn(`Release ${release.name} does not have a valid JSON download URL, skipping`);
+          return false;
+        }
+        return true;
       });
 
     const vssFilePath = path.join(__dirname, '../../data/vss.json');

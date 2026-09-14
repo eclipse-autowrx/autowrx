@@ -148,15 +148,9 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex max-h-[80vh] w-full flex-col bg-background p-4"
+      className="flex w-full flex-col bg-background"
     >
-      {/* Title */}
-      <h2 className="text-xl font-semibold text-primary">
-        {isCreate ? 'Create New User' : 'Update User'}
-      </h2>
-
-      {/* Content */}
-      <div className="mt-4 space-y-4">
+      <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="name">Name *</Label>
           <Input

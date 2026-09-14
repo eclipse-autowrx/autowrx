@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       custom_tag:
-        description: 'Custom tag for the image (e.g., v1.2.3, release-2024-01-15)'
+        description: 'Custom tag for the image (e.g., v2026.06.30)'
         required: false
         type: string
         default: ''
@@ -36,23 +36,39 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.inputs.branch || github.ref }}
 
+      - name: Update package.json version
+        shell: bash
+        run: |
+          # Extract version from date-based git tag (e.g., v2026.06.30 -> 2026.06.30)
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          # Accept YYYY.MM.DD, optionally with a .N same-day suffix (e.g. 2026.06.30.2)
+          if [[ -z "$VERSION" ]] || [[ ! "$VERSION" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[0-9]+)?$ ]]; then
+            VERSION="$(date -u +%Y.%m.%d)"
+            echo "No valid date version tag found, using today's UTC date as fallback: $VERSION"
+          else
+            echo "Using version from tag: $VERSION"
+          fi
+          # Keep backend + frontend package.json in sync.
+          # The frontend version is what the app footer ("Version x.x.x") displays.
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" ./backend/package.json
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" ./frontend/package.json
+          echo "Updated package.json version to $VERSION"
+
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
         with:
           driver-opts: |
             network=host
 
       - name: Log in to Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -60,14 +76,18 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/autowrx
           tags: |
             type=ref,event=branch
             type=ref,event=tag
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            # Date-based release tags, e.g. git tag v2026.06.30 produces:
+            #   v2026.06.30  (raw tag, via type=ref,event=tag above)
+            #   2026.06.30   (clean date, v stripped)
+            #   2026.06      (month-rolling "latest this month")
+            type=match,pattern=v(\d+\.\d+\.\d+),group=1
+            type=match,pattern=v(\d+\.\d+)\.\d+,group=1
             type=sha,prefix=test-
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{ github.event.inputs.custom_tag }},enable=${{ github.event.inputs.custom_tag != '' }}
@@ -87,11 +107,11 @@ jobs:
           fi
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./backend/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: ${{ steps.should_push.outputs.push == 'true' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -128,17 +148,17 @@ jobs:
               echo "Custom tagged image is available:"
               echo "  ghcr.io/${{ env.IMAGE_PREFIX }}/autowrx:${{ github.event.inputs.custom_tag }}"
               echo ""
-              echo "You can now use this image in production by updating .env.stack:"
-              echo "IMAGE_TAG=${{ github.event.inputs.custom_tag }}"
+              echo "Use it in production by pinning the image tag in instance-setup/docker-compose.prod.yml:"
+              echo "  image: ghcr.io/${{ env.IMAGE_PREFIX }}/autowrx:${{ github.event.inputs.custom_tag }}"
             elif [[ "${{ github.ref_type }}" == "tag" ]]; then
               echo "Tagged image is available:"
               echo "  ghcr.io/${{ env.IMAGE_PREFIX }}/autowrx:${{ github.ref_name }}"
               echo ""
-              echo "You can now use this image in production by updating .env.stack:"
-              echo "IMAGE_TAG=${{ github.ref_name }}"
+              echo "Use it in production by pinning the image tag in instance-setup/docker-compose.prod.yml:"
+              echo "  image: ghcr.io/${{ env.IMAGE_PREFIX }}/autowrx:${{ github.ref_name }}"
             else
-              echo "You can now test this image by updating .env.stack:"
-              echo "IMAGE_TAG=test-${GITHUB_SHA:0:7}"
+              echo "Test this image by pinning it in instance-setup/docker-compose.prod.yml:"
+              echo "  image: ghcr.io/${{ env.IMAGE_PREFIX }}/autowrx:test-${GITHUB_SHA:0:7}"
             fi
           else
             echo "Image was built but not pushed (test only)"
@@ -152,7 +172,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Extract tag name
         id: tag
@@ -189,7 +209,7 @@ jobs:
           echo "Created individual file copies"
 
       - name: Create GitHub Release with assets
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: Release ${{ env.RELEASE_TAG }}

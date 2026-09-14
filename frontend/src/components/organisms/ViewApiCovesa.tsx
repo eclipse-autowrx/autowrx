@@ -21,6 +21,7 @@ import {
   TbList,
   TbDownload,
   TbReplace,
+  TbFileImport,
   TbLoader,
 } from 'react-icons/tb'
 import useCurrentModel from '@/hooks/useCurrentModel'
@@ -28,12 +29,14 @@ import VssComparator from '@/components/organisms/VssComparator'
 import { getComputedAPIs, replaceAPIsService } from '@/services/model.service'
 import { isAxiosError } from 'axios'
 import { toast } from 'react-toastify'
-import { Dialog, DialogContent } from '@/components/atoms/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/atoms/dialog'
 import DaFileUpload from '@/components/atoms/DaFileUpload'
 import { Button } from '@/components/atoms/button'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { Spinner } from '@/components/atoms/spinner'
+import PluginPageRender from '@/components/organisms/PluginPageRender'
+import { useConfiguredPlugins } from '@/hooks/useConfiguredPlugins'
 
 const ViewApiCovesa = () => {
   const { model_id, api: apiParam } = useParams<{ model_id: string; api?: string }>()
@@ -42,6 +45,7 @@ const ViewApiCovesa = () => {
   const [activeTab, setActiveTab] = useState<
     'list' | 'tree' | 'compare' | 'hierarchical'
   >('list')
+  const [openPluginIndex, setOpenPluginIndex] = useState<number | null>(null)
   const [activeModelApis, refreshModel] = useModelStore((state) => [
     state.activeModelApis,
     state.refreshModel,
@@ -56,6 +60,8 @@ const ViewApiCovesa = () => {
   const [loading, setLoading] = useState(false)
   const [url, setUrl] = useState('')
   const [showUpload, setShowUpload] = useState(false)
+
+  const availablePlugins = useConfiguredPlugins('VSS_PLUGINS')
 
   useEffect(() => {
     // Set selected API from route param or default to first API
@@ -124,11 +130,15 @@ const ViewApiCovesa = () => {
 
   return (
     <div className="bg-white rounded-md h-full w-full flex flex-col">
-      {/* <div className="flex w-full min-h-10 items-center justify-between">
+      <div className="flex w-full min-h-10 items-center justify-between border-b border-muted-foreground/50 shrink-0">
         <div className="flex space-x-2 h-full">
           <DaTabItem
             active={activeTab === 'list'}
-            onClick={() => setActiveTab('list')}
+            to="#"
+            onClick={(e) => {
+              e.preventDefault()
+              setActiveTab('list')
+            }}
           >
             <TbList className="w-5 h-5 mr-2" />
             List View
@@ -136,22 +146,32 @@ const ViewApiCovesa = () => {
 
           <DaTabItem
             active={activeTab === 'tree'}
-            onClick={() => setActiveTab('tree')}
+            to="#"
+            onClick={(e) => {
+              e.preventDefault()
+              setActiveTab('tree')
+            }}
           >
-            <TbBinaryTree2 className="w-5 h-5 mr-2 rotate-[270deg]" />
+            <TbBinaryTree2 className="w-5 h-5 mr-2 rotate-270" />
             Tree View
           </DaTabItem>
 
           <DaTabItem
             active={activeTab === 'compare'}
-            onClick={() => setActiveTab('compare')}
+            to="#"
+            onClick={(e) => {
+              e.preventDefault()
+              setActiveTab('compare')
+            }}
           >
             <TbGitCompare className="w-5 h-5 mr-2" />
             Version Diff
           </DaTabItem>
           <DaTabItem
             active={false}
-            onClick={async () => {
+            to="#"
+            onClick={async (e) => {
+              e.preventDefault()
               if (!model) return
               try {
                 const data = await getComputedAPIs(model.id)
@@ -161,8 +181,10 @@ const ViewApiCovesa = () => {
                 document.body.appendChild(link)
                 link.click()
                 document.body.removeChild(link)
+                toast.success('JSON file downloaded successfully')
               } catch (e) {
                 console.error(e)
+                toast.error('Failed to download JSON file')
               }
             }}
           >
@@ -172,7 +194,9 @@ const ViewApiCovesa = () => {
           {hasWritePermission && (
             <DaTabItem
               active={false}
-              onClick={() => {
+              to="#"
+              onClick={(e) => {
+                e.preventDefault()
                 if (!model) return
                 setShowUpload(true)
               }}
@@ -181,11 +205,25 @@ const ViewApiCovesa = () => {
               Replace Vehicle API
             </DaTabItem>
           )}
+          {availablePlugins.map((p, i) => (
+            <DaTabItem
+              key={`${p.plugin}-${i}`}
+              active={false}
+              to="#"
+              onClick={(e) => {
+                e.preventDefault()
+                setOpenPluginIndex(i)
+              }}
+            >
+              <TbFileImport className="w-5 h-5 mr-2" />
+              {p.label}
+            </DaTabItem>
+          ))}
         </div>
         <div className="text-sm font-medium text-primary pr-4">
           {model?.api_version && `COVESA VSS ${model.api_version}`}
         </div>
-      </div> */}
+      </div>
 
       {(activeTab === 'list' || activeTab === 'hierarchical') && (
         <div className="grow w-full flex overflow-auto">
@@ -210,32 +248,57 @@ const ViewApiCovesa = () => {
         </div>
       )}
 
-      {/* {activeTab === 'tree' && (
+      {activeTab === 'tree' && (
         <div className="flex w-full grow overflow-auto items-center justify-center">
           <DaTreeView onNodeClick={() => setActiveTab('list')} />
         </div>
-      )} */}
-      {/* {activeTab === 'compare' && (
+      )}
+      {activeTab === 'compare' && (
         <div className="flex w-full grow overflow-auto justify-center">
           <VssComparator />
         </div>
-      )} */}
+      )}
 
-      {/* {hasWritePermission && (
+      {openPluginIndex !== null && availablePlugins[openPluginIndex] && (
+        <Dialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setOpenPluginIndex(null)
+          }}
+        >
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto flex flex-col">
+            <DialogHeader>
+              <DialogTitle>
+                {availablePlugins[openPluginIndex].label}
+              </DialogTitle>
+            </DialogHeader>
+            <PluginPageRender
+              key={`plugin-${openPluginIndex}`}
+              plugin_id={availablePlugins[openPluginIndex].plugin}
+              data={{
+                model: model || null,
+                prototype: null,
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {hasWritePermission && (
         <Dialog open={showUpload} onOpenChange={setShowUpload}>
-          <DialogContent>
-            <div className="w-[280px]">
-              <div className="text-sm font-medium text-center">
-                Upload Vehicle API file
-              </div>
-              <div className="h-2" />
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Upload Vehicle API file</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
               <DaFileUpload
                 onFileUpload={(url) => setUrl(url)}
                 accept=".json"
+                className="w-full"
               />
               <Button
-                size="sm"
-                className="w-full mt-4"
+                size="default"
+                className="w-full"
                 onClick={handleReplaceAPI}
                 disabled={!url || loading}
               >
@@ -245,7 +308,7 @@ const ViewApiCovesa = () => {
             </div>
           </DialogContent>
         </Dialog>
-      )} */}
+      )}
     </div>
   )
 }

@@ -6,19 +6,23 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { FC, useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import DaDashboardGrid from './DaDashboardGrid'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import PrototypeTabCodeDashboardCfg from '@/components/organisms/PrototypeTabCodeDashboardCfg'
+import useCanEditPrototype from '@/hooks/useCanEditPrototype'
 import usePermissionHook from '@/hooks/usePermissionHook'
-import { PERMISSIONS } from '@/data/permission'
-import useCurrentModel from '@/hooks/useCurrentModel'
+import { PERMISSIONS } from '@/const/permission'
 import {
   TbArrowsMaximize,
   TbArrowsMinimize,
   TbEdit,
   TbTrash,
+  TbPalette,
+  TbDeviceFloppy,
+  TbCheck,
+  TbDotsVertical
 } from 'react-icons/tb'
 import { Button } from '@/components/atoms/button'
 const MODE_RUN = 'run'
@@ -29,31 +33,187 @@ import { DaImage } from '@/components/atoms/DaImage'
 import { Link } from 'react-router-dom'
 import { updatePrototypeService } from '@/services/prototype.service'
 import useGetPrototype from '@/hooks/useGetPrototype'
+import { useQuery, useMutation } from '@tanstack/react-query'
+import {
+  listDashboardTemplates,
+  createDashboardTemplate,
+  updateDashboardTemplate,
+  type DashboardTemplate,
+} from '@/services/dashboardTemplate.service'
+import { toast } from 'react-toastify'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/atoms/dropdown-menu'
+import DaDialog from '@/components/molecules/DaDialog'
+import { useSiteConfig } from '@/utils/siteConfig'
+import { getUsedVehicleApiNames, applySyncWithCodeToOptions } from '@/hooks/useUsedVehicleApisFromCode'
+
+const processWidgetItems = (widgetItems: any[], usedApiNames: string[]) => {
+  if (!widgetItems) return
+  widgetItems.forEach((widget) => {
+    if (!widget?.url) {
+      if (widget.options?.url) {
+        widget.url = widget.options.url
+      } else if (widget.path) {
+        widget.url = widget.path
+      }
+    }
+    if (widget.options) {
+      applySyncWithCodeToOptions(widget.options, usedApiNames)
+    }
+  })
+}
 
 const DaDashboard = () => {
-  const { data: model } = useCurrentModel()
+  const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
   const [
     prototype,
     setActivePrototype,
     prototypeHasUnsavedChanges,
     setPrototypeHasUnsavedChanges,
+    activeModelApis,
   ] = useModelStore((state) => [
     state.prototype as Prototype,
     state.setActivePrototype,
     state.prototypeHasUnsavedChanges,
     state.setPrototypeHasUnsavedChanges,
+    state.activeModelApis,
   ])
   const [widgetItems, setWidgetItems] = useState<any>([])
   const [mode, setMode] = useState<string>(MODE_RUN)
-  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+  const isAuthorized = useCanEditPrototype(prototype)
+  const [isAdmin] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
   const {
     showPrototypeDashboardFullScreen,
     setShowPrototypeDashboardFullScreen,
   } = useSystemUI()
 
+  useEffect(() => {
+    return () => {
+      setShowPrototypeDashboardFullScreen(false)
+    }
+  }, [setShowPrototypeDashboardFullScreen])
+
   const originalWidgetConfigRef = useRef<string>('')
   const [pendingChanges, setPendingChanges] = useState(false)
   const { refetch } = useGetPrototype(prototype?.id || '')
+
+  // --- Template state ---
+  const [showSaveDialog, setShowSaveDialog] = useState(false)
+  const [templateName, setTemplateName] = useState('')
+  const [templateDesc, setTemplateDesc] = useState('')
+  const [applyOpen, setApplyOpen] = useState(false)
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false)
+
+  const [conflictTemplate, setConflictTemplate] = useState<DashboardTemplate | null>(null)
+  const [showOverrideDialog, setShowOverrideDialog] = useState(false)
+
+  const { data: templatesData } = useQuery({
+    queryKey: ['dashboard-templates-list'],
+    queryFn: () => listDashboardTemplates({ limit: 100, page: 1 }),
+  })
+
+  const buildWidgetConfig = () => {
+    if (!prototype?.widget_config) return undefined
+    try { return JSON.parse(prototype.widget_config) } catch { return undefined }
+  }
+
+  // Derive the currently applied template ID from prototype.extend.
+  // The key may be: absent (never set → auto-apply eligible), null (user saved custom config), or a string (template applied).
+  // Using `in` to distinguish "key never set" from "key set to null" — optional chaining alone can't tell them apart
+  // because (null)?.dashboard_template_id also yields undefined.
+  const extendObj = prototype?.extend
+  const hasTemplateDecision =
+    extendObj != null && typeof extendObj === 'object' && 'dashboard_template_id' in extendObj
+  const activeTemplateId = extendObj?.dashboard_template_id as string | null | undefined
+
+  useEffect(() => {
+    if (!hasTemplateDecision && templatesData?.results?.length && prototype && mode === MODE_RUN) {
+      const defaultTemplate = templatesData.results.find((t: DashboardTemplate) => t.is_default)
+      if (defaultTemplate) handleApplyTemplate(defaultTemplate)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasTemplateDecision, templatesData, prototype, mode])
+
+  const closeSaveDialog = () => {
+    setShowSaveDialog(false)
+    setTemplateName('')
+    setTemplateDesc('')
+  }
+
+  const saveTemplateMutation = useMutation({
+    mutationFn: () =>
+      createDashboardTemplate({
+        name: templateName.trim(),
+        description: templateDesc.trim() || undefined,
+        visibility: 'public',
+        widget_config: buildWidgetConfig(),
+      }),
+    onSuccess: () => {
+      toast.success('Dashboard saved as template')
+      closeSaveDialog()
+    },
+    onError: (e: any) =>
+      toast.error(e?.response?.data?.message || e.message || 'Failed to save template'),
+  })
+
+  const overrideTemplateMutation = useMutation({
+    mutationFn: (id: string) =>
+      updateDashboardTemplate(id, {
+        name: templateName.trim(),
+        description: templateDesc.trim() || undefined,
+        widget_config: buildWidgetConfig(),
+      }),
+    onSuccess: () => {
+      toast.success('Template overridden successfully')
+      setShowOverrideDialog(false)
+      setConflictTemplate(null)
+      closeSaveDialog()
+    },
+    onError: (e: any) =>
+      toast.error(e?.response?.data?.message || e.message || 'Failed to override template'),
+  })
+
+  const handleSaveTemplate = () => {
+    const name = templateName.trim().toLowerCase()
+    const existing = templatesData?.results?.find(
+      (t) => t.name.toLowerCase() === name,
+    )
+    if (existing) {
+      setConflictTemplate(existing)
+      setShowOverrideDialog(true)
+    } else {
+      saveTemplateMutation.mutate()
+    }
+  }
+
+  const handleApplyTemplate = async (template: DashboardTemplate) => {
+    if (!template.widget_config) {
+      toast.warn('This template has no widget configuration')
+      return
+    }
+    const newConfig = JSON.stringify(template.widget_config, null, 2)
+    const newExtend = { ...(prototype?.extend ?? {}), dashboard_template_id: template.id }
+    const newPrototype = { ...prototype, widget_config: newConfig, extend: newExtend }
+    setActivePrototype(newPrototype)
+    setApplyOpen(false)
+    if (prototype?.id) {
+      try {
+        await updatePrototypeService(prototype.id, {
+          widget_config: newConfig,
+          extend: newExtend,
+        })
+        setPrototypeHasUnsavedChanges(false)
+      } catch (error) {
+        console.error('Error applying template:', error)
+        toast.error('Failed to save template to prototype')
+      }
+    }
+  }
+
 
   useEffect(() => {
     if (prototypeHasUnsavedChanges && prototype?.id) {
@@ -90,24 +250,14 @@ const DaDashboard = () => {
         console.error('Error parsing widget config', err)
       }
     }
-    //
-    processWidgetItems(widgetItems)
-    setWidgetItems(widgetItems)
-  }, [prototype?.widget_config])
+    const usedApiNames = getUsedVehicleApiNames(
+      prototype?.code,
+      activeModelApis,
+    )
 
-  const processWidgetItems = (widgetItems: any[]) => {
-    if (!widgetItems) return
-    widgetItems.forEach((widget) => {
-      if (!widget?.url) {
-        if (widget.options?.url) {
-          widget.url = widget.options.url
-        } else if (widget.path) {
-          // For built-in widgets, use the static path
-          widget.url = widget.path
-        }
-      }
-    })
-  }
+    processWidgetItems(widgetItems, usedApiNames)
+    setWidgetItems(widgetItems)
+  }, [prototype?.widget_config, prototype?.code, activeModelApis])
 
   const handleEnterEditMode = () => {
     originalWidgetConfigRef.current = prototype?.widget_config || ''
@@ -135,12 +285,14 @@ const DaDashboard = () => {
   }
 
   const handleSave = async () => {
-    // Only save to database if changes were made
-    if (pendingChanges && prototype?.id) {
+    if (prototype?.id) {
       try {
+        const newExtend = { ...(prototype?.extend ?? {}), dashboard_template_id: null }
         await updatePrototypeService(prototype.id, {
           widget_config: prototype.widget_config,
+          extend: newExtend,
         })
+        setActivePrototype({ ...prototype, extend: newExtend })
         setPrototypeHasUnsavedChanges(false)
       } catch (error) {
         console.error('Error saving widget configuration:', error)
@@ -168,27 +320,68 @@ const DaDashboard = () => {
     <div className="w-full h-full relative border bg-white">
       <div
         className={cn(
-          'absolute z-10 left-0 px-2 top-0 flex w-full py-1 shadow-xl bg-white items-center',
-          showPrototypeDashboardFullScreen && 'h-[56px]',
+          'da-dashboard-toolbar absolute z-10 left-0 px-2 top-0 flex gap-1 w-full py-1 shadow-xl items-center bg-white',
+          showPrototypeDashboardFullScreen && 'da-dashboard-fullscreen-toolbar h-[56px]',
         )}
       >
         {showPrototypeDashboardFullScreen && (
           <Link to="/" className="w-fit h-[56px] flex items-center px-2">
-            <DaImage src="/imgs/logo-wide.png" className="object-contain" />
+            <DaImage
+              src={logoUrl}
+              className="da-dashboard-fullscreen-logo object-contain"
+              style={{ height: '28px' }}
+            />
           </Link>
         )}
         {isAuthorized && (
-          <div className="ml-2 flex w-full h-fit items-center px-1 justify-end">
+          <div className="flex w-full h-fit items-center justify-end">
             {mode == MODE_RUN && (
-              <Button
-                variant="outline"
-                size="sm"
-                data-id="dashboard-edit-button"
-                onClick={handleEnterEditMode}
-              >
-                <TbEdit className="size-4 mr-1" />
-                Edit
-              </Button>
+              <div className="flex items-center gap-1">
+                {/* Apply Template — all authorized users */}
+                <DropdownMenu open={applyOpen} onOpenChange={setApplyOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" data-id="dashboard-apply-template-button">
+                      <TbPalette className="size-4" />
+                      {activeTemplateId && templatesData?.results?.find((t) => t.id === activeTemplateId)
+                        ? templatesData.results.find((t) => t.id === activeTemplateId)!.name
+                        : ''}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64 max-h-64 overflow-y-auto">
+                    {templatesData?.results?.length ? (
+                      templatesData.results.map((t: DashboardTemplate) => (
+                        <DropdownMenuItem
+                          key={t.id}
+                          onClick={() => handleApplyTemplate(t)}
+                          className="cursor-pointer"
+                        >
+                          <span className={`truncate ${t.id === activeTemplateId ? 'flex-1 font-semibold text-da-primary-500' : ''}`}>
+                            {t.name}
+                          </span>
+                          {t.id === activeTemplateId
+                            ? (<span className="flex size-4 mr-2 shrink-0 items-center justify-center">
+                              <TbCheck className="size-4 text-da-primary-500" />
+                            </span>) : null}
+                        </DropdownMenuItem>
+                      ))
+                    ) : (
+                      <DropdownMenuItem disabled>
+                        No templates available
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  data-id="dashboard-edit-button"
+                  onClick={handleEnterEditMode}
+                >
+                  <TbEdit className="size-4" />
+                  Edit
+                </Button>
+              </div>
             )}
 
             {mode == MODE_EDIT && (
@@ -244,6 +437,27 @@ const DaDashboard = () => {
             <TbArrowsMaximize className="size-4" />
           )}
         </Button>
+        {isAdmin && (
+          <DropdownMenu open={adminMenuOpen} onOpenChange={setAdminMenuOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <TbDotsVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => {
+                  setAdminMenuOpen(false)
+                  setShowSaveDialog(true)
+                }}
+              >
+                <TbDeviceFloppy className="size-4 mr-2" />
+                Save as Template
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       <div
@@ -270,6 +484,90 @@ const DaDashboard = () => {
           )}
         </div>
       </div>
+
+      {/* Confirm Override Dialog */}
+      <DaDialog
+        open={showOverrideDialog}
+        onOpenChange={(v) => {
+          if (!v) setConflictTemplate(null)
+          setShowOverrideDialog(v)
+        }}
+        dialogTitle="Override Existing Template?"
+        className="w-105"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            A template named <span className="font-semibold text-foreground">&quot;{conflictTemplate?.name}&quot;</span> already exists.
+            Do you want to override it with the current dashboard layout?
+          </p>
+          <div className="flex justify-end gap-2 pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setShowOverrideDialog(false); setConflictTemplate(null) }}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              disabled={overrideTemplateMutation.isPending}
+              onClick={() => conflictTemplate && overrideTemplateMutation.mutate(conflictTemplate.id)}
+            >
+              {overrideTemplateMutation.isPending ? 'Overriding…' : 'Override'}
+            </Button>
+          </div>
+        </div>
+      </DaDialog>
+
+      {/* Save as Template Dialog */}
+      <DaDialog
+        open={showSaveDialog}
+        onOpenChange={(v) => {
+          if (!v) { setTemplateName(''); setTemplateDesc('') }
+          setShowSaveDialog(v)
+        }}
+        dialogTitle="Save Dashboard as Template"
+        className="w-110"
+      >
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Template Name *</label>
+            <input
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              placeholder="My Dashboard Template"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Description (optional)</label>
+            <textarea
+              className="flex min-h-18 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              placeholder="Short description..."
+              value={templateDesc}
+              onChange={(e) => setTemplateDesc(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setShowSaveDialog(false); setTemplateName(''); setTemplateDesc('') }}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={!templateName.trim() || saveTemplateMutation.isPending}
+              onClick={handleSaveTemplate}
+            >
+              {saveTemplateMutation.isPending ? 'Saving…' : 'Save Template'}
+            </Button>
+          </div>
+        </div>
+      </DaDialog>
     </div>
   )
 }

@@ -165,6 +165,7 @@ const PageUserProfile = () => {
                       <DaDialog
                         open={isOpenPopup}
                         onOpenChange={setIsOpenPopup}
+                        dialogTitle="Change Password"
                         trigger={
                           <Button size="sm" variant="outline">
                             Change password

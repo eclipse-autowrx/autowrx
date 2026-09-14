@@ -54,13 +54,19 @@ const start = async () => {
   });
 
   // Load database-dependent modules only after MongoDB is connected.
+  // Some modules initialize Casbin or Mongoose plugins during require().
+  const { init: initDataSync } = require('./sync');
   const initializeRoles = require('./scripts/initializeRoles');
   const { setupScheduledCheck, assignAdmins, convertLogsCap } = require('./scripts');
+  const { init: initSocket } = require('./config/socket');
+  const { seedPredefinedSiteConfigs, syncSiteConfigSnapshotsIfNeeded } = require('./services/siteConfig.service');
+  const { seedProjectTemplates } = require('./services/projectTemplate.service');
+  const PREDEFINED_SITE_CONFIGS = require('./config/predefinedSiteConfigs');
+  const PREDEFINED_PROJECT_TEMPLATES = require('./config/predefinedProjectTemplates');
 
-  // Load routes and socket configuration only after MongoDB is connected.
-  // Some Casbin initialization runs during route loading and accesses MongoDB.
+  // Register sync hooks before loading routes and models through the application.
+  initDataSync();
   const app = require('./app');
-  const { init } = require('./config/socket');
 
   logger.info('Connected to MongoDB ');
   logger.info(`🚀 Backend running in ${config.env.toUpperCase()} mode`);
@@ -68,11 +74,22 @@ const start = async () => {
   logger.info(`🍪 Cookie Config: secure=${config.jwt.cookie.options.secure}, sameSite=${config.jwt.cookie.options.sameSite}, httpOnly=${config.jwt.cookie.options.httpOnly}`);
 
   convertLogsCap();
-  initializeRoles().then(() => assignAdmins());
+  await initializeRoles();
+  const adminUserId = await assignAdmins();
+
+  if (adminUserId) {
+    await seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS, adminUserId);
+    await seedProjectTemplates(PREDEFINED_PROJECT_TEMPLATES, adminUserId);
+  }
+
+  await syncSiteConfigSnapshotsIfNeeded().catch((error) => {
+    logger.warn(`Site config snapshot sync skipped: ${error.message}`);
+  });
+
   server = app.listen(config.port, () => {
     logger.info(`Listening to port ${config.port}`);
   });
-  init(server);
+  initSocket(server);
   setupScheduledCheck();
 };
 

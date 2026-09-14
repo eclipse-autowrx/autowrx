@@ -5,7 +5,8 @@ export interface ModelTemplate {
   name: string
   description?: string
   image?: string
-  visibility: 'public' | 'private' | 'default'
+  visibility: 'public' | 'private' | 'editable'
+  is_default?: boolean
   config?: any
   createdAt: string
   updatedAt: string

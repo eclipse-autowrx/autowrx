@@ -1,277 +1,132 @@
-# API Plugin System Architecture Guide
+# Custom API System Architecture Guide
+
+> This was previously called the "API Plugin System" (models `PluginAPI`/`PluginApiInstance`, routes `/v2/system/plugin-api` and `/v2/vehicle-data/plugin-api-instances`). Those names and routes no longer exist — the models are now **`CustomApiSchema`** and **`CustomApiSet`**, at `/v2/system/custom-api-schema` and `/v2/custom-api-sets`. See `endpoints/custom-api-schema.md` and `endpoints/custom-api-set.md` for the endpoint contracts.
 
 ## Overview
 
-The API Plugin System allows administrators to define custom API set schemas and enables users to create instances of these API sets. The system supports three types of API structures: Tree (hierarchical), List (flat), and Graph (with relationships).
+The Custom API System lets administrators define custom API-set schemas and lets users create instances of those API sets. It supports three structure types: **Tree** (hierarchical), **List** (flat), and **Graph** (with relationships).
 
 ### Purpose
-
-- Enable admins to define reusable API set schemas
-- Allow users to create and manage API set instances
-- Support multiple API structure types (Tree, List, Graph)
-- Provide scope-based access control (system vs user)
-- Integrate API sets with vehicle models
-
-### Use Cases
-
-1. **COVESA API**: Tree-structured vehicle signal specification
-2. **REST API**: Flat list of REST endpoints
-3. **USP API**: Graph-structured API with dependencies
-
-## Architecture
+- Admins define reusable API-set schemas (`CustomApiSchema`).
+- Users/admins create and manage API-set instances (`CustomApiSet`) that conform to a schema.
+- Scope-based access control: `system` (shared) vs `user` (private).
+- Vehicle models reference instances via the `custom_api_sets` field.
 
 ### System Components
 
 ```
-┌─────────────┐
-│  PluginAPI  │  ← Schema definitions (admin-created)
-└──────┬──────┘
-       │ defines structure
-       ↓
 ┌──────────────────┐
-│PluginApiInstance │  ← Data instances (user/admin-created)
-└──────┬───────────┘
-       │ referenced by
-       ↓
-┌──────────┐
-│  Model   │  ← Vehicle models link to instances
-└──────────┘
+│  CustomApiSchema │  ← schema definitions (admin-created)
+└────────┬─────────┘
+         │ defines structure
+         ↓
+┌────────────────┐
+│  CustomApiSet   │  ← data instances (user/admin-created)
+└────────┬───────┘
+         │ referenced by
+         ↓
+┌────────────────┐
+│     Model       │  ← vehicle models link to sets via `custom_api_sets`
+└────────────────┘
 ```
-
-### Data Flow
-
-1. Admin creates PluginAPI schema defining structure
-2. User/Admin creates PluginApiInstance following schema
-3. Model references PluginApiInstance via `plugin_api_instances` field
 
 ## Data Models
 
-### PluginAPI Schema
+### CustomApiSchema
 
-Defines the template/structure for API sets:
+Defines the template/structure for an API set (collection `customapischemas`):
 
 ```javascript
 {
-  code: 'rest_api',              // Unique identifier
-  name: 'REST API',               // Display name
-  type: 'list',                   // 'tree' | 'list' | 'graph'
-  attributes: [                   // Required fields for each item
-    { name: 'name', data_type: 'string', required: true },
-    { name: 'path', data_type: 'string', required: true }
-  ],
-  relationships: [],               // For graph type
-  tree_config: {},                // For tree type
-  is_active: true
+  code: 'rest_api',        // unique, lowercase, max 100
+  name: 'REST API',
+  type: 'list',            // 'tree' | 'list' | 'graph'
+  schema: '...',           // REQUIRED — JSON-encoded string defining the item fields
+  id_format: null,         // optional id format
+  relationships: [],        // for graph type: { name, type, target_api, description }
+  tree_config: {},          // for tree type (separator, max_depth, …)
+  display_mapping: {},     // optional { title, description, type }
+  schema_definition: {},   // optional JSON Schema / custom format
+  version: '1.0.0',
+  is_active: true,
 }
 ```
 
-### PluginApiInstance Schema
+> `schema` replaced the old `attributes` array — it is a **JSON-encoded string** in the request body.
 
-Stores actual API data:
+### CustomApiSet
+
+An instance of a schema (collection `customapisets`):
 
 ```javascript
 {
-  plugin_api: ObjectId,            // Reference to PluginAPI
-  plugin_api_code: 'rest_api',     // Denormalized for queries
-  scope: 'system',                 // 'system' | 'user'
-  owner: ObjectId,                 // Creator/owner
+  custom_api_schema: ObjectId,       // → CustomApiSchema
+  custom_api_schema_code: 'rest_api', // denormalized for queries
+  scope: 'system',                    // 'system' | 'user'
+  owner: ObjectId,                    // creator/owner
+  name: 'My REST API set',
   data: {
-    items: [                       // Array of API items
-      {
-        id: 'api1',
-        path: '/api/users',
-        name: 'Get Users',
-        // ... other attributes
-      }
+    items: [
+      { id: 'api1', path: '/api/users', name: 'Get Users' /* …item fields per schema */ }
     ],
     metadata: {}
   }
 }
 ```
 
-### Model Integration
-
-Models reference PluginApiInstances:
-
-```javascript
-{
-  plugin_api_instances: [ObjectId, ...]    // Instance references
-}
-```
-
 ## API Types
 
-### Tree API
-
-Hierarchical structure with parent-child relationships.
-
-**Structure:**
-- Items have `path` (e.g., "ABC.X1.X2")
-- Items have `parent_id` referencing parent path
-- Supports nested hierarchies
-
-**Example:**
+### Tree API — hierarchical (parent-child). Items have `path` and `parent_id`. Use case: COVESA VSS.
 ```json
-{
-  "items": [
-    { "id": "ABC", "path": "ABC", "name": "ABC" },
-    { "id": "ABC.X1", "path": "ABC.X1", "parent_id": "ABC", "name": "X1" },
-    { "id": "ABC.X1.X2", "path": "ABC.X1.X2", "parent_id": "ABC.X1", "name": "X2" }
-  ]
-}
+{ "items": [
+  { "id": "ABC", "path": "ABC", "name": "ABC" },
+  { "id": "ABC.X1", "path": "ABC.X1", "parent_id": "ABC", "name": "X1" }
+]}
 ```
 
-**Use Case:** COVESA VSS structure
-
-### List API
-
-Flat array of API endpoints.
-
-**Structure:**
-- Items are independent
-- No parent-child relationships
-- Similar to Swagger/REST API documentation
-
-**Example:**
-```json
-{
-  "items": [
-    {
-      "id": "get-users",
-      "path": "/api/v1/users",
-      "method": "GET",
-      "name": "Get Users"
-    },
-    {
-      "id": "create-user",
-      "path": "/api/v1/users",
-      "method": "POST",
-      "name": "Create User"
-    }
-  ]
-}
-```
-
-**Use Case:** REST API documentation
-
-### Graph API
-
-Nodes with relationships/edges between them.
-
-**Structure:**
-- Items are nodes
-- Items have `relationships` array
-- Relationships reference other items by ID
-
-**Example:**
-```json
-{
-  "items": [
-    {
-      "id": "service1",
-      "name": "Service 1",
-      "relationships": [
-        { "relationship_name": "depends_on", "target_item_id": "service2" }
-      ]
-    },
-    {
-      "id": "service2",
-      "name": "Service 2"
-    }
-  ]
-}
-```
-
-**Use Case:** Service dependencies, API relationships
+### List API — flat array, no nesting. Use case: REST API documentation.
+### Graph API — nodes with a `relationships` array (`{ relationship_name, target_item_id }`). Use case: service dependencies.
 
 ## Scope System
 
-### System Scope
-
-- Created by admin users
-- Accessible by all users
-- Shared across the platform
-- Use for standard API sets
-
-### User Scope
-
-- Created by any user
-- Only accessible by creator
-- Private to the user
-- Use for custom/personal API sets
+- **System scope** — created by admins, readable by all, shared across the platform.
+- **User scope** — created by any authenticated user, private to the creator.
 
 ## Permission Model
 
-### PluginAPI
-
-- **Create/Update/Delete**: Admin only
-- **Read**: Public (all users)
-
-### PluginApiInstance
-
-- **System scope**:
-  - Create: Admin only
-  - Read: All users
-  - Update/Delete: Admin only
-
-- **User scope**:
-  - Create: Any authenticated user
-  - Read: Creator only
-  - Update/Delete: Creator only
-
-### Model Integration
-
-- User must have write permission on model
-- User must have access to PluginApiInstance (system scope or owner)
+- **CustomApiSchema**: Create/Update/Delete = admin only (`auth()` + `checkPermission(ADMIN)`); Read = public.
+- **CustomApiSet** (the routes apply `auth()` for writes; optional `PUBLIC_VIEWING` for reads):
+  - Create — any authenticated user, for either scope (there is **no admin gate** for system-scope creation; `owner` is set to the creator).
+  - Read — system scope = public (all users, including unauthenticated); user scope = owner only.
+  - Update / Delete — user scope = owner only; system scope = any authenticated user (no admin gate — the service only enforces ownership for user-scoped sets).
+  - Item operations (add/update/remove item) = the authenticated user.
+- **Model integration** — linking a set via `PATCH /v2/models/{id}` requires `WRITE_MODEL` on the model, plus read access to the set (system scope or owner).
 
 ## Storage Strategy
 
-### Single Document Approach
-
-- Entire API set stored in one `PluginApiInstance` document
-- All items stored in `data.items` array
-- MongoDB document size limit: 16MB
-
-### Size Considerations
-
-- **Typical size**: Hundreds of items × 1-5KB = 100KB-5MB
-- **Risk**: Low for current use case
-- **Future**: Consider chunking if sets grow beyond thousands of items
-
-### Update Operations
-
-- Use MongoDB array update operators for efficient partial updates
-- `$set`, `$push`, `$pull`, positional `$` operators
-- Supports adding/updating/removing individual items
+- An entire API set is stored in one `CustomApiSet` document (`data.items[]` array). Mind the 16 MB document limit (hundreds of items is low-risk; chunk beyond thousands).
+- Item-level operations (add/update/remove) use MongoDB array operators (`$set`, `$push`, `$pull`, positional `$`).
 
 ## Usage Examples
 
-### Creating a PluginAPI Schema
-
-```javascript
-POST /v2/system/plugin-api
+### Create a schema
+```json
+POST /v2/system/custom-api-schema
 {
   "code": "covesa",
   "name": "COVESA API",
   "type": "tree",
-  "attributes": [
-    { "name": "name", "data_type": "string", "required": true },
-    { "name": "value", "data_type": "mixed", "required": false }
-  ],
-  "tree_config": {
-    "separator": ".",
-    "max_depth": 10
-  }
+  "schema": "{\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"object\"}}}",
+  "tree_config": { "separator": ".", "max_depth": 10 }
 }
 ```
 
-### Creating an Instance
-
-```javascript
-POST /v2/vehicle-data/plugin-api-instances
+### Create an instance
+```json
+POST /v2/custom-api-sets
 {
-  "plugin_api": "<plugin_api_id>",
-  "plugin_api_code": "covesa",
+  "custom_api_schema": "<schema_id>",
+  "custom_api_schema_code": "covesa",
   "scope": "system",
   "name": "Vehicle Signals",
   "data": {
@@ -283,108 +138,29 @@ POST /v2/vehicle-data/plugin-api-instances
 }
 ```
 
-### Linking to Model
-
-```javascript
-PATCH /v2/vehicle-data/models/{modelId}
-{
-  "plugin_api_instances": ["<instance_id>"]
-}
+### Link an instance to a model
+```json
+PATCH /v2/models/{modelId}
+{ "custom_api_sets": ["<instance_id>"] }
 ```
 
-### Adding an Item
-
-```javascript
-POST /v2/vehicle-data/plugin-api-instances/{id}/items
-{
-  "item": {
-    "id": "Vehicle.Battery",
-    "path": "Vehicle.Battery",
-    "parent_id": "Vehicle",
-    "name": "Battery"
-  }
-}
+### Add an item to an instance
+```json
+POST /v2/custom-api-sets/{id}/items
+{ "item": { "id": "Vehicle.Battery", "path": "Vehicle.Battery", "parent_id": "Vehicle", "name": "Battery" } }
 ```
-
-## Validation
-
-### Schema Validation
-
-- Items must match PluginAPI attribute definitions
-- Required attributes must be present
-- Data types must match schema
-
-### Structure Validation
-
-- **Tree**: Parent references must exist
-- **Graph**: Relationship targets must exist
-- **List**: No structural validation
-
-### Permission Validation
-
-- Scope-based access checks
-- Ownership verification for user-scoped instances
-- Model write permission checks
-
-## Migration Guide
-
-### From custom_apis
-
-The existing `custom_apis` field in Model can coexist with the new system. To migrate:
-
-1. Create PluginAPI schema for custom APIs
-2. Create PluginApiInstance from existing `custom_apis` data
-3. Link instance to model via `plugin_api_instances`
-4. Optionally remove `custom_apis` field
-
-### Backward Compatibility
-
-- `custom_apis` field remains supported
-- Existing models continue to work
-- New models can use PluginAPI system
-
-## Best Practices
-
-### Schema Design
-
-1. **Keep attributes minimal**: Only include essential fields
-2. **Use appropriate types**: Choose tree/list/graph based on structure
-3. **Version schemas**: Use version field for schema evolution
-4. **Document attributes**: Provide descriptions for clarity
-
-### Instance Management
-
-1. **Use system scope**: For shared, standard API sets
-2. **Use user scope**: For personal/custom API sets
-3. **Validate before save**: Ensure data matches schema
-4. **Keep items organized**: Maintain consistent structure
-
-### Performance
-
-1. **Index frequently queried fields**: `plugin_api_code`, `scope`, `owner`
-2. **Limit item count**: Keep sets under 1000 items when possible
-3. **Use pagination**: For large instance lists
-4. **Cache schemas**: PluginAPI schemas rarely change
 
 ## Testing
 
-Run the self-test script to validate the system:
-
 ```bash
-# Run tests and clean up
-node src/scripts/test-plugin-api-system.js
-
-# Keep test data for inspection
-node src/scripts/test-plugin-api-system.js --keep-data
-
-# Clean existing test data
-node src/scripts/test-plugin-api-system.js --clean
+node src/scripts/test-custom-api-system.js            # run + clean up
+node src/scripts/test-custom-api-system.js --keep-data  # keep test data
+node src/scripts/test-custom-api-system.js --clean       # clean existing test data
 ```
+(A legacy `test-plugin-api-system.js` also exists from before the rename.)
 
-The test script validates:
-- CRUD operations
-- Scope-based permissions
-- Model integration
-- Validation rules
-- Item-level operations
+## Validation
 
+- **Schema**: items must match the `schema` definition; required fields must be present.
+- **Structure**: Tree — parent refs must exist; Graph — relationship targets must exist; List — no structural validation.
+- **Permission**: scope-based access + ownership (user scope) + model write permission.
