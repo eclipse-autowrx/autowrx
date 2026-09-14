@@ -149,6 +149,8 @@ const NewPrototypeLayout: FC = () => {
     ? selectedPluginId
     : (visibleCustomTabs[0]?.plugin ?? null)
 
+  // Synthetic id for plugin data only — PluginPageRender must not treat this as
+  // a real model ObjectId when checking WRITE_MODEL.
   const previewModel = model
     ? model
     : previewTemplateConfig
