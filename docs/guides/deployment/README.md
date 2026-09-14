@@ -1,8 +1,15 @@
 # Deployment
 
-How AutoWRX is deployed to production: a **single application image** (the
-backend serves both the API and the built frontend) plus **MongoDB**, run with
-Docker Compose from the [`instance-setup/`](../../../instance-setup) directory.
+How AutoWRX is deployed to production. Two deployment modes are supported:
+
+| Mode | Guide | Use case |
+|---|---|---|
+| **Single site** | This page + [Instance Setup Guide](../../../instance-setup/instance-setup-guide.md) | One app + one MongoDB on a single host |
+| **Multi-site (Azure VM)** | [AZ-deployment-2sites-2db.md](./AZ-deployment-2sites-2db.md) | Two independent sites + per-provider kit-manager + runtimes on one Azure VM with Nginx + Let's Encrypt |
+
+The single-site deployment uses a **single application image** (the backend
+serves both the API and the built frontend) plus **MongoDB**, run with Docker
+Compose from the [`instance-setup/`](../../../instance-setup) directory.
 
 > **Canonical step-by-step:** the
 > [Instance Setup Guide](../../../instance-setup/instance-setup-guide.md) in
