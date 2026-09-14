@@ -24,14 +24,12 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3200}
-      # Always use port 27017 for internal Docker network communication
-      # MONGODB_PORT (27010) is only for external host access
-      MONGODB_URL: mongodb://autowrx-db:27017/${MONGODB_DATABASE:-autowrx}
-      JWT_SECRET: ${JWT_SECRET}
+      SECRETS_PROVIDER: ${SECRETS_PROVIDER:-keyvault}
+      AZURE_KEY_VAULT_NAME: ${AZURE_KEY_VAULT_NAME}
+      AZURE_KEY_VAULT_ALLOW_ENV_FALLBACK: ${AZURE_KEY_VAULT_ALLOW_ENV_FALLBACK:-false}
       JWT_COOKIE_NAME: ${JWT_COOKIE_NAME:-token}
       CORS_ORIGINS: ${CORS_ORIGINS}
       ADMIN_EMAILS: ${ADMIN_EMAILS}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     volumes:
       - '${UPLOAD_PATH_HOST:-./data/upload}:/usr/src/playground-be/static/uploads'
       - '${PLUGIN_PATH_HOST:-./data/plugin}:/usr/src/playground-be/static/plugin'

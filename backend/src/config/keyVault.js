@@ -14,8 +14,6 @@ const { SecretClient } = require('@azure/keyvault-secrets');
 const secretMappings = {
   'mongodb-url': 'MONGODB_URL',
   'jwt-secret': 'JWT_SECRET',
-  'smtp-username': 'SMTP_USERNAME',
-  'smtp-password': 'SMTP_PASSWORD',
   'github-client-secret': 'GITHUB_CLIENT_SECRET',
   'email-api-key': 'EMAIL_API_KEY',
   'aws-public-key': 'AWS_PUBLIC_KEY',
@@ -28,8 +26,6 @@ const secretMappings = {
 };
 
 const requiredSecretNames = new Set(['mongodb-url', 'jwt-secret']);
-
-const isNotFoundError = (error) => error.statusCode === 404 || error.code === 'SecretNotFound';
 
 const getSecretsProvider = () => {
   const configuredProvider = process.env.SECRETS_PROVIDER?.toLowerCase();
@@ -83,13 +79,24 @@ const loadKeyVaultSecrets = async () => {
     await Promise.all(Object.entries(secretMappings).map(async ([secretName, environmentVariable]) => {
       try {
         const secret = await client.getSecret(secretName);
-        if (secret.value !== undefined) {
+        if (secret.value !== undefined && secret.value !== '') {
           process.env[environmentVariable] = secret.value;
+        } else if (requiredSecretNames.has(secretName)) {
+          throw new Error(`Required secret '${secretName}' is empty in Azure Key Vault`);
+        } else {
+          console.warn(`Optional secret '${secretName}' is empty in Azure Key Vault; skipping`);
         }
       } catch (error) {
-        if (requiredSecretNames.has(secretName) || !isNotFoundError(error)) {
-          throw new Error(`Unable to load secret '${secretName}' from Azure Key Vault`);
+        if (requiredSecretNames.has(secretName)) {
+          const status = error.statusCode ? ` status=${error.statusCode}` : '';
+          const code = error.code ? ` code=${error.code}` : '';
+          const message = error.message ? ` ${error.message}` : '';
+          throw new Error(
+            `Unable to load required secret '${secretName}' from Azure Key Vault.${status}${code}${message}`
+          );
         }
+
+        console.warn(`Optional secret '${secretName}' could not be loaded from Azure Key Vault; skipping`);
       }
     }));
   } catch (error) {

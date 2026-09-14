@@ -15,14 +15,10 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const start = async () => {
   await loadKeyVaultSecrets();
 
-  // Load the application only after Key Vault values have been placed in process.env.
+  // Load configuration only after Key Vault values have been placed in process.env.
   const mongoose = require('mongoose');
-  const app = require('./app');
   const config = require('./config/config');
   const logger = require('./config/logger');
-  const initializeRoles = require('./scripts/initializeRoles');
-  const { init } = require('./config/socket');
-  const { setupScheduledCheck, assignAdmins, convertLogsCap } = require('./scripts');
 
   let server;
 
@@ -52,7 +48,20 @@ const start = async () => {
     }
   });
 
-  await mongoose.connect(config.mongoose.url, config.mongoose.options);
+  await mongoose.connect(config.mongoose.url, {
+    ...config.mongoose.options,
+    serverSelectionTimeoutMS: 10000,
+  });
+
+  // Load database-dependent modules only after MongoDB is connected.
+  const initializeRoles = require('./scripts/initializeRoles');
+  const { setupScheduledCheck, assignAdmins, convertLogsCap } = require('./scripts');
+
+  // Load routes and socket configuration only after MongoDB is connected.
+  // Some Casbin initialization runs during route loading and accesses MongoDB.
+  const app = require('./app');
+  const { init } = require('./config/socket');
+
   logger.info('Connected to MongoDB ');
   logger.info(`🚀 Backend running in ${config.env.toUpperCase()} mode`);
   logger.info(`📊 CORS Origins: ${config.cors.origins ? 'Custom function' : 'Default'}`);
