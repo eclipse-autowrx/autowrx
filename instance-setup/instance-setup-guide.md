@@ -46,7 +46,7 @@ cp .env.prod.sample .env.prod
 nano .env.prod  # or use your preferred editor
 ```
 
-**Required Configuration:**
+**Required Configuration (environment mode):**
 
 ```bash
 # Instance name (used for container naming)
@@ -54,19 +54,35 @@ NAME=autowrx
 
 # Port mapping
 FRONTEND_PORT=3200
+NODE_ENV=production
+SECRETS_PROVIDER=env
 
-# Security - CHANGE THESE!
+# Database and security - CHANGE THESE!
+MONGODB_URL=mongodb://autowrx-db:27017/autowrx
 JWT_SECRET=your-secure-random-secret-here
+ADMIN_PASSWORD=your-secure-password
 
 # CORS - Add your domain(s)
 CORS_ORIGINS=yourdomain\\.com,.*\\.yourdomain\\.com
 
 # Admin user (created on first run)
 ADMIN_EMAILS=admin@yourdomain.com
-ADMIN_PASSWORD=your-secure-password
 ```
 
+**Azure Key Vault mode (optional):**
+
+Set the following instead of supplying `MONGODB_URL`, `JWT_SECRET`, and `ADMIN_PASSWORD`:
+
+```bash
+SECRETS_PROVIDER=keyvault
+AZURE_KEY_VAULT_NAME=your-key-vault-name
+AZURE_KEY_VAULT_ALLOW_ENV_FALLBACK=false
+```
+
+Create the corresponding `mongodb-url`, `jwt-secret`, and `admin-password` secrets in the vault. The production `mongodb-url` should use the Docker hostname `autowrx-db`, not `localhost`.
+
 **Important Notes:**
+- Keep `.env.prod` private; it is ignored by Git.
 - `JWT_SECRET`: Use a strong, random secret (e.g., `openssl rand -base64 32`)
 - `CORS_ORIGINS`: Escape dots with `\\.` (e.g., `example\\.com`)
 - Authentication settings (self-registration, public viewing, etc.) are configured via the Site Configuration in the admin panel after deployment
