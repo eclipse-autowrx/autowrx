@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
+const { isValidObjectId } = require('mongoose');
 const { UserRole, Model, Prototype, Role, Asset } = require('../models');
 const ApiError = require('../utils/ApiError');
 const roleModel = require('../models/role.model');
@@ -195,6 +196,11 @@ const hasPermission = async (userId, permission, id, type) => {
 
   if (!id) {
     return check(userId, permission);
+  }
+
+  // Non-ObjectId refs (e.g. frontend preview sentinel "preview-template") are not resources.
+  if (!isValidObjectId(id)) {
+    return false;
   }
 
   if (type === 'asset') {

@@ -71,11 +71,18 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const [pluginMetaConfig, setPluginMetaConfig] = useState<Record<string, any>>({})
   const runtimeServerUrl = useSiteConfig('RUNTIME_SERVER_URL', config?.runtime?.url)
 
-  // Extract IDs from data
-  const model_id = data?.model?.id
+  // NewPrototypeLayout uses id "preview-template" as a synthetic model when
+  // previewing a template with no real model. That sentinel is not a Mongo
+  // ObjectId — do not send it to /permissions/has-permission.
+  const rawModelId = data?.model?.id as string | undefined
+  const isPreviewTemplate = rawModelId === 'preview-template'
+  const model_id = isPreviewTemplate ? undefined : rawModelId
   const prototype_id = data?.prototype?.id
 
-  const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
+  const writeModelPermission: [string, string?][] = isPreviewTemplate
+    ? []
+    : [[PERMISSIONS.WRITE_MODEL, model_id]]
+  const [isAuthorized = false] = usePermissionHook(...writeModelPermission)
   const canEditPrototype = useCanEditPrototype(data?.prototype)
   const { data: currentUser } = useSelfProfileQuery()
 
