@@ -24,14 +24,15 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3200}
-      # Always use port 27017 for internal Docker network communication
-      # MONGODB_PORT (27010) is only for external host access
-      MONGODB_URL: mongodb://autowrx-db:27017/${MONGODB_DATABASE:-autowrx}
-      JWT_SECRET: ${JWT_SECRET}
+      SECRETS_PROVIDER: ${SECRETS_PROVIDER:-env}
+      AZURE_KEY_VAULT_NAME: ${AZURE_KEY_VAULT_NAME:-}
+      AZURE_KEY_VAULT_ALLOW_ENV_FALLBACK: ${AZURE_KEY_VAULT_ALLOW_ENV_FALLBACK:-false}
+      MONGODB_URL: ${MONGODB_URL:-mongodb://autowrx-db:27017/${MONGODB_DATABASE:-autowrx}}
+      JWT_SECRET: ${JWT_SECRET:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       JWT_COOKIE_NAME: ${JWT_COOKIE_NAME:-token}
       CORS_ORIGINS: ${CORS_ORIGINS}
       ADMIN_EMAILS: ${ADMIN_EMAILS}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       GENAI_URL: ${GENAI_URL:-}
       KIT_SERVER_URL: ${KIT_SERVER_URL:-}
       RUNTIME_SERVICE_MAPPINGS: ${RUNTIME_SERVICE_MAPPINGS:-}
