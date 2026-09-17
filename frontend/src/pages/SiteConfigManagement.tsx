@@ -234,6 +234,16 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     category: 'model_prototype',
   },
   {
+    key: 'HIDE_MODEL_PAGE',
+    scope: 'site',
+    value: false,
+    secret: false,
+    valueType: 'boolean',
+    description:
+      'When enabled, hides the Vehicle Models list page (/model) and redirects visitors to Home. Also removes the "Vehicle Models" breadcrumb entry.',
+    category: 'model_prototype',
+  },
+  {
     key: 'VSS_PLUGINS',
     scope: 'site',
     value: [{ label: 'A2L Importer', plugin: 'a2l-importer' }],
