@@ -242,7 +242,7 @@ const HomeHeroSection = ({
   return (
     <>
       <div
-        className="flex col-span-12 relative w-full justify-between z-10 overflow-hidden"
+        className="flex col-span-12 relative w-full justify-between z-10 overflow-hidden [@media(max-width:1023px)_and_(max-height:719px)]:hidden"
         style={{ minHeight, maxHeight, height: maxHeight }}
       >
         {/* Gradient overlay */}
