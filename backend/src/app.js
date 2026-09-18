@@ -75,7 +75,7 @@ if (config.env === 'development') {
           scriptSrcElem: ["'unsafe-inline'", "'unsafe-eval'", '*'],
           styleSrc: ["'unsafe-inline'", '*'],
           imgSrc: ['*', 'data:', 'blob:'],
-          connectSrc: ['*'],
+          connectSrc: ['*', 'ws:', 'wss:'],
           fontSrc: ['*', 'data:'],
           objectSrc: ["'none'"],
           mediaSrc: ['*'],
