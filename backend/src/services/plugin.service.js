@@ -155,7 +155,10 @@ const deletePluginById = async (id, actor) => {
   }
 
   await plugin.deleteOne();
-  return true;
+  // Return the now-deleted document so the caller can clean up any
+  // associated on-disk files (internal plugins extract to static/plugin/<slug>,
+  // which this service has no knowledge of).
+  return plugin;
 };
 
 module.exports = {
