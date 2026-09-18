@@ -89,8 +89,8 @@ const NavigationBar = ({ }) => {
     () => partitionNavBarActions(Array.isArray(navBarActions) ? navBarActions : []),
     [navBarActions],
   )
-  const allowNonAdminAddonConfig = useSiteConfig(
-    'ALLOW_NON_ADMIN_ADDON_CONFIG',
+  const enableModelCustomization = useSiteConfig(
+    'ENABLE_MODEL_CUSTOMIZATION',
     true,
   )
   const toolsMenuItems = useMemo(() => {
@@ -105,11 +105,11 @@ const NavigationBar = ({ }) => {
         { to: '/admin/project-templates', icon: TbFileCode, label: 'Prototype Templates' },
       ]
     }
-    if (allowNonAdminAddonConfig) {
+    if (enableModelCustomization) {
       return [{ to: '/me/plugins', icon: TbApps, label: 'Plugins' }]
     }
     return []
-  }, [isAuthorized, allowNonAdminAddonConfig])
+  }, [isAuthorized, enableModelCustomization])
 
   useEffect(() => {
     if (siteTitle) {

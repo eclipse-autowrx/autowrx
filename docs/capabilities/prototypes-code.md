@@ -351,7 +351,7 @@ Authors (build); reviewers (feedback); operators (staging); end users (view).
 ### API contract
 
 - Page route: `GET /model/:id/library/prototype/:pid[/:tab]` — renders the workspace with tabs `view|journey|code|dashboard|feedback|staging|plug` (reads optional via `PUBLIC_VIEWING`).
-- Addon tab add/manage requires `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG`.
+- Addon tab add/manage requires `WRITE_MODEL` + `ENABLE_MODEL_CUSTOMIZATION`.
 - "Save as Template" requires admin (`MANAGE_USERS`).
 - Staging requires sign-in + prototype code.
 - Plugin tabs render via `PluginPageRender` (unsandboxed — a plugin tab can access the page like any other script).
@@ -368,24 +368,24 @@ flowchart TD
     V([Visitor]) -->|"GET /model/:id/library/prototype/:pid/:tab"| WS["Workspace shell"]
     WS --> Tabs["view · journey · code · dashboard · feedback · staging · plug"]
     Tabs -->|addon tab| PR["PluginPageRender (unsandboxed)"]
-    O([Owner]) -->|"addon add/manage (WRITE_MODEL + ALLOW_NON_ADMIN_ADDON_CONFIG)"| CFG["tab config + right-nav"]
+    O([Owner]) -->|"addon add/manage (WRITE_MODEL + ENABLE_MODEL_CUSTOMIZATION)"| CFG["tab config + right-nav"]
     CFG -->|persist| P["prototype.extend / tab config"]
     O -->|"Save as Template (admin)"| MT["Model Template"]
 ```
 
 ### Security
 
-Tab management requires `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG`; Staging requires sign-in; a plugin tab can access the page like any other script (unsandboxed).
+Tab management requires `WRITE_MODEL` + `ENABLE_MODEL_CUSTOMIZATION`; Staging requires sign-in; a plugin tab can access the page like any other script (unsandboxed).
 
 **Coverage:**
-- **Auth:** reads optional via `PUBLIC_VIEWING`; addon/tab management requires sign-in + `WRITE_MODEL` + `ALLOW_NON_ADMIN_ADDON_CONFIG`; Staging requires sign-in.
+- **Auth:** reads optional via `PUBLIC_VIEWING`; addon/tab management requires sign-in + `WRITE_MODEL` + `ENABLE_MODEL_CUSTOMIZATION`; Staging requires sign-in.
 - **Authorization:** `WRITE_MODEL` for addon add/manage; "Save as Template" requires admin (`MANAGE_USERS`).
 - **Input validation:** tab/addon config is loosely validated (`extend` accepts any JSON, `widget_config` a JSON string); a plugin tab can access the page like any other script.
 - **Rate limiting:** not applied.
 - **Secrets:** none.
 
 **Risks:**
-- **Malicious addon tab:** plugins run unsandboxed via `PluginPageRender`; if the `ALLOW_NON_ADMIN_ADDON_CONFIG` gate were bypassed, a non-admin could inject a hostile tab into every visitor's view (XSS / token theft). *Mitigation:* none currently — plugins run unsandboxed by design; only install trusted plugins.
+- **Malicious addon tab:** plugins run unsandboxed via `PluginPageRender`; if the `ENABLE_MODEL_CUSTOMIZATION` gate were bypassed, a non-admin could inject a hostile tab into every visitor's view (XSS / token theft). *Mitigation:* none currently — plugins run unsandboxed by design; only install trusted plugins.
 - **Staging bypass:** Staging requires auth + prototype code; a missing check could expose staging execution to anonymous users or code-less prototypes. *Mitigation:* enforce auth + code-present check server-side before staging execution.
 
 ### Personal data processing

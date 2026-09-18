@@ -16,6 +16,7 @@
     "test:home-prototype-list": "playwright test tests/home-prototype-list.spec.ts",
     "test:image-fallback": "playwright test tests/image-fallback.spec.ts",
     "test:model-editable-visibility": "playwright test tests/model-editable-visibility.spec.ts",
+    "test:model-customization-menu": "playwright test tests/model-customization-menu.spec.ts",
     "test:smoke": "playwright test tests/auth.spec.ts tests/layout.spec.ts",
     "test:all": "playwright test --reporter=line,html"
   },
