@@ -45,6 +45,7 @@ export interface PluginAPI {
   /**
    * Update the current prototype's data
    * @param updates Partial prototype data to update
+   * @param options.silent When true (default), suppresses the success toast. Error toasts always show.
    * @returns Promise resolving to the updated prototype
    * @throws Error if prototype_id is not available or update fails
    *
@@ -53,7 +54,7 @@ export interface PluginAPI {
    *   extend: { pluginSettings: { theme: 'dark' } }
    * })
    */
-  updatePrototype?: (updates: Partial<Prototype>) => Promise<Prototype>
+  updatePrototype?: (updates: Partial<Prototype>, options?: { silent?: boolean }) => Promise<Prototype>
 
   // ========================================
   // Vehicle API Operations (Read & Write)
