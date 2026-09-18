@@ -127,7 +127,9 @@
       </span>
     </div>
 
-    <iframe id="preview-frame" sandbox="allow-scripts allow-forms" style="display:none" title="Runtime preview"></iframe>
+    <!-- allow-same-origin is required: without it the frame gets an opaque origin and every
+         subresource it loads is blocked by Cross-Origin-Resource-Policy: same-origin -->
+    <iframe id="preview-frame" sandbox="allow-scripts allow-forms allow-same-origin" style="display:none" title="Runtime preview"></iframe>
   </div>
 
   <script>
