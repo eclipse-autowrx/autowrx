@@ -109,7 +109,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   }, [model_id])
 
   const handleUpdatePrototype = useCallback(async (updates: Partial<Prototype>, options?: { silent?: boolean }): Promise<Prototype> => {
-    const { silent = true } = options ?? {}
+    const { silent = false } = options ?? {}
     if (!prototype_id) {
       const errorMsg = 'Cannot update prototype: prototype_id not available in data'
       toast.error(errorMsg)

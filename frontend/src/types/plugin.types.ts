@@ -45,7 +45,7 @@ export interface PluginAPI {
   /**
    * Update the current prototype's data
    * @param updates Partial prototype data to update
-   * @param options.silent When true (default), suppresses the success toast. Error toasts always show.
+   * @param options.silent When true, suppresses the success toast (default false). Error toasts always show.
    * @returns Promise resolving to the updated prototype
    * @throws Error if prototype_id is not available or update fails
    *

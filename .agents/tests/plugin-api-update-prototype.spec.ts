@@ -59,7 +59,7 @@ test.describe('Plugin API - updatePrototype silent option', () => {
     }
   });
 
-  test('silent (default) suppresses success toast; silent:false shows it', async ({ page }) => {
+  test('default shows success toast; silent:true suppresses it', async ({ page }) => {
     test.setTimeout(120000);
 
     const timestamp = Date.now();
@@ -89,16 +89,17 @@ test.describe('Plugin API - updatePrototype silent option', () => {
     expect(page.url()).toContain(`plugid=${createdPlugin.slug}`);
     await expectPluginDetailLoaded(page, E2E_PLUGIN_MARKER, `Prototype: ${protoName}`);
 
-    // Silent case: default options, no toast expected.
+    // Silent case first (explicit silent:true, no toast expected) so there's no
+    // earlier toast still lingering (autoClose is 5s) that could taint the assertion.
     await page.getByTestId('e2e-update-silent-btn').click();
     await expect(page.getByTestId('e2e-update-status')).toHaveText('done', { timeout: 15000 });
     await page.waitForTimeout(1000);
     await expect(page.getByText(SUCCESS_TOAST_TEXT)).toHaveCount(0);
     await saveScreenshot(page, 'update-prototype-silent');
 
-    // Verbose case: silent:false, toast expected.
-    await page.getByTestId('e2e-update-verbose-btn').click();
+    // Default case: no options passed, toast expected.
+    await page.getByTestId('e2e-update-default-btn').click();
     await expect(page.getByText(SUCCESS_TOAST_TEXT)).toBeVisible({ timeout: 15000 });
-    await saveScreenshot(page, 'update-prototype-verbose');
+    await saveScreenshot(page, 'update-prototype-default');
   });
 });

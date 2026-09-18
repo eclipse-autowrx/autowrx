@@ -51,7 +51,7 @@
         {
           'data-testid': 'e2e-update-silent-btn',
           onClick: function () {
-            callUpdate(undefined);
+            callUpdate({ silent: true });
           },
         },
         'Update Silent',
@@ -59,12 +59,12 @@
       React.createElement(
         'button',
         {
-          'data-testid': 'e2e-update-verbose-btn',
+          'data-testid': 'e2e-update-default-btn',
           onClick: function () {
-            callUpdate({ silent: false });
+            callUpdate(undefined);
           },
         },
-        'Update Verbose',
+        'Update Default',
       ),
       React.createElement('p', { 'data-testid': 'e2e-update-status' }, status),
     );
