@@ -14,7 +14,11 @@ import {
   selectHomeModelCategory,
   selectHomeModelSort,
   renameModelViaHomeContextMenu,
+  deleteModelViaHomeContextMenu,
   getHomeModelListSection,
+  getHomePrototypeListSection,
+  selectHomePrototypeCategory,
+  createTestPrototype,
   assertHomeModelOrder,
   setModelLastViewedMap,
   waitForModelInHomeList,
@@ -328,6 +332,44 @@ test.describe('Home Model List', () => {
     });
 
     await saveScreenshot(page, 'home-model-list-rename');
+  });
+
+  test('deleting a model refreshes the sibling prototype list', async ({ page }) => {
+    const timestamp = Date.now();
+    const modelName = `E2E_HomeDeleteModel_${timestamp}`;
+    const protoName = `E2E_HomeDeleteProto_${timestamp}`;
+
+    await loginAsAdmin(page);
+    await setSiteConfigJson(page, 'CFG_HOME_CONTENT', [
+      { type: 'model-list', title: 'Vehicle Models' },
+      { type: 'prototype-list', title: 'All Prototypes' },
+    ]);
+
+    const modelId = await createTestModelViaApi(page, modelName, 'private');
+    createdModelIds.push(modelId);
+    await createTestPrototype(page, protoName, modelId);
+
+    await page.goto('/');
+    const modelSection = getHomeModelListSection(page);
+    const prototypeSection = getHomePrototypeListSection(page);
+    await expect(modelSection.locator(`[aria-label="${modelName}"]`)).toBeVisible({
+      timeout: 20000,
+    });
+    await selectHomePrototypeCategory(page, 'My Prototypes');
+    await expect(
+      prototypeSection.locator(`[data-id^="prototype-item-"]:has-text("${protoName}")`),
+    ).toBeVisible({ timeout: 20000 });
+
+    await deleteModelViaHomeContextMenu(page, modelName);
+
+    await expect(modelSection.locator(`[aria-label="${modelName}"]`)).toHaveCount(0, {
+      timeout: 20000,
+    });
+    await expect(
+      prototypeSection.locator(`[data-id^="prototype-item-"]:has-text("${protoName}")`),
+    ).toHaveCount(0, { timeout: 20000 });
+
+    await saveScreenshot(page, 'home-model-list-delete-refreshes-prototype-list');
   });
 
   test('My Contributions shows model for contributor', async ({ page }) => {
