@@ -579,38 +579,37 @@ const FormNewPrototype = ({
                 />
             )}
 
-            {(isLoadingTemplates || templateOptions.length > 0) &&
-                (isLoadingTemplates ? (
-                    <div className="mt-4 flex flex-col gap-1.5">
-                        <Label>Prototype Template *</Label>
-                        <div className="flex h-10 border px-2 rounded-md shadow-sm items-center">
-                            <TbLoader className="size-4 animate-spin mr-2" /> Loading
-                            templates...
-                        </div>
+            {isLoadingTemplates ? (
+                <div className="mt-4 flex flex-col gap-1.5">
+                    <Label>Prototype Template *</Label>
+                    <div className="flex h-10 border px-2 rounded-md shadow-sm items-center">
+                        <TbLoader className="size-4 animate-spin mr-2" /> Loading
+                        templates...
                     </div>
-                ) : (
-                    <div className="mt-4 flex flex-col gap-1.5">
-                        <Label>Prototype Template *</Label>
-                        <Select
-                            value={selectedTemplateId}
-                            onValueChange={setSelectedTemplateId}
+                </div>
+            ) : templateOptions.length > 1 ? (
+                <div className="mt-4 flex flex-col gap-1.5">
+                    <Label>Prototype Template *</Label>
+                    <Select
+                        value={selectedTemplateId}
+                        onValueChange={setSelectedTemplateId}
+                    >
+                        <SelectTrigger
+                            className="w-full"
+                            data-id="project-template-select"
                         >
-                            <SelectTrigger
-                                className="w-full"
-                                data-id="project-template-select"
-                            >
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="w-[var(--radix-select-trigger-width)]">
-                                {templateOptions.map((t) => (
-                                    <SelectItem key={t.id} value={t.id}>
-                                        {t.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                ))}
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="w-[var(--radix-select-trigger-width)]">
+                            {templateOptions.map((t) => (
+                                <SelectItem key={t.id} value={t.id}>
+                                    {t.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            ) : null}
 
             <div className="mt-4 select-none">
                 <DaCheckbox
