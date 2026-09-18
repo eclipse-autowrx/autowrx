@@ -18,6 +18,29 @@ const ApiError = require('../utils/ApiError');
 
 const PLUGIN_DIR = path.join(__dirname, '../../static/plugin');
 
+// Per-slug lock so concurrent uploads to the same plugin slug never
+// interleave their directory-swap steps (see withSlugLock below).
+const slugLocks = new Map();
+
+/**
+ * Serialize async work per slug. Concurrent uploads to the same slug queue
+ * up and run one at a time, instead of racing on the shared pluginPath/oldDir
+ * rename sequence (which previously could fail with ENOTEMPTY when two
+ * uploads for the same slug interleaved).
+ */
+function withSlugLock(slug, fn) {
+  const previous = slugLocks.get(slug) || Promise.resolve();
+  const run = previous.then(fn, fn);
+  // Keep the chain alive regardless of success/failure, but don't leak
+  // rejected promises into the map (each waiter observes its own `run`).
+  const tracked = run.catch(() => {});
+  slugLocks.set(slug, tracked);
+  tracked.finally(() => {
+    if (slugLocks.get(slug) === tracked) slugLocks.delete(slug);
+  });
+  return run;
+}
+
 async function ensureDir(dir) {
   // Directory paths are derived from trusted configuration and sanitized inputs (e.g. slug),
   // so using a non-literal path here is intentional.
@@ -318,36 +341,52 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
     // pluginPath on success. This keeps the currently-serving plugin intact if
     // extraction fails (a failed re-upload no longer wipes the live plugin)
     // and avoids partial overwrites of an existing plugin.
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
-    const tmpExtract = await fsp.mkdtemp(path.join(PLUGIN_DIR, `${slug}.tmp-`));
-    try {
-      await safeExtractZip(req.file.path, tmpExtract);
-      // Success: move the current plugin dir aside, rename the extracted dir
-      // into place, then remove the old one. If the swap fails, restore the
-      // old dir so the live plugin is never left missing.
-      const oldDir = `${pluginPath}.old`;
+    //
+    // The whole extract-and-swap sequence is serialized per slug: two
+    // concurrent uploads to the same slug previously could interleave their
+    // rename steps (request B's "move pluginPath aside" no-ops because
+    // request A already moved it, then B's final rename into pluginPath
+    // fails with ENOTEMPTY because A already repopulated it).
+    await withSlugLock(slug, async () => {
       // eslint-disable-next-line security/detect-non-literal-fs-filename
-      await fsp.rm(oldDir, { recursive: true, force: true }).catch(() => {});
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
-      await fsp.rename(pluginPath, oldDir).catch(() => {}); // no-op if first upload
+      const tmpExtract = await fsp.mkdtemp(path.join(PLUGIN_DIR, `${slug}.tmp-`));
       try {
+        await safeExtractZip(req.file.path, tmpExtract);
+        // Success: move the current plugin dir aside, rename the extracted dir
+        // into place, then remove the old one. If the swap fails, restore the
+        // old dir so the live plugin is never left missing.
+        const oldDir = `${pluginPath}.old`;
         // eslint-disable-next-line security/detect-non-literal-fs-filename
-        await fsp.rename(tmpExtract, pluginPath);
-      } catch (swapErr) {
-        // Swap failed: restore the previous plugin, then rethrow.
+        await fsp.rm(oldDir, { recursive: true, force: true }).catch(() => {});
+        try {
+          // eslint-disable-next-line security/detect-non-literal-fs-filename
+          await fsp.rename(pluginPath, oldDir);
+        } catch (asideErr) {
+          // ENOENT means this is the first upload for this slug (nothing to
+          // move aside) — expected and safe to ignore. Any other error means
+          // pluginPath is still in place and unmoved, so rethrow instead of
+          // silently proceeding to a rename that would fail anyway.
+          if (asideErr.code !== 'ENOENT') throw asideErr;
+        }
+        try {
+          // eslint-disable-next-line security/detect-non-literal-fs-filename
+          await fsp.rename(tmpExtract, pluginPath);
+        } catch (swapErr) {
+          // Swap failed: restore the previous plugin, then rethrow.
+          // eslint-disable-next-line security/detect-non-literal-fs-filename
+          await fsp.rename(oldDir, pluginPath).catch(() => {});
+          throw swapErr;
+        }
         // eslint-disable-next-line security/detect-non-literal-fs-filename
-        await fsp.rename(oldDir, pluginPath).catch(() => {});
-        throw swapErr;
+        await fsp.rm(oldDir, { recursive: true, force: true }).catch(() => {});
+      } catch (err) {
+        // Extraction failed: safeExtractZip already removed tmpExtract; ensure it
+        // is gone. The live pluginPath is untouched.
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
+        await fsp.rm(tmpExtract, { recursive: true, force: true }).catch(() => {});
+        throw err;
       }
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
-      await fsp.rm(oldDir, { recursive: true, force: true }).catch(() => {});
-    } catch (err) {
-      // Extraction failed: safeExtractZip already removed tmpExtract; ensure it
-      // is gone. The live pluginPath is untouched.
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
-      await fsp.rm(tmpExtract, { recursive: true, force: true }).catch(() => {});
-      throw err;
-    }
+    });
 
     // Try to detect entry file (index.js preferred, fallback index.html)
     let entryRel = await findEntryFile(pluginPath, ['index.js', 'index.html']);
