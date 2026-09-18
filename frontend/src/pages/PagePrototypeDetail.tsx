@@ -106,8 +106,8 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     'public' | 'private'
   >('public')
   const [savingProjectTemplate, setSavingProjectTemplate] = useState(false)
-  const allowNonAdminAddonConfig = useSiteConfig(
-    'ALLOW_NON_ADMIN_ADDON_CONFIG',
+  const enableNonAdminAddonConfig = useSiteConfig(
+    'ENABLE_NON_ADMIN_ADDON_CONFIG',
     true,
   )
 
@@ -259,7 +259,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   }, [user, model])
 
   const canConfigurePrototypeAddons =
-    (isModelOwner || hasWritePermission) && !!allowNonAdminAddonConfig
+    (isModelOwner || hasWritePermission) && !!enableNonAdminAddonConfig
 
   const handleSaveProjectTemplate = async () => {
     if (!projectTemplateName.trim() || !prototype) return
@@ -479,7 +479,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
                     Customize Layout...
                   </DropdownMenuItem>
                 )}
-                {isAdmin && (
+                {isAdmin && enableNonAdminAddonConfig && (
                   <DropdownMenuItem
                     onClick={() => {
                       setMoreMenuOpen(false)

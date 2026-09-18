@@ -214,7 +214,7 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     category: 'model_prototype',
   },
   {
-    key: 'ALLOW_NON_ADMIN_ADDON_CONFIG',
+    key: 'ENABLE_NON_ADMIN_ADDON_CONFIG',
     scope: 'site',
     value: true,
     secret: false,

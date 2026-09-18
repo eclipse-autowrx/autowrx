@@ -79,9 +79,12 @@ const ModelDetailLayout = () => {
   >(undefined)
   const [isModelOwner, setIsModelOwner] = useState(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
-  const [hasWritePermission] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
-  const allowNonAdminAddonConfig = useSiteConfig(
-    'ALLOW_NON_ADMIN_ADDON_CONFIG',
+  const [hasWritePermission, isAdmin] = usePermissionHook(
+    [PERMISSIONS.WRITE_MODEL, model?.id],
+    [PERMISSIONS.MANAGE_USERS],
+  )
+  const enableNonAdminAddonConfig = useSiteConfig(
+    'ENABLE_NON_ADMIN_ADDON_CONFIG',
     true,
   )
   const disableCustomApiSets = useSiteConfig(
@@ -182,7 +185,7 @@ const ModelDetailLayout = () => {
 
   // Use actual model loading state
   const isLoading = isModelLoading || !model
-  const canManageModelUI = (isModelOwner || hasWritePermission) && !!allowNonAdminAddonConfig
+  const canManageModelUI = (isModelOwner || hasWritePermission) && !!enableNonAdminAddonConfig
 
   const numberOfPrototypes = prototypeCount ?? 0
   const numberOfApis = activeModelApis?.length || 0
@@ -280,7 +283,7 @@ const ModelDetailLayout = () => {
           </div>
         )}
         <div className="grow"></div>
-        {canManageModelUI && model && (
+        {(canManageModelUI || isAdmin) && model && (
           <DropdownMenu open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
             <DropdownMenuTrigger asChild>
               <Button
@@ -292,6 +295,15 @@ const ModelDetailLayout = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  setMoreMenuOpen(false)
+                  setOpenManageAddonsDialog(true)
+                }}
+              >
+                <TbSettings className="w-5 h-5" />
+                Manage Addons
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setMoreMenuOpen(false)
@@ -313,15 +325,6 @@ const ModelDetailLayout = () => {
               >
                 <GiSaveArrow className="w-5 h-5" />
                 Save Model as Template
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setMoreMenuOpen(false)
-                  setOpenManageAddonsDialog(true)
-                }}
-              >
-                <TbSettings className="w-5 h-5" />
-                Manage Addons
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
