@@ -7,6 +7,10 @@ hooks** — they don't hold business logic. See [../architecture/frontend.md](..
 
 **File:** `frontend/src/pages/PageModelList.tsx` · **Route:** `/model`
 
+The page can be hidden site-wide via the `HIDE_MODEL_PAGE` site config
+(boolean, default `false`). When enabled, the page redirects to `/` and the
+"Vehicle Models" breadcrumb entry is skipped (see `DaBreadcrumbBar.tsx`).
+
 ```typescript
 const PageModelList = () => {
   const navigate = useNavigate()

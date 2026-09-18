@@ -23,7 +23,7 @@ import { ModelCreate, ModelLite, Prototype } from '@/types/model.type'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useAuthStore from '@/stores/authStore'
 import { addLog } from '@/services/log.service'
-import { getConfig } from '@/utils/siteConfig'
+import { getConfig, useSiteConfig } from '@/utils/siteConfig'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import { useNavigate } from 'react-router-dom'
 import DaTabItem from '@/components/atoms/DaTabItem'
@@ -68,6 +68,7 @@ const PageModelList = () => {
   const { data: user, isLoading: isUserLoading } = useSelfProfileQuery()
   const { authBootstrapped, setOpenLoginDialog } = useAuthStore()
   const { authConfigs } = useAuthConfigs()
+  const hideModelPage = useSiteConfig('HIDE_MODEL_PAGE', false)
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -426,6 +427,16 @@ const PageModelList = () => {
     targets.forEach((t) => t.el && observer.observe(t.el))
     return () => observer.disconnect()
   }, [user])
+
+  // Hide the model list page entirely when disabled via site config,
+  // redirecting visitors back to Home.
+  useEffect(() => {
+    if (hideModelPage) {
+      navigate('/', { replace: true })
+    }
+  }, [hideModelPage, navigate])
+
+  if (hideModelPage) return null
 
   // Auth gate: when the user is not signed in, show a friendly message
   // instead of the model list and offer a button to open the global login dialog.
