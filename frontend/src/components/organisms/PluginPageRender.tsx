@@ -108,7 +108,8 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     }
   }, [model_id])
 
-  const handleUpdatePrototype = useCallback(async (updates: Partial<Prototype>): Promise<Prototype> => {
+  const handleUpdatePrototype = useCallback(async (updates: Partial<Prototype>, options?: { silent?: boolean }): Promise<Prototype> => {
+    const { silent = false } = options ?? {}
     if (!prototype_id) {
       const errorMsg = 'Cannot update prototype: prototype_id not available in data'
       toast.error(errorMsg)
@@ -118,7 +119,9 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
       const updatedPrototype = await updatePrototypeService(prototype_id, updates)
       // Invalidate React Query cache so parent re-fetches and passes fresh data.prototype to the plugin
       await queryClient.invalidateQueries({ queryKey: ['prototype', prototype_id] })
-      toast.success('Prototype updated successfully')
+      if (!silent) {
+        toast.success('Prototype updated successfully')
+      }
       return updatedPrototype
     } catch (err: any) {
       const errorMsg = err?.message || 'Failed to update prototype'

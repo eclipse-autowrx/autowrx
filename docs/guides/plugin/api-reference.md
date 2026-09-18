@@ -8,7 +8,7 @@ The host passes a `PluginAPI` object to your plugin component as `props.api`. It
 interface PluginAPI {
   // Model & Prototype (2)
   updateModel?: (updates: Partial<Model>) => Promise<Model>
-  updatePrototype?: (updates: Partial<Prototype>) => Promise<Prototype>
+  updatePrototype?: (updates: Partial<Prototype>, options?: { silent?: boolean }) => Promise<Prototype>
 
   // Vehicle API (6)
   getComputedAPIs?: (model_id?: string) => Promise<CVI>
@@ -54,7 +54,7 @@ interface PluginAPI {
 | Method | Description | Present when |
 |---|---|---|
 | `updateModel(updates: Partial<Model>): Promise<Model>` | Update the current model. Use the `extend` field for plugin data; preserve existing with `...data?.model?.extend`. | `model_id` exists |
-| `updatePrototype(updates: Partial<Prototype>): Promise<Prototype>` | Update the current prototype. | `prototype_id` exists |
+| `updatePrototype(updates: Partial<Prototype>, options?: { silent?: boolean }): Promise<Prototype>` | Update the current prototype. `options.silent` (default `false`) suppresses the success toast when `true`; error toasts always show regardless. Pass `{ silent: true }` to suppress the success toast. | `prototype_id` exists |
 
 ## Vehicle API
 
