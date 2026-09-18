@@ -10,6 +10,7 @@ const httpStatus = require('http-status');
 const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
+const crypto = require('crypto');
 const yauzl = require('yauzl');
 const catchAsync = require('../utils/catchAsync');
 const { pluginService } = require('../services');
@@ -39,6 +40,31 @@ function withSlugLock(slug, fn) {
     if (slugLocks.get(slug) === tracked) slugLocks.delete(slug);
   });
   return run;
+}
+
+/**
+ * Remove a plugin's extracted files and any leftover swap artifacts
+ * (`<slug>.tmp-*` from an interrupted extraction, `<slug>.old-*` from an
+ * interrupted swap) so a later re-upload/re-create under the same slug
+ * always starts from a clean directory.
+ */
+async function removePluginFiles(slug) {
+  let entries = [];
+  try {
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
+    entries = await fsp.readdir(PLUGIN_DIR);
+  } catch (_) {
+    return; // PLUGIN_DIR doesn't exist yet — nothing to clean up.
+  }
+  const targets = entries.filter(
+    (name) => name === slug || name.startsWith(`${slug}.tmp-`) || name.startsWith(`${slug}.old-`),
+  );
+  await Promise.all(
+    targets.map((name) =>
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
+      fsp.rm(path.join(PLUGIN_DIR, name), { recursive: true, force: true }).catch(() => {}),
+    ),
+  );
 }
 
 async function ensureDir(dir) {
@@ -355,9 +381,12 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
         // Success: move the current plugin dir aside, rename the extracted dir
         // into place, then remove the old one. If the swap fails, restore the
         // old dir so the live plugin is never left missing.
-        const oldDir = `${pluginPath}.old`;
-        // eslint-disable-next-line security/detect-non-literal-fs-filename
-        await fsp.rm(oldDir, { recursive: true, force: true }).catch(() => {});
+        //
+        // The aside directory gets a fresh random suffix per attempt (rather
+        // than a fixed `<slug>.old`) so a stuck/leftover aside-dir from a
+        // previous crashed or interrupted upload can never block this rename
+        // — the target is guaranteed not to already exist.
+        const oldDir = `${pluginPath}.old-${crypto.randomBytes(6).toString('hex')}`;
         try {
           // eslint-disable-next-line security/detect-non-literal-fs-filename
           await fsp.rename(pluginPath, oldDir);
@@ -434,7 +463,14 @@ const removePlugin = catchAsync(async (req, res) => {
     id: req.user.id,
     isAdmin,
   };
-  await pluginService.deletePluginById(req.params.id, actor);
+  const deleted = await pluginService.deletePluginById(req.params.id, actor);
+  // Internal plugins extract to static/plugin/<slug> on upload; the DB
+  // record carries no reference back to that directory once deleted, so
+  // clean it up here (best-effort) to avoid orphaned files blocking a later
+  // re-upload/re-create under the same slug.
+  if (deleted?.is_internal && deleted.slug) {
+    await removePluginFiles(deleted.slug);
+  }
   res.status(httpStatus.NO_CONTENT).send();
 });
 
