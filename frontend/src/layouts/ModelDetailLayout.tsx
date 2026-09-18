@@ -83,8 +83,8 @@ const ModelDetailLayout = () => {
     [PERMISSIONS.WRITE_MODEL, model?.id],
     [PERMISSIONS.MANAGE_USERS],
   )
-  const enableNonAdminAddonConfig = useSiteConfig(
-    'ENABLE_NON_ADMIN_ADDON_CONFIG',
+  const enableModelCustomization = useSiteConfig(
+    'ENABLE_MODEL_CUSTOMIZATION',
     true,
   )
   const disableCustomApiSets = useSiteConfig(
@@ -185,7 +185,11 @@ const ModelDetailLayout = () => {
 
   // Use actual model loading state
   const isLoading = isModelLoading || !model
-  const canManageModelUI = (isModelOwner || hasWritePermission) && !!enableNonAdminAddonConfig
+  const canManageModelUI = (isModelOwner || hasWritePermission) && !!enableModelCustomization
+  // The site config is a hard switch: when disabled nobody sees the menu, admins included.
+  const canOpenModelMoreMenu =
+    !!enableModelCustomization &&
+    (isModelOwner || hasWritePermission || isAdmin)
 
   const numberOfPrototypes = prototypeCount ?? 0
   const numberOfApis = activeModelApis?.length || 0
@@ -283,12 +287,13 @@ const ModelDetailLayout = () => {
           </div>
         )}
         <div className="grow"></div>
-        {(canManageModelUI || isAdmin) && model && (
+        {canOpenModelMoreMenu && model && (
           <DropdownMenu open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
+                data-id="btn-model-more-menu"
                 className="h-[52px] w-12 rounded-none hover:bg-accent"
               >
                 <TbDotsVertical className="w-5 h-5" />
@@ -296,6 +301,7 @@ const ModelDetailLayout = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
+                data-id="btn-model-manage-addons"
                 onClick={() => {
                   setMoreMenuOpen(false)
                   setOpenManageAddonsDialog(true)
@@ -305,6 +311,7 @@ const ModelDetailLayout = () => {
                 Manage Addons
               </DropdownMenuItem>
               <DropdownMenuItem
+                data-id="btn-model-save-as-template"
                 onClick={() => {
                   setMoreMenuOpen(false)
                   if (model) {

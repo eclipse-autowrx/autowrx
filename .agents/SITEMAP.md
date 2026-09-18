@@ -65,6 +65,8 @@
 | Model description | Edit model description | ❌ |
 | Add plugin tab to model | Attach admin plugin via + button | ✅ `plugin-management.spec.ts` |
 | Model plugin detail page | Plugin renders on `/model/:id/plugin` | ✅ `plugin-management.spec.ts` |
+| More-actions menu | Kebab menu: Manage Addons, Save Model as Template | ✅ `model-customization-menu.spec.ts` |
+| `ENABLE_MODEL_CUSTOMIZATION` gate | Flag off hides the kebab menu for everyone, admins included | ✅ `model-customization-menu.spec.ts` |
 
 ---
 
@@ -121,6 +123,10 @@
 | Feedback tab | Submit / view feedback | ✅ `prototype-extended.spec.ts` |
 | Prototype plugins | Custom plugin tabs | ✅ `plugin-management.spec.ts` |
 | Prototype plugin detail page | Plugin renders on `/plug?plugid=` | ✅ `plugin-management.spec.ts` |
+| More-actions menu | Kebab menu: Customize Prototype Layout, Save Model as Template, Save Prototype as Template | ✅ `model-customization-menu.spec.ts` |
+| Save Model as Template | Opens Create Template dialog from the prototype page | ✅ `model-customization-menu.spec.ts` |
+| Save Prototype as Template | Admin-only; hidden for non-admin owners | ✅ `model-customization-menu.spec.ts` |
+| `ENABLE_MODEL_CUSTOMIZATION` gate | Flag off hides the kebab menu for everyone, admins included | ✅ `model-customization-menu.spec.ts` |
 
 ---
 

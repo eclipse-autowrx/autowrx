@@ -29,6 +29,7 @@ import CustomTabEditor, {
   TabsBorderRadius,
 } from '@/components/organisms/CustomTabEditor'
 import PrototypeSidebar from '@/components/organisms/PrototypeSidebar'
+import TemplateForm from '@/components/organisms/TemplateForm'
 import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
 import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
 import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
@@ -41,6 +42,7 @@ import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import usePluginPreloader from '@/hooks/usePluginPreloader'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { getModelTabConfig } from '@/lib/modelTabUtils'
 import { hasPrototypeCode } from '@/lib/prototypeCodeUtils'
 import PagePrototypePlugin from '@/pages/PagePrototypePlugin'
 import PrototypeRightAction from '@/pages/PrototypeRightAction'
@@ -60,6 +62,7 @@ import {
 import { recordPrototypeLastViewed } from '@/utils/prototypeLastViewed'
 import { useQueryClient } from '@tanstack/react-query'
 import { FC, useCallback, useEffect, useState } from 'react'
+import { GiSaveArrow } from 'react-icons/gi'
 import {
   TbDotsVertical,
   TbFileCode,
@@ -93,6 +96,19 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   const [isModelOwner, setIsModelOwner] = useState(false)
   const [openAddonDialog, setOpenAddonDialog] = useState(false)
   const [openManageAddonsDialog, setOpenManageAddonsDialog] = useState(false)
+  const [openTemplateForm, setOpenTemplateForm] = useState(false)
+  const [templateInitialData, setTemplateInitialData] = useState<
+    | {
+        name?: string
+        description?: string
+        image?: string
+        visibility?: string
+        config?: any
+        model_tabs?: TabConfig[]
+        prototype_tabs?: TabConfig[]
+      }
+    | undefined
+  >(undefined)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [hasWritePermission, isAdmin] = usePermissionHook(
     [PERMISSIONS.WRITE_MODEL, model?.id],
@@ -106,8 +122,8 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     'public' | 'private'
   >('public')
   const [savingProjectTemplate, setSavingProjectTemplate] = useState(false)
-  const enableNonAdminAddonConfig = useSiteConfig(
-    'ENABLE_NON_ADMIN_ADDON_CONFIG',
+  const enableModelCustomization = useSiteConfig(
+    'ENABLE_MODEL_CUSTOMIZATION',
     true,
   )
 
@@ -259,7 +275,11 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   }, [user, model])
 
   const canConfigurePrototypeAddons =
-    (isModelOwner || hasWritePermission) && !!enableNonAdminAddonConfig
+    (isModelOwner || hasWritePermission) && !!enableModelCustomization
+  // The site config is a hard switch: when disabled nobody sees the menu, admins included.
+  const canOpenPrototypeMoreMenu =
+    !!enableModelCustomization &&
+    (isModelOwner || hasWritePermission || isAdmin)
 
   const handleSaveProjectTemplate = async () => {
     if (!projectTemplateName.trim() || !prototype) return
@@ -456,31 +476,67 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
                 : (model?.custom_template?.prototype_right_nav_buttons ?? [])
             }
           />
-          {(canConfigurePrototypeAddons || isAdmin) && (
+          {canOpenPrototypeMoreMenu && (
             <DropdownMenu open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
+                  data-id="btn-prototype-more-menu"
                   className="h-[52px] w-12 rounded-none hover:bg-accent"
                 >
                   <TbDotsVertical className="w-5 h-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="min-w-[16rem]">
                 {canConfigurePrototypeAddons && (
                   <DropdownMenuItem
+                    className="whitespace-nowrap"
+                    data-id="btn-prototype-customize-layout"
                     onClick={() => {
                       setMoreMenuOpen(false)
                       setOpenManageAddonsDialog(true)
                     }}
                   >
                     <TbSettings className="w-5 h-5" />
-                    Customize Layout...
+                    Customize Prototype Layout
                   </DropdownMenuItem>
                 )}
-                {isAdmin && enableNonAdminAddonConfig && (
+                <DropdownMenuItem
+                  className="whitespace-nowrap"
+                  data-id="btn-prototype-save-model-as-template"
+                  onClick={() => {
+                    setMoreMenuOpen(false)
+                    if (model) {
+                      const normalizedPrototypeTabs = getTabConfig(
+                        model.custom_template?.prototype_tabs,
+                      )
+                      const normalizedModelTabs = getModelTabConfig(
+                        model.custom_template?.model_tabs,
+                      )
+                      setTemplateInitialData({
+                        name: model.name || '',
+                        description: '',
+                        image: model.model_home_image_file || '',
+                        visibility: model.visibility || 'public',
+                        config: {
+                          ...model.custom_template,
+                          prototype_tabs: normalizedPrototypeTabs,
+                        },
+                        model_tabs: normalizedModelTabs,
+                        prototype_tabs: normalizedPrototypeTabs,
+                      })
+                    }
+                    setOpenTemplateForm(true)
+                  }}
+                >
+                  <GiSaveArrow className="w-5 h-5" />
+                  Save Model as Template
+                </DropdownMenuItem>
+                {isAdmin && (
                   <DropdownMenuItem
+                    className="whitespace-nowrap"
+                    data-id="btn-prototype-save-as-template"
                     onClick={() => {
                       setMoreMenuOpen(false)
                       setOpenSaveProjectTemplate(true)
@@ -577,6 +633,25 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         title="Customize Prototype Layout"
         description="Configure tabs, appearance, sidebar, and action buttons"
       />
+
+      {/* Save Model as Template Dialog */}
+      <DaDialog
+        open={openTemplateForm}
+        onOpenChange={setOpenTemplateForm}
+        className="w-210 max-w-[calc(100vw-80px)] max-h-[90vh]"
+        dialogTitle="Create Template"
+        contentContainerClassName="p-0"
+      >
+        <TemplateForm
+          open={openTemplateForm}
+          templateId={undefined}
+          onClose={() => {
+            setOpenTemplateForm(false)
+            setTemplateInitialData(undefined)
+          }}
+          initialData={templateInitialData}
+        />
+      </DaDialog>
 
       {/* Save Prototype as Template Dialog */}
       <DaDialog

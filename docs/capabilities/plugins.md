@@ -440,7 +440,7 @@ Model owners (customize workspace); admins.
 
 ### API contract
 
-- Tab management requires `WRITE_MODEL` + `ENABLE_NON_ADMIN_ADDON_CONFIG` (admins always allowed).
+- Tab management requires `WRITE_MODEL` + `ENABLE_MODEL_CUSTOMIZATION` (admins always allowed).
 - Saving stores the tab config on `model.custom_template` (`model_tabs`/`prototype_tabs`/`prototype_sidebar_plugin`/`prototype_right_nav_buttons`).
 
 ### Quality control
@@ -452,7 +452,7 @@ sequenceDiagram
     participant O as Model owner
     participant M as model.custom_template
     participant P as PluginPageRender
-    O->>M: WRITE_MODEL + ENABLE_NON_ADMIN_ADDON_CONFIG
+    O->>M: WRITE_MODEL + ENABLE_MODEL_CUSTOMIZATION
     M->>P: model_tabs / prototype_tabs
     M->>P: prototype_sidebar_plugin
     M->>P: prototype_right_nav_buttons
@@ -465,13 +465,13 @@ sequenceDiagram
 
 **Coverage:**
 - **Auth:** required — tab management is a write action on the model.
-- **Authorization:** requires `WRITE_MODEL` + `ENABLE_NON_ADMIN_ADDON_CONFIG` (admins always allowed); non-admins are gated by the addon flag.
+- **Authorization:** requires `WRITE_MODEL` + `ENABLE_MODEL_CUSTOMIZATION` (admins always allowed); non-admins are gated by the addon flag.
 - **Input validation:** tab config is stored on `model.custom_template` (Mixed); validated at the model-update layer, not plugin-specific; no allowlist on referenced plugin IDs/slugs.
 - **Rate limiting:** not applied — `authLimiter` defined but not used on model-update routes.
 - **Secrets:** none — tab config references plugin IDs/slugs and layout only.
 
 **Risks:**
-- **Malicious tab injection:** a non-admin bypassing `ENABLE_NON_ADMIN_ADDON_CONFIG` could inject a hostile plugin tab into every visitor's view, running arbitrary unsandboxed code (XSS / token theft) across the whole model audience. *Mitigation:* `WRITE_MODEL` + addon flag gate enforced; audit flag default and enforce plugin allowlists.
+- **Malicious tab injection:** a non-admin bypassing `ENABLE_MODEL_CUSTOMIZATION` could inject a hostile plugin tab into every visitor's view, running arbitrary unsandboxed code (XSS / token theft) across the whole model audience. *Mitigation:* `WRITE_MODEL` + addon flag gate enforced; audit flag default and enforce plugin allowlists.
 - **Sidebar/right-nav persistence:** sidebar and right-nav buttons are always-visible surfaces; a malicious plugin placed there executes on every model open, not just when a tab is activated. *Mitigation:* none currently — plugins run unsandboxed by design; only install trusted plugins, and don't pass tokens/PII into PluginAPI/config/data.
 - **Supply-chain via referenced plugin IDs:** tab config references plugin IDs/slugs; if a referenced plugin is later compromised, the layout becomes a dormant delivery channel for malicious code. *Mitigation:* none currently — pin plugin versions or re-validate referenced plugins on load.
 
@@ -523,7 +523,7 @@ Plugin authors (manage own plugins); admins (manage all + custom APIs).
 
 ### API contract
 
-- `/me/plugins` (auth; shown to non-admins only when `ENABLE_NON_ADMIN_ADDON_CONFIG`) → CRUD own plugins.
+- `/me/plugins` (auth; shown to non-admins only when `ENABLE_MODEL_CUSTOMIZATION`) → CRUD own plugins.
 - `/admin/plugins` (`MANAGE_USERS`) → 4 sections; the custom API sections are hidden when `DISABLE_CUSTOM_API_SETS`.
 
 ### Quality control
@@ -548,14 +548,14 @@ flowchart TD
 My Plugins auth; admin `MANAGE_USERS`; non-admin visibility gated by addon flag.
 
 **Coverage:**
-- **Auth:** required for `/me/plugins` and `/admin/plugins`; non-admin visibility is gated by `ENABLE_NON_ADMIN_ADDON_CONFIG`.
+- **Auth:** required for `/me/plugins` and `/admin/plugins`; non-admin visibility is gated by `ENABLE_MODEL_CUSTOMIZATION`.
 - **Authorization:** `/me/plugins` → my own plugins (auth); `/admin/plugins` → `MANAGE_USERS` (admin).
 - **Input validation:** same validation as CAP-PLUGIN-01 (create/update via shared `/v2/plugin` endpoints); `config` is not validated (accepted as-is).
 - **Rate limiting:** not applied — `authLimiter` defined but not used on plugin routes.
 - **Secrets:** none — the admin UI manages plugin records and per-stage mapping; no secrets handled.
 
 **Risks:**
-- **Flag misconfiguration widens authoring:** if `ENABLE_NON_ADMIN_ADDON_CONFIG` defaults to true, any authenticated user can author and publish plugins, enlarging the supply-chain attack surface. *Mitigation:* flag is site-config driven; set it to `false` on sensitive tenants and audit who can author plugins.
+- **Flag misconfiguration widens authoring:** if `ENABLE_MODEL_CUSTOMIZATION` defaults to true, any authenticated user can author and publish plugins, enlarging the supply-chain attack surface. *Mitigation:* flag is site-config driven; set it to `false` on sensitive tenants and audit who can author plugins.
 - **Admin plugin takeover:** a stolen `MANAGE_USERS` session lets an attacker reconfigure or replace any plugin (including deploy plugins that run during staging), turning admin actions into platform-wide compromise. *Mitigation:* require re-auth / step-up auth for admin plugin management; audit-log admin plugin changes.
 - **Deploy-plugin execution context:** deploy plugins configured per staging stage run in the staging/deploy pipeline; a malicious deploy plugin can interfere with deployments or exfiltrate build artifacts. *Mitigation:* none currently — plugins run unsandboxed by design; only install trusted plugins, and don't pass tokens/PII into PluginAPI/config/data.
 

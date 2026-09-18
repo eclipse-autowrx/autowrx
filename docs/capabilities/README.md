@@ -154,7 +154,7 @@ AutoWRX is highly configurable via site-config keys (managed in **Admin → Site
 ### Platform features (`predefinedSiteConfigs.js`)
 | Flag | Default | Effect |
 |---|---|---|
-| `ENABLE_NON_ADMIN_ADDON_CONFIG` | `true` | Non-admin model owners can manage addon tabs/plugins. |
+| `ENABLE_MODEL_CUSTOMIZATION` | `true` | Non-admin model owners can manage addon tabs/plugins. |
 | `ENABLE_NEW_PROTOTYPE_PAGE` | `false` | Use the full-page `/new-prototype` create flow vs inline dialog. |
 | `DISABLE_CUSTOM_API_SETS` | `false` | Hide the custom API schema/set UI. |
 | `SHOW_SDV_PROTOPILOT_BUTTON` | `true` | Show the GenAI SDV code-generation button on the Code tab. |

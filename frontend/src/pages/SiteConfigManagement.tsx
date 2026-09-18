@@ -214,13 +214,13 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     category: 'model_prototype',
   },
   {
-    key: 'ENABLE_NON_ADMIN_ADDON_CONFIG',
+    key: 'ENABLE_MODEL_CUSTOMIZATION',
     scope: 'site',
     value: true,
     secret: false,
     valueType: 'boolean',
     description:
-      'Allow non-admin model owners to add/manage addon tabs on model and prototype detail pages. Admin users can always configure addon tabs regardless of this setting.',
+      'Enable model/prototype customization UI: addon tabs, layout customization, and save-as-template actions on model and prototype detail pages. Admin users can always configure addon tabs regardless of this setting, but "Save Prototype as Template" is hidden for everyone when disabled.',
     category: 'model_prototype',
   },
   {

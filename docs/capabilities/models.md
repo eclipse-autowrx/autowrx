@@ -232,12 +232,12 @@ Model owners (customize the workspace); end users (tailored model views); admins
 ### API contract
 
 - Tab configuration I save is stored on the model as `model_tabs`, `prototype_tabs`, `prototype_sidebar_plugin`, `prototype_right_nav_buttons`.
-- Managing addon/tab configuration requires `WRITE_MODEL` + `ENABLE_NON_ADMIN_ADDON_CONFIG` (admins always allowed).
+- Managing addon/tab configuration requires `WRITE_MODEL` + `ENABLE_MODEL_CUSTOMIZATION` (admins always allowed).
 - Admin "Save as Template" stores the layout as a Model Template.
 
 ### Quality control
 
-When I add a plugin addon tab, it renders in the workspace; when I reorder or hide tabs, the layout persists; as a non-admin with `ENABLE_NON_ADMIN_ADDON_CONFIG=false`, addon configuration is blocked.
+When I add a plugin addon tab, it renders in the workspace; when I reorder or hide tabs, the layout persists; as a non-admin with `ENABLE_MODEL_CUSTOMIZATION=false`, addon configuration is blocked.
 
 ```mermaid
 flowchart TD
@@ -255,13 +255,13 @@ Tab management gated by `WRITE_MODEL` + the addon-config flag. Plugins run unsan
 
 **Coverage:**
 - **Auth:** Write requires auth (JWT); reads optional via `PUBLIC_VIEWING`.
-- **Authorization:** `WRITE_MODEL` (owner bypass) + `ENABLE_NON_ADMIN_ADDON_CONFIG` flag (admins always allowed).
+- **Authorization:** `WRITE_MODEL` (owner bypass) + `ENABLE_MODEL_CUSTOMIZATION` flag (admins always allowed).
 - **Input validation:** my `custom_template` payload is accepted as-is (shape not strictly validated).
 - **Rate limiting:** not applied (`authLimiter` defined but unused).
 - **Secrets:** none.
 
 **Risks:**
-- **Malicious tab injection:** a plugin addon tab embeds arbitrary code running unsandboxed in visitors' browsers. If the `ENABLE_NON_ADMIN_ADDON_CONFIG` gate were bypassed, a non-admin could inject a hostile tab into every visitor's view (XSS / token theft). *Mitigation:* tab writes require `WRITE_MODEL` + the `ENABLE_NON_ADMIN_ADDON_CONFIG` flag (admins always allowed); keep the flag check server-side and prefer sandboxed plugin rendering (see [plugins.md](./plugins.md)).
+- **Malicious tab injection:** a plugin addon tab embeds arbitrary code running unsandboxed in visitors' browsers. If the `ENABLE_MODEL_CUSTOMIZATION` gate were bypassed, a non-admin could inject a hostile tab into every visitor's view (XSS / token theft). *Mitigation:* tab writes require `WRITE_MODEL` + the `ENABLE_MODEL_CUSTOMIZATION` flag (admins always allowed); keep the flag check server-side and prefer sandboxed plugin rendering (see [plugins.md](./plugins.md)).
 - **Plugin supply chain:** a tab config references plugin IDs; a compromised or rogue plugin becomes an attack surface for all models using that layout. *Mitigation:* only reference plugins from trusted sources; admins should review referenced plugin IDs before saving a layout and remove rogue plugins from the registry.
 
 ### Personal data processing
