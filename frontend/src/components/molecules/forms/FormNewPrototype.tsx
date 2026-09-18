@@ -317,10 +317,16 @@ const FormNewPrototype = ({
             }
 
             const response = await createPrototypeService(body)
+            const createdPrototypeName = prototypeName.trim()
+
+            // Clear the name before invalidating the prototype list query below —
+            // that refetch resolves to include the prototype we just created, which
+            // would otherwise momentarily flag `prototypeName` as a duplicate of itself.
+            setPrototypeName('')
 
             await addLog({
-                name: `New prototype '${prototypeName}'`,
-                description: `Prototype '${prototypeName}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
+                name: `New prototype '${createdPrototypeName}'`,
+                description: `Prototype '${createdPrototypeName}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
                 type: 'new-prototype',
                 create_by: currentUser?.id ?? '',
                 ref_id: response.id,
@@ -329,14 +335,14 @@ const FormNewPrototype = ({
             })
 
             toast({
-                description: `Prototype "${prototypeName}" created successfully`,
+                description: `Prototype "${createdPrototypeName}" created successfully`,
                 duration: 3000,
             })
 
             await invalidatePrototypeListQueries(queryClient)
 
             if (onSuccess) {
-                onSuccess(modelId, response.id, prototypeName.trim())
+                onSuccess(modelId, response.id, createdPrototypeName)
             } else {
                 navigate(`/model/${modelId}/library/prototype/${response.id}`)
             }
