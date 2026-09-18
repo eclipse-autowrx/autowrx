@@ -1608,6 +1608,17 @@ export async function renameModelViaHomeContextMenu(
   await page.waitForTimeout(2000);
 }
 
+export async function deleteModelViaHomeContextMenu(
+  page: Page,
+  modelName: string,
+  title = 'Vehicle Models',
+): Promise<void> {
+  const section = getHomeModelListSection(page, title);
+  await openModelContextMenu(page, modelName, section);
+  await page.getByRole('menuitem', { name: 'Delete Model' }).click();
+  await confirmNameDialog(page, modelName);
+}
+
 export function getModelCard(page: Page, modelName: string, section?: Locator): Locator {
   const root = section ?? page;
   return root.locator(`[aria-label="${modelName}"]`).first();

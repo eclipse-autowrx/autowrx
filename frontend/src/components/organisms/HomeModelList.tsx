@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { ModelLite } from '@/types/model.type'
 import {
   listAllModels,
@@ -17,6 +18,7 @@ import {
 } from '@/services/model.service'
 import { listModelPrototypes } from '@/services/prototype.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { invalidatePrototypeListQueries } from '@/hooks/usePrototypeQueries'
 import useImportModel from '@/hooks/useImportModel'
 import { useUrlQueryParam } from '@/hooks/useUrlQueryParam'
 import { HiPlus } from 'react-icons/hi'
@@ -187,6 +189,7 @@ const HomeModelList = ({ title }: HomeModelListProps) => {
   const [isDeletingModel, setIsDeletingModel] = useState(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   useEffect(() => {
     if (!userLoading && !user && activeCategory !== 'all') {
@@ -260,14 +263,14 @@ const HomeModelList = ({ title }: HomeModelListProps) => {
     try {
       await deleteModelService(deleteModelId)
       await refetchModels()
-      window.dispatchEvent(new CustomEvent('model:list-changed'))
+      await invalidatePrototypeListQueries(queryClient)
     } catch (error) {
       console.error('Failed to delete model:', error)
     } finally {
       setIsDeletingModel(false)
       setDeleteModelId(null)
     }
-  }, [deleteModelId, refetchModels])
+  }, [deleteModelId, refetchModels, queryClient])
 
   useEffect(() => {
     if (userLoading) return
