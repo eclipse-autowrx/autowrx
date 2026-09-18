@@ -50,6 +50,7 @@ import {
   TbMapPin,
   TbMessagePlus,
   TbPencil,
+  TbPlus,
   TbPuzzle,
   TbRoute,
   TbSearch,
@@ -439,10 +440,22 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   const renderTabList = (showInstructionText: boolean) => (
     <>
       {showInstructionText && (
-        <p className="text-sm text-muted-foreground mb-2">
-          Configure which tabs appear in the prototype tab bar, their order,
-          labels, and visibility.
-        </p>
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <p className="text-sm text-muted-foreground">
+            Configure which tabs appear in the prototype tab bar, their
+            order, labels, and visibility.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 gap-1.5"
+            onClick={() => handleRequestAddonSelect(null)}
+          >
+            <TbPuzzle className="w-4 h-4" />
+            <TbPlus className="w-3.5 h-3.5" />
+            Add-ons
+          </Button>
+        </div>
       )}
       {localTabs.length > 0 ? (
         <DragDropContext onDragEnd={handleDragEnd}>
@@ -1018,18 +1031,16 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
         </DialogContent>
       </Dialog>
 
-      {isModelMode && (
-        <ModelTabAddonSelectDialog
-          open={addonSelectOpen}
-          onOpenChange={(nextOpen) => {
-            setAddonSelectOpen(nextOpen)
-            if (!nextOpen) setChangingPluginIndex(null)
-          }}
-          tabs={localTabs}
-          changingPluginIndex={changingPluginIndex}
-          onSelect={handleModelAddonSelect}
-        />
-      )}
+      <ModelTabAddonSelectDialog
+        open={addonSelectOpen}
+        onOpenChange={(nextOpen) => {
+          setAddonSelectOpen(nextOpen)
+          if (!nextOpen) setChangingPluginIndex(null)
+        }}
+        tabs={localTabs}
+        changingPluginIndex={changingPluginIndex}
+        onSelect={handleModelAddonSelect}
+      />
     </>
   )
 }

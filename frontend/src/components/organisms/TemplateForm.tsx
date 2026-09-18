@@ -48,6 +48,7 @@ import {
   TbMessagePlus,
   TbCheck,
   TbX,
+  TbPlus,
 } from 'react-icons/tb'
 import { MdOutlineDoubleArrow } from 'react-icons/md'
 import { toast } from 'react-toastify'
@@ -151,6 +152,9 @@ export default function TemplateForm({
   const [changingPluginIndex, setChangingPluginIndex] = useState<number | null>(
     null,
   )
+  const [addonSelectTarget, setAddonSelectTarget] = useState<
+    'model' | 'prototype'
+  >('model')
   const [prototypeTabs, setPrototypeTabs] = useState<TabConfig[]>([])
   const [prototypeStagingConfig, setPrototypeStagingConfig] =
     useState<StagingConfig>({})
@@ -467,22 +471,39 @@ export default function TemplateForm({
     ) ?? []
 
   const handleRequestAddonSelect = (index: number | null) => {
+    setAddonSelectTarget('model')
     setChangingPluginIndex(index)
     setAddonSelectOpen(true)
   }
 
-  const handleModelAddonSelect = (plugin: Plugin, label: string) => {
+  const handleRequestPrototypeAddonSelect = (index: number | null) => {
+    setAddonSelectTarget('prototype')
+    setChangingPluginIndex(index)
+    setAddonSelectOpen(true)
+  }
+
+  const handleAddonSelect = (plugin: Plugin, label: string) => {
+    const targetTabs =
+      addonSelectTarget === 'model' ? modelTabs : prototypeTabs
     const result = applyModelTabAddonSelect(
-      modelTabs,
+      targetTabs,
       plugin,
       label,
       changingPluginIndex,
     )
     if (result === 'duplicate') {
-      toast.info('This addon is already added to model tabs')
+      toast.info(
+        addonSelectTarget === 'model'
+          ? 'This addon is already added to model tabs'
+          : 'This addon is already added to prototype tabs',
+      )
       return
     }
-    setModelTabs(result)
+    if (addonSelectTarget === 'model') {
+      setModelTabs(result)
+    } else {
+      setPrototypeTabs(result)
+    }
     setAddonSelectOpen(false)
     setChangingPluginIndex(null)
   }
@@ -671,10 +692,22 @@ export default function TemplateForm({
                 {/* Tab Bar Sub-tab */}
                 {activePrototypeTab === 'tabs' && (
                   <>
-                    <p className="text-sm text-muted-foreground">
-                      Configure which tabs appear in the prototype tab bar,
-                      their order, labels, and visibility.
-                    </p>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm text-muted-foreground">
+                        Configure which tabs appear in the prototype tab bar,
+                        their order, labels, and visibility.
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0 gap-1.5"
+                        onClick={() => handleRequestPrototypeAddonSelect(null)}
+                      >
+                        <TbPuzzle className="w-4 h-4" />
+                        <TbPlus className="w-3.5 h-3.5" />
+                        Add-ons
+                      </Button>
+                    </div>
                     {prototypeTabs.length > 0 ? (
                       <DragDropContext onDragEnd={handleDragEnd}>
                         <Droppable droppableId="prototype-tabs">
@@ -1119,9 +1152,9 @@ export default function TemplateForm({
         setAddonSelectOpen(nextOpen)
         if (!nextOpen) setChangingPluginIndex(null)
       }}
-      tabs={modelTabs}
+      tabs={addonSelectTarget === 'model' ? modelTabs : prototypeTabs}
       changingPluginIndex={changingPluginIndex}
-      onSelect={handleModelAddonSelect}
+      onSelect={handleAddonSelect}
     />
     </>
   )
