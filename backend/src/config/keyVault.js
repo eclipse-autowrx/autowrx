@@ -37,7 +37,12 @@ const getSecretsProvider = () => {
     return configuredProvider;
   }
 
-  return process.env.NODE_ENV === 'production' ? 'keyvault' : 'env';
+  // Safe by default: an unset SECRETS_PROVIDER must not silently turn on Key
+  // Vault in production — that path requires AZURE_KEY_VAULT_NAME and Azure
+  // credentials, and booting it unconfigured crash-loops. Reading secrets from
+  // the environment is the documented default (see instance-setup guide and
+  // .env.prod.sample); Key Vault is strictly opt-in via SECRETS_PROVIDER=keyvault.
+  return 'env';
 };
 
 const restoreEnvironmentSecrets = (environmentSecrets) => {
