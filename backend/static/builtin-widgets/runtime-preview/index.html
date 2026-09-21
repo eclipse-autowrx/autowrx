@@ -31,8 +31,9 @@
       opacity: 0.4;
     }
 
-    /* Error state */
-    #error-state {
+    /* Error / connecting states */
+    #error-state,
+    #connecting-state {
       display: none;
       flex-direction: column;
       align-items: center;
@@ -44,7 +45,8 @@
       background: #fafafa;
     }
 
-    #error-state .error-icon {
+    #error-state .error-icon,
+    #connecting-state .error-icon {
       width: 52px;
       height: 52px;
       border-radius: 50%;
@@ -61,14 +63,31 @@
       color: #9ca3af;
     }
 
-    #error-state .error-title {
+    #connecting-state .spinner {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid #e5e7eb;
+      border-top-color: #9ca3af;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    #error-state .error-title,
+    #connecting-state .error-title {
       font-size: 15px;
       font-weight: 600;
       color: #374151;
       margin: 0;
     }
 
-    #error-state .error-subtitle {
+    #error-state .error-subtitle,
+    #connecting-state .error-subtitle {
       font-size: 13px;
       color: #9ca3af;
       margin: 0;
@@ -76,7 +95,8 @@
       line-height: 1.5;
     }
 
-    #error-state .error-badge {
+    #error-state .error-badge,
+    #connecting-state .error-badge {
       margin-top: 4px;
       display: inline-flex;
       align-items: center;
@@ -90,7 +110,8 @@
       font-family: ui-monospace, monospace;
     }
 
-    #error-state .error-badge .dot {
+    #error-state .error-badge .dot,
+    #connecting-state .error-badge .dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
@@ -109,6 +130,19 @@
           d="M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-4M9 3l6 0m-6 0v6m6-6v6m0 0H9m6 0v8" />
       </svg>
       <span id="placeholder-text">No runtime selected</span>
+    </div>
+
+    <!-- Waiting for the app's HTTP server to come up -->
+    <div id="connecting-state">
+      <div class="error-icon">
+        <div class="spinner"></div>
+      </div>
+      <p class="error-title">Starting application</p>
+      <p class="error-subtitle">Waiting for the application to serve the preview.</p>
+      <span class="error-badge" id="connecting-runtime-badge" style="display:none">
+        <span class="dot"></span>
+        <span id="connecting-runtime-label"></span>
+      </span>
     </div>
 
     <!-- Connection / runtime error -->
@@ -135,16 +169,34 @@
   <script>
     const DEFAULT_MAPPINGS = []
 
+    // The app is reported as running as soon as the user hits Run, but the kit's HTTP
+    // server may need seconds to bind. Until then the proxy answers 502 with a valid
+    // (empty) HTML body, so iframe load/error events cannot tell us when it is up.
+    // Keep probing the preview URL and swap the iframe in the moment it answers 200.
+    const FAST_PROBE_INTERVAL = 700
+    const SLOW_PROBE_INTERVAL = 2000
+    const IDLE_PROBE_INTERVAL = 5000
+    const FAST_PROBE_WINDOW = 20000
+
     let runtimeMappings = DEFAULT_MAPPINGS
     let currentRuntimeName = null
     let lastPreviewUrl = null
     // JWT access token from parent — iframe.src cannot set Authorization
     let accessToken = null
 
+    let probeTimer = null
+    let probeGeneration = 0
+    let isAppRunning = false
+    let waitStartedAt = 0
+
     function onWidgetLoaded(options) {
       if (options && Array.isArray(options.runtimeMappings) && options.runtimeMappings.length > 0) {
         runtimeMappings = options.runtimeMappings
       }
+    }
+
+    function el(id) {
+      return document.getElementById(id)
     }
 
     function buildPreviewUrl(previewPath) {
@@ -155,62 +207,113 @@
       return url
     }
 
-    function showError(runtimeName) {
-      const placeholder = document.getElementById('placeholder')
-      const frame = document.getElementById('preview-frame')
-      const errorState = document.getElementById('error-state')
-      const badge = document.getElementById('error-runtime-badge')
-      const badgeLabel = document.getElementById('error-runtime-label')
-
-      placeholder.style.display = 'none'
-      frame.style.display = 'none'
-      frame.src = 'about:blank'
-      errorState.style.display = 'flex'
-
+    function applyBadge(badgeId, labelId, runtimeName) {
+      const badge = el(badgeId)
       if (runtimeName) {
-        badgeLabel.textContent = runtimeName
+        el(labelId).textContent = runtimeName
         badge.style.display = 'inline-flex'
       } else {
         badge.style.display = 'none'
       }
     }
 
-    function hideError() {
-      document.getElementById('error-state').style.display = 'none'
-    }
+    // Single owner of visibility: 'placeholder' | 'connecting' | 'error' | 'preview'
+    function setState(state, runtimeName) {
+      const frame = el('preview-frame')
 
-    function reloadPreview() {
-      if (!lastPreviewUrl) return
-      const frame = document.getElementById('preview-frame')
-      const placeholder = document.getElementById('placeholder')
-      hideError()
-      frame.onerror = function () {
-        showError(currentRuntimeName)
-      }
-      if (frame.src === lastPreviewUrl) {
+      el('placeholder').style.display = state === 'placeholder' ? 'flex' : 'none'
+      el('connecting-state').style.display = state === 'connecting' ? 'flex' : 'none'
+      el('error-state').style.display = state === 'error' ? 'flex' : 'none'
+      frame.style.display = state === 'preview' ? 'block' : 'none'
+
+      if (state !== 'preview' && frame.src !== 'about:blank') {
         frame.src = 'about:blank'
       }
-      frame.src = lastPreviewUrl
-      placeholder.style.display = 'none'
-      frame.style.display = 'block'
+
+      applyBadge('connecting-runtime-badge', 'connecting-runtime-label', runtimeName)
+      applyBadge('error-runtime-badge', 'error-runtime-label', runtimeName)
+    }
+
+    function showError(runtimeName) {
+      setState('error', runtimeName)
+    }
+
+    function showPreview() {
+      setState('preview', currentRuntimeName)
+      el('preview-frame').src = lastPreviewUrl
+    }
+
+    async function probePreview(url) {
+      try {
+        const res = await fetch(url, { method: 'GET', cache: 'no-store', credentials: 'include' })
+        if (res.body && typeof res.body.cancel === 'function') {
+          try {
+            await res.body.cancel()
+          } catch {
+            // ignore
+          }
+        }
+        return res.ok
+      } catch {
+        return false
+      }
+    }
+
+    function nextProbeInterval() {
+      if (!isAppRunning) return IDLE_PROBE_INTERVAL
+      return Date.now() - waitStartedAt < FAST_PROBE_WINDOW ? FAST_PROBE_INTERVAL : SLOW_PROBE_INTERVAL
+    }
+
+    function stopProbing() {
+      probeGeneration++
+      if (probeTimer) {
+        clearTimeout(probeTimer)
+        probeTimer = null
+      }
+    }
+
+    // Never give up while a runtime is selected: a slow app can take far longer than a
+    // single check, and a late start must still be picked up on its own.
+    function startProbing() {
+      if (!lastPreviewUrl) return
+      stopProbing()
+
+      const gen = probeGeneration
+      const url = lastPreviewUrl
+      waitStartedAt = Date.now()
+      setState('connecting', currentRuntimeName)
+
+      const tick = async function () {
+        if (gen !== probeGeneration) return
+
+        const ok = await probePreview(url)
+        // Runtime/token may have changed while the probe was in flight
+        if (gen !== probeGeneration || url !== lastPreviewUrl) return
+
+        if (ok) {
+          probeTimer = null
+          showPreview()
+          return
+        }
+
+        if (!isAppRunning || Date.now() - waitStartedAt >= FAST_PROBE_WINDOW) {
+          showError(currentRuntimeName)
+        }
+        probeTimer = setTimeout(tick, nextProbeInterval())
+      }
+
+      tick()
     }
 
     function applyRuntimeName(name) {
       if (name === currentRuntimeName) return
       currentRuntimeName = name
 
-      const placeholder = document.getElementById('placeholder')
-      const placeholderText = document.getElementById('placeholder-text')
-      const frame = document.getElementById('preview-frame')
-
-      hideError()
-
       if (!name) {
+        stopProbing()
         lastPreviewUrl = null
-        frame.style.display = 'none'
-        frame.src = 'about:blank'
-        placeholder.style.display = 'flex'
-        placeholderText.textContent = 'No runtime selected'
+        el('placeholder-text').textContent = 'No runtime selected'
+        setState('placeholder')
         return
       }
 
@@ -221,26 +324,23 @@
       const previewPath = match ? match.path : '/runtime-preview/' + name.replace(/runtime-/i, '')
       lastPreviewUrl = buildPreviewUrl(previewPath)
 
-      frame.onerror = function () {
-        showError(currentRuntimeName)
-      }
-
-      if (frame.src !== lastPreviewUrl) {
-        frame.src = lastPreviewUrl
-      }
-
-      placeholder.style.display = 'none'
-      frame.style.display = 'block'
+      startProbing()
     }
 
-    function onAppRunningStateChanged(isRunning) {
-      if (isRunning) {
-        if (lastPreviewUrl || currentRuntimeName) {
-          hideError()
-          reloadPreview()
-        }
-      } else {
+    function onAppRunningStateChanged(running) {
+      isAppRunning = !!running
+
+      if (isAppRunning) {
+        // Restart the fast window even if a slow poll was already running
+        if (lastPreviewUrl) startProbing()
+        return
+      }
+
+      stopProbing()
+      if (currentRuntimeName || lastPreviewUrl) {
         showError(currentRuntimeName)
+      } else {
+        setState('placeholder')
       }
     }
 
