@@ -434,17 +434,15 @@ Prototype authors (write/edit SDV code); GenAI users (generate code).
 
 - When an **owner** opens the Code tab at **Code tab (`/model/:id/library/prototype/:pid/code`)**, they see the Monaco editor with their prototype's code and a language label (Python or Rust); when a **user** lacks write permission, the editor is read-only.
 - When an **owner** edits code with write permission at **Code tab (`/model/:id/library/prototype/:pid/code`)**, their changes auto-save periodically and on blur, and persist to the prototype.
-- When an **owner** views the Code tab with the Vehicle API panel shown at **Code tab (`/model/:id/library/prototype/:pid/code`)**, they see the vehicle signals list beside the editor, and they can resize or collapse it.
+- When an **owner** views the Code tab at **Code tab (`/model/:id/library/prototype/:pid/code`)**, they see the vehicle signals list beside the editor, and they can resize or collapse it.
 - When an **owner** with GenAI permission views the Code tab with the SDV ProtoPilot button shown at **Code tab (`/model/:id/library/prototype/:pid/code`)**, they can launch the GenAI dialog, generate code, preview it, and apply it to their editor.
-- When an **owner** has code diff enabled and their code changes (via GenAI or a plugin) at **Code tab (`/model/:id/library/prototype/:pid/code`)**, a "Show Diff" toggle appears comparing the previous version with the current; they can show or hide the diff.
 - When an **owner** opens a prototype whose code is a JSON project (an array) at **Code tab (`/model/:id/library/prototype/:pid/code`)**, the multi-file project editor (CAP-PROTO-06) loads instead of the single-file Monaco editor.
 
 ### API contract
 
 - Editing / auto-save requires `WRITE_MODEL`; persisted via `PATCH /v2/prototypes/:id` with body `{ code }` → `200`.
-- `SHOW_CODE_API_PANEL=true` → Vehicle API panel shown.
+- Vehicle API panel is always shown beside the editor.
 - `SHOW_SDV_PROTOPILOT_BUTTON=true` + `USE_GEN_AI` permission → SDV ProtoPilot button shown.
-- `SHOW_CODE_DIFF=true` → code diff shown after generation.
 - GenAI calls go to the external `GENAI_SDV_APP_ENDPOINT`; GenAI output is applied directly to `prototype.code`.
 - Auto-save is throttled (`captureChange`); no version history.
 - `code` accepts any string (including empty) — no language or safety validation.
@@ -452,7 +450,7 @@ Prototype authors (write/edit SDV code); GenAI users (generate code).
 
 ### Quality control
 
-I edit code and it auto-saves; I open the API panel and see the signals list; I run ProtoPilot and see a generated-code preview, then apply it; I toggle diff and see the changes.
+I edit code and it auto-saves; I open the API panel and see the signals list; I run ProtoPilot and see a generated-code preview, then apply it.
 
 ```mermaid
 sequenceDiagram
@@ -463,7 +461,7 @@ sequenceDiagram
     participant DB as prototype.code
     A->>E: edit code (WRITE_MODEL)
     E->>DB: auto-save (captureChange throttled)
-    A->>API: open panel (SHOW_CODE_API_PANEL)
+    A->>API: open panel
     API-->>A: signals list
     A->>AI: launch (SHOW_SDV_PROTOPILOT_BUTTON + USE_GEN_AI)
     AI-->>A: generated code preview
