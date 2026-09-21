@@ -76,14 +76,12 @@ Prototype authors (bootstrap code); GenAI-capable users.
 
 - When a **user** opens the Code tab at **Code tab (`/model/:id/prototype/:id?tab=code`)** with GenAI permission, they see the SDV ProtoPilot button; when they lack permission or the button is hidden by config, they do not see it.
 - When a **user** submits a prompt in the ProtoPilot dialog at **Code tab (`/model/:id/prototype/:id?tab=code`)**, they see the generated code in a preview; when they apply it, their prototype's code is updated and the dialog closes.
-- When a **user** views the preview at **Code tab (`/model/:id/prototype/:id?tab=code`)** with code-diff display enabled, they see what changed between their previous code and the generated code; when it is disabled, they see only the generated code.
 
 ### API contract
 
 No dedicated HTTP surface — the ProtoPilot dialog calls the GenAI proxy (see CAP-INTEG-02). UI gating and apply target:
 
 - `SHOW_SDV_PROTOPILOT_BUTTON` site-config flag (default `true`) + `USE_GEN_AI` (`generativeAI`) permission — both required for the button to render.
-- `SHOW_CODE_DIFF` site-config flag (default `false`) — toggles code-diff view in the preview.
 - Generated code is applied to `prototype.code` (Prototype document in MongoDB).
 - External GenAI endpoints: `GENAI_SDV_APP_ENDPOINT` (SDV Copilot), `GENAI_MARKETPLACE_URL` (Marketplace).
 
@@ -96,7 +94,7 @@ flowchart LR
     U([Author]) -->|"prompt"| PP["SDV ProtoPilot<br/>(SHOW_SDV_PROTOPILOT_BUTTON + USE_GEN_AI)"]
     PP -->|"call"| SDV["SDV Copilot<br/>(GENAI_SDV_APP_ENDPOINT)"]
     PP -->|"call"| MK["Marketplace<br/>(GENAI_MARKETPLACE_URL)"]
-    SDV -->|generated code| PV["Preview (diff if SHOW_CODE_DIFF)"]
+    SDV -->|generated code| PV["Preview"]
     MK -->|generated code| PV
     PV -->|"apply"| PC["prototype.code"]
 ```
