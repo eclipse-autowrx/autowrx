@@ -35,6 +35,8 @@ interface PrototypeTabsProps {
 // tab does not resize when the host clears it; only the colour is toggled.
 const NotificationBadge: FC<{ visible: boolean }> = ({ visible }) => (
   <span
+    data-testid="tab-notification-badge"
+    data-visible={visible}
     className={cn(
       'ml-1.5 inline-block w-2 h-2 rounded-full shrink-0',
       visible ? 'bg-primary' : 'bg-transparent',
