@@ -7,7 +7,6 @@
 // SPDX-License-Identifier: MIT
 
 import { Button } from '@/components/atoms/button'
-import DaCheckbox from '@/components/atoms/DaCheckbox'
 import DaFileUploadButton from '@/components/atoms/DaFileUploadButton'
 import { Input } from '@/components/atoms/input'
 import { DaText } from '@/components/atoms/DaText'
@@ -169,7 +168,6 @@ const FormNewPrototype = ({
     const [newModelApiDataUrl, setNewModelApiDataUrl] = useState<string | undefined>(undefined)
     const [newModelTemplateId, setNewModelTemplateId] = useState<string | null>(null)
     const [uploading, setUploading] = useState(false)
-    const [signalExploration, setSignalExploration] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
@@ -313,7 +311,6 @@ const FormNewPrototype = ({
                     ?? getDefaultDashboardCfg(selectedTemplate?.language ?? 'python')
                     ?? '[]',
                 autorun: true,
-                extend: { signal_exploration: signalExploration },
             }
 
             const response = await createPrototypeService(body)
@@ -616,18 +613,6 @@ const FormNewPrototype = ({
                     </Select>
                 </div>
             ) : null}
-
-            <div className="mt-4 select-none">
-                <DaCheckbox
-                    checked={signalExploration}
-                    onChange={() => setSignalExploration((prev) => !prev)}
-                    label="Enable Signal Exploration"
-                />
-                <DaText variant="small" className="text-gray-500 ml-6 text-sm">
-                    Generate custom signals based on your requirements
-                </DaText>
-            </div>
-
 
             {error && !isDuplicatePrototypeName && (
                 <DaText variant="small" className="mt-4 text-red-500">
