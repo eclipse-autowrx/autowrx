@@ -28,6 +28,42 @@ const SOURCE_IMAGE = '/imgs/default_prototype_cover.jpg';
 // copy's simulation tab load the template instead of the copied widget config.
 const SOURCE_DASHBOARD_TEMPLATE_ID = 'e2e-copy-dashboard-template';
 
+// Every content field the copy is expected to carry over. Values are chosen to
+// differ from what the create step produces, so an assertion cannot pass just
+// because the new prototype happened to be built from a matching template.
+const SOURCE_CONTENT = {
+  code: SOURCE_CODE,
+  // Not 'python': the create step takes the language from the selected project
+  // template, so a copy that ignores this field silently mislabels the code and
+  // makes the runtime build it the wrong way.
+  language: 'rust',
+  apis: { VSC: [], VSS: ['Vehicle.Speed'] },
+  widget_config: SOURCE_WIDGET_CONFIG,
+  image_file: SOURCE_IMAGE,
+  journey_image_file: '/imgs/e2e-copy-journey.jpg',
+  analysis_image_file: '/imgs/e2e-copy-analysis.jpg',
+  customer_journey: 'E2E copy customer journey',
+  description: {
+    problem: 'E2E copy problem',
+    says_who: 'E2E copy says who',
+    solution: 'E2E copy solution',
+    status: 'E2E copy status',
+  },
+  tags: [{ title: 'e2e-copy-tag', description: 'tag carried by the copy' }],
+  complexity_level: 5,
+  portfolio: { effort_estimation: 4, needs_addressed: 3, relevance: 2 },
+  skeleton: '{"e2e":"copy-skeleton"}',
+  related_ea_components: 'E2E copy EA components',
+  partner_logo: '/imgs/e2e-copy-partner.png',
+  requirements: 'E2E copy requirements',
+  requirements_data: { marker: 'E2E_COPY_REQUIREMENTS' },
+  flow: { marker: 'E2E_COPY_FLOW' },
+  autorun: false,
+} as const;
+
+// Must NOT follow the copy — identity, lifecycle and usage stats.
+const NOT_COPIED_STATE = 'released';
+
 test.describe.configure({ mode: 'serial' });
 
 test.describe('Prototype Copy', () => {
@@ -85,10 +121,12 @@ test.describe('Prototype Copy', () => {
     sourceId = created.prototypeId;
 
     await updatePrototypeViaApi(page, sourceId, {
-      code: SOURCE_CODE,
-      widget_config: SOURCE_WIDGET_CONFIG,
-      image_file: SOURCE_IMAGE,
-      extend: { dashboard_template_id: SOURCE_DASHBOARD_TEMPLATE_ID },
+      ...SOURCE_CONTENT,
+      state: NOT_COPIED_STATE,
+      extend: {
+        dashboard_template_id: SOURCE_DASHBOARD_TEMPLATE_ID,
+        watch_vars: ['Vehicle.Speed'],
+      },
     });
 
     return { protoName };
@@ -152,15 +190,31 @@ test.describe('Prototype Copy', () => {
 
     const copied = await getPrototypeViaApi(page, copyId!);
     expect(copied.name).toBe(copyName);
-    expect(copied.widget_config).toBe(SOURCE_WIDGET_CONFIG);
-    expect(copied.image_file).toBe(SOURCE_IMAGE);
+
+    // Every content field is carried over.
+    for (const [field, value] of Object.entries(SOURCE_CONTENT)) {
+      expect(copied[field], `field "${field}" was not copied`).toEqual(value);
+    }
+
+    // extend is carried over, minus the dashboard template, plus the copy marker.
     expect(copied.extend?.copy).toBe(true);
+    expect(copied.extend?.watch_vars).toEqual(['Vehicle.Speed']);
     // Regression guard: the source's dashboard template must not follow the copy.
     expect(copied.extend?.dashboard_template_id).toBeUndefined();
+
+    // Identity, lifecycle and usage stats must NOT be inherited.
+    // model_id comes back populated as the model document, not a bare id.
+    const copiedModelId =
+      typeof copied.model_id === 'string' ? copied.model_id : copied.model_id?.id;
+    expect(copiedModelId).toBe(modelId);
+    expect(copied.state).not.toBe(NOT_COPIED_STATE);
+    expect(copied.executed_turns ?? 0).toBe(0);
+    expect(copied.editors_choice ?? false).toBe(false);
 
     // The source is left untouched.
     const source = await getPrototypeViaApi(page, sourceId!);
     expect(source.name).toBe(protoName);
+    expect(source.state).toBe(NOT_COPIED_STATE);
     expect(source.extend?.dashboard_template_id).toBe(SOURCE_DASHBOARD_TEMPLATE_ID);
 
     await saveScreenshot(page, 'prototype-copy-created');

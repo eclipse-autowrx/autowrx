@@ -34,6 +34,45 @@ import {
 } from '@/services/prototype.service'
 
 /**
+ * Prototype content carried over by the copy flow.
+ *
+ * Everything absent from this list keeps the value the create step gave the
+ * new prototype, and deliberately so:
+ * - identity / ownership: `id`, `name`, `model_id`, `created_by`, timestamps
+ * - lifecycle: `state` — a copy starts in development, it does not inherit
+ *   `released`
+ * - usage and curation: `executed_turns`, `rated_by`, `last_viewed`,
+ *   `editors_choice` — copying these would fake run counts, ratings and
+ *   editorial picks
+ *
+ * `extend` is handled separately because it needs per-key treatment.
+ */
+const COPIED_PROTOTYPE_FIELDS = [
+  'apis',
+  'code',
+  // Without the language the copy is created from the selected project
+  // template's, so Rust code can land on a `python` prototype — the Code tab
+  // mislabels it and the runtime builds it the wrong way.
+  'language',
+  'widget_config',
+  'image_file',
+  'journey_image_file',
+  'analysis_image_file',
+  'customer_journey',
+  'description',
+  'tags',
+  'complexity_level',
+  'portfolio',
+  'skeleton',
+  'related_ea_components',
+  'partner_logo',
+  'requirements',
+  'requirements_data',
+  'flow',
+  'autorun',
+] as const
+
+/**
  * Layout for `/new-prototype`: previews the selected model's (or default
  * model-template) prototype shell behind the create dialog, then navigates
  * to PagePrototypeDetail after creation.
@@ -140,18 +179,24 @@ const NewPrototypeLayout: FC = () => {
   const handlePrototypeCreated = useCallback(
     async (modelId: string, prototypeId: string) => {
       if (copySource) {
+        const source = copySource as unknown as Record<string, unknown>
+        const payload: Record<string, unknown> = {}
+        for (const field of COPIED_PROTOTYPE_FIELDS) {
+          // Skip absent fields rather than sending null: the update validation
+          // rejects a null where it expects a string or object.
+          if (source[field] !== undefined && source[field] !== null) {
+            payload[field] = source[field]
+          }
+        }
+
         // The dashboard template id is deliberately dropped: it would make the
         // copy's simulation tab load the template instead of the copied widget
         // config, leaving the tab blank.
         const { dashboard_template_id: _dropped, ...sourceExtend } =
           (copySource.extend ?? {}) as Record<string, any>
-        await updatePrototypeService(prototypeId, {
-          apis: copySource.apis,
-          code: copySource.code,
-          widget_config: copySource.widget_config,
-          image_file: copySource.image_file,
-          extend: { ...sourceExtend, copy: true },
-        })
+        payload.extend = { ...sourceExtend, copy: true }
+
+        await updatePrototypeService(prototypeId, payload)
         await queryClient.invalidateQueries({
           queryKey: ['prototype', prototypeId],
         })
