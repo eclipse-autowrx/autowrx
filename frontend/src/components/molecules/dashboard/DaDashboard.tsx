@@ -51,9 +51,12 @@ import DaDialog from '@/components/molecules/DaDialog'
 import { useSiteConfig } from '@/utils/siteConfig'
 import { getUsedVehicleApiNames, applySyncWithCodeToOptions } from '@/hooks/useUsedVehicleApisFromCode'
 
-const processWidgetItems = (widgetItems: any[], usedApiNames: string[]) => {
-  if (!widgetItems) return
-  widgetItems.forEach((widget) => {
+const processWidgetConfigs = (
+  widgetConfigs: any[],
+  usedApiNames: string[],
+) => {
+  if (!widgetConfigs) return
+  widgetConfigs.forEach((widget) => {
     if (!widget?.url) {
       if (widget.options?.url) {
         widget.url = widget.options.url
@@ -82,7 +85,12 @@ const DaDashboard = () => {
     state.setPrototypeHasUnsavedChanges,
     state.activeModelApis,
   ])
-  const [widgetItems, setWidgetItems] = useState<any>([])
+  const [widgetConfigs, setWidgetConfigs] = useState<any>([])
+  // Widget options are sent to each iframe once, at load — bump this to force
+  // a remount so a new configuration actually reaches the widgets.
+  const [remountCountByWidgetConfig, setRemountCountByWidgetConfig] =
+    useState(0)
+  const prevWidgetConfigRef = useRef(prototype?.widget_config)
   const [mode, setMode] = useState<string>(MODE_RUN)
   const isAuthorized = useCanEditPrototype(prototype)
   const [isAdmin] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
@@ -231,19 +239,19 @@ const DaDashboard = () => {
   }, [])
 
   useEffect(() => {
-    let widgetItems = []
+    let widgetConfigs = []
     // prototype.widget_config: JSON string
     if (prototype?.widget_config) {
       try {
-        let dashboard_config = JSON.parse(prototype.widget_config) // prototype.dashboard_config: JSON object
-        if (Array.isArray(dashboard_config)) {
-          widgetItems = dashboard_config
+        let parsedWidgetConfig = JSON.parse(prototype.widget_config) // parsedWidgetConfig: JSON object
+        if (Array.isArray(parsedWidgetConfig)) {
+          widgetConfigs = parsedWidgetConfig
         } else {
           if (
-            dashboard_config?.widgets &&
-            Array.isArray(dashboard_config.widgets)
+            parsedWidgetConfig?.widgets &&
+            Array.isArray(parsedWidgetConfig.widgets)
           ) {
-            widgetItems = dashboard_config.widgets
+            widgetConfigs = parsedWidgetConfig.widgets
           }
         }
       } catch (err) {
@@ -255,8 +263,14 @@ const DaDashboard = () => {
       activeModelApis,
     )
 
-    processWidgetItems(widgetItems, usedApiNames)
-    setWidgetItems(widgetItems)
+    processWidgetConfigs(widgetConfigs, usedApiNames)
+    setWidgetConfigs(widgetConfigs)
+
+    // Only config changes remount; code/signal changes must not lose widget state.
+    if (prototype?.widget_config !== prevWidgetConfigRef.current) {
+      prevWidgetConfigRef.current = prototype?.widget_config
+      setRemountCountByWidgetConfig((v) => v + 1)
+    }
   }, [prototype?.widget_config, prototype?.code, activeModelApis])
 
   const handleEnterEditMode = () => {
@@ -275,7 +289,7 @@ const DaDashboard = () => {
       4,
     )
 
-    setWidgetItems([])
+    setWidgetConfigs([])
 
     const newPrototype = { ...prototype, widget_config: emptyConfig }
     setActivePrototype(newPrototype)
@@ -474,7 +488,10 @@ const DaDashboard = () => {
         >
           {mode == MODE_RUN && (
             <div className="flex w-full h-full px-1 pb-1">
-              <DaDashboardGrid widgetItems={widgetItems} />
+              <DaDashboardGrid
+                widgetConfigs={widgetConfigs}
+                remountCountByWidgetConfig={remountCountByWidgetConfig}
+              />
             </div>
           )}
           {mode == MODE_EDIT && (

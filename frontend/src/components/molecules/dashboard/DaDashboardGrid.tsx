@@ -15,8 +15,9 @@ import useCurrentModelApi from '@/hooks/useCurrentModelApi'
 import { calculateSpans } from '@/lib/utils'
 
 interface DaDashboardGridProps {
-  widgetItems: any[]
+  widgetConfigs: any[]
   appLog?: string
+  remountCountByWidgetConfig?: number
 }
 
 interface PropsWidgetItem {
@@ -185,7 +186,10 @@ const WidgetItem: FC<PropsWidgetItem> = ({
   )
 }
 
-const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
+const DaDashboardGrid: FC<DaDashboardGridProps> = ({
+  widgetConfigs,
+  remountCountByWidgetConfig = 0,
+}) => {
   const [showModal, setShowModal] = useState(false)
   const [payload, setPayload] = useState<any>()
   const { data: cvi } = useCurrentModelApi()
@@ -271,7 +275,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
         {(() => {
           const renderedWidgets = new Set<number>()
           return CELLS.map((cell) => {
-            const widgetIndex = widgetItems.findIndex((w) =>
+            const widgetIndex = widgetConfigs.findIndex((w) =>
               w.boxes?.includes(cell),
             )
             
@@ -279,8 +283,8 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
               renderedWidgets.add(widgetIndex)
               return (
                 <WidgetItem
-                  key={`widget-${cell}-${widgetIndex}`}
-                  widgetConfig={widgetItems[widgetIndex]}
+                  key={`instance-${cell}-${remountCountByWidgetConfig}`}
+                  widgetConfig={widgetConfigs[widgetIndex]}
                   apisValue={allVars}
                   appLog={appLog}
                   vssTree={memoizedVssTree}
