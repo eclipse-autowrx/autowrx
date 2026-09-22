@@ -120,7 +120,7 @@ const initHandle = () => {
     });
   }, 200);
   window.addEventListener("unload", () => {
-    if (onWidgetUnloaded != undefined) {
+    if (typeof onWidgetUnloaded !== "undefined") {
       onWidgetUnloaded();
     }
     clearInterval(interval);
@@ -141,7 +141,7 @@ window.addEventListener("load", () => {
     if (urlOptions) {
       widgetOptions = urlOptions;
       // If we got options from URL, call onWidgetLoaded immediately
-      if (onWidgetLoaded != undefined) {
+      if (typeof onWidgetLoaded !== "undefined") {
         onWidgetLoaded(widgetOptions);
       }
     }
@@ -191,7 +191,7 @@ window.addEventListener("message", function (e) {
         if (payload.options && widgetLoaded && !widgetOptions) {
           widgetOptions = payload.options;
           console.log("Received widget options via postMessage:", widgetOptions);
-          if (onWidgetLoaded != undefined) {
+          if (typeof onWidgetLoaded !== "undefined") {
             onWidgetLoaded(widgetOptions);
           }
         }
@@ -206,12 +206,12 @@ window.addEventListener("message", function (e) {
         break;
       case "app-log":
         if (!payload.log) return;
-        if (appendLog) {
+        if (typeof appendLog !== "undefined") {
           appendLog(payload.log)
         }
         break;
       case "app-running-state":
-        if (onAppRunningStateChanged != undefined) {
+        if (typeof onAppRunningStateChanged !== "undefined") {
           onAppRunningStateChanged(!!payload.isRunning)
         }
         break;
