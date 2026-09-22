@@ -1,3 +1,11 @@
+// Copyright (c) 2025 Eclipse Foundation.
+//
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { test, expect } from '@playwright/test';
 import {
   loginAsAdmin,
@@ -218,5 +226,52 @@ test.describe('Prototype Copy', () => {
     expect(source.extend?.dashboard_template_id).toBe(SOURCE_DASHBOARD_TEMPLATE_ID);
 
     await saveScreenshot(page, 'prototype-copy-created');
+  });
+
+  test('a failed content copy still lands the user on the new prototype', async ({
+    page,
+  }) => {
+    const { protoName } = await seedSourcePrototype(page, 'PatchFail');
+
+    await page.goto(`/model/${modelId}/library/list`);
+    await searchPrototypeLibrary(page, protoName);
+
+    await openPrototypeContextMenu(page, protoName);
+    await page.getByRole('menuitem', { name: COPY_MENU_ITEM }).click();
+
+    const nameInput = page.locator('[data-id="prototype-name-input"]').first();
+    await expect(nameInput).toBeEnabled({ timeout: 20000 });
+    const copyName = `${protoName}_Copy`;
+    await nameInput.fill(copyName);
+
+    // Fail only the copy PATCH. The create POST must still succeed, so that we
+    // exercise the state the guard exists for: the prototype is created, the
+    // content copy is not.
+    await page.route('**/prototypes/*', async (route) => {
+      if (route.request().method() === 'PATCH') {
+        await route.abort('failed');
+        return;
+      }
+      await route.fallback();
+    });
+
+    await page.getByRole('button', { name: 'Confirm' }).click();
+
+    // The user must not be stranded on the finished form: navigation happens
+    // even though the copy failed.
+    await expect(page).toHaveURL(
+      new RegExp(`/model/${modelId}/library/prototype/[a-f0-9]+`),
+      { timeout: 45000 },
+    );
+    copyId = getPrototypeIdFromUrl(page.url());
+
+    // ...and the failure is reported rather than swallowed.
+    // The toaster renders the message in more than one node, so scope to the first.
+    await expect(
+      page.getByText(/copying its content failed/i).first(),
+    ).toBeVisible({ timeout: 15000 });
+
+    await page.unroute('**/prototypes/*');
+    await saveScreenshot(page, 'prototype-copy-patch-failed');
   });
 });

@@ -27,6 +27,7 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useAuthStore from '@/stores/authStore'
 import useModelStore from '@/stores/modelStore'
 import { TbLayoutSidebar } from 'react-icons/tb'
+import { useToast } from '@/components/molecules/toaster/use-toast'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   getPrototype,
@@ -89,6 +90,7 @@ const NewPrototypeLayout: FC = () => {
   } = useSelfProfileQuery()
   const { data: model } = useCurrentModel()
   const queryClient = useQueryClient()
+  const { toast } = useToast()
   const setActiveModel = useModelStore((state) => state.setActiveModel)
   // `prototype_id` turns this page into a copy flow: the new prototype is
   // created normally, then the source's content is written onto it.
@@ -196,14 +198,31 @@ const NewPrototypeLayout: FC = () => {
           (copySource.extend ?? {}) as Record<string, any>
         payload.extend = { ...sourceExtend, copy: true }
 
-        await updatePrototypeService(prototypeId, payload)
-        await queryClient.invalidateQueries({
-          queryKey: ['prototype', prototypeId],
-        })
+        try {
+          await updatePrototypeService(prototypeId, payload)
+          await queryClient.invalidateQueries({
+            queryKey: ['prototype', prototypeId],
+          })
+        } catch (error) {
+          // Only the content copy failed — the prototype itself was already
+          // created. FormNewPrototype calls this without awaiting, so throwing
+          // here would surface nowhere and strand the user on a finished form
+          // with an empty prototype silently saved. Report it and carry on to
+          // the prototype, where the copy can be retried.
+          console.error('Failed to copy prototype content:', error)
+          toast({
+            variant: 'destructive',
+            description:
+              error instanceof Error
+                ? `Prototype created, but copying its content failed: ${error.message}`
+                : 'Prototype created, but copying its content failed.',
+            duration: 6000,
+          })
+        }
       }
       navigate(`/model/${modelId}/library/prototype/${prototypeId}`)
     },
-    [navigate, copySource, queryClient],
+    [navigate, copySource, queryClient, toast],
   )
 
   const handleSetActiveTab = useCallback(
