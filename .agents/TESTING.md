@@ -70,6 +70,7 @@ npx playwright test tests/model-editable-visibility.spec.ts
 | `tests/auth.spec.ts` | Login, logout, register |
 | `tests/vehicle-models.spec.ts` | Create/Read/Update/Delete vehicle models |
 | `tests/prototype.spec.ts` | Create/Read/Update/Delete prototypes |
+| `tests/prototype-dashboard-remount.spec.ts` | Applying a dashboard template delivers new widget options to mounted widgets |
 | `tests/admin.spec.ts` | Admin panel: user management, site config |
 | `tests/site-config-restore-default.spec.ts` | Public config restore default (accept + cancel) |
 | `tests/import-export.spec.ts` | Model/prototype export and import round-trips |
