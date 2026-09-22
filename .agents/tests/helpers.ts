@@ -1085,11 +1085,40 @@ export async function createTestPrototypeViaApi(
   return { prototypeId, protoName: opts.name };
 }
 
+export async function updatePrototypeViaApi(
+  page: Page,
+  prototypeId: string,
+  data: Record<string, unknown>,
+  auth?: AuthCredentials,
+): Promise<void> {
+  const token = auth
+    ? await getTokenForUser(page, auth.email, auth.password)
+    : await getAuthToken(page);
+  const res = await page.request.patch(`${API_URL}/v2/prototypes/${prototypeId}`, {
+    data,
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to update prototype: ${res.status()} ${await res.text()}`);
+  }
+}
+
 export async function getPrototypeViaApi(
   page: Page,
   prototypeId: string,
   auth?: AuthCredentials,
-): Promise<{ id: string; code?: string; name?: string }> {
+): Promise<
+  Record<string, any> & {
+    id: string;
+    code?: string;
+    name?: string;
+    model_id?: string;
+    widget_config?: string;
+    image_file?: string;
+    state?: string;
+    extend?: Record<string, any>;
+  }
+> {
   const token = auth
     ? await getTokenForUser(page, auth.email, auth.password)
     : await getAuthToken(page);
@@ -1100,11 +1129,8 @@ export async function getPrototypeViaApi(
     throw new Error(`Failed to get prototype: ${res.status()} ${await res.text()}`);
   }
   const data = await res.json();
-  return {
-    id: String(data?.id || data?._id || prototypeId),
-    code: data?.code,
-    name: data?.name,
-  };
+  // Return the whole document: copy assertions need to reach any field.
+  return { ...data, id: String(data?.id || data?._id || prototypeId) };
 }
 
 export function getPrototypeLibraryCreateWrapper(page: Page): Locator {

@@ -82,6 +82,8 @@
 | Prototype card visible | Card shows after creation | ✅ `prototype.spec.ts` |
 | Rename prototype | Via API (context menu requires site config) | ✅ `prototype.spec.ts` |
 | Delete prototype | Via API, card removed from UI | ✅ `prototype.spec.ts` |
+| Copy prototype (menu entry) | `Copy Prototype` shown in card context / ⋮ menu | ✅ `prototype-copy.spec.ts` |
+| Copy prototype (full flow) | Routes to `/new-prototype?prototype_id=…`, copies code / widget config / image, drops `dashboard_template_id` | ✅ `prototype-copy.spec.ts` |
 | Search / filter | Filter prototypes by name | ✅ `prototype-extended.spec.ts` |
 | Sort prototypes | Sort by date/name | ✅ `prototype-extended.spec.ts` |
 | Library paging (CAP-PROTO-09) | Page-number buttons (max 7 + ellipsis) when more than 50 prototypes | ❌ |

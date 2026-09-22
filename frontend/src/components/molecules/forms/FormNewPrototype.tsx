@@ -7,7 +7,6 @@
 // SPDX-License-Identifier: MIT
 
 import { Button } from '@/components/atoms/button'
-import DaCheckbox from '@/components/atoms/DaCheckbox'
 import DaFileUploadButton from '@/components/atoms/DaFileUploadButton'
 import { Input } from '@/components/atoms/input'
 import { DaText } from '@/components/atoms/DaText'
@@ -50,6 +49,10 @@ interface FormNewPrototypeProps {
     code?: string
     widget_config?: string
     buttonText?: string
+    /** Pre-fills the name field, e.g. with the name of a prototype being copied. */
+    defaultPrototypeName?: string
+    /** True while `defaultPrototypeName` is still being fetched — blocks submit. */
+    loadingDefaultPrototypeName?: boolean
     onModelChange?: (modelId: string | null) => void
     /** Fired when creating a new model so the parent can preview the selected template layout. */
     onTemplatePreviewChange?: (config: Record<string, any> | null) => void
@@ -66,6 +69,8 @@ const FormNewPrototype = ({
     code,
     widget_config,
     buttonText,
+    defaultPrototypeName,
+    loadingDefaultPrototypeName,
     onModelChange,
     onTemplatePreviewChange,
     onSuccess,
@@ -164,12 +169,19 @@ const FormNewPrototype = ({
         activeSelection?.type === 'existing' ? activeSelection.modelId : ''
 
     const [prototypeName, setPrototypeName] = useState('')
+
+    useEffect(() => {
+        if (defaultPrototypeName && !prototypeName) {
+            setPrototypeName(defaultPrototypeName)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [defaultPrototypeName])
+
     const [newModelName, setNewModelName] = useState('')
     const [newModelApiVersion, setNewModelApiVersion] = useState('v4.1')
     const [newModelApiDataUrl, setNewModelApiDataUrl] = useState<string | undefined>(undefined)
     const [newModelTemplateId, setNewModelTemplateId] = useState<string | null>(null)
     const [uploading, setUploading] = useState(false)
-    const [signalExploration, setSignalExploration] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
@@ -260,7 +272,8 @@ const FormNewPrototype = ({
         (templateOptions.length > 0 && !selectedTemplateId) ||
         !prototypeName.trim() ||
         (isCreatingNewModel ? !newModelName.trim() || isDuplicateModelName : !selectedModelId) ||
-        isDuplicatePrototypeName
+        isDuplicatePrototypeName ||
+        !!loadingDefaultPrototypeName
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -313,7 +326,6 @@ const FormNewPrototype = ({
                     ?? getDefaultDashboardCfg(selectedTemplate?.language ?? 'python')
                     ?? '[]',
                 autorun: true,
-                extend: { signal_exploration: signalExploration },
             }
 
             const response = await createPrototypeService(body)
@@ -569,6 +581,7 @@ const FormNewPrototype = ({
                         setPrototypeName(e.target.value)
                         setError('')
                     }}
+                    disabled={loadingDefaultPrototypeName}
                     placeholder="Prototype Name"
                     data-id="prototype-name-input"
                     autoFocus
@@ -616,18 +629,6 @@ const FormNewPrototype = ({
                     </Select>
                 </div>
             ) : null}
-
-            <div className="mt-4 select-none">
-                <DaCheckbox
-                    checked={signalExploration}
-                    onChange={() => setSignalExploration((prev) => !prev)}
-                    label="Enable Signal Exploration"
-                />
-                <DaText variant="small" className="text-gray-500 ml-6 text-sm">
-                    Generate custom signals based on your requirements
-                </DaText>
-            </div>
-
 
             {error && !isDuplicatePrototypeName && (
                 <DaText variant="small" className="mt-4 text-red-500">

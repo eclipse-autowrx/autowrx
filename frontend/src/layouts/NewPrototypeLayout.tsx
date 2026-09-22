@@ -27,6 +27,51 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useAuthStore from '@/stores/authStore'
 import useModelStore from '@/stores/modelStore'
 import { TbLayoutSidebar } from 'react-icons/tb'
+import { useToast } from '@/components/molecules/toaster/use-toast'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  getPrototype,
+  updatePrototypeService,
+} from '@/services/prototype.service'
+
+/**
+ * Prototype content carried over by the copy flow.
+ *
+ * Everything absent from this list keeps the value the create step gave the
+ * new prototype, and deliberately so:
+ * - identity / ownership: `id`, `name`, `model_id`, `created_by`, timestamps
+ * - lifecycle: `state` — a copy starts in development, it does not inherit
+ *   `released`
+ * - usage and curation: `executed_turns`, `rated_by`, `last_viewed`,
+ *   `editors_choice` — copying these would fake run counts, ratings and
+ *   editorial picks
+ *
+ * `extend` is handled separately because it needs per-key treatment.
+ */
+const COPIED_PROTOTYPE_FIELDS = [
+  'apis',
+  'code',
+  // Without the language the copy is created from the selected project
+  // template's, so Rust code can land on a `python` prototype — the Code tab
+  // mislabels it and the runtime builds it the wrong way.
+  'language',
+  'widget_config',
+  'image_file',
+  'journey_image_file',
+  'analysis_image_file',
+  'customer_journey',
+  'description',
+  'tags',
+  'complexity_level',
+  'portfolio',
+  'skeleton',
+  'related_ea_components',
+  'partner_logo',
+  'requirements',
+  'requirements_data',
+  'flow',
+  'autorun',
+] as const
 
 /**
  * Layout for `/new-prototype`: previews the selected model's (or default
@@ -44,7 +89,17 @@ const NewPrototypeLayout: FC = () => {
     isFetching: isUserFetching,
   } = useSelfProfileQuery()
   const { data: model } = useCurrentModel()
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
   const setActiveModel = useModelStore((state) => state.setActiveModel)
+  // `prototype_id` turns this page into a copy flow: the new prototype is
+  // created normally, then the source's content is written onto it.
+  const copySourceId = searchParams.get('prototype_id')
+  const { data: copySource, isFetching: isFetchingCopySource } = useQuery({
+    queryKey: ['prototype', copySourceId],
+    queryFn: () => getPrototype(copySourceId!),
+    enabled: !!copySourceId,
+  })
   const isResolvingAuth =
     !authBootstrapped || (!user && (isUserLoading || isUserFetching))
   const urlParamModelId = searchParams.get('model_id')
@@ -124,10 +179,50 @@ const NewPrototypeLayout: FC = () => {
   )
 
   const handlePrototypeCreated = useCallback(
-    (modelId: string, prototypeId: string) => {
+    async (modelId: string, prototypeId: string) => {
+      if (copySource) {
+        const source = copySource as unknown as Record<string, unknown>
+        const payload: Record<string, unknown> = {}
+        for (const field of COPIED_PROTOTYPE_FIELDS) {
+          // Skip absent fields rather than sending null: the update validation
+          // rejects a null where it expects a string or object.
+          if (source[field] !== undefined && source[field] !== null) {
+            payload[field] = source[field]
+          }
+        }
+
+        // The dashboard template id is deliberately dropped: it would make the
+        // copy's simulation tab load the template instead of the copied widget
+        // config, leaving the tab blank.
+        const { dashboard_template_id: _dropped, ...sourceExtend } =
+          (copySource.extend ?? {}) as Record<string, any>
+        payload.extend = { ...sourceExtend, copy: true }
+
+        try {
+          await updatePrototypeService(prototypeId, payload)
+          await queryClient.invalidateQueries({
+            queryKey: ['prototype', prototypeId],
+          })
+        } catch (error) {
+          // Only the content copy failed — the prototype itself was already
+          // created. FormNewPrototype calls this without awaiting, so throwing
+          // here would surface nowhere and strand the user on a finished form
+          // with an empty prototype silently saved. Report it and carry on to
+          // the prototype, where the copy can be retried.
+          console.error('Failed to copy prototype content:', error)
+          toast({
+            variant: 'destructive',
+            description:
+              error instanceof Error
+                ? `Prototype created, but copying its content failed: ${error.message}`
+                : 'Prototype created, but copying its content failed.',
+            duration: 6000,
+          })
+        }
+      }
       navigate(`/model/${modelId}/library/prototype/${prototypeId}`)
     },
-    [navigate],
+    [navigate, copySource, queryClient, toast],
   )
 
   const handleSetActiveTab = useCallback(
@@ -229,6 +324,10 @@ const NewPrototypeLayout: FC = () => {
       >
         <FormNewPrototype
           onClose={() => setOpenNewPrototypeDialog(false)}
+          defaultPrototypeName={
+            copySource ? `${copySource.name} (Copy)` : undefined
+          }
+          loadingDefaultPrototypeName={isFetchingCopySource}
           onModelChange={handleModelChange}
           onTemplatePreviewChange={handleTemplatePreviewChange}
           onSuccess={handlePrototypeCreated}

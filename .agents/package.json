@@ -12,6 +12,7 @@
     "test:site-config": "playwright test tests/site-config-restore-default.spec.ts",
     "test:import-export": "playwright test tests/import-export.spec.ts",
     "test:prototype-context-menu": "playwright test tests/prototype-context-menu.spec.ts",
+    "test:prototype-copy": "playwright test tests/prototype-copy.spec.ts",
     "test:home-model-list": "playwright test tests/home-model-list.spec.ts",
     "test:home-prototype-list": "playwright test tests/home-prototype-list.spec.ts",
     "test:image-fallback": "playwright test tests/image-fallback.spec.ts",
