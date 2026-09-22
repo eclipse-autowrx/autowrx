@@ -118,7 +118,7 @@ no store, route, token, or filesystem access.
     `replaceAPIs`.
   - **Runtime values:** `getRuntimeApiValues` / `setRuntimeApiValues` — bridge to
     `runtimeStore` (see [realtime-signals.md](./realtime-signals.md)).
-  - **Wishlist APIs, assets, file upload, navigation (`setActiveTab`).**
+  - **Wishlist APIs, assets, file upload, navigation (`setActiveTab`, `notifyTab`).**
   - **Kit/runtime files:** `fetchSignalMapping` / `replaceSignalMapping`,
     `fetchVss` / `replaceVss` — these open their **own** Socket.IO connections to
     the external kit server.
