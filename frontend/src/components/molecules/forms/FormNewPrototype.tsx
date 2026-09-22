@@ -49,6 +49,10 @@ interface FormNewPrototypeProps {
     code?: string
     widget_config?: string
     buttonText?: string
+    /** Pre-fills the name field, e.g. with the name of a prototype being copied. */
+    defaultPrototypeName?: string
+    /** True while `defaultPrototypeName` is still being fetched — blocks submit. */
+    loadingDefaultPrototypeName?: boolean
     onModelChange?: (modelId: string | null) => void
     /** Fired when creating a new model so the parent can preview the selected template layout. */
     onTemplatePreviewChange?: (config: Record<string, any> | null) => void
@@ -65,6 +69,8 @@ const FormNewPrototype = ({
     code,
     widget_config,
     buttonText,
+    defaultPrototypeName,
+    loadingDefaultPrototypeName,
     onModelChange,
     onTemplatePreviewChange,
     onSuccess,
@@ -163,6 +169,14 @@ const FormNewPrototype = ({
         activeSelection?.type === 'existing' ? activeSelection.modelId : ''
 
     const [prototypeName, setPrototypeName] = useState('')
+
+    useEffect(() => {
+        if (defaultPrototypeName && !prototypeName) {
+            setPrototypeName(defaultPrototypeName)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [defaultPrototypeName])
+
     const [newModelName, setNewModelName] = useState('')
     const [newModelApiVersion, setNewModelApiVersion] = useState('v4.1')
     const [newModelApiDataUrl, setNewModelApiDataUrl] = useState<string | undefined>(undefined)
@@ -258,7 +272,8 @@ const FormNewPrototype = ({
         (templateOptions.length > 0 && !selectedTemplateId) ||
         !prototypeName.trim() ||
         (isCreatingNewModel ? !newModelName.trim() || isDuplicateModelName : !selectedModelId) ||
-        isDuplicatePrototypeName
+        isDuplicatePrototypeName ||
+        !!loadingDefaultPrototypeName
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -566,6 +581,7 @@ const FormNewPrototype = ({
                         setPrototypeName(e.target.value)
                         setError('')
                     }}
+                    disabled={loadingDefaultPrototypeName}
                     placeholder="Prototype Name"
                     data-id="prototype-name-input"
                     autoFocus

@@ -27,6 +27,11 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useAuthStore from '@/stores/authStore'
 import useModelStore from '@/stores/modelStore'
 import { TbLayoutSidebar } from 'react-icons/tb'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  getPrototype,
+  updatePrototypeService,
+} from '@/services/prototype.service'
 
 /**
  * Layout for `/new-prototype`: previews the selected model's (or default
@@ -44,7 +49,16 @@ const NewPrototypeLayout: FC = () => {
     isFetching: isUserFetching,
   } = useSelfProfileQuery()
   const { data: model } = useCurrentModel()
+  const queryClient = useQueryClient()
   const setActiveModel = useModelStore((state) => state.setActiveModel)
+  // `prototype_id` turns this page into a copy flow: the new prototype is
+  // created normally, then the source's content is written onto it.
+  const copySourceId = searchParams.get('prototype_id')
+  const { data: copySource, isFetching: isFetchingCopySource } = useQuery({
+    queryKey: ['prototype', copySourceId],
+    queryFn: () => getPrototype(copySourceId!),
+    enabled: !!copySourceId,
+  })
   const isResolvingAuth =
     !authBootstrapped || (!user && (isUserLoading || isUserFetching))
   const urlParamModelId = searchParams.get('model_id')
@@ -124,10 +138,27 @@ const NewPrototypeLayout: FC = () => {
   )
 
   const handlePrototypeCreated = useCallback(
-    (modelId: string, prototypeId: string) => {
+    async (modelId: string, prototypeId: string) => {
+      if (copySource) {
+        // The dashboard template id is deliberately dropped: it would make the
+        // copy's simulation tab load the template instead of the copied widget
+        // config, leaving the tab blank.
+        const { dashboard_template_id: _dropped, ...sourceExtend } =
+          (copySource.extend ?? {}) as Record<string, any>
+        await updatePrototypeService(prototypeId, {
+          apis: copySource.apis,
+          code: copySource.code,
+          widget_config: copySource.widget_config,
+          image_file: copySource.image_file,
+          extend: { ...sourceExtend, copy: true },
+        })
+        await queryClient.invalidateQueries({
+          queryKey: ['prototype', prototypeId],
+        })
+      }
       navigate(`/model/${modelId}/library/prototype/${prototypeId}`)
     },
-    [navigate],
+    [navigate, copySource, queryClient],
   )
 
   const handleSetActiveTab = useCallback(
@@ -229,6 +260,10 @@ const NewPrototypeLayout: FC = () => {
       >
         <FormNewPrototype
           onClose={() => setOpenNewPrototypeDialog(false)}
+          defaultPrototypeName={
+            copySource ? `${copySource.name} (Copy)` : undefined
+          }
+          loadingDefaultPrototypeName={isFetchingCopySource}
           onModelChange={handleModelChange}
           onTemplatePreviewChange={handleTemplatePreviewChange}
           onSuccess={handlePrototypeCreated}

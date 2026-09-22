@@ -16,6 +16,7 @@ import { Prototype } from '@/types/model.type'
 import { HiStar } from 'react-icons/hi'
 import {
   TbCloudDown,
+  TbCopy,
   TbDotsVertical,
   TbDownload,
   TbEdit,
@@ -269,6 +270,19 @@ export const DaPrototypeCard = ({
       >
         <TbCloudDown className="size-4" />
         Deploy
+      </MenuItem>
+      <MenuItem
+        className="cursor-pointer gap-2"
+        onSelect={() =>
+          wrapAction(() => {
+            navigate(
+              `/new-prototype?model_id=${prototype.model_id}&prototype_id=${prototype.id}`,
+            )
+          })
+        }
+      >
+        <TbCopy className="size-4" />
+        Copy Prototype
       </MenuItem>
       <MenuItem
         className="cursor-pointer gap-2"
