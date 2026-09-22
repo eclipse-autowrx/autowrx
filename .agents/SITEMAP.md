@@ -118,6 +118,7 @@
 | Change prototype status | Overview → Edit → Status Released | ✅ `prototype-extended.spec.ts` |
 | Run prototype | Execute SDV code | ✅ `prototype-runtime.spec.ts` |
 | Add widget to dashboard | Drag/drop or add widget | ✅ `prototype-dashboard.spec.ts` |
+| Apply dashboard template | Mounted widgets pick up the new config | ✅ `prototype-dashboard-remount.spec.ts` |
 | Share prototype | Share link / permissions | ✅ `prototype-extended.spec.ts` (no share btn visible for admin) |
 | Deploy prototype | Deploy to staging | ❌ |
 | Feedback tab | Submit / view feedback | ✅ `prototype-extended.spec.ts` |

@@ -486,6 +486,35 @@ export async function setPrototypeCodeViaApi(
   }
 }
 
+/**
+ * Seed a prototype's dashboard configuration.
+ *
+ * `extend` is worth passing explicitly: DaDashboard auto-applies the default
+ * dashboard template when `extend` has no `dashboard_template_id` key at all,
+ * which would overwrite the widget config a test just seeded. Passing
+ * `{ dashboard_template_id: null }` records a decision and disables that.
+ */
+export async function setPrototypeDashboardConfigViaApi(
+  page: Page,
+  prototypeId: string,
+  widgetConfig: unknown,
+  extend?: Record<string, unknown>,
+) {
+  const token = await getAuthToken(page);
+  const res = await page.request.patch(`${API_URL}/v2/prototypes/${prototypeId}`, {
+    data: {
+      widget_config: JSON.stringify(widgetConfig),
+      ...(extend ? { extend } : {}),
+    },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(
+      `Failed to update prototype widget config: ${res.status()} ${await res.text()}`,
+    );
+  }
+}
+
 export async function goToPrototypeCodeTab(page: Page, modelId: string, prototypeId: string) {
   const responsePromise = page.waitForResponse(
     (res) =>
@@ -1049,6 +1078,51 @@ export async function deleteModelTemplateViaApi(page: Page, templateId: string):
   });
   if (!res.ok() && res.status() !== 404) {
     throw new Error(`Failed to delete model template: ${res.status()} ${await res.text()}`);
+  }
+}
+
+export async function createDashboardTemplateViaApi(
+  page: Page,
+  payload: {
+    name: string;
+    widget_config: unknown;
+    description?: string;
+    visibility?: 'public' | 'private';
+  },
+): Promise<string> {
+  const token = await getAuthToken(page);
+  const res = await page.request.post(`${API_URL}/v2/system/dashboard-template`, {
+    data: { visibility: 'public', ...payload },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(
+      `Failed to create dashboard template: ${res.status()} ${await res.text()}`,
+    );
+  }
+  const data = await res.json();
+  const templateId = data?.id || data?._id;
+  if (!templateId) {
+    throw new Error(
+      `Create dashboard template response missing id: ${JSON.stringify(data)}`,
+    );
+  }
+  return String(templateId);
+}
+
+export async function deleteDashboardTemplateViaApi(
+  page: Page,
+  templateId: string,
+): Promise<void> {
+  const token = await getAuthToken(page);
+  const res = await page.request.delete(
+    `${API_URL}/v2/system/dashboard-template/${templateId}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (!res.ok() && res.status() !== 404) {
+    throw new Error(
+      `Failed to delete dashboard template: ${res.status()} ${await res.text()}`,
+    );
   }
 }
 

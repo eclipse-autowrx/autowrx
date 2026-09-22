@@ -7,6 +7,7 @@
     "test:auth": "playwright test tests/auth.spec.ts",
     "test:models": "playwright test tests/vehicle-models.spec.ts",
     "test:prototype": "playwright test tests/prototype.spec.ts",
+    "test:prototype-dashboard-remount": "playwright test tests/prototype-dashboard-remount.spec.ts",
     "test:admin": "playwright test tests/admin.spec.ts",
     "test:layout": "playwright test tests/layout.spec.ts",
     "test:site-config": "playwright test tests/site-config-restore-default.spec.ts",
