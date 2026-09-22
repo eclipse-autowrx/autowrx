@@ -110,6 +110,10 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     | undefined
   >(undefined)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
+  // Keyed by builtin tab key (e.g. 'code') or `plug:${pluginSlug}` for custom tabs.
+  const [tabNotifications, setTabNotifications] = useState<
+    Record<string, boolean>
+  >({})
   const [hasWritePermission, isAdmin] = usePermissionHook(
     [PERMISSIONS.WRITE_MODEL, model?.id],
     [PERMISSIONS.MANAGE_USERS],
@@ -324,6 +328,37 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     [model_id, prototype_id, navigate],
   )
 
+  // Callback for plugins to flag a tab with a notification badge without navigating to it.
+  const handleNotifyTab = useCallback(
+    (targetTab: string, targetPluginSlug?: string) => {
+      const key =
+        targetTab === 'plug' && targetPluginSlug
+          ? `plug:${targetPluginSlug}`
+          : targetTab
+      const isActive =
+        targetTab === 'plug'
+          ? tab === 'plug' && pluginId === targetPluginSlug
+          : tab === targetTab
+      if (isActive) return
+      setTabNotifications((prev) =>
+        prev[key] ? prev : { ...prev, [key]: true },
+      )
+    },
+    [tab, pluginId],
+  )
+
+  // Clear a tab's notification badge once the user navigates to it.
+  useEffect(() => {
+    const activeKey = tab === 'plug' && pluginId ? `plug:${pluginId}` : tab
+    if (activeKey && tabNotifications[activeKey]) {
+      setTabNotifications((prev) => {
+        const next = { ...prev }
+        delete next[activeKey]
+        return next
+      })
+    }
+  }, [tab, pluginId, tabNotifications])
+
   const handleAddonSelect = async (plugin: Plugin, label: string) => {
     if (!model_id || !model) {
       toast.error('Model not found')
@@ -432,6 +467,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           pluginSlug={sidebarPlugin}
           isCollapsed={sidebarCollapsed}
           onSetActiveTab={handleSetActiveTab}
+          onNotifyTab={handleNotifyTab}
         />
       )}
 
@@ -454,6 +490,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
               tabs={model?.custom_template?.prototype_tabs}
               tabsVariant={tabsVariant}
               tabsBorderRadius={tabsBorderRadius}
+              tabNotifications={tabNotifications}
             />
           </div>
           {canConfigurePrototypeAddons && (
@@ -587,6 +624,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
                     <PagePrototypePlugin
                       pluginSlug={tabConfig.plugin}
                       onSetActiveTab={handleSetActiveTab}
+                      onNotifyTab={handleNotifyTab}
                     />
                   </div>
                 )
@@ -602,6 +640,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
                 <PagePrototypePlugin
                   pluginSlug={pluginId}
                   onSetActiveTab={handleSetActiveTab}
+                  onNotifyTab={handleNotifyTab}
                 />
               )}
           </div>

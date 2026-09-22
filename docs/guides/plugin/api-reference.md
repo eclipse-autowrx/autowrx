@@ -18,8 +18,9 @@ interface PluginAPI {
   setRuntimeApiValues?: (values: Record<string, any>) => void
   getRuntimeApiValues?: () => Record<string, any>
 
-  // Navigation (1)
+  // Navigation (2)
   setActiveTab?: (tab: string, pluginSlug?: string) => void
+  notifyTab?: (tab: string, pluginSlug?: string) => void
 
   // Wishlist APIs (5)
   createWishlistApi?: (data: ExtendedApiCreate) => Promise<ExtendedApiRet>
@@ -72,6 +73,7 @@ interface PluginAPI {
 | Method | Description | Present when |
 |---|---|---|
 | `setActiveTab(tab, pluginSlug?): void` | Switch the active prototype tab. Built-in tab keys: `view`, `journey`, `code`, `dashboard`, `feedback`, `staging`, `plug`. `pluginSlug` is required when `tab === 'plug'` (activates a custom plugin tab). | the host passes an `onSetActiveTab` handler (typically always) |
+| `notifyTab(tab, pluginSlug?): void` | Mark a tab as having a pending update without navigating to it: a small badge appears on the tab and the host clears it once the user opens that tab. Same tab keys as `setActiveTab`. No-op when the target tab is already active. | the host passes an `onNotifyTab` handler (prototype detail page) |
 
 ## Wishlist APIs (custom/extended vehicle signals)
 

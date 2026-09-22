@@ -16,6 +16,7 @@ interface PrototypeSidebarProps {
   defaultWidthPercent?: number
   minWidthPx?: number
   onSetActiveTab?: (tab: string, pluginSlug?: string) => void
+  onNotifyTab?: (tab: string, pluginSlug?: string) => void
 }
 
 const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
@@ -24,6 +25,7 @@ const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
   defaultWidthPercent = 35,
   minWidthPx = 200,
   onSetActiveTab,
+  onNotifyTab,
 }) => {
   const { showPrototypeDashboardFullScreen } = useSystemUI()
   const [width, setWidth] = useState<number | null>(null)
@@ -109,7 +111,7 @@ const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
         }}
       >
         <div className={isCollapsed ? 'hidden' : 'w-full h-full'}>
-          <PagePrototypePlugin pluginSlug={pluginSlug} onSetActiveTab={onSetActiveTab} />
+          <PagePrototypePlugin pluginSlug={pluginSlug} onSetActiveTab={onSetActiveTab} onNotifyTab={onNotifyTab} />
         </div>
       </div>
 

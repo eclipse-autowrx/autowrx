@@ -26,7 +26,23 @@ interface PrototypeTabsProps {
   tabsVariant?: string
   /** Border radius for tab buttons. Defaults to 'medium'. */
   tabsBorderRadius?: TabsBorderRadius
+  /** Keyed by builtin tab `key` (e.g. 'code') or `plug:${pluginSlug}` for custom tabs. */
+  tabNotifications?: Record<string, boolean>
 }
+
+// Small notification badge rendered next to a tab's label, similar to a mobile
+// app icon badge. Always rendered so the reserved space never changes and the
+// tab does not resize when the host clears it; only the colour is toggled.
+const NotificationBadge: FC<{ visible: boolean }> = ({ visible }) => (
+  <span
+    data-testid="tab-notification-badge"
+    data-visible={visible}
+    className={cn(
+      'ml-1.5 inline-block w-2 h-2 rounded-full shrink-0',
+      visible ? 'bg-primary' : 'bg-transparent',
+    )}
+  />
+)
 
 
 // Default builtin tabs
@@ -70,7 +86,7 @@ export const getTabConfig = (tabs?: any[]): TabConfig[] => {
   return migrateTabConfig(tabs)
 }
 
-const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRadius }) => {
+const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRadius, tabNotifications }) => {
   const { model_id, prototype_id, tab } = useParams()
   const [searchParams] = useSearchParams()
   const variant = tabsVariant || 'tab'
@@ -128,6 +144,7 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRa
             (tab === key)
 
           const icon = renderTabIcon(tabConfig, defaultIcon)
+          const hasNotification = !!tabNotifications?.[key || '']
 
           if (variant !== 'tab') {
             return (
@@ -140,7 +157,7 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRa
                   'da-prototype-tab',
                 )}
               >
-                {icon}{label}
+                {icon}{label}<NotificationBadge visible={hasNotification} />
               </Link>
             )
           }
@@ -153,7 +170,7 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRa
               dataId={dataId}
               className="da-prototype-tab"
             >
-              {icon}{label}
+              {icon}{label}<NotificationBadge visible={hasNotification} />
             </DaTabItem>
           )
         } else {
@@ -161,6 +178,7 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRa
           const isActive = tab === 'plug' && searchParams.get('plugid') === plugin
           const icon = renderTabIcon(tabConfig, null)
           const to = `/model/${model_id}/library/prototype/${prototype_id}/plug?plugid=${plugin}`
+          const hasNotification = !!tabNotifications?.[`plug:${plugin}`]
 
           if (variant !== 'tab') {
             return (
@@ -172,7 +190,7 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRa
                   'da-prototype-tab',
                 )}
               >
-                {icon}{label}
+                {icon}{label}<NotificationBadge visible={hasNotification} />
               </Link>
             )
           }
@@ -184,7 +202,7 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRa
               to={to}
               className="da-prototype-tab"
             >
-              {icon}{label}
+              {icon}{label}<NotificationBadge visible={hasNotification} />
             </DaTabItem>
           )
         }

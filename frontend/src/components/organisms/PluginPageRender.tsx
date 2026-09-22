@@ -43,6 +43,7 @@ interface PluginPageRenderProps {
   plugin_id: string
   data?: any
   onSetActiveTab?: (tab: string, pluginSlug?: string) => void
+  onNotifyTab?: (tab: string, pluginSlug?: string) => void
 }
 
 const GLOBAL_KEY = 'page-plugin'
@@ -59,7 +60,7 @@ const pluginRegistrations = new Map<string, any>()
 /** Map plugin URLs to plugin_ids so we can match registrations even when multiple plugins load simultaneously */
 const urlToPluginId = new Map<string, string>()
 
-const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, onSetActiveTab }) => {
+const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, onSetActiveTab, onNotifyTab }) => {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const injectedScriptRef = useRef<HTMLScriptElement | null>(null)
   const loadIdRef = useRef(0)
@@ -614,6 +615,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
 
     // Navigation
     setActiveTab: onSetActiveTab ? handleSetActiveTab : undefined,
+    notifyTab: onNotifyTab,
 
     // Wishlist API operations
     createWishlistApi: handleCreateWishlistApi,

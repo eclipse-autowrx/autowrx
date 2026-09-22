@@ -147,6 +147,23 @@ export interface PluginAPI {
    */
   setActiveTab?: (tab: string, pluginSlug?: string) => void
 
+  /**
+   * Mark a prototype tab as having a pending update, without navigating to it.
+   * Shows a small notification badge on the tab (like a mobile app icon badge);
+   * the host clears it automatically once the user opens that tab. No-op if the
+   * target tab is already the active one.
+   * @param tab Built-in tab key ('view', 'journey', 'code', 'dashboard') or 'plug' for custom plugin tabs
+   * @param pluginSlug Required when tab is 'plug' — the plugin slug to flag
+   *
+   * @example
+   * // Flag the code tab without switching to it
+   * api.notifyTab?.('code')
+   *
+   * // Flag a custom plugin tab
+   * api.notifyTab?.('plug', 'my-plugin-slug')
+   */
+  notifyTab?: (tab: string, pluginSlug?: string) => void
+
   // ========================================
   // Wishlist API Operations (Custom/Extended APIs)
   // ========================================

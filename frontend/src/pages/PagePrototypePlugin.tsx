@@ -18,9 +18,10 @@ import { useUsedVehicleApis } from '@/hooks/useUsedVehicleApis'
 interface PagePrototypePluginProps {
   pluginSlug?: string // If provided, use this instead of reading from URL
   onSetActiveTab?: (tab: string, pluginSlug?: string) => void
+  onNotifyTab?: (tab: string, pluginSlug?: string) => void
 }
 
-const PagePrototypePlugin: FC<PagePrototypePluginProps> = ({ pluginSlug, onSetActiveTab }) => {
+const PagePrototypePlugin: FC<PagePrototypePluginProps> = ({ pluginSlug, onSetActiveTab, onNotifyTab }) => {
   const { data: model, isLoading: isModelLoading } = useCurrentModel()
   const { data: prototype, isLoading: isPrototypeLoading } = useCurrentPrototype()
   const [searchParams] = useSearchParams()
@@ -81,6 +82,7 @@ const PagePrototypePlugin: FC<PagePrototypePluginProps> = ({ pluginSlug, onSetAc
           prototype: prototypeWithApis,
         }}
         onSetActiveTab={onSetActiveTab}
+        onNotifyTab={onNotifyTab}
       />
     </div>
   )
