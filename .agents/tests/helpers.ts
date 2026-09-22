@@ -1085,11 +1085,37 @@ export async function createTestPrototypeViaApi(
   return { prototypeId, protoName: opts.name };
 }
 
+export async function updatePrototypeViaApi(
+  page: Page,
+  prototypeId: string,
+  data: Record<string, unknown>,
+  auth?: AuthCredentials,
+): Promise<void> {
+  const token = auth
+    ? await getTokenForUser(page, auth.email, auth.password)
+    : await getAuthToken(page);
+  const res = await page.request.patch(`${API_URL}/v2/prototypes/${prototypeId}`, {
+    data,
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to update prototype: ${res.status()} ${await res.text()}`);
+  }
+}
+
 export async function getPrototypeViaApi(
   page: Page,
   prototypeId: string,
   auth?: AuthCredentials,
-): Promise<{ id: string; code?: string; name?: string }> {
+): Promise<{
+  id: string;
+  code?: string;
+  name?: string;
+  model_id?: string;
+  widget_config?: string;
+  image_file?: string;
+  extend?: Record<string, unknown>;
+}> {
   const token = auth
     ? await getTokenForUser(page, auth.email, auth.password)
     : await getAuthToken(page);
@@ -1104,6 +1130,10 @@ export async function getPrototypeViaApi(
     id: String(data?.id || data?._id || prototypeId),
     code: data?.code,
     name: data?.name,
+    model_id: data?.model_id,
+    widget_config: data?.widget_config,
+    image_file: data?.image_file,
+    extend: data?.extend,
   };
 }
 
