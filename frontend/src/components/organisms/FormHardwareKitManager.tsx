@@ -18,6 +18,7 @@ import { Button } from '@/components/atoms/button'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import CodeEditor from '@/components/molecules/CodeEditor'
 import DaRuntimeConnector from '@/components/molecules/DaRuntimeConnector'
+import { toast } from 'react-toastify'
 
 interface iPropTabConfig {
     hidden?: boolean
@@ -251,6 +252,7 @@ const FormHardwareKitManager = ({
                     onActiveRtChanged={() => { }}
                     onLoadedMockSignals={() => { }}
                     onNewLog={() => { }}
+                    onError={(error: string) => { toast.error(error) }}
                     onAppRunningStateChanged={() => { }}
                     onRuntimeInfoReceived={() => { }}
                     onReadFileResponse={onReadFileResponse}
