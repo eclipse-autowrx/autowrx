@@ -1418,6 +1418,7 @@ const FileTree: React.FC<FileTreeProps> = ({
           {!(renamingItem && renamingItem.path === itemPath) && (
             <div
               key={item.name}
+              data-testid={`file-tree-item-${itemPath}`}
               className={`
                 flex items-center px-2 py-1 text-sm cursor-pointer hover:bg-gray-100 group
                 ${isActive ? 'bg-blue-100 text-blue-900' : 'text-gray-700'}

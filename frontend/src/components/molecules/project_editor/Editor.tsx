@@ -505,6 +505,8 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
                 <div
                   key={openFilePath}
                   ref={isActive ? activeTabRef : null}
+                  data-testid={`editor-tab-${openFilePath}`}
+                  data-active={isActive}
                   onClick={() => onSelectFile(openFile)}
                   className={`
                     flex items-center justify-between px-2 py-2 text-sm cursor-pointer border-r border-gray-200 max-w-[200px] shrink-0
@@ -598,7 +600,10 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
           // Markdown is documentation, so render it instead of showing source.
           // The wrapper owns the scroll: long documents would otherwise overflow
           // the fixed-height editor pane with no way to reach the rest.
-          <div className="h-full overflow-y-auto px-10 py-8">
+          <div
+            data-testid="markdown-viewer"
+            className="h-full overflow-y-auto px-10 py-8"
+          >
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={privacyMarkdownComponents}
