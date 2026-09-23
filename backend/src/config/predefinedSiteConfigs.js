@@ -97,6 +97,15 @@ const PREDEFINED_SITE_CONFIGS = [
     description: 'Custom JSON options passed to the Socket.IO client when connecting to the runtime server.',
   },
   {
+    key: 'ALLOW_ADDING_FILES',
+    scope: 'site',
+    value: false,
+    secret: false,
+    valueType: 'boolean',
+    description: 'Allow adding, renaming and deleting files in the Prototype Code tab project editor.',
+    category: 'model_prototype',
+  },
+  {
     key: 'DEFAULT_MARKETPLACE_URL',
     scope: 'site',
     value: 'https://marketplace.digitalauto.tech',

@@ -28,6 +28,7 @@ import {
   VscCloudUpload,
 } from 'react-icons/vsc'
 import { TbLayoutSidebar, TbLayoutSidebarFilled } from 'react-icons/tb'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 interface ProjectEditorProps {
   data: string
@@ -36,13 +37,15 @@ interface ProjectEditorProps {
   prototypeName?: string
 }
 
-/** Collect all file paths from root-level fsData (used when syncing from data prop). */
-function collectAllFilePathsFromRoot(rootItems: FileSystemItem[]): Set<string> {
-  const out = new Set<string>()
+/** Index every file in root-level fsData by the same path used by FileTree. */
+function collectFilesByPathFromRoot(
+  rootItems: FileSystemItem[],
+): Map<string, File> {
+  const out = new Map<string, File>()
   function walk(items: FileSystemItem[], basePath: string) {
     items.forEach((item) => {
       const path = basePath ? `${basePath}/${item.name}` : item.name
-      if (item.type === 'file') out.add(path)
+      if (item.type === 'file') out.set(path, { ...item, path })
       else if (item.type === 'folder') walk(item.items, path)
     })
   }
@@ -112,6 +115,10 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
   const fsDataRef = useRef<FileSystemItem[]>(fsData)
   const pendingChangesRef = useRef<Map<string, string>>(pendingChanges)
   const unsavedFilesRef = useRef<Set<string>>(unsavedFiles)
+
+  // When disabled the project structure is fixed: the file tree is read-only and
+  // the create/import toolbar is hidden.
+  const allowAddingFiles = useSiteConfig('ALLOW_ADDING_FILES', false)
 
   // Update refs whenever state changes
   useEffect(() => {
@@ -536,19 +543,41 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
       setFsData(parsed)
 
-      // Reconcile open tabs and active file: only keep paths that still exist in new data
-      const validPaths = collectAllFilePathsFromRoot(parsed)
-      setOpenFiles((prev) => prev.filter((f) => validPaths.has(f.path || f.name)))
+      // Reconcile open tabs and active file: drop paths that no longer exist and
+      // adopt the incoming content for the ones that do — an external write (AI,
+      // plugin, another tab) would otherwise leave open tabs showing stale text.
+      const filesByPath = collectFilesByPathFromRoot(parsed)
+      const refresh = (f: File): File => {
+        const incoming = filesByPath.get(f.path || f.name)
+        return incoming ? { ...f, content: incoming.content } : f
+      }
+      setOpenFiles((prev) =>
+        prev.filter((f) => filesByPath.has(f.path || f.name)).map(refresh),
+      )
       setActiveFile((prev) => {
         if (!prev) return null
-        if (validPaths.has(prev.path || prev.name)) return prev
-        const remaining = openFiles.filter((f) => validPaths.has(f.path || f.name))
+        if (filesByPath.has(prev.path || prev.name)) return refresh(prev)
+        const remaining = openFiles
+          .filter((f) => filesByPath.has(f.path || f.name))
+          .map(refresh)
         return remaining[0] || null
       })
     } catch {
       // Invalid JSON, keep current state
     }
   }, [data])
+
+  // Open app_logic.py on first load: it is the entry point of every generated
+  // project, so landing on the empty Introduction screen is never what the user
+  // wants. Only applies while nothing else is open.
+  useEffect(() => {
+    if (activeFile || openFiles.length > 0 || fsData.length === 0) return
+    const defaultFile = collectFilesByPathFromRoot(fsData).get('app_logic.py')
+    if (defaultFile) {
+      setOpenFiles([defaultFile])
+      setActiveFile(defaultFile)
+    }
+  }, [fsData, activeFile, openFiles.length])
 
   const toggleCollapse = useCallback(() => {
     setIsCollapsed((prev) => !prev)
@@ -1974,34 +2003,38 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 {projectName.toUpperCase()}
               </span>
               <div className="flex items-center space-x-1">
-                <button
-                  onClick={() => handleAddItemToRoot('file')}
-                  title="New File"
-                  className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  <VscNewFile size={16} />
-                </button>
-                <button
-                  onClick={() => handleAddItemToRoot('folder')}
-                  title="New Folder"
-                  className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  <VscNewFolder size={16} />
-                </button>
-                <button
-                  onClick={handleExport}
-                  title="Download Project as ZIP"
-                  className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  <VscCloudDownload size={16} />
-                </button>
-                <button
-                  onClick={triggerImport}
-                  title="Import Project from ZIP"
-                  className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  <VscCloudUpload size={16} />
-                </button>
+                {allowAddingFiles && (
+                  <>
+                    <button
+                      onClick={() => handleAddItemToRoot('file')}
+                      title="New File"
+                      className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      <VscNewFile size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleAddItemToRoot('folder')}
+                      title="New Folder"
+                      className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      <VscNewFolder size={16} />
+                    </button>
+                    <button
+                      onClick={handleExport}
+                      title="Download Project as ZIP"
+                      className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      <VscCloudDownload size={16} />
+                    </button>
+                    <button
+                      onClick={triggerImport}
+                      title="Import Project from ZIP"
+                      className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      <VscCloudUpload size={16} />
+                    </button>
+                  </>
+                )}
                 {/* <button
                   onClick={handleRefresh}
                   title="Refresh"
@@ -2072,6 +2105,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 onDropFiles={handleDropFiles}
                 allCollapsed={allCollapsed}
                 activeFile={activeFile}
+                allowAddingFiles={allowAddingFiles}
               />
             </div>
           </div>
@@ -2103,6 +2137,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           unsavedFiles={unsavedFiles}
           onSave={saveFile}
           onSaveAll={saveAllFiles}
+          allowAddingFiles={allowAddingFiles}
           onCreateFile={() => handleAddItemToRoot('file')}
           onCreateFolder={() => handleAddItemToRoot('folder')}
           onSelectFirstFile={() => {

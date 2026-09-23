@@ -55,6 +55,8 @@ interface FileTreeProps {
   onDropFiles: (files: FileList, target: Folder) => void
   allCollapsed: boolean
   activeFile: File | null
+  /** When false the tree is read-only: no context menus, no drag & drop, no create/rename/delete. */
+  allowAddingFiles: boolean
 }
 
 const FileTree: React.FC<FileTreeProps> = ({
@@ -69,6 +71,7 @@ const FileTree: React.FC<FileTreeProps> = ({
   onDropFiles,
   allCollapsed,
   activeFile,
+  allowAddingFiles,
 }) => {
   const [expandedFolders, setExpandedFolders] = useState<string[]>([])
   const [openDropdown, setOpenDropdown] = useState<{
@@ -1415,6 +1418,7 @@ const FileTree: React.FC<FileTreeProps> = ({
           {!(renamingItem && renamingItem.path === itemPath) && (
             <div
               key={item.name}
+              data-testid={`file-tree-item-${itemPath}`}
               className={`
                 flex items-center px-2 py-1 text-sm cursor-pointer hover:bg-gray-100 group
                 ${isActive ? 'bg-blue-100 text-blue-900' : 'text-gray-700'}
@@ -1423,28 +1427,40 @@ const FileTree: React.FC<FileTreeProps> = ({
               `}
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
               onClick={() => onFileSelect({ ...item, path: itemPath })}
-              onContextMenu={(e) => handleContextMenu(e, item, itemPath)}
-              draggable
-              onDragStart={() => handleItemDragStart(item, itemPath)}
+              onContextMenu={
+                allowAddingFiles
+                  ? (e) => handleContextMenu(e, item, itemPath)
+                  : undefined
+              }
+              draggable={allowAddingFiles}
+              onDragStart={
+                allowAddingFiles
+                  ? () => handleItemDragStart(item, itemPath)
+                  : undefined
+              }
               onDragOver={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
               }}
-              onDrop={(e) => handleDrop(e, undefined)}
+              onDrop={
+                allowAddingFiles ? (e) => handleDrop(e, undefined) : undefined
+              }
             >
               {getFileIcon(item.name)}
               <span className="truncate">{item.name}</span>
 
               {/* Context menu button */}
-              <button
-                className="ml-auto opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-opacity"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleContextMenu(e, item, itemPath)
-                }}
-              >
-                <VscKebabVertical size={14} />
-              </button>
+              {allowAddingFiles && (
+                <button
+                  className="ml-auto opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleContextMenu(e, item, itemPath)
+                  }}
+                >
+                  <VscKebabVertical size={14} />
+                </button>
+              )}
             </div>
           )}
 
@@ -1503,14 +1519,28 @@ const FileTree: React.FC<FileTreeProps> = ({
               `}
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
               onClick={() => toggleFolder(itemPath)}
-              onContextMenu={(e) => handleContextMenu(e, item, itemPath)}
-              onDragOver={(e) => handleFolderDragOver(e, itemPath)} // Use path instead of name
-              onDragLeave={handleFolderDragLeave}
-              onDrop={(e) =>
-                handleDrop(e, { ...item, path: itemPath } as Folder)
+              onContextMenu={
+                allowAddingFiles
+                  ? (e) => handleContextMenu(e, item, itemPath)
+                  : undefined
               }
-              draggable
-              onDragStart={() => handleItemDragStart(item, itemPath)}
+              onDragOver={
+                allowAddingFiles
+                  ? (e) => handleFolderDragOver(e, itemPath) // Use path instead of name
+                  : undefined
+              }
+              onDragLeave={allowAddingFiles ? handleFolderDragLeave : undefined}
+              onDrop={
+                allowAddingFiles
+                  ? (e) => handleDrop(e, { ...item, path: itemPath } as Folder)
+                  : undefined
+              }
+              draggable={allowAddingFiles}
+              onDragStart={
+                allowAddingFiles
+                  ? () => handleItemDragStart(item, itemPath)
+                  : undefined
+              }
             >
               <button
                 className="mr-1 p-0.5 hover:bg-gray-200 rounded transition-colors"
@@ -1528,15 +1558,17 @@ const FileTree: React.FC<FileTreeProps> = ({
               <span className="truncate">{item.name}</span>
 
               {/* Context menu button */}
-              <button
-                className="ml-auto opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-opacity"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleContextMenu(e, item, itemPath)
-                }}
-              >
-                <VscKebabVertical size={14} />
-              </button>
+              {allowAddingFiles && (
+                <button
+                  className="ml-auto opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleContextMenu(e, item, itemPath)
+                  }}
+                >
+                  <VscKebabVertical size={14} />
+                </button>
+              )}
             </div>
           )}
 
@@ -1648,7 +1680,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       onContextMenu={(e) => {
         // Prevent browser context menu and show root menu for any uncaught right-clicks
         e.preventDefault()
-        handleRootContextMenu(e)
+        if (allowAddingFiles) handleRootContextMenu(e)
       }}
     >
       {/* Top upload button */}
@@ -1672,14 +1704,17 @@ const FileTree: React.FC<FileTreeProps> = ({
           }`}
         onContextMenu={(e) => {
           // Only show root menu if clicking on empty space (not on a file/folder)
-          if (e.target === e.currentTarget) {
+          if (allowAddingFiles && e.target === e.currentTarget) {
             handleRootContextMenu(e)
           }
         }}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={(e) =>
-          handleDrop(e, { type: 'folder', name: 'root', items: items })
+        onDragOver={allowAddingFiles ? handleDragOver : undefined}
+        onDragLeave={allowAddingFiles ? handleDragLeave : undefined}
+        onDrop={
+          allowAddingFiles
+            ? (e) =>
+                handleDrop(e, { type: 'folder', name: 'root', items: items })
+            : undefined
         }
       >
         {sortItems(items).map((item) => (
