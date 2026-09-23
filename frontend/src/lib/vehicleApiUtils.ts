@@ -6,19 +6,29 @@
 //
 // SPDX-License-Identifier: MIT
 
-export const filterAndCompareVehicleApis = (
-  code: string,
-  activeModelApis: any,
-) => {
-  if (!code) {
-    return { apisInCodeOnly: [], apisInModel: [], apisNotInModel: [] }
-  }
+import type {
+  File,
+  FileSystemItem,
+  Folder,
+} from '@/components/molecules/project_editor/types'
+
+const parseVehicleApis = (code: string) => {
+  // Filter out comments and log statements: neither describes a signal the
+  // prototype actually uses, and a signal name quoted in a LOGGER call would
+  // otherwise be reported as used.
+  code = code
+    .split('\n')
+    .filter((line) => !line.trim().startsWith('#'))
+    .filter((line) => !line.includes('LOGGER'))
+    .join('\n')
 
   // Replace all sequences of whitespace with a single space
   code = code.replace(/\s+/g, ' ').trim()
 
-  // Capture Vehicle APIs while allowing spaces and line breaks around dots
-  const vehicleApiPattern = /\bVehicle(?:\s*\.\s*[A-Za-z0-9_]+)+/g
+  // Capture Vehicle APIs while allowing spaces and line breaks around dots.
+  // Lowercase `vehicle` is accepted because app templates bind the tree to a
+  // lowercase local name.
+  const vehicleApiPattern = /\b[Vv]ehicle(?:\s*\.\s*[A-Za-z0-9_]+)+/g
   const vehicleApisInCode = code.match(vehicleApiPattern) || []
 
   const methodNames = ['get', 'set', 'subscribe', 'set_many', 'add', 'apply']
@@ -38,12 +48,65 @@ export const filterAndCompareVehicleApis = (
         return null
       }
 
-      return filteredParts.join('.')
+      const reconstructedApi = filteredParts.join('.')
+
+      // Capitalize the first letter, in case the signal started with a
+      // lowercase 'vehicle' — model API names are always capitalized.
+      return reconstructedApi.charAt(0).toUpperCase() + reconstructedApi.slice(1)
     })
     .filter((api) => api !== null)
 
-  const normalizedApis = [...new Set(processedApis)]
-  const filteredApis = normalizedApis.filter((api) => api !== 'Vehicle')
+  return processedApis.filter((api) => api !== 'Vehicle')
+}
+
+const getChildren = (folder: Folder): File[] => {
+  const children: File[] = []
+
+  for (const item of folder.items) {
+    if (item.type === 'file') {
+      children.push(item)
+    } else if (item.type === 'folder') {
+      children.push(...getChildren(item))
+    }
+  }
+
+  return children
+}
+
+export const filterAndCompareVehicleApis = (
+  code: string,
+  activeModelApis: any,
+) => {
+  if (!code) {
+    return { apisInCodeOnly: [], apisInModel: [], apisNotInModel: [] }
+  }
+
+  // `code` is either a multi-file project (JSON array) or a single source file.
+  let files: File[] = []
+  try {
+    const parsed: FileSystemItem[] = JSON.parse(code)
+    if (!Array.isArray(parsed)) throw new Error('not a project')
+    for (const item of parsed) {
+      if (item.type === 'folder') {
+        files.push(...getChildren(item))
+      } else {
+        files.push(item)
+      }
+    }
+  } catch {
+    files = [{ type: 'file', name: 'code.py', content: code }]
+  }
+
+  // Markdown holds documentation, not code — signal names mentioned in prose
+  // must not count as used.
+  files = files.filter((file) => !file.name.endsWith('.md'))
+
+  const parsedApis: string[] = []
+  for (const file of files) {
+    parsedApis.push(...parseVehicleApis(file.content || ''))
+  }
+
+  const filteredApis = [...new Set(parsedApis)]
 
   const apisInModel: string[] = []
   const apisNotInModel: string[] = []
