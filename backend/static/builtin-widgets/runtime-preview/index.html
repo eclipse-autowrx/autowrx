@@ -179,6 +179,9 @@
     const FAST_PROBE_WINDOW = 20000
 
     let runtimeMappings = DEFAULT_MAPPINGS
+    // When true the preview shows app-core's built-in default route instead of
+    // the UI the running application generates.
+    let showDefaultUi = false
     let currentRuntimeName = null
     let lastPreviewUrl = null
     // JWT access token from parent — iframe.src cannot set Authorization
@@ -193,6 +196,12 @@
       if (options && Array.isArray(options.runtimeMappings) && options.runtimeMappings.length > 0) {
         runtimeMappings = options.runtimeMappings
       }
+      if (options && typeof options.showDefaultUi === 'boolean') {
+        showDefaultUi = options.showDefaultUi
+      }
+      // Widget options can arrive after runtime-info, so rebuild the preview in
+      // case runtimeMappings/showDefaultUi changed where it should point.
+      if (currentRuntimeName) applyPreview(currentRuntimeName)
     }
 
     function el(id) {
@@ -305,10 +314,19 @@
       tick()
     }
 
-    function applyRuntimeName(name) {
-      if (name === currentRuntimeName) return
-      currentRuntimeName = name
+    function computePreviewPath(name) {
+      const match = runtimeMappings.find(function (m) {
+        return name.endsWith(m.suffix) || name === m.suffix
+      })
 
+      const basePath = match ? match.path : '/runtime-preview/' + name.replace(/runtime-/i, '')
+      // app-core's ApplicationRuntime.mount() always registers a fixed default
+      // route alongside the base path, so Default UI is reached by appending
+      // /default.
+      return showDefaultUi ? basePath.replace(/\/+$/, '') + '/default' : basePath
+    }
+
+    function applyPreview(name) {
       if (!name) {
         stopProbing()
         lastPreviewUrl = null
@@ -317,14 +335,15 @@
         return
       }
 
-      const match = runtimeMappings.find(function (m) {
-        return name.endsWith(m.suffix) || name === m.suffix
-      })
-
-      const previewPath = match ? match.path : '/runtime-preview/' + name.replace(/runtime-/i, '')
-      lastPreviewUrl = buildPreviewUrl(previewPath)
+      lastPreviewUrl = buildPreviewUrl(computePreviewPath(name))
 
       startProbing()
+    }
+
+    function applyRuntimeName(name) {
+      if (name === currentRuntimeName) return
+      currentRuntimeName = name
+      applyPreview(name)
     }
 
     function onAppRunningStateChanged(running) {
