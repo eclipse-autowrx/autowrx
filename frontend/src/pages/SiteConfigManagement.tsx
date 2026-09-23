@@ -103,6 +103,16 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     description: 'Custom JSON options passed to the Socket.IO client when connecting to the runtime server. Example: {"transports":["websocket"],"reconnectionAttempts":5}. Leave empty to use default Socket.IO options.',
   },
   {
+    key: 'ALLOW_ADDING_FILES',
+    scope: 'site',
+    value: false,
+    secret: false,
+    valueType: 'boolean',
+    description:
+      'Allow adding, renaming and deleting files in the Prototype Code tab project editor. When disabled, the file tree is read-only and the project structure is fixed.',
+    category: 'model_prototype',
+  },
+  {
     key: 'DEFAULT_MARKETPLACE_URL',
     scope: 'site',
     value: 'https://marketplace.digitalauto.tech',

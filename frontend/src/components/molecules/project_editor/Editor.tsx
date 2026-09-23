@@ -12,6 +12,9 @@ import { File } from './types'
 import Introduction from './Introduction'
 import { VscSave, VscSaveAll, VscChevronLeft, VscChevronRight } from 'react-icons/vsc'
 import { TbX } from 'react-icons/tb'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import privacyMarkdownComponents from '@/lib/privacyMarkdownComponents'
 
 interface EditorComponentProps {
   file: File | null
@@ -26,6 +29,7 @@ interface EditorComponentProps {
   onCreateFile?: () => void
   onCreateFolder?: () => void
   onSelectFirstFile?: () => void
+  allowAddingFiles?: boolean
 }
 
 const EditorComponent: React.FC<EditorComponentProps> = ({
@@ -41,6 +45,7 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
   onCreateFile,
   onCreateFolder,
   onSelectFirstFile,
+  allowAddingFiles,
 }) => {
   const tabsContainerRef = useRef<HTMLDivElement>(null)
   const activeTabRef = useRef<HTMLDivElement>(null)
@@ -462,6 +467,7 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
         onCreateFile={onCreateFile}
         onCreateFolder={onCreateFolder}
         onSelectFirstFile={onSelectFirstFile}
+        allowAddingFiles={allowAddingFiles}
       />
     )
   }
@@ -588,6 +594,18 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
               This is a binary file.
             </div>
           )
+        ) : file.name.endsWith('.md') ? (
+          // Markdown is documentation, so render it instead of showing source.
+          // The wrapper owns the scroll: long documents would otherwise overflow
+          // the fixed-height editor pane with no way to reach the rest.
+          <div className="h-full overflow-y-auto px-10 py-8">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={privacyMarkdownComponents}
+            >
+              {file.content}
+            </ReactMarkdown>
+          </div>
         ) : (
           <Editor
             height="100%"

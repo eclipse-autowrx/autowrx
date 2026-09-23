@@ -12,10 +12,12 @@ const Introduction = ({
   onCreateFile,
   onCreateFolder,
   onSelectFirstFile,
+  allowAddingFiles,
 }: {
   onCreateFile?: () => void
   onCreateFolder?: () => void
   onSelectFirstFile?: () => void
+  allowAddingFiles?: boolean
 }) => {
   return (
     <div className="p-10 text-gray-800 text-center h-full flex flex-col justify-center items-center bg-white">
@@ -38,6 +40,7 @@ const Introduction = ({
             Choose a file from the explorer
           </li>
           <li
+            hidden={!allowAddingFiles}
             className="text-sm flex items-center text-gray-600 hover:text-gray-800 transition-colors cursor-pointer hover:bg-gray-50 p-2 rounded"
             onClick={onCreateFile}
           >
@@ -45,6 +48,7 @@ const Introduction = ({
             Create a new file
           </li>
           <li
+            hidden={!allowAddingFiles}
             className="text-sm flex items-center text-gray-600 hover:text-gray-800 transition-colors cursor-pointer hover:bg-gray-50 p-2 rounded"
             onClick={onCreateFolder}
           >
