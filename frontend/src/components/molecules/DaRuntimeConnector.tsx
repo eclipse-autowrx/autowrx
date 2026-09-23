@@ -37,6 +37,8 @@ interface KitConnectProps {
   onActiveRtChanged?: (newActiveKitId: string | undefined) => void
   onLoadedMockSignals?: (signals: []) => void
   onNewLog?: (log: string) => void
+  /** Runtime-side failures worth surfacing to the user (e.g. a failed read-file). */
+  onError?: (error: string, rtId?: string) => void
   onAppExit?: (code: any) => void
   onAppRunningStateChanged?: (isRunning: boolean) => void
   onRuntimeInfoReceived?: (payload: any) => void
@@ -60,6 +62,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       onActiveRtChanged,
       onLoadedMockSignals,
       onNewLog,
+      onError,
       onAppRunningStateChanged,
       onRuntimeInfoReceived,
       onDeployResponse,
@@ -713,9 +716,14 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         onRuntimeStateResponse(payload)
       }
 
-      if (payload.cmd === 'read-file' && onReadFileResponse) {
+      if (payload.cmd === 'read-file') {
         const reply = parseReadFileReply(payload)
-        if (reply && !reply.hasError) {
+        if (reply?.hasError) {
+          onError?.(
+            `READ_FILE ERROR: ${reply.error}`,
+            payload.kit_id || activeRtIdRef.current,
+          )
+        } else if (reply && onReadFileResponse) {
           onReadFileResponse(reply.filePath, reply.content)
         }
       }
