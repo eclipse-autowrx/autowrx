@@ -119,6 +119,7 @@
 | Sequential tab navigation | Navigate all tabs in order | ✅ `prototype-tabs.spec.ts` |
 | Change prototype status | Overview → Edit → Status Released | ✅ `prototype-extended.spec.ts` |
 | Run prototype | Execute SDV code | ✅ `prototype-runtime.spec.ts` |
+| Runtime panel plugin | `custom_template.prototype_runtime_plugin` replaces the built-in Runtime Control Panel; runtime bridge (state, widget writes) | 🚧 `prototype-runtime-plugin.spec.ts` (written, not yet run) |
 | Add widget to dashboard | Drag/drop or add widget | ✅ `prototype-dashboard.spec.ts` |
 | Apply dashboard template | Mounted widgets pick up the new config | ✅ `prototype-dashboard-remount.spec.ts` |
 | Share prototype | Share link / permissions | ✅ `prototype-extended.spec.ts` (no share btn visible for admin) |

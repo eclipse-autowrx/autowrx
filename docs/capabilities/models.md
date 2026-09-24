@@ -225,13 +225,13 @@ Model owners (customize the workspace); end users (tailored model views); admins
 
 - When an **owner** configures tabs (add/reorder/hide) and saves at the Model detail (`/model/:id`), the layout persists on the model and renders for everyone viewing it.
 - When an **owner** adds a plugin addon tab at the Model detail (`/model/:id`), it renders in the workspace; when they reorder or hide tabs, the new order/visibility persists.
-- When an **owner** sets a sidebar plugin or right-nav buttons at the Model detail (`/model/:id`), they render accordingly.
+- When an **owner** sets a sidebar plugin, a runtime panel plugin or right-nav buttons at the Model detail (`/model/:id`), they render accordingly (a runtime panel plugin replaces the built-in Runtime Control Panel).
 - When a **user** who is a non-admin tries to configure addon tabs/plugins at the Model detail (`/model/:id`) with addon configuration by non-admins disabled, they're prevented from configuring addon tabs/plugins.
 - When an **admin** chooses "Save as Template" at the Model detail (`/model/:id`), the layout is stored as a Model Template for reuse.
 
 ### API contract
 
-- Tab configuration I save is stored on the model as `model_tabs`, `prototype_tabs`, `prototype_sidebar_plugin`, `prototype_right_nav_buttons`.
+- Tab configuration I save is stored on the model as `model_tabs`, `prototype_tabs`, `prototype_sidebar_plugin`, `prototype_runtime_plugin`, `prototype_right_nav_buttons`.
 - Managing addon/tab configuration requires `WRITE_MODEL` + `ENABLE_MODEL_CUSTOMIZATION` (admins always allowed).
 - Admin "Save as Template" stores the layout as a Model Template.
 
@@ -244,6 +244,7 @@ flowchart TD
     O([Model owner]) -->|configure tabs| T["model.custom_template"]
     T --> Tabs["model_tabs · prototype_tabs"]
     T --> Side["prototype_sidebar_plugin"]
+    T --> Rt["prototype_runtime_plugin"]
     T --> Nav["prototype_right_nav_buttons"]
     Tabs -->|renders| PR["PluginPageRender (unsandboxed)"]
     O -->|"Save as Template"| MT["Model Template (admin)"]
@@ -273,7 +274,7 @@ N/A
 ### AutoWRX data
 Layout config stored on the model document; no secrets.
 **Coverage:**
-- **Stored data:** `model.custom_template` (`model_tabs`, `prototype_tabs`, `prototype_sidebar_plugin`, `prototype_right_nav_buttons`) on the model doc.
+- **Stored data:** `model.custom_template` (`model_tabs`, `prototype_tabs`, `prototype_sidebar_plugin`, `prototype_runtime_plugin`, `prototype_right_nav_buttons`) on the model doc.
 - **Retention:** follows the model (hard-deleted with it).
 - **Encryption:** none beyond Mongo defaults / TLS in transit.
 - **Logging:** request logs; no sensitive data.

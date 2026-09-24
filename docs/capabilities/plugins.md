@@ -425,7 +425,7 @@ Static sample assets.
 
 ### Description
 
-As a model owner (or admin), I can add a plugin as a custom tab, reorder/edit/hide tabs, set a variant, configure a sidebar plugin and right-nav action buttons (including the built-in Staging), and choose the open mode (dialog/page), so that I can customize the workspace for my model.
+As a model owner (or admin), I can add a plugin as a custom tab, reorder/edit/hide tabs, set a variant, configure a sidebar plugin, a runtime panel plugin (replacing the built-in Runtime Control Panel) and right-nav action buttons (including the built-in Staging), and choose the open mode (dialog/page), so that I can customize the workspace for my model.
 
 ### Who uses it / value
 
@@ -437,11 +437,13 @@ Model owners (customize workspace); admins.
 - When a **user** without permission to manage addons opens the tab editor at **Addon select dialog (`/model/:id`)**, the tab editor is unavailable to them; **admins** can always manage tabs.
 - When an **owner** saves their tab layout at **Addon select dialog (`/model/:id`)**, the configuration persists on the model and the workspace reflects their changes on the next open.
 - When an **owner** adds an addon tab at **Addon select dialog (`/model/:id`)**, it renders the referenced plugin in the workspace.
+- When an **owner** sets a runtime panel plugin in the "Side Panels" section, the prototype Code and Dashboard tabs render that plugin instead of the built-in Runtime Control Panel; removing it restores the built-in panel.
 
 ### API contract
 
 - Tab management requires `WRITE_MODEL` + `ENABLE_MODEL_CUSTOMIZATION` (admins always allowed).
-- Saving stores the tab config on `model.custom_template` (`model_tabs`/`prototype_tabs`/`prototype_sidebar_plugin`/`prototype_right_nav_buttons`).
+- Saving stores the tab config on `model.custom_template` (`model_tabs`/`prototype_tabs`/`prototype_sidebar_plugin`/`prototype_runtime_plugin`/`prototype_right_nav_buttons`).
+- A runtime panel plugin gets the runtime bridge on `PluginAPI` (`setRuntimeState`, `getRuntimeState`, `onWidgetSignalWrite`, `notifyWidgets`, `reportPrototypeRun`) and `data.currentUser` (`id`, `name`) + `data.canRun`.
 
 ### Quality control
 
@@ -455,6 +457,7 @@ sequenceDiagram
     O->>M: WRITE_MODEL + ENABLE_MODEL_CUSTOMIZATION
     M->>P: model_tabs / prototype_tabs
     M->>P: prototype_sidebar_plugin
+    M->>P: prototype_runtime_plugin
     M->>P: prototype_right_nav_buttons
     P-->>O: renders plugin (unsandboxed)
 ```
@@ -472,20 +475,19 @@ sequenceDiagram
 
 **Risks:**
 - **Malicious tab injection:** a non-admin bypassing `ENABLE_MODEL_CUSTOMIZATION` could inject a hostile plugin tab into every visitor's view, running arbitrary unsandboxed code (XSS / token theft) across the whole model audience. *Mitigation:* `WRITE_MODEL` + addon flag gate enforced; audit flag default and enforce plugin allowlists.
-- **Sidebar/right-nav persistence:** sidebar and right-nav buttons are always-visible surfaces; a malicious plugin placed there executes on every model open, not just when a tab is activated. *Mitigation:* none currently — plugins run unsandboxed by design; only install trusted plugins, and don't pass tokens/PII into PluginAPI/config/data.
+- **Sidebar/runtime-panel/right-nav persistence:** sidebar, runtime panel and right-nav buttons are always-visible surfaces; a malicious plugin placed there executes on every model open, not just when a tab is activated. *Mitigation:* none currently — plugins run unsandboxed by design; only install trusted plugins, and don't pass tokens/PII into PluginAPI/config/data.
 - **Supply-chain via referenced plugin IDs:** tab config references plugin IDs/slugs; if a referenced plugin is later compromised, the layout becomes a dormant delivery channel for malicious code. *Mitigation:* none currently — pin plugin versions or re-validate referenced plugins on load.
 
 ### Personal data processing
-❌ No — this capability does not process personal data; tab/layout config references plugin IDs/slugs and layout only.
-N/A.
+⚠️ Partly — the stored layout holds plugin IDs/slugs only, but a configured runtime panel plugin receives the viewer's user `id` and `name` in `data.currentUser` (the kit server protocol needs them, as for the built-in panel).
 **Risks:**
-- none — no personal data processed.
+- **User identity exposed to plugin code:** a malicious runtime panel plugin can read and exfiltrate the viewer's user id and name. *Mitigation:* only the runtime panel slot gets it (no email, no token); only install trusted plugins.
 
 ### AutoWRX data
 Tab/layout config on the model document.
 
 **Coverage:**
-- **Stored data:** `model.custom_template` (`model_tabs`/`prototype_tabs`/`prototype_sidebar_plugin`/`prototype_right_nav_buttons`) in MongoDB.
+- **Stored data:** `model.custom_template` (`model_tabs`/`prototype_tabs`/`prototype_sidebar_plugin`/`prototype_runtime_plugin`/`prototype_right_nav_buttons`) in MongoDB.
 - **Retention:** indefinite — lives with the model document; removed when the model is deleted.
 - **Encryption:** TLS in transit; no at-rest encryption beyond MongoDB defaults.
 - **Logging:** standard request logging on model save.
@@ -495,7 +497,7 @@ Tab/layout config on the model document.
 - **Layout as metadata leak:** `custom_template` reveals which plugins and staging stages a model relies on, exposing internal architecture to anyone with read access.
 
 ### Test coverage
-- **E2E (Playwright):** 2 test case(s) in `plugin-management.spec.ts` (add plugin tab via + button) — SITEMAP: ✅
+- **E2E (Playwright):** 2 test case(s) in `plugin-management.spec.ts` (add plugin tab via + button) + 2 in `prototype-runtime-plugin.spec.ts` (runtime panel plugin replaces the built-in panel, bridges runtime state and widget writes; built-in panel kept when unset) — SITEMAP: ✅
 - **Estimated coverage:** ≈50% (est.) — 2 AC bullets; 2 E2E cases cover add-tab via + button; no reorder/hide/staging test; SITEMAP ✅.
 - **Unit (Jest):** none
 

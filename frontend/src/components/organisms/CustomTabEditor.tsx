@@ -18,6 +18,7 @@ import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import { Spinner } from '@/components/atoms/spinner'
 import ActionButtonsTab from '@/components/organisms/ActionButtonsTab'
+import PluginSlotPicker from '@/components/molecules/PluginSlotPicker'
 import ModelTabListEditor, {
   applyModelTabAddonSelect,
   ModelTabAddonSelectDialog,
@@ -142,8 +143,11 @@ interface CustomTabEditorProps {
     updatedTabsVariant?: string | null,
     updatedRightNavButtons?: RightNavPluginButton[] | null,
     updatedTabsBorderRadius?: TabsBorderRadius | null,
+    updatedRuntimePlugin?: string | null,
   ) => Promise<void>
   sidebarPlugin?: string
+  /** Plugin replacing the built-in Runtime Control Panel */
+  runtimePlugin?: string
   stagingConfig?: StagingConfig
   rightNavButtons?: RightNavPluginButton[]
   /** Global style variant for all prototype tab buttons ('tab' | 'primary' | 'outline' | 'ghost') */
@@ -162,6 +166,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   tabs,
   onSave,
   sidebarPlugin,
+  runtimePlugin,
   stagingConfig,
   rightNavButtons,
   tabsVariant,
@@ -198,6 +203,10 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   )
   const [showSidebarPluginPicker, setShowSidebarPluginPicker] = useState(false)
   const [sidebarSearchTerm, setSidebarSearchTerm] = useState('')
+  // Runtime panel plugin state
+  const [localRuntimePlugin, setLocalRuntimePlugin] = useState<string | null>(
+    runtimePlugin || null,
+  )
 
   // Fetch plugins for plugin pickers
   const { data: pluginsData, isLoading: pluginsLoading } = useQuery({
@@ -213,6 +222,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
     if (open) {
       setLocalTabs(tabs)
       setLocalSidebarPlugin(sidebarPlugin || null)
+      setLocalRuntimePlugin(runtimePlugin || null)
       setLocalTabsVariant(tabsVariant || 'tab')
       setLocalTabsBorderRadius(tabsBorderRadius || 'round')
       setLocalRightNavPlugins(
@@ -231,6 +241,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
     open,
     tabs,
     sidebarPlugin,
+    runtimePlugin,
     stagingConfig,
     tabsVariant,
     tabsBorderRadius,
@@ -345,6 +356,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
     try {
 
       const sidebarChanged = localSidebarPlugin !== (sidebarPlugin || null)
+      const runtimeChanged = localRuntimePlugin !== (runtimePlugin || null)
       const variantChanged = localTabsVariant !== (tabsVariant || 'tab')
       const borderRadiusChanged =
         localTabsBorderRadius !== (tabsBorderRadius || 'round')
@@ -374,6 +386,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
             ? localTabsBorderRadius
             : null
           : undefined,
+        runtimeChanged ? localRuntimePlugin : undefined,
       )
       onOpenChange(false)
     } catch (error) {
@@ -386,6 +399,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   const handleCancel = () => {
     setLocalTabs(tabs) // Reset to original
     setLocalSidebarPlugin(sidebarPlugin || null)
+    setLocalRuntimePlugin(runtimePlugin || null)
     setLocalTabsVariant(tabsVariant || 'tab')
     setLocalTabsBorderRadius(tabsBorderRadius || 'round')
     setLocalRightNavPlugins(
@@ -751,7 +765,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
             }`}
           >
             <TbLayoutSidebar className="w-4 h-4" />
-            Sidebar Panel
+            Side Panels
           </button>
           <button
             onClick={() => setActiveDialogTab('actions')}
@@ -892,6 +906,21 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                   Set Sidebar Plugin
                 </Button>
               )}
+
+              <p className="text-sm text-muted-foreground mt-4">
+                Select a plugin to replace the built-in Runtime Control Panel on
+                the right side of the prototype view. Leave empty to use the
+                built-in panel.
+              </p>
+              <PluginSlotPicker
+                dataId="runtime-plugin-picker"
+                value={localRuntimePlugin}
+                onChange={setLocalRuntimePlugin}
+                plugins={pluginsData?.results}
+                loading={pluginsLoading}
+                setLabel="Set Runtime Panel Plugin"
+                removeTitle="Remove runtime panel plugin"
+              />
             </div>
           )}
 

@@ -67,7 +67,7 @@ erDiagram
 
 `custom_template` on a Model is a loosely-typed object that stores the UI
 configuration a plugin/tab system reads: `model_tabs`, `prototype_tabs`,
-`prototype_sidebar_plugin`, `prototype_tabs_variant`,
+`prototype_sidebar_plugin`, `prototype_runtime_plugin`, `prototype_tabs_variant`,
 `prototype_right_nav_buttons`. See [plugin-system.md](./plugin-system.md).
 
 ---

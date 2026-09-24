@@ -118,12 +118,21 @@ no store, route, token, or filesystem access.
     `replaceAPIs`.
   - **Runtime values:** `getRuntimeApiValues` / `setRuntimeApiValues` — bridge to
     `runtimeStore` (see [realtime-signals.md](./realtime-signals.md)).
+  - **Runtime panel bridge** (for runtime panel plugins, see §5):
+    `setRuntimeState` / `getRuntimeState` (silent read/write of `apisValue`,
+    `traceVars`, `appLog`, `isAppRunning`, `activeRuntimeName` in `runtimeStore`),
+    `onWidgetSignalWrite` (subscribe to widget `set-api-value` messages; returns
+    an unsubscribe function), `notifyWidgets` (post a message to every widget
+    iframe, e.g. `run-app` / `stop-app`), `reportPrototypeRun` (activity log +
+    execution counter).
   - **Wishlist APIs, assets, file upload, navigation (`setActiveTab`, `notifyTab`).**
   - **Kit/runtime files:** `fetchSignalMapping` / `replaceSignalMapping`,
     `fetchVss` / `replaceVss` — these open their **own** Socket.IO connections to
     the external kit server.
 
-Every method wraps its service call with toast feedback and re-throws.
+Every method wraps its service call with toast feedback and re-throws — except
+the runtime panel bridge methods, which are silent because they are called on
+every streamed value.
 
 ---
 
@@ -141,6 +150,20 @@ model's `custom_template`:
 When a custom tab is active, the page mounts `PageModelPlugin` /
 `PagePrototypePlugin` → `PluginPageRender` with `plugin_id = <slug>`. See
 [data-model.md](./data-model.md) for the `custom_template` shape.
+
+Besides tabs, a model layout has single-plugin **slots**, set in the "Side
+Panels" section of the layout / template editors:
+
+- **Sidebar** → `custom_template.prototype_sidebar_plugin`, rendered on the left
+  of the prototype view by `PrototypeSidebar`.
+- **Runtime panel** → `custom_template.prototype_runtime_plugin`, rendered by
+  `PrototypeRuntimePanel` **instead of** the built-in `DaRuntimeControl` on the
+  prototype Code and Dashboard tabs (unset = built-in panel). The plugin owns its
+  runtime connection and width: collapsed it must be `3.5rem` wide (the space the
+  main content reserves). Besides `model` and `prototype`, its `data` carries
+  `currentUser` (`id`, `name` — the kit server protocol needs them) and `canRun`
+  (`READ_MODEL`). It feeds dashboard widgets through the runtime panel bridge
+  (§4).
 
 ---
 
