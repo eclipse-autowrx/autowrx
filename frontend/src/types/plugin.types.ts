@@ -18,6 +18,17 @@ import type { Asset, QueryAssetsParams } from './asset.type'
 import type { List } from './common.type'
 
 /**
+ * Shared runtime state read by dashboard widgets (mirrors the host runtime store)
+ */
+export interface PluginRuntimeState {
+  apisValue: Record<string, any>
+  traceVars: Record<string, any>
+  appLog: string
+  isAppRunning: boolean
+  activeRuntimeName?: string
+}
+
+/**
  * Limited API callbacks provided to plugins for interacting with the host application
  *
  * Plugins can only:
@@ -125,6 +136,53 @@ export interface PluginAPI {
    * console.log(values['Vehicle.Speed'])
    */
   getRuntimeApiValues?: () => Record<string, any>
+
+  /**
+   * Update the shared runtime state that dashboard widgets read from.
+   * Silent (no toast), so it is safe to call on every value update streamed
+   * from a runtime. Only the provided fields are changed.
+   * Intended for runtime panel plugins (`custom_template.prototype_runtime_plugin`).
+   *
+   * @example
+   * api.setRuntimeState?.({ apisValue: { 'Vehicle.Speed': 42 }, isAppRunning: true })
+   */
+  setRuntimeState?: (state: Partial<PluginRuntimeState>) => void
+
+  /**
+   * Read the current shared runtime state.
+   *
+   * @example
+   * const { isAppRunning } = api.getRuntimeState?.() || {}
+   */
+  getRuntimeState?: () => PluginRuntimeState
+
+  /**
+   * Subscribe to signal write requests sent by dashboard widgets
+   * (`{ cmd: 'set-api-value', api, value }` window messages).
+   * @returns Unsubscribe function
+   *
+   * @example
+   * useEffect(() => api.onWidgetSignalWrite?.((values) => kit.writeSignals(values)), [])
+   */
+  onWidgetSignalWrite?: (
+    callback: (values: Record<string, any>) => void,
+  ) => () => void
+
+  /**
+   * Post a message to every dashboard widget iframe (e.g. `{ action: 'run-app' }`).
+   *
+   * @example
+   * api.notifyWidgets?.({ action: 'stop-app' })
+   */
+  notifyWidgets?: (data: any) => void
+
+  /**
+   * Record that the current prototype was run (activity log + execution counter).
+   *
+   * @example
+   * api.reportPrototypeRun?.()
+   */
+  reportPrototypeRun?: () => void
 
   // ========================================
   // Navigation

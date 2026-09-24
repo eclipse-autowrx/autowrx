@@ -16,7 +16,8 @@ import config from '@/configs/config'
 import { io } from 'socket.io-client'
 import { listAssetsService, createAssetService, updateAssetService, deleteAssetService, shareMyAsset, removeUserFromShareList, getAssetById } from '@/services/asset.service'
 import { searchUserByEmailService } from '@/services/search.service'
-import { updatePrototypeService } from '@/services/prototype.service'
+import { updatePrototypeService, countCodeExecution } from '@/services/prototype.service'
+import { addLog } from '@/services/log.service'
 import { listVSSVersionsService } from '@/services/api.service'
 import { uploadFileService } from '@/services/upload.service'
 import {
@@ -33,7 +34,7 @@ import useCanEditPrototype from '@/hooks/useCanEditPrototype'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { parseReadFileReply, prepareKitFileContentForWrite } from '@/utils/kitReply'
 import { PERMISSIONS } from '@/data/permission'
-import type { PluginAPI } from '@/types/plugin.types'
+import type { PluginAPI, PluginRuntimeState } from '@/types/plugin.types'
 import type { Model, Prototype } from '@/types/model.type'
 import type { CVI, VehicleAPI, VSSRelease, ExtendedApi, ExtendedApiCreate, ExtendedApiRet } from '@/types/api.type'
 import type { List } from '@/types/common.type'
@@ -598,6 +599,66 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     [onSetActiveTab, model_id, prototype_id],
   )
 
+  // Runtime bridge - lets a runtime panel plugin drive the dashboard like DaRuntimeControl does
+  const handleSetRuntimeState = useCallback((state: Partial<PluginRuntimeState>): void => {
+    if (!state) return
+    const store = useRuntimeStore.getState()
+    if ('apisValue' in state) store.setActiveApis(state.apisValue)
+    if ('traceVars' in state) store.setTraceVars(state.traceVars)
+    if ('appLog' in state) store.setAppLog(state.appLog || '')
+    if ('isAppRunning' in state) store.setIsAppRunning(!!state.isAppRunning)
+    if ('activeRuntimeName' in state) store.setActiveRuntimeName(state.activeRuntimeName)
+  }, [])
+
+  const handleGetRuntimeState = useCallback((): PluginRuntimeState => {
+    const { apisValue, traceVars, appLog, isAppRunning, activeRuntimeName } = useRuntimeStore.getState()
+    return {
+      apisValue: (apisValue as Record<string, any>) || {},
+      traceVars: (traceVars as Record<string, any>) || {},
+      appLog: appLog || '',
+      isAppRunning,
+      activeRuntimeName,
+    }
+  }, [])
+
+  const handleOnWidgetSignalWrite = useCallback(
+    (callback: (values: Record<string, any>) => void): (() => void) => {
+      const listener = (e: MessageEvent) => {
+        if (!e.data || typeof e.data !== 'string') return
+        try {
+          const payload = JSON.parse(e.data)
+          if (payload.cmd === 'set-api-value' && payload.api) {
+            callback({ [`${payload.api}`]: payload.value })
+          }
+        } catch (err) {
+          // Silent fail for invalid JSON
+        }
+      }
+      window.addEventListener('message', listener)
+      return () => window.removeEventListener('message', listener)
+    },
+    [],
+  )
+
+  const handleNotifyWidgets = useCallback((message: any): void => {
+    document.querySelectorAll('iframe').forEach((iframe) => {
+      iframe.contentWindow?.postMessage(JSON.stringify(message), '*')
+    })
+  }, [])
+
+  const handleReportPrototypeRun = useCallback((): void => {
+    const prototype = data?.prototype
+    if (!prototype?.id) return
+    const userId = currentUser?.id || 'Anonymous'
+    addLog({
+      name: `User ${userId} run prototype`,
+      description: `User ${userId} run prototype ${prototype.name || 'Unknown'} with id ${prototype.id}`,
+      type: 'run-prototype',
+      create_by: userId,
+    })
+    countCodeExecution(prototype.id)
+  }, [data?.prototype, currentUser?.id])
+
   const pluginAPI: PluginAPI = {
     // Model & Prototype updates
     updateModel: model_id ? handleUpdateModel : undefined,
@@ -612,6 +673,11 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     replaceAPIs: model_id ? handleReplaceAPIs : undefined,
     setRuntimeApiValues: handleSetRuntimeApiValues,
     getRuntimeApiValues: handleGetRuntimeApiValues,
+    setRuntimeState: handleSetRuntimeState,
+    getRuntimeState: handleGetRuntimeState,
+    onWidgetSignalWrite: handleOnWidgetSignalWrite,
+    notifyWidgets: handleNotifyWidgets,
+    reportPrototypeRun: prototype_id ? handleReportPrototypeRun : undefined,
 
     // Navigation
     setActiveTab: onSetActiveTab ? handleSetActiveTab : undefined,
