@@ -22,6 +22,7 @@ import { Spinner } from '@/components/atoms/spinner'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import DaImportFile from '@/components/atoms/DaImportFile'
 import ActionButtonsTab from '@/components/organisms/ActionButtonsTab'
+import PluginSlotPicker from '@/components/molecules/PluginSlotPicker'
 import ModelTabListEditor, {
   applyModelTabAddonSelect,
   ModelTabAddonSelectDialog,
@@ -170,6 +171,9 @@ export default function TemplateForm({
   )
   const [showSidebarPluginPicker, setShowSidebarPluginPicker] = useState(false)
   const [sidebarSearchTerm, setSidebarSearchTerm] = useState('')
+  const [localRuntimePlugin, setLocalRuntimePlugin] = useState<string | null>(
+    null,
+  )
   const [activePrototypeTab, setActivePrototypeTab] = useState<
     'tabs' | 'style' | 'sidebar' | 'actions'
   >('tabs')
@@ -193,6 +197,7 @@ export default function TemplateForm({
       setPrototypeTabsVariant(cfg.prototype_tabs_variant || 'tab')
       setPrototypeTabsBorderRadius(cfg.prototype_tabs_border_radius || 'round')
       setLocalSidebarPlugin(cfg.prototype_sidebar_plugin || null)
+      setLocalRuntimePlugin(cfg.prototype_runtime_plugin || null)
       // Extract staging config and non-staging right nav buttons from prototype_right_nav_buttons
       const rightNavRaw: RightNavPluginButton[] = Array.isArray(
         cfg.prototype_right_nav_buttons,
@@ -231,6 +236,7 @@ export default function TemplateForm({
       setPrototypeTabsVariant('tab')
       setPrototypeTabsBorderRadius('round')
       setLocalSidebarPlugin(null)
+      setLocalRuntimePlugin(null)
     }
   }, [initial])
 
@@ -259,6 +265,7 @@ export default function TemplateForm({
         setPrototypeRightNavButtons(ensureStagingRightNavButton([]))
         setPrototypeTabsBorderRadius('round')
         setLocalSidebarPlugin(null)
+        setLocalRuntimePlugin(null)
       }
     }
   }, [open, isCreate, initialData])
@@ -298,6 +305,7 @@ export default function TemplateForm({
         fullConfig.prototype_tabs_border_radius || 'round',
       )
       setLocalSidebarPlugin(fullConfig.prototype_sidebar_plugin || null)
+      setLocalRuntimePlugin(fullConfig.prototype_runtime_plugin || null)
       // Extract staging config and non-staging right nav buttons from prototype_right_nav_buttons
       const rightNavRaw2: RightNavPluginButton[] = Array.isArray(
         fullConfig.prototype_right_nav_buttons,
@@ -358,6 +366,7 @@ export default function TemplateForm({
               ? prototypeTabsBorderRadius
               : null,
           prototype_sidebar_plugin: localSidebarPlugin,
+          prototype_runtime_plugin: localRuntimePlugin,
           prototype_right_nav_buttons: prototypeRightNavButtons,
         },
       }
@@ -674,7 +683,7 @@ export default function TemplateForm({
                     }`}
                   >
                     <TbLayoutSidebar className="w-4 h-4" />
-                    Sidebar Panel
+                    Side Panels
                   </button>
                   <button
                     onClick={() => setActivePrototypeTab('actions')}
@@ -1116,6 +1125,21 @@ export default function TemplateForm({
                         Set Sidebar Plugin
                       </Button>
                     )}
+
+                    <p className="text-sm text-muted-foreground mt-4">
+                      Select a plugin to replace the built-in Runtime Control
+                      Panel on the right side of the prototype view. Leave
+                      empty to use the built-in panel.
+                    </p>
+                    <PluginSlotPicker
+                      dataId="runtime-plugin-picker"
+                      value={localRuntimePlugin}
+                      onChange={setLocalRuntimePlugin}
+                      plugins={pluginsData?.results}
+                      loading={pluginsLoading}
+                      setLabel="Set Runtime Panel Plugin"
+                      removeTitle="Remove runtime panel plugin"
+                    />
                   </div>
                 )}
 

@@ -19,6 +19,7 @@ import AddonSelect from '@/components/molecules/AddonSelect'
 import DaDialog from '@/components/molecules/DaDialog'
 import ProjectTemplateMetadataFields from '@/components/molecules/project/ProjectTemplateMetadataFields'
 import DaRuntimeControl from '@/components/molecules/dashboard/DaRuntimeControl'
+import PrototypeRuntimePanel from '@/components/organisms/PrototypeRuntimePanel'
 import PrototypeTabs, {
   getTabConfig,
 } from '@/components/molecules/PrototypeTabs'
@@ -165,6 +166,10 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   // Extract sidebar plugin slug
   const sidebarPlugin: string | undefined =
     model?.custom_template?.prototype_sidebar_plugin || undefined
+
+  // Extract runtime panel plugin slug (replaces the built-in DaRuntimeControl)
+  const runtimePlugin: string | undefined =
+    model?.custom_template?.prototype_runtime_plugin || undefined
 
   // Extract global tab style variant
   const tabsVariant: string | undefined =
@@ -414,6 +419,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     updatedTabsVariant?: string | null,
     updatedRightNavButtons?: RightNavPluginButton[] | null,
     updatedTabsBorderRadius?: TabsBorderRadius | null,
+    updatedRuntimePlugin?: string | null,
   ) => {
     if (!model_id || !model) {
       toast.error('Model not found')
@@ -429,6 +435,11 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
       // Update sidebar plugin: null means remove, string means set, undefined means no change
       if (updatedSidebarPlugin !== undefined) {
         updates.prototype_sidebar_plugin = updatedSidebarPlugin
+      }
+
+      // Update runtime panel plugin: null means remove, string means set, undefined means no change
+      if (updatedRuntimePlugin !== undefined) {
+        updates.prototype_runtime_plugin = updatedRuntimePlugin
       }
 
       // Update tabs variant: null means remove (revert to default), string means set, undefined means no change
@@ -589,7 +600,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         </div>
 
         {/* Main content area */}
-        <div className="flex flex-col flex-1 h-full overflow-y-auto relative">
+        <div className="flex flex-col flex-1 h-full overflow-y-auto overflow-x-hidden relative">
           <div
             style={{ right: showRt ? '3.5rem' : '0' }}
             className="absolute left-0 bottom-0 top-0 grow h-full z-0"
@@ -644,7 +655,14 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
                 />
               )}
           </div>
-          <DaRuntimeControl className={showRt ? undefined : 'hidden'} />
+          {runtimePlugin ? (
+            <PrototypeRuntimePanel
+              pluginSlug={runtimePlugin}
+              className={showRt ? undefined : 'hidden'}
+            />
+          ) : (
+            <DaRuntimeControl className={showRt ? undefined : 'hidden'} />
+          )}
         </div>
       </div>
 
@@ -665,6 +683,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         tabs={getTabConfig(model?.custom_template?.prototype_tabs)}
         onSave={handleSaveCustomTabs}
         sidebarPlugin={sidebarPlugin}
+        runtimePlugin={runtimePlugin}
         stagingConfig={stagingConfig}
         rightNavButtons={rightNavButtons}
         tabsVariant={tabsVariant}
