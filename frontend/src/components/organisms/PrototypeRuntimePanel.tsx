@@ -15,6 +15,7 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { useUsedVehicleApis } from '@/hooks/useUsedVehicleApis'
 import { useSystemUI } from '@/hooks/useSystemUI'
 import useModelStore from '@/stores/modelStore'
+import { shallow } from 'zustand/shallow'
 import { PERMISSIONS } from '@/data/permission'
 import { cn } from '@/lib/utils'
 
@@ -33,13 +34,20 @@ const PrototypeRuntimePanel: FC<PrototypeRuntimePanelProps> = ({
   className,
 }) => {
   const { data: model } = useCurrentModel()
-  const { data: prototype } = useCurrentPrototype()
+  const { data: queriedPrototype } = useCurrentPrototype()
+  // Like DaRuntimeControl, prefer the store: the Code tab saves into it without
+  // refreshing the prototype query, and a runtime must run the latest code.
+  const [storePrototype, activeModelV2CApis] = useModelStore(
+    (state) => [state.prototype, state.activeModelV2CApis],
+    shallow,
+  )
+  const prototype =
+    storePrototype?.id && storePrototype.id === queriedPrototype?.id
+      ? storePrototype
+      : queriedPrototype
   const { data: currentUser } = useSelfProfileQuery()
   const [canRun] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
   const { showPrototypeDashboardFullScreen } = useSystemUI()
-  const [activeModelV2CApis] = useModelStore((state) => [
-    state.activeModelV2CApis,
-  ])
 
   const usedApis = useUsedVehicleApis(prototype?.code || '')
 
