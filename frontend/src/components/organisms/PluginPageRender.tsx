@@ -646,6 +646,10 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     })
   }, [])
 
+  const handleRemountWidgets = useCallback((): void => {
+    useRuntimeStore.getState().incrementRemountCountByRuntime()
+  }, [])
+
   const handleReportPrototypeRun = useCallback((): void => {
     const prototype = data?.prototype
     if (!prototype?.id) return
@@ -678,6 +682,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     onWidgetSignalWrite: handleOnWidgetSignalWrite,
     notifyWidgets: handleNotifyWidgets,
     reportPrototypeRun: prototype_id ? handleReportPrototypeRun : undefined,
+    remountWidgets: handleRemountWidgets,
 
     // Navigation
     setActiveTab: onSetActiveTab ? handleSetActiveTab : undefined,

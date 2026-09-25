@@ -197,12 +197,13 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({
   // Memoize VSS tree to prevent unnecessary re-renders with large data
   const memoizedVssTree = useMemo(() => cvi, [cvi])
 
-  const [apisValue, traceVars, appLog, isAppRunning, activeRuntimeName] = useRuntimeStore((state) => [
+  const [apisValue, traceVars, appLog, isAppRunning, activeRuntimeName, remountCountByRuntime] = useRuntimeStore((state) => [
     state.apisValue,
     state.traceVars,
     state.appLog,
     state.isAppRunning,
     state.activeRuntimeName,
+    state.remountCountByRuntime,
   ])
 
   const [allVars, setAllVars] = useState<any>({})
@@ -283,7 +284,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({
               renderedWidgets.add(widgetIndex)
               return (
                 <WidgetItem
-                  key={`instance-${cell}-${remountCountByWidgetConfig}`}
+                  key={`instance-${cell}-${remountCountByWidgetConfig + remountCountByRuntime}`}
                   widgetConfig={widgetConfigs[widgetIndex]}
                   apisValue={allVars}
                   appLog={appLog}
