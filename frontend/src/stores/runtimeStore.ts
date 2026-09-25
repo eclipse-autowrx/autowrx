@@ -16,6 +16,8 @@ type RuntimeState = {
   appLog?: string
   activeRuntimeName?: string
   isAppRunning: boolean
+  /** Bumped to remount dashboard widgets (e.g. after a runtime starts an app) */
+  remountCountByRuntime: number
 }
 
 type Actions = {
@@ -24,6 +26,7 @@ type Actions = {
   setTraceVars: (_: any) => void
   setActiveRuntimeName: (name: string | undefined) => void
   setIsAppRunning: (isRunning: boolean) => void
+  incrementRemountCountByRuntime: () => void
 }
 
 const useRuntimeStore = createWithEqualityFn<RuntimeState & Actions>()(
@@ -32,6 +35,7 @@ const useRuntimeStore = createWithEqualityFn<RuntimeState & Actions>()(
     appLog: "",
     activeRuntimeName: undefined,
     isAppRunning: false,
+    remountCountByRuntime: 0,
     setAppLog: (log) => {
       set((state) => {
         state.appLog = log
@@ -52,6 +56,10 @@ const useRuntimeStore = createWithEqualityFn<RuntimeState & Actions>()(
     setIsAppRunning: (isRunning) =>
       set((state) => {
         state.isAppRunning = isRunning
+      }),
+    incrementRemountCountByRuntime: () =>
+      set((state) => {
+        state.remountCountByRuntime += 1
       }),
   }))
 )

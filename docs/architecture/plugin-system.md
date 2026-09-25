@@ -124,7 +124,8 @@ no store, route, token, or filesystem access.
     `onWidgetSignalWrite` (subscribe to widget `set-api-value` messages; returns
     an unsubscribe function), `notifyWidgets` (post a message to every widget
     iframe, e.g. `run-app` / `stop-app`), `reportPrototypeRun` (activity log +
-    execution counter).
+    execution counter), `remountWidgets` (remount all dashboard widgets through
+    `runtimeStore.remountCountByRuntime`).
   - **Wishlist APIs, assets, file upload, navigation (`setActiveTab`, `notifyTab`).**
   - **Kit/runtime files:** `fetchSignalMapping` / `replaceSignalMapping`,
     `fetchVss` / `replaceVss` — these open their **own** Socket.IO connections to

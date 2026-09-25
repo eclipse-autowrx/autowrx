@@ -32,6 +32,7 @@
       { 'data-testid': 'e2e-runtime-plugin-root', style: { width: '320px', padding: '8px' } },
       React.createElement('h1', null, MARKER),
       React.createElement('p', { 'data-testid': 'e2e-runtime-can-run' }, 'canRun: ' + String(!!data.canRun)),
+      React.createElement('p', { 'data-testid': 'e2e-runtime-remount' }, 'remountWidgets: ' + typeof api.remountWidgets),
       React.createElement(
         'button',
         {

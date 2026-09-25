@@ -443,7 +443,7 @@ Model owners (customize workspace); admins.
 
 - Tab management requires `WRITE_MODEL` + `ENABLE_MODEL_CUSTOMIZATION` (admins always allowed).
 - Saving stores the tab config on `model.custom_template` (`model_tabs`/`prototype_tabs`/`prototype_sidebar_plugin`/`prototype_runtime_plugin`/`prototype_right_nav_buttons`).
-- A runtime panel plugin gets the runtime bridge on `PluginAPI` (`setRuntimeState`, `getRuntimeState`, `onWidgetSignalWrite`, `notifyWidgets`, `reportPrototypeRun`) and `data.currentUser` (`id`, `name`) + `data.canRun`.
+- A runtime panel plugin gets the runtime bridge on `PluginAPI` (`setRuntimeState`, `getRuntimeState`, `onWidgetSignalWrite`, `notifyWidgets`, `reportPrototypeRun`, `remountWidgets`) and `data.currentUser` (`id`, `name`) + `data.canRun`.
 
 ### Quality control
 

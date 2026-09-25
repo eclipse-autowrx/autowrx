@@ -98,6 +98,7 @@ test.describe('Prototype runtime panel plugin', () => {
     await expect(panel).toHaveAttribute('data-runtime-plugin', createdPlugin.slug);
     await expect(panel.getByText(MARKER)).toBeVisible({ timeout: 20000 });
     await expect(page.getByTestId('e2e-runtime-can-run')).toHaveText('canRun: true');
+    await expect(page.getByTestId('e2e-runtime-remount')).toHaveText('remountWidgets: function');
 
     // setRuntimeState writes the shared store; getRuntimeState reads it back.
     await page.getByTestId('e2e-runtime-set-state-btn').click();

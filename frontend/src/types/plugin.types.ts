@@ -184,6 +184,15 @@ export interface PluginAPI {
    */
   reportPrototypeRun?: () => void
 
+  /**
+   * Remount all dashboard widgets (e.g. shortly after a runtime started the app,
+   * so widgets re-subscribe to the fresh runtime state).
+   *
+   * @example
+   * setTimeout(() => api.remountWidgets?.(), 2500)
+   */
+  remountWidgets?: () => void
+
   // ========================================
   // Navigation
   // ========================================
