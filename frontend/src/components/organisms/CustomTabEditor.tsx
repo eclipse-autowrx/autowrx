@@ -93,7 +93,7 @@ export interface StagingConfig {
 }
 
 export interface RightNavPluginButton {
-  builtin?: 'staging' // Marks the built-in staging button item
+  builtin?: 'staging' | 'copy' // Marks a built-in button item (staging, or the copy-prototype shortcut)
   plugin?: string // Plugin slug (required for plugin-type items)
   label?: string
   iconSvg?: string
@@ -109,6 +109,14 @@ export interface RightNavPluginButton {
 export const DEFAULT_STAGING_RIGHT_NAV_BUTTON: RightNavPluginButton = {
   builtin: 'staging',
   label: 'Staging',
+}
+
+export const DEFAULT_COPY_RIGHT_NAV_BUTTON: RightNavPluginButton = {
+  builtin: 'copy',
+  label: 'Copy',
+  variant: 'outline',
+  iconSvg:
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667l0 -8.666"/><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"/></svg>',
 }
 
 export function ensureStagingRightNavButton(
@@ -129,6 +137,23 @@ export function ensureStagingRightNavButton(
     },
     ...buttons,
   ]
+}
+
+export function ensureCopyRightNavButton(
+  buttons: RightNavPluginButton[] = [],
+): RightNavPluginButton[] {
+  if (buttons.some((b) => b.builtin === 'copy')) return buttons
+  return [DEFAULT_COPY_RIGHT_NAV_BUTTON, ...buttons]
+}
+
+/** Ensures both built-in right-nav buttons (Copy, then Staging) are present. */
+export function ensureBuiltinRightNavButtons(
+  buttons: RightNavPluginButton[] = [],
+  stagingConfig?: StagingConfig,
+): RightNavPluginButton[] {
+  return ensureCopyRightNavButton(
+    ensureStagingRightNavButton(buttons, stagingConfig),
+  )
 }
 
 export type TabsBorderRadius = 'none' | 'round' | 'full'
@@ -196,7 +221,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
     useState<TabsBorderRadius>(tabsBorderRadius || 'round')
   const [localRightNavPlugins, setLocalRightNavPlugins] = useState<
     RightNavPluginButton[]
-  >(() => ensureStagingRightNavButton(rightNavButtons, stagingConfig))
+  >(() => ensureBuiltinRightNavButtons(rightNavButtons, stagingConfig))
   // Sidebar plugin state
   const [localSidebarPlugin, setLocalSidebarPlugin] = useState<string | null>(
     sidebarPlugin || null,
@@ -226,7 +251,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
       setLocalTabsVariant(tabsVariant || 'tab')
       setLocalTabsBorderRadius(tabsBorderRadius || 'round')
       setLocalRightNavPlugins(
-        ensureStagingRightNavButton(rightNavButtons, stagingConfig),
+        ensureBuiltinRightNavButtons(rightNavButtons, stagingConfig),
       )
       setActiveDialogTab('tabs')
       setEditingIndex(null)
@@ -361,7 +386,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
       const borderRadiusChanged =
         localTabsBorderRadius !== (tabsBorderRadius || 'round')
       const mergedRightNav: RightNavPluginButton[] = [...localRightNavPlugins]
-      const originalRightNav = ensureStagingRightNavButton(
+      const originalRightNav = ensureBuiltinRightNavButtons(
         rightNavButtons,
         stagingConfig,
       )
@@ -403,7 +428,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
     setLocalTabsVariant(tabsVariant || 'tab')
     setLocalTabsBorderRadius(tabsBorderRadius || 'round')
     setLocalRightNavPlugins(
-      ensureStagingRightNavButton(rightNavButtons, stagingConfig),
+      ensureBuiltinRightNavButtons(rightNavButtons, stagingConfig),
     )
     setEditingIndex(null)
     setEditingLabel('')
@@ -465,8 +490,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
             className="shrink-0 gap-1.5"
             onClick={() => handleRequestAddonSelect(null)}
           >
-            <TbPuzzle className="w-4 h-4" />
-            <TbPlus className="w-3.5 h-3.5" />
+            <TbPlus className="w-4 h-4" />
             Add-ons
           </Button>
         </div>

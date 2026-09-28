@@ -65,7 +65,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import { FC, useCallback, useEffect, useState } from 'react'
 import { GiSaveArrow } from 'react-icons/gi'
 import {
-  TbCopy,
   TbDotsVertical,
   TbFileCode,
   TbLayoutSidebar,
@@ -523,18 +522,6 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             </div>
           )}
           <div className="grow"></div>
-          <div className="flex w-fit h-full items-center mr-2">
-            <Button
-              variant="outline"
-              size="sm"
-              data-id="btn-prototype-copy"
-              onClick={handleCopyPrototype}
-              title="Copy this prototype into a model"
-            >
-              <TbCopy className="w-4 h-4" />
-              Copy
-            </Button>
-          </div>
           <PrototypeRightAction
             prototype={prototype}
             actions={
@@ -542,6 +529,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
                 ? undefined
                 : (model?.custom_template?.prototype_right_nav_buttons ?? [])
             }
+            onCopyClick={handleCopyPrototype}
           />
           {canOpenPrototypeMoreMenu && (
             <DropdownMenu open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>

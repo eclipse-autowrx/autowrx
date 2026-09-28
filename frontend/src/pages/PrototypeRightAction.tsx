@@ -10,11 +10,13 @@ import { useState } from 'react'
 export interface PrototypeRightActionProps {
   prototype: Prototype
   actions?: TabConfig[]
+  onCopyClick?: () => void
 }
 
 const PrototypeRightAction = ({
   prototype,
   actions,
+  onCopyClick,
 }: PrototypeRightActionProps) => {
   const [openDialog, setOpenDialog] = useState('')
   const stagingDisabled = !hasPrototypeCode(prototype?.code)
@@ -24,7 +26,8 @@ const PrototypeRightAction = ({
   return (
     <>
       {actions?.map((action) => {
-        if (action.openMode === 'page') return null
+        if (action.openMode === 'page' || action.builtin === 'copy')
+          return null
         const dialogKey = JSON.stringify(action)
         return (
           <DaDialog
@@ -59,6 +62,7 @@ const PrototypeRightAction = ({
       <PrototypeRightActionButtons
         tabs={actions}
         onClick={(action) => setOpenDialog(JSON.stringify(action))}
+        onCopyClick={onCopyClick}
         stagingDisabled={stagingDisabled}
         stagingDisabledTitle={stagingDisabledTitle}
       />
