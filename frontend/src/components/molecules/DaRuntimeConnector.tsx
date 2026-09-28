@@ -325,7 +325,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }
 
     const revertToDefaultVehicleModel = () => {
-      if (prototype && prototype.id && currentUser) {
+      if (currentUser) {
         socketio?.emit('messageToKit', {
           cmd: 'revert_vehicle_model',
           data: "",
@@ -335,7 +335,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }
 
     const builldVehicleModel = (vss_json: string) => {
-      if (prototype && prototype.id && currentUser && vss_json) {
+      if (currentUser && vss_json) {
         socketio?.emit('messageToKit', {
           cmd: 'generate_vehicle_model',
           data: vss_json || "",

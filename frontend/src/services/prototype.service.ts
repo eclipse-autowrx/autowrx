@@ -22,6 +22,11 @@ export const PROTOTYPE_LIST_CARD_FIELDS = [
   'state',
   'code',
   'executed_turns',
+  'description',
+  'complexity_level',
+  'customer_journey',
+  'extend',
+  'portfolio',
 ].join(',')
 
 const PROTOTYPE_LIST_DEFAULT_FIELDS = [
