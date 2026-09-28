@@ -531,6 +531,10 @@ Authors of multi-file SDV projects.
 ### Acceptance criteria
 
 - When an **owner** opens a prototype whose code is a JSON project (an array) at **Project editor (`/model/:id/library/prototype/:pid/code`)**, the multi-file project editor activates in the Code tab; otherwise the single-file Monaco editor is used.
+- When an **owner** opens a project at **Project editor (`/model/:id/library/prototype/:pid/code`)** with no file open yet, `app_logic.py` opens automatically if the project contains one.
+- When an **owner** opens a `.md` file at **Project editor (`/model/:id/library/prototype/:pid/code`)**, it is rendered as formatted Markdown in a scrollable pane instead of shown as editor source.
+- When an **owner** views the project editor with `ALLOW_ADDING_FILES` disabled at **Project editor (`/model/:id/library/prototype/:pid/code`)**, the toolbar's New File/New Folder/Export/Import buttons are hidden and the file tree offers no context menu, drag & drop, or rename/delete; when it is enabled, all of those are available.
+- When the prototype's code is replaced from outside the editor (GenAI or a plugin) at **Project editor (`/model/:id/library/prototype/:pid/code`)**, the already-open tabs show the new content rather than the version they were opened with.
 - When an **owner** creates a file or folder at **Project editor (`/model/:id/library/prototype/:pid/code`)**, they enter a name in the tree; an empty name, invalid characters (`:*?"<>|`), reserved names (CON, PRN, …), or leading/trailing spaces show an error; a duplicate name at the target location shows an error.
 - When an **owner** renames, moves, or deletes an item at **Project editor (`/model/:id/library/prototype/:pid/code`)**, the tree updates; deleting a folder asks for confirmation and removes its contents; closing a file with unsaved changes asks whether to save, discard, or cancel.
 - When an **owner** opens multiple files at **Project editor (`/model/:id/library/prototype/:pid/code`)**, each opens in its own tab with its own Monaco editor; unsaved files are marked.
@@ -540,6 +544,7 @@ Authors of multi-file SDV projects.
 
 ### API contract
 
+- `ALLOW_ADDING_FILES` site config (default `false`) → when disabled, the file tree is read-only and the create/import/export toolbar is hidden; existing file contents stay editable. Note: `false` also hides the Export (download ZIP) button, even though exporting doesn't structurally change the project.
 - Activates when `prototype.code` is a JSON project (array); editing requires `WRITE_MODEL`; persisted via `PATCH /v2/prototypes/:id` with `code` = JSON string of the file tree → `200`.
 - File ops act on paths inside the JSON project — `../` traversal is not explicitly validated.
 - ZIP import must sanitize entry names (currently no sanitization — reject `../` and absolute paths).

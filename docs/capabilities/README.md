@@ -158,6 +158,7 @@ AutoWRX is highly configurable via site-config keys (managed in **Admin → Site
 | `ENABLE_NEW_PROTOTYPE_PAGE` | `false` | Use the full-page `/new-prototype` create flow vs inline dialog. |
 | `DISABLE_CUSTOM_API_SETS` | `false` | Hide the custom API schema/set UI. |
 | `SHOW_SDV_PROTOPILOT_BUTTON` | `true` | Show the GenAI SDV code-generation button on the Code tab. |
+| `ALLOW_ADDING_FILES` | `false` | Allow add/rename/delete/import/export in the multi-file project editor. |
 | `USER_ASSET_TYPES` | `['CLOUD_RUNTIME','HARDWARE_KIT','GENAI-PYTHON']` | Asset types available on My Assets. |
 | `RUNTIME_SERVER_URL` | `https://kit.digitalauto.tech` | Hardware-kit / runtime server the frontend connects to. |
 
