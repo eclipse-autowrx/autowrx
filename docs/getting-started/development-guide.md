@@ -165,7 +165,30 @@ VITE_SERVER_BASE_URL=http://localhost:3200
 VITE_SERVER_VERSION=v2
 ```
 
-**Note:** The frontend `.env` file is minimal. Most configuration is handled by the backend.
+### Admin page visibility
+
+The following optional `VITE_` variables control what the built frontend shows
+on **Admin → Site Config** and **Manage Features**. Add them to `frontend/.env`
+before starting or building the frontend; changing them requires a frontend
+restart or rebuild. With all three unset, all Site Config sections and all
+feature categories normally available on Manage Features remain visible.
+
+| Variable | Effect |
+|---|---|
+| `VITE_ADMIN_CLEAN_MODE=true` | Hides the Auth, GenAI / ProtoPilot, SSO, Email, Secret, and Standard Staging sections; shows only `Unlimited model` and `Admin` feature categories. |
+| `VITE_ADMIN_HIDDEN_SITE_CONFIG_SECTIONS` | Comma-separated section keys to hide. Overrides the clean mode section list when set. Valid keys: `public`, `home`, `style`, `auth`, `model_prototype`, `genai`, `sso`, `email`, `secrets`, `staging`, `privacy`. |
+| `VITE_ADMIN_VISIBLE_FEATURE_CATEGORIES` | Comma-separated category names to show, matching names returned by the API exactly. Overrides the clean mode category list when set. |
+
+The two lists can be overridden independently. An explicitly empty list clears
+that list's clean mode default: empty hidden sections shows every section;
+empty visible categories shows no categories. A hidden Site Config section
+cannot be opened through its `?section=` URL parameter; the page selects the
+first visible section instead. If every section is hidden, the sidebar and
+content area have no section to show.
+
+These settings only filter the frontend UI. They do not change API permissions,
+backend configuration, or the roles already assigned to users. For deployment
+details, see [Deployment](../guides/deployment/README.md).
 
 ### MongoDB Setup Details
 

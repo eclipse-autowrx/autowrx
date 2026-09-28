@@ -140,7 +140,7 @@ Admins (central configuration); end users (see published branding/home/style/pri
 
 ### Acceptance criteria
 
-- When an **admin** opens the Site Config admin page at **Admin → Site Config (`/admin/site-config`)**, they see the 11 section tabs in the sidebar; when they select a tab, the corresponding section loads.
+- When an **admin** opens the Site Config admin page at **Admin → Site Config (`/admin/site-config`)**, they see the 11 section tabs by default; when they select a tab, the corresponding section loads. A frontend build configured with `VITE_ADMIN_CLEAN_MODE=true` hides Auth, GenAI / ProtoPilot, SSO, Email, Secret, and Standard Staging; `VITE_ADMIN_HIDDEN_SITE_CONFIG_SECTIONS` can override the hidden section keys. A URL requesting a hidden section falls back to the first visible section.
 - When an **admin** edits keys in a section and saves at **Admin → Site Config (`/admin/site-config`)**, the system persists them and they apply site-wide.
 - When an **admin** opens a section's edit history and restores a prior entry at **Admin → Site Config (`/admin/site-config`)**, the section reverts to that snapshot.
 - When an **admin** opens a secret-bearing section at **Admin → Site Config (`/admin/site-config`)**, secret values are masked and only revealed for admin display.
@@ -155,6 +155,8 @@ Admins (central configuration); end users (see published branding/home/style/pri
 ### Quality control
 
 As an admin, edit a config in a section, then verify the value persists and applies site-wide; restore from history and verify the section reverts.
+
+For a build with admin visibility settings, verify the sidebar and `?section=` fallback using the [frontend configuration guide](../getting-started/development-guide.md#admin-page-visibility). This UI filter does not change backend authorization.
 
 ```mermaid
 flowchart TD

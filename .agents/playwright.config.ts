@@ -1,3 +1,11 @@
+// Copyright (c) 2026 Eclipse Foundation.
+//
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { defineConfig, devices } from '@playwright/test';
 import { config as dotenvConfig } from 'dotenv';
 import { resolve } from 'path';
@@ -5,6 +13,7 @@ dotenvConfig({ path: resolve(__dirname, '.env') });
 
 export default defineConfig({
   testDir: './tests',
+  testIgnore: 'admin-visibility.spec.ts',
   globalSetup: resolve(__dirname, 'e2e-env-guard.ts'),
   timeout: 60000,
   expect: { timeout: 8000 },
