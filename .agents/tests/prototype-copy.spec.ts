@@ -154,6 +154,27 @@ test.describe('Prototype Copy', () => {
     await saveScreenshot(page, 'prototype-copy-context-menu');
   });
 
+  test('Copy button in the prototype detail header starts the same copy flow', async ({
+    page,
+  }) => {
+    const { protoName } = await seedSourcePrototype(page, 'Header');
+
+    await page.goto(`/model/${modelId}/library/prototype/${sourceId}/view`);
+
+    const headerCopyButton = page.locator('[data-id="btn-prototype-copy"]');
+    await expect(headerCopyButton).toBeVisible({ timeout: 10000 });
+    await headerCopyButton.click();
+
+    // Same destination and pre-fill as the card context-menu entry point.
+    await expect(page).toHaveURL(
+      new RegExp(`/new-prototype\\?.*model_id=${modelId}.*prototype_id=${sourceId}`),
+    );
+    const nameInput = page.locator('[data-id="prototype-name-input"]').first();
+    await expect(nameInput).toHaveValue(`${protoName} (Copy)`, { timeout: 20000 });
+
+    await saveScreenshot(page, 'prototype-copy-header-button');
+  });
+
   test('copying a prototype carries its content and drops the dashboard template', async ({
     page,
   }) => {

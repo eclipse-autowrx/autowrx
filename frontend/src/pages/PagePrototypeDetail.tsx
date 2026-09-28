@@ -65,6 +65,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { FC, useCallback, useEffect, useState } from 'react'
 import { GiSaveArrow } from 'react-icons/gi'
 import {
+  TbCopy,
   TbDotsVertical,
   TbFileCode,
   TbLayoutSidebar,
@@ -364,6 +365,12 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     }
   }, [tab, pluginId, tabNotifications])
 
+  // Open the New Prototype dialog pre-filled to copy this prototype into a model of the user's choosing.
+  const handleCopyPrototype = useCallback(() => {
+    if (!model_id || !prototype_id) return
+    navigate(`/new-prototype?model_id=${model_id}&prototype_id=${prototype_id}`)
+  }, [model_id, prototype_id, navigate])
+
   const handleAddonSelect = async (plugin: Plugin, label: string) => {
     if (!model_id || !model) {
       toast.error('Model not found')
@@ -516,6 +523,18 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             </div>
           )}
           <div className="grow"></div>
+          <div className="flex w-fit h-full items-center mr-2">
+            <Button
+              variant="outline"
+              size="sm"
+              data-id="btn-prototype-copy"
+              onClick={handleCopyPrototype}
+              title="Copy this prototype into a model"
+            >
+              <TbCopy className="w-4 h-4" />
+              Copy
+            </Button>
+          </div>
           <PrototypeRightAction
             prototype={prototype}
             actions={

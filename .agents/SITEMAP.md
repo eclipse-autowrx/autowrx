@@ -124,6 +124,7 @@
 | Apply dashboard template | Mounted widgets pick up the new config | ✅ `prototype-dashboard-remount.spec.ts` |
 | Share prototype | Share link / permissions | ✅ `prototype-extended.spec.ts` (no share btn visible for admin) |
 | Deploy prototype | Deploy to staging | ❌ |
+| Copy button in header | Header button next to Deploy/Staging; same `/new-prototype?prototype_id=…` flow as the card menu | ✅ `prototype-copy.spec.ts` |
 | Feedback tab | Submit / view feedback | ✅ `prototype-extended.spec.ts` |
 | Prototype plugins | Custom plugin tabs | ✅ `plugin-management.spec.ts` |
 | Prototype plugin detail page | Plugin renders on `/plug?plugid=` | ✅ `plugin-management.spec.ts` |
