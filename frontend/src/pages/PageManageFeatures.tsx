@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { useState, useEffect } from 'react'
+import config from '@/configs/config'
 import {
   listUsersByRolesService,
   assignRoleToUserService,
@@ -61,7 +62,16 @@ const PageManageFeatures = () => {
 
   const fetchPermissions = async () => {
     try {
-      const response = await fetchFeaturesService()
+      let response = await fetchFeaturesService()
+      // A deployment can restrict which categories show here via env
+      // (VITE_ADMIN_CLEAN_MODE / VITE_ADMIN_VISIBLE_FEATURE_CATEGORIES, see
+      // configs/config.ts). null means no allowlist configured -> show all.
+      const { visibleFeatureCategories } = config.adminUi
+      if (visibleFeatureCategories) {
+        response = response.filter((feature: { name: string }) =>
+          visibleFeatureCategories.includes(feature.name),
+        )
+      }
       setFeatures(response)
       if (response.length > 0) {
         setActiveTab(response[0].name)

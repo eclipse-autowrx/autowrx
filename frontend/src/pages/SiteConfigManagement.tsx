@@ -8,6 +8,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import config from '@/configs/config'
 import PublicConfigSection from '@/components/organisms/PublicConfigSection'
 import SecretConfigSection from '@/components/organisms/SecretConfigSection'
 import SiteStyleSection from '@/components/organisms/SiteStyleSection'
@@ -308,42 +309,66 @@ export const PREDEFINED_AUTH_CONFIGS: any[] = [
   },
 ]
 
+type SectionTab =
+  | 'public'
+  | 'style'
+  | 'secrets'
+  | 'home'
+  | 'auth'
+  | 'sso'
+  | 'email'
+  | 'staging'
+  | 'model_prototype'
+  | 'genai'
+  | 'privacy'
+
+// Every Site Config sidebar section, in render order. A deployment can hide
+// any of these via env (see configs/config.ts / adminUi.hiddenSiteConfigSections).
+const SECTIONS: {
+  key: SectionTab
+  label: string
+  Component: React.ComponentType
+}[] = [
+  { key: 'public', label: 'Public Config', Component: PublicConfigSection },
+  { key: 'home', label: 'Home Config', Component: HomeConfigSection },
+  { key: 'style', label: 'Site Style (CSS)', Component: SiteStyleSection },
+  { key: 'auth', label: 'Auth Config', Component: AuthConfigSection },
+  {
+    key: 'model_prototype',
+    label: 'Model & Prototype',
+    Component: PrototypeConfigSection,
+  },
+  { key: 'genai', label: 'GenAI / ProtoPilot', Component: GenAIConfigSection },
+  { key: 'sso', label: 'SSO Config', Component: SSOConfigSection },
+  { key: 'email', label: 'Email Config', Component: EmailConfigSection },
+  { key: 'secrets', label: 'Secret Config', Component: SecretConfigSection },
+  {
+    key: 'staging',
+    label: 'Standard Staging Frame',
+    Component: StagingConfigSection,
+  },
+  { key: 'privacy', label: 'Privacy Policy', Component: PrivacyPolicySection },
+]
+
 const SiteConfigManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
 
-  // Get initial section from URL or default to 'public'
-  type SectionTab =
-    | 'public'
-    | 'style'
-    | 'secrets'
-    | 'home'
-    | 'auth'
-    | 'sso'
-    | 'email'
-    | 'staging'
-    | 'model_prototype'
-    | 'genai'
-    | 'privacy'
-  const validSections: SectionTab[] = [
-    'public',
-    'style',
-    'secrets',
-    'home',
-    'auth',
-    'sso',
-    'email',
-    'staging',
-    'model_prototype',
-    'genai',
-    'privacy',
-  ]
+  // Sections a deployment can hide via VITE_ADMIN_CLEAN_MODE /
+  // VITE_ADMIN_HIDDEN_SITE_CONFIG_SECTIONS (see configs/config.ts). Order
+  // here is the order they render in.
+  const visibleSections = SECTIONS.filter(
+    (section) => !config.adminUi.hiddenSiteConfigSections.has(section.key),
+  )
 
   const getSectionFromUrl = (): SectionTab => {
     const section = searchParams.get('section')
-    if (section && validSections.includes(section as SectionTab)) {
+    if (
+      section &&
+      visibleSections.some((s) => s.key === section)
+    ) {
       return section as SectionTab
     }
-    return 'public'
+    return visibleSections[0]?.key || 'public'
   }
 
   const [activeTab, setActiveTab] = useState<SectionTab>(
@@ -383,105 +408,18 @@ const SiteConfigManagement: React.FC = () => {
                 </h2>
               </div>
               <nav className="p-2">
-                <button
-                  onClick={() => handleTabChange('public')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'public'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
-                >
-                  Public Config
-                </button>
-                <button
-                  onClick={() => handleTabChange('home')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'home'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
-                >
-                  Home Config
-                </button>
-                <button
-                  onClick={() => handleTabChange('style')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'style'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
-                >
-                  Site Style (CSS)
-                </button>
-                <button
-                  onClick={() => handleTabChange('auth')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'auth'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
-                >
-                  Auth Config
-                </button>
-                <button
-                  onClick={() => handleTabChange('model_prototype')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'model_prototype'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
-                >
-                  Model & Prototype
-                </button>
-                <button
-                  onClick={() => handleTabChange('genai')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'genai'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
-                >
-                  GenAI / ProtoPilot
-                </button>
-                <button
-                  onClick={() => handleTabChange('sso')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'sso'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
-                >
-                  SSO Config
-                </button>
-                <button
-                  onClick={() => handleTabChange('email')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'email'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
-                >
-                  Email Config
-                </button>
-                <button
-                  onClick={() => handleTabChange('secrets')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'secrets'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
-                >
-                  Secret Config
-                </button>
-                <button
-                  onClick={() => handleTabChange('staging')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'staging'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
-                >
-                  Standard Staging Frame
-                </button>
-                <button
-                  onClick={() => handleTabChange('privacy')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'privacy'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
-                >
-                  Privacy Policy
-                </button>
+                {visibleSections.map((section) => (
+                  <button
+                    key={section.key}
+                    onClick={() => handleTabChange(section.key)}
+                    className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === section.key
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                      }`}
+                  >
+                    {section.label}
+                  </button>
+                ))}
               </nav>
             </div>
           </div>
@@ -489,18 +427,12 @@ const SiteConfigManagement: React.FC = () => {
           {/* Right Content Panel */}
           <div className="flex-1 min-w-0">
             <div className="bg-background rounded-lg shadow border border-border">
-              {/* Conditionally render only the active section */}
-              {activeTab === 'public' && <PublicConfigSection />}
-              {activeTab === 'home' && <HomeConfigSection />}
-              {activeTab === 'staging' && <StagingConfigSection />}
-              {activeTab === 'auth' && <AuthConfigSection />}
-              {activeTab === 'sso' && <SSOConfigSection />}
-              {activeTab === 'style' && <SiteStyleSection />}
-              {activeTab === 'email' && <EmailConfigSection />}
-              {activeTab === 'secrets' && <SecretConfigSection />}
-              {activeTab === 'model_prototype' && <PrototypeConfigSection />}
-              {activeTab === 'genai' && <GenAIConfigSection />}
-              {activeTab === 'privacy' && <PrivacyPolicySection />}
+              {/* Render only the active (and visible) section */}
+              {visibleSections
+                .filter((section) => section.key === activeTab)
+                .map((section) => (
+                  <section.Component key={section.key} />
+                ))}
             </div>
           </div>
         </div>
