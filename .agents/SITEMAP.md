@@ -192,6 +192,7 @@
 | Admin access (logged in) | Admin can access `/admin` | ✅ `admin.spec.ts` |
 | Unauthenticated access blocked | Redirect / deny for guests | ✅ `admin.spec.ts` |
 | Site config form | Settings form renders | ✅ `admin.spec.ts` |
+| Site config section visibility | Build time clean mode or hidden section list filters sidebar and URL selection | ❌ |
 | Restore default (public config) | Factory reset reverts modified public configs | ✅ `site-config-restore-default.spec.ts` |
 | Navigation bar actions editor | Configure left/right navbar links and search | ✅ `nav-bar-actions.spec.ts` |
 | Navigation bar actions render | Custom links/search appear from NAV_BAR_ACTIONS | ✅ `nav-bar-actions.spec.ts` |
@@ -199,6 +200,7 @@
 | User list loads | Shows users table | ✅ `admin.spec.ts` |
 | Create new user | Add user form | ✅ `admin-extended.spec.ts` (fill + cancel) |
 | Edit user role | Change user permissions | ✅ `admin-features.spec.ts` |
+| Manage Features category visibility | Build time clean mode or category allowlist filters displayed roles | ❌ |
 | Plugin list | Shows installed plugins | ✅ `admin.spec.ts` |
 | Install plugin (external URL) | Add plugin via admin UI with external URL | ✅ `plugin-management.spec.ts` |
 | Install plugin (ZIP upload) | Add plugin via admin UI with ZIP upload | ✅ `plugin-management.spec.ts` |
