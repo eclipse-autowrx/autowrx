@@ -28,6 +28,9 @@ npx playwright test tests/home-prototype-list.spec.ts
 npx playwright test tests/image-fallback.spec.ts
 npx playwright test tests/model-editable-visibility.spec.ts
 
+# Admin visibility variants (starts two dedicated Vite servers)
+npx playwright test --config=playwright.admin-visibility.config.ts
+
 # With screenshots on failure
 npx playwright test --screenshot=only-on-failure
 
@@ -79,6 +82,7 @@ npx playwright test tests/model-editable-visibility.spec.ts
 | `tests/home-prototype-list.spec.ts` | Home prototype-list: guest visibility, category tabs, My Prototypes filter, all 6 sort options, navigation |
 | `tests/image-fallback.spec.ts` | Model and prototype cards fall back to default images when primary image fails to load |
 | `tests/model-editable-visibility.spec.ts` | Editable model visibility: non-owner prototype create, guest home shows editable+public, template inheritance |
+| `tests/admin-visibility.spec.ts` | Site Config sections and Manage Features categories under clean mode and explicit overrides; run with `playwright.admin-visibility.config.ts` |
 | `tests/layout.spec.ts` | Layout, responsive, visual snapshots |
 
 ## Environment guard (fail-closed)
@@ -88,6 +92,14 @@ Every run checks the target environment **before any test executes** (`e2e-env-g
 - **Disposable test stacks**: after seeding the admin, set the key once — `PATCH /v2/site-config/key/E2E_TEST_ENABLED {"value": true}` — and the guard passes
 - **Production-grade instances**: never set the key. To run suites in a maintenance window, set `E2E_ALLOW_ANY_ENV=1` for that run only — the suites mutate site-config (homepage/nav) and create `E2E_*` data, and their restore hooks do not run if the run is killed mid-flight
 - **Non-mutating subset** (auth, image-fallback, read-only flows) is the only category ever defensible outside a window
+
+The admin visibility suite needs a disposable backend on `localhost:3200`, an
+admin account, and `.agents/.env` with `BASE_URL`, `API_URL`, `ADMIN_EMAIL`, and
+`ADMIN_PASSWORD`. The normal `E2E_TEST_ENABLED=true` guard still applies. The
+suite starts its own Vite servers on ports 3211 and 3212, so leave those ports
+free and keep the three `VITE_ADMIN_*` visibility variables out of
+`frontend/.env` while running it. The standard Playwright config excludes this
+suite because it requires these dedicated frontend variants.
 
 ## Environment
 
