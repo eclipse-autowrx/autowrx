@@ -335,12 +335,27 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }
 
     const builldVehicleModel = (vss_json: string) => {
-      if (currentUser && vss_json) {
+      if (prototype && prototype.id && currentUser && vss_json) {
         socketio?.emit('messageToKit', {
           cmd: 'generate_vehicle_model',
-          data: vss_json || "",
+          vss_spec: vss_json || '',
+          data: vss_json || '',
           to_kit_id: activeRtId,
         })
+      } else if (vss_json) {
+        // No prototype context (e.g. Manage Hardware Kit): send both command spellings
+        const payload = {
+          vss_spec: vss_json || '',
+          data: vss_json || '',
+          to_kit_id: activeRtId,
+          prototype: {
+            name: 'no-name',
+            id: 'no-id',
+          },
+          username: 'no',
+        }
+        socketio?.emit('messageToKit', { cmd: 'generate_vehicle_model', ...payload })
+        socketio?.emit('messageToKit', { cmd: 'generate-vehicle-model', ...payload })
       }
     }
 
