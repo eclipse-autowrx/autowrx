@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { Spinner } from '@/components/atoms/spinner'
@@ -1160,6 +1160,18 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   // Only render when we have a component and it was loaded for this exact plugin_id (deep check)
   const shouldRenderPlugin =
     !loading && !error && !!PluginComponent && loadedPluginName === plugin_id
+  // Minimal current-user object (id/name only, never the full profile) so plugins that open their
+  // own kit socket register with the real user instead of a placeholder identity. A host that
+  // already supplied `data.currentUser` (e.g. the runtime panel) keeps its value.
+  const currentUserId = currentUser?.id
+  const currentUserName = currentUser?.name
+  const dataForPlugin = useMemo(
+    () => ({
+      ...data,
+      currentUser: currentUserId ? { id: currentUserId, name: currentUserName } : (data?.currentUser ?? null),
+    }),
+    [data, currentUserId, currentUserName],
+  )
   const pluginConfig = { plugin_id: loadedPluginName, ...siteConfigs, ...pluginMetaConfig }
 
   // Log what we're about to render
@@ -1184,7 +1196,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
       {shouldRenderPlugin && (
         <div key={`plugin-${plugin_id}-${loadedPluginName}`} className="w-full h-full">
           <PluginComponent
-            data={data}
+            data={dataForPlugin}
             editable={canEditPrototype}
             config={pluginConfig}
             api={pluginAPI}
