@@ -8,7 +8,7 @@
 
 import config from '@/configs/config'
 import { useSiteConfig } from '@/utils/siteConfig'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import {
     TbDownload,
     TbLoader,
@@ -203,7 +203,8 @@ const FormHardwareKitManager = ({
     const [edgeConfig, setEdgeConfig] = useState<any>(null)
     const [edgeVss, setEdgeVss] = useState<any>(null)
     const runTimeRef = useRef<any>()
-    const runtimeServerUrl = useSiteConfig('RUNTIME_SERVER_URL')
+    const runtimeServerUrl = useSiteConfig('RUNTIME_SERVER_URL', config?.runtime?.url)
+    const runtimeServerConfigRaw = useSiteConfig('RUNTIME_SERVER_CONFIG', '')
 
     const CONFIG_PATH = '/app/remote_access/signal-config.json'
     const VSS_PATH = '/app/remote_access/vss.json'
@@ -213,7 +214,6 @@ const FormHardwareKitManager = ({
     }
 
     const triggerRebuildVehicleModel = (vss: string) => {
-        console.log('triggerRebuildVehicleModel')
         runTimeRef.current?.builldVehicleModel(vss)
     }
 
@@ -236,6 +236,19 @@ const FormHardwareKitManager = ({
         }
     }
 
+    const KIT_SOCKET_IO_CONFIG = useMemo<Record<string, any> | undefined>(() => {
+    if (!runtimeServerConfigRaw) return undefined
+    try {
+      const parsed =
+        typeof runtimeServerConfigRaw === 'string'
+          ? JSON.parse(runtimeServerConfigRaw)
+          : runtimeServerConfigRaw
+      return parsed && typeof parsed === 'object' ? parsed : undefined
+    } catch {
+      return undefined
+    }
+    }, [runtimeServerConfigRaw])
+
     return (
         <div className="flex flex-col h-[80vh] p-4 bg-background w-full">
             <div className="flex items-center justify-between mb-2">
@@ -246,6 +259,7 @@ const FormHardwareKitManager = ({
                     isDeployMode={true}
                     targetPrefix={['Kit-', 'PilotCar-']}
                     kitServerUrl={runtimeServerUrl}
+                    socketIoConfig={KIT_SOCKET_IO_CONFIG}
                     ref={runTimeRef}
                     forceKitId={kitName}
                     usedAPIs={[]}
@@ -284,6 +298,7 @@ const FormHardwareKitManager = ({
                     sendVssToDevice={(vss: string) => {
                         writeFile(VSS_PATH, vss)
                         setTimeout(() => {
+                            console.log('triggerRebuildVehicleModel after 3s')
                             triggerRebuildVehicleModel(vss)
                         }, 3000)
                     }}

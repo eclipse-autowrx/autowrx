@@ -72,6 +72,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const [siteConfigs, setSiteConfigs] = useState<{ public: Record<string, any> }>({ public: {} })
   const [pluginMetaConfig, setPluginMetaConfig] = useState<Record<string, any>>({})
   const runtimeServerUrl = useSiteConfig('RUNTIME_SERVER_URL', config?.runtime?.url)
+  const runtimeServerConfigRaw = useSiteConfig('RUNTIME_SERVER_CONFIG', '')
 
   // NewPrototypeLayout uses id "preview-template" as a synthetic model when
   // previewing a template with no real model. That sentinel is not a Mongo
@@ -373,6 +374,17 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const SIGNAL_CONFIG_PATH = config.runtime?.signalConfigPath || '/app/remote_access/signal-config.json'
   const VSS_PATH = config.runtime?.vssPath || '/app/remote_access/vss.json'
   const KIT_SERVER_URL = runtimeServerUrl || config.runtime?.url || 'https://kit.digitalauto.tech'
+  // Socket.IO options for the runtime server (e.g. websocket-only transport behind a proxy)
+  const KIT_SOCKET_IO_CONFIG = useMemo<Record<string, any> | undefined>(() => {
+    if (!runtimeServerConfigRaw) return undefined
+    try {
+      const parsed =
+        typeof runtimeServerConfigRaw === 'string' ? JSON.parse(runtimeServerConfigRaw) : runtimeServerConfigRaw
+      return parsed && typeof parsed === 'object' ? parsed : undefined
+    } catch {
+      return undefined
+    }
+  }, [runtimeServerConfigRaw])
   // Name/id only — Kit-Manager exposes CLIENTS via public GET /listAllClient
   const kitRegisterPayload = {
     username: currentUser?.name || 'plugin',
@@ -381,7 +393,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   }
   const handleFetchSignalMapping = useCallback((kitName: string): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const socket = io(KIT_SERVER_URL)
+      const socket = KIT_SOCKET_IO_CONFIG ? io(KIT_SERVER_URL, KIT_SOCKET_IO_CONFIG) : io(KIT_SERVER_URL)
       const kitId = kitName
       let settled = false
 
@@ -426,11 +438,11 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
         finish(() => reject(new Error(`Connection failed: ${err.message}`)))
       })
     })
-  }, [KIT_SERVER_URL, data?.prototype?.name, prototype_id, currentUser?.id, currentUser?.email, currentUser?.name])
+  }, [KIT_SERVER_URL, KIT_SOCKET_IO_CONFIG, data?.prototype?.name, prototype_id, currentUser?.id, currentUser?.email, currentUser?.name])
 
   const handleFetchVss = useCallback((kitName: string): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const socket = io(KIT_SERVER_URL)
+      const socket = KIT_SOCKET_IO_CONFIG ? io(KIT_SERVER_URL, KIT_SOCKET_IO_CONFIG) : io(KIT_SERVER_URL)
       const kitId = kitName
       let settled = false
 
@@ -475,11 +487,11 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
         finish(() => reject(new Error(`Connection failed: ${err.message}`)))
       })
     })
-  }, [KIT_SERVER_URL, data?.prototype?.name, prototype_id, currentUser?.id, currentUser?.email, currentUser?.name])
+  }, [KIT_SERVER_URL, KIT_SOCKET_IO_CONFIG, data?.prototype?.name, prototype_id, currentUser?.id, currentUser?.email, currentUser?.name])
 
   const handleReplaceVss = useCallback((kitName: string, vssContent: string): Promise<void> => {
     return new Promise((resolve, reject) => {
-      const socket = io(KIT_SERVER_URL)
+      const socket = KIT_SOCKET_IO_CONFIG ? io(KIT_SERVER_URL, KIT_SOCKET_IO_CONFIG) : io(KIT_SERVER_URL)
       const kitId = kitName
       let settled = false
 
@@ -515,13 +527,13 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
         finish(() => reject(new Error(`Connection failed: ${err.message}`)))
       })
     })
-  }, [KIT_SERVER_URL, data?.prototype?.name, prototype_id, currentUser?.id, currentUser?.email, currentUser?.name])
+  }, [KIT_SERVER_URL, KIT_SOCKET_IO_CONFIG, data?.prototype?.name, prototype_id, currentUser?.id, currentUser?.email, currentUser?.name])
 
   const handleReplaceSignalMapping = useCallback(async (kitName: string, fileContent: string): Promise<void> => {
     if (!model_id) throw new Error('No model available for VSS upload')
 
     return new Promise((resolve, reject) => {
-      const socket = io(KIT_SERVER_URL)
+      const socket = KIT_SOCKET_IO_CONFIG ? io(KIT_SERVER_URL, KIT_SOCKET_IO_CONFIG) : io(KIT_SERVER_URL)
       const kitId = kitName
       let settled = false
 
@@ -579,7 +591,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
         finish(() => reject(new Error(`Connection failed: ${err.message}`)))
       })
     })
-  }, [model_id, KIT_SERVER_URL, data?.prototype?.name, prototype_id, currentUser?.id, currentUser?.email, currentUser?.name])
+  }, [model_id, KIT_SERVER_URL, KIT_SOCKET_IO_CONFIG, data?.prototype?.name, prototype_id, currentUser?.id, currentUser?.email, currentUser?.name])
 
   const handleSetActiveTab = useCallback(
     (targetTab: string, targetPluginSlug?: string) => {
