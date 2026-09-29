@@ -1,3 +1,11 @@
+// Copyright (c) 2026 Eclipse Foundation.
+//
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { Button } from '@/components/atoms/button'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import { DEFAULT_COPY_RIGHT_NAV_BUTTON, TabConfig } from '@/components/organisms/CustomTabEditor'
