@@ -1,6 +1,14 @@
+// Copyright (c) 2026 Eclipse Foundation.
+//
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { Button } from '@/components/atoms/button'
 import DaTabItem from '@/components/atoms/DaTabItem'
-import { TabConfig } from '@/components/organisms/CustomTabEditor'
+import { DEFAULT_COPY_RIGHT_NAV_BUTTON, TabConfig } from '@/components/organisms/CustomTabEditor'
 import StagingTabButton from '@/components/organisms/StagingTabButton'
 import { renderTabIcon } from '@/lib/tabUtils'
 import { cn } from '@/lib/utils'
@@ -12,9 +20,15 @@ const DEFAULT_STAGING_TAB: TabConfig = {
   type: 'builtin',
 }
 
+const DEFAULT_COPY_TAB: TabConfig = {
+  ...DEFAULT_COPY_RIGHT_NAV_BUTTON,
+  type: 'builtin',
+} as TabConfig
+
 export interface PrototypeRightActionButtonProps {
   tabs?: TabConfig[]
   onClick?: (tabConfig: TabConfig) => void
+  onCopyClick?: () => void
   stagingDisabled?: boolean
   stagingDisabledTitle?: string
 }
@@ -23,6 +37,7 @@ export const PrototypeRightActionButton = ({
   config,
   disabled,
   title,
+  dataId,
   onClick,
 }: {
   config: TabConfig & {
@@ -30,8 +45,10 @@ export const PrototypeRightActionButton = ({
   }
   disabled?: boolean
   title?: string
+  dataId?: string
   onClick?: () => void
 }) => {
+  const isCopy = config.builtin === 'copy'
   const icon = !config.hideIcon
     ? renderTabIcon(
         {
@@ -41,7 +58,7 @@ export const PrototypeRightActionButton = ({
       ) || config.iconElement
     : null
 
-  if (config.type === 'builtin' || config.builtin)
+  if ((config.type === 'builtin' || config.builtin) && !isCopy)
     return (
       <StagingTabButton
         stagingConfig={{
@@ -79,7 +96,10 @@ export const PrototypeRightActionButton = ({
               : '',
       )}
       variant={config.variant === 'primary' ? 'default' : config.variant}
+      size="sm"
       disabled={disabled}
+      title={title}
+      data-id={dataId}
       onClick={onClick}
     >
       {icon}
@@ -91,6 +111,7 @@ export const PrototypeRightActionButton = ({
 const PrototypeRightActionButtons = ({
   tabs,
   onClick,
+  onCopyClick,
   stagingDisabled,
   stagingDisabledTitle,
 }: PrototypeRightActionButtonProps) => {
@@ -99,33 +120,47 @@ const PrototypeRightActionButtons = ({
   const rawTabs = tabs ?? []
   const visibleTabs = rawTabs.filter((t) => !t.hidden)
   const hasStagingEntry = rawTabs.some((t) => t.builtin === 'staging')
-  const displayTabs =
+  const hasCopyEntry = rawTabs.some((t) => t.builtin === 'copy')
+  let displayTabs =
     tabs === undefined
-      ? [DEFAULT_STAGING_TAB]
+      ? [DEFAULT_COPY_TAB, DEFAULT_STAGING_TAB]
       : hasStagingEntry
         ? visibleTabs
         : [DEFAULT_STAGING_TAB, ...visibleTabs]
+  if (tabs !== undefined && !hasCopyEntry) {
+    displayTabs = [DEFAULT_COPY_TAB, ...displayTabs]
+  }
   return (
     <div className="flex items-center gap-2">
       {displayTabs.map((tabConfig) => {
         const isStaging = tabConfig.builtin === 'staging'
+        const isCopy = tabConfig.builtin === 'copy'
         return (
           <PrototypeRightActionButton
             key={`right-actions-btn-${JSON.stringify(tabConfig)}`}
             config={tabConfig}
             disabled={isStaging ? stagingDisabled : undefined}
-            title={isStaging ? stagingDisabledTitle : undefined}
+            title={
+              isCopy
+                ? 'Copy this prototype into a model'
+                : isStaging
+                  ? stagingDisabledTitle
+                  : undefined
+            }
+            dataId={isCopy ? 'btn-prototype-copy' : undefined}
             onClick={
-              tabConfig.openMode === 'dialog'
-                ? stagingDisabled && isStaging
-                  ? undefined
-                  : () => onClick?.(tabConfig)
-                : tabConfig.type === 'builtin' || tabConfig.builtin
-                  ? undefined
-                  : () =>
-                      navigate(
-                        `/model/${model_id}/library/prototype/${prototype_id}/plug?plugid=${tabConfig.plugin}`,
-                      )
+              isCopy
+                ? onCopyClick
+                : tabConfig.openMode === 'dialog'
+                  ? stagingDisabled && isStaging
+                    ? undefined
+                    : () => onClick?.(tabConfig)
+                  : tabConfig.type === 'builtin' || tabConfig.builtin
+                    ? undefined
+                    : () =>
+                        navigate(
+                          `/model/${model_id}/library/prototype/${prototype_id}/plug?plugid=${tabConfig.plugin}`,
+                        )
             }
           />
         )

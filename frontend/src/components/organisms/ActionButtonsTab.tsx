@@ -19,6 +19,7 @@ import DOMPurify from 'dompurify'
 import { useState } from 'react'
 import {
   TbChevronUp,
+  TbCopy,
   TbEye,
   TbEyeOff,
   TbGripVertical,
@@ -103,6 +104,8 @@ const ActionButtonEditor = ({
               }),
             }}
           />
+        ) : config.builtin === 'copy' ? (
+          <TbCopy className="w-5 h-5 text-muted-foreground shrink-0" />
         ) : config.builtin ? (
           <TbListCheck className="w-5 h-5 text-muted-foreground shrink-0" />
         ) : (
@@ -553,7 +556,7 @@ const ActionButtonsTab = ({
                               </div>
                             }
                             config={
-                              btn.builtin
+                              btn.builtin === 'staging'
                                 ? {
                                     ...btn,
                                     builtin: 'staging',
@@ -562,7 +565,9 @@ const ActionButtonsTab = ({
                                     hideIcon: btn.hideIcon,
                                     corners: btn.corners,
                                   }
-                                : btn
+                                : btn.builtin === 'copy'
+                                  ? { ...btn, label: btn.label || 'Copy' }
+                                  : btn
                             }
                             expanded={expandedRightNavItem === i}
                             onRemove={() =>

@@ -27,6 +27,9 @@
         let interval = null;
         let chart = null;
         let counter = 0;
+        let dataUpdateInterval = 1000;
+        let maxDataPoints = 60;
+        let isAppRunning = false;
 
         // Define some colors for different signals
         const CHART_COLORS = [
@@ -39,6 +42,65 @@
             '#FF9F40'  // Orange
         ];
 
+        function stopSampling() {
+            if (interval) {
+                clearInterval(interval);
+                interval = null;
+            }
+        }
+
+        function resetChart() {
+            if (!chart) return;
+            counter = 0;
+            chart.data.labels = [];
+            chart.data.datasets.forEach(dataset => {
+                dataset.data = [];
+            });
+            chart.options.scales.x.min = 0;
+            delete chart.options.scales.x.max;
+            chart.update();
+        }
+
+        function startSampling() {
+            stopSampling();
+            interval = setInterval(() => {
+                if (ASSOCIATED_APIS.length > 0) {
+                    let hasNewData = false;
+
+                    // Update datasets for each API
+                    ASSOCIATED_APIS.forEach((api, index) => {
+                        let apiValueObject = getApiValue(api);
+                        let apiValue = apiValueObject?.value || 0;
+
+                        if (index === 0) {
+                            // Only add new labels for the first dataset
+                            chart.data.labels.push(counter);
+                            hasNewData = true;
+                        }
+
+                        chart.data.datasets[index].data.push(apiValue);
+                    });
+
+                    if (hasNewData) {
+                        counter++;
+
+                        // Remove old data points if exceeding maxDataPoints
+                        if (chart.data.labels.length > maxDataPoints) {
+                            chart.data.labels.shift();
+                            chart.data.datasets.forEach(dataset => {
+                                dataset.data.shift();
+                            });
+                        }
+
+                        chart.options.scales.x.min = Math.max(0, counter - maxDataPoints);
+                        chart.options.scales.x.max = counter;
+
+                        chart.update();
+                    }
+                }
+            }, dataUpdateInterval);
+        }
+
         function onWidgetLoaded(options) {
             // Accept either a single API or an array of APIs
             if (options.apis && Array.isArray(options.apis)) {
@@ -47,8 +109,8 @@
                 ASSOCIATED_APIS = [options.api];
             }
 
-            const dataUpdateInterval = options.dataUpdateInterval || 1000;
-            const maxDataPoints = options.maxDataPoints || 60;
+            dataUpdateInterval = options.dataUpdateInterval || 1000;
+            maxDataPoints = options.maxDataPoints || 60;
 
             const ctx = document.getElementById('api-chart').getContext('2d');
 
@@ -112,46 +174,25 @@
                 }
             });
 
-            interval = setInterval(() => {
-                if (ASSOCIATED_APIS.length > 0) {
-                    let hasNewData = false;
+            // app-running-state can arrive before widget-options
+            if (isAppRunning) {
+                startSampling();
+            }
+        }
 
-                    // Update datasets for each API
-                    ASSOCIATED_APIS.forEach((api, index) => {
-                        let apiValueObject = getApiValue(api);
-                        let apiValue = apiValueObject?.value || 0;
-
-                        if (index === 0) {
-                            // Only add new labels for the first dataset
-                            chart.data.labels.push(counter);
-                            hasNewData = true;
-                        }
-
-                        chart.data.datasets[index].data.push(apiValue);
-                    });
-
-                    if (hasNewData) {
-                        counter++;
-
-                        // Remove old data points if exceeding maxDataPoints
-                        if (chart.data.labels.length > maxDataPoints) {
-                            chart.data.labels.shift();
-                            chart.data.datasets.forEach(dataset => {
-                                dataset.data.shift();
-                            });
-                        }
-
-                        chart.options.scales.x.min = Math.max(0, counter - maxDataPoints);
-                        chart.options.scales.x.max = counter;
-
-                        chart.update();
-                    }
-                }
-            }, dataUpdateInterval);
+        function onAppRunningStateChanged(isRunning) {
+            isAppRunning = isRunning;
+            if (!chart) return;
+            if (isRunning) {
+                resetChart();
+                startSampling();
+            } else {
+                stopSampling();
+            }
         }
 
         function onWidgetUnloaded(options) {
-            if (interval) clearInterval(interval);
+            stopSampling();
         }
     </script>
 </body>

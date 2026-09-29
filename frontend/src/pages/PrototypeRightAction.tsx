@@ -1,3 +1,11 @@
+// Copyright (c) 2026 Eclipse Foundation.
+//
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import DaDialog from '@/components/molecules/DaDialog'
 import PrototypeRightActionButtons from '@/components/molecules/PrototypeRightActionButtons'
 import { TabConfig } from '@/components/organisms/CustomTabEditor'
@@ -10,11 +18,13 @@ import { useState } from 'react'
 export interface PrototypeRightActionProps {
   prototype: Prototype
   actions?: TabConfig[]
+  onCopyClick?: () => void
 }
 
 const PrototypeRightAction = ({
   prototype,
   actions,
+  onCopyClick,
 }: PrototypeRightActionProps) => {
   const [openDialog, setOpenDialog] = useState('')
   const stagingDisabled = !hasPrototypeCode(prototype?.code)
@@ -24,7 +34,8 @@ const PrototypeRightAction = ({
   return (
     <>
       {actions?.map((action) => {
-        if (action.openMode === 'page') return null
+        if (action.openMode === 'page' || action.builtin === 'copy')
+          return null
         const dialogKey = JSON.stringify(action)
         return (
           <DaDialog
@@ -59,6 +70,7 @@ const PrototypeRightAction = ({
       <PrototypeRightActionButtons
         tabs={actions}
         onClick={(action) => setOpenDialog(JSON.stringify(action))}
+        onCopyClick={onCopyClick}
         stagingDisabled={stagingDisabled}
         stagingDisabledTitle={stagingDisabledTitle}
       />

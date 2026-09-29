@@ -27,6 +27,47 @@
       direction: rtl;
       text-overflow: ellipsis;
     }
+
+    .signal-desc-clamped {
+      display: flex;
+      overflow: hidden;
+      align-items: baseline;
+    }
+
+    .signal-desc-text {
+      flex: 1 1 0%;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .signal-desc-expanded {
+      display: block;
+      overflow: visible;
+    }
+
+    .signal-desc-expanded .signal-desc-text {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+    }
+
+    .signal-desc-toggle {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 12px;
+      color: rgb(148 163 184);
+      cursor: pointer;
+      display: inline;
+      white-space: nowrap;
+      vertical-align: baseline;
+    }
+
+    .signal-desc-toggle:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 
@@ -100,21 +141,130 @@
       if (!allows) return ''
       return `<p class='text-content text-slate-400 font-semibold'>Allows values: ${allows.join(', ')}</p>`
     }
+
+    function escapeHtml(text) {
+      if (!text) return ''
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+    }
+
+    function buildSignalMetaLine(signal) {
+      const parts = [
+        `[${signal.type.toUpperCase()}]`,
+        `[${signal.datatype}]`,
+      ]
+      if (signal.unit) {
+        parts.push(`[${signal.unit}]`)
+      }
+      return parts.join(' ')
+    }
+
+    function isLongDescription(text, threshold = 100) {
+      return text && text.length > threshold
+    }
+
+    function getDescriptionTextNode(descEl) {
+      return [...descEl.childNodes].find(n => n.nodeType === Node.TEXT_NODE)
+    }
+
+    function clampDescriptionText(descEl, toggleEl) {
+      const textSpan = descEl.querySelector('.signal-desc-text')
+      if (!textSpan) return
+
+      const fullText = descEl.dataset.fullText || textSpan.textContent
+      descEl.dataset.fullText = fullText
+      textSpan.textContent = fullText
+      descEl.classList.remove('signal-desc-expanded')
+      descEl.classList.add('signal-desc-clamped')
+      toggleEl.innerText = ' Show more'
+      toggleEl.style.display = 'inline'
+    }
+
+    function expandDescriptionText(descEl, toggleEl) {
+      const textSpan = descEl.querySelector('.signal-desc-text')
+      if (!textSpan) return
+
+      textSpan.textContent = descEl.dataset.fullText || textSpan.textContent
+      toggleEl.innerText = ' Show less'
+      descEl.classList.remove('signal-desc-clamped')
+      descEl.classList.add('signal-desc-expanded')
+    }
+
+    function scheduleDescriptionClamp(descEl, toggleEl) {
+      requestAnimationFrame(() => {
+        if (descEl.isConnected) clampDescriptionText(descEl, toggleEl)
+      })
+    }
+
+    function attachDescriptionToggle(descEl, toggleEl) {
+      toggleEl.addEventListener('click', () => {
+        const expanded = descEl.classList.contains('signal-desc-expanded')
+        if (expanded) {
+          clampDescriptionText(descEl, toggleEl)
+        } else {
+          expandDescriptionText(descEl, toggleEl)
+        }
+      })
+    }
+
+    function createSignalNameCell(signal, content) {
+      const wrapper = document.createElement('div')
+      wrapper.className = 'w-full'
+
+      const nameRow = document.createElement('div')
+      nameRow.className = 'w-full flex justify-start'
+      const nameEl = document.createElement('div')
+      nameEl.className = 'font-semibold text-slate-600 overflow-x-hidden whitespace-nowrap rtl'
+      nameEl.innerText = content
+      nameRow.appendChild(nameEl)
+      wrapper.appendChild(nameRow)
+
+      const metaEl = document.createElement('p')
+      metaEl.className = 'w-full text-content text-slate-400 font-normal leading-tight'
+      metaEl.innerText = buildSignalMetaLine(signal)
+      wrapper.appendChild(metaEl)
+
+      if (signal.description) {
+        const descEl = document.createElement('p')
+        const long = isLongDescription(signal.description)
+        descEl.className = `signal-desc w-full text-content text-slate-600 font-normal leading-tight ${long ? 'signal-desc-clamped' : ''}`
+        descEl.title = signal.description
+        descEl.dataset.fullText = signal.description
+        const textSpan = document.createElement('span')
+        textSpan.className = 'signal-desc-text'
+        textSpan.textContent = signal.description
+        descEl.appendChild(textSpan)
+
+        if (long) {
+          const toggleEl = document.createElement('button')
+          toggleEl.type = 'button'
+          toggleEl.className = 'signal-desc-toggle'
+          toggleEl.style.display = 'none'
+          toggleEl.innerText = ' Show more'
+          attachDescriptionToggle(descEl, toggleEl)
+          descEl.appendChild(toggleEl)
+          scheduleDescriptionClamp(descEl, toggleEl)
+        }
+
+        wrapper.appendChild(descEl)
+      }
+
+      return wrapper
+    }
+
     function createTableCell(signal, content, col) {
       const cell = document.createElement('td');
       switch (col) {
         case 0:
           cell.className = `px-1 py-2 w-[70vw] max-w-[70vw] overflow-x-hidden font-semibold text-big`;
           if (signal) {
-            cell.innerHTML = `<div class='w-full'>
-                <div class='w-full flex justify-start'>
-                  <div class='font-semibold text-slate-600 overflow-x-hidden whitespace-nowrap rtl'>${content}</div>
-                </div>
-                <p class='w-full text-content text-slate-600 font-normal whitespace-pre-wrap leading-tight'> [${signal.type.toUpperCase()}] [${signal.datatype}] ${signal.unit ? ("[" + signal.unit + "]") : ''} ${signal.description}</p>
-                </div>`
+            cell.appendChild(createSignalNameCell(signal, content))
           } else {
             cell.innerHTML = `<div class='w-full flex justify-start'>
-                <div class='font-semibold text-slate-600 overflow-x-hidden whitespace-nowrap rtl'>${content}</div>
+                <div class='font-semibold text-slate-600 overflow-x-hidden whitespace-nowrap rtl'>${escapeHtml(content)}</div>
               </div>`
           }
 

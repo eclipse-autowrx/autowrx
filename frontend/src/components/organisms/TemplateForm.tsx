@@ -59,7 +59,7 @@ import {
   StagingConfig,
   RightNavPluginButton,
   TabsBorderRadius,
-  ensureStagingRightNavButton,
+  ensureBuiltinRightNavButtons,
 } from '@/components/organisms/CustomTabEditor'
 import {
   getModelTabConfig,
@@ -218,7 +218,7 @@ export default function TemplateForm({
         : {}
       setPrototypeStagingConfig(stagingItemConfig)
       setPrototypeRightNavButtons(
-        ensureStagingRightNavButton(rightNavRaw, stagingItemConfig),
+        ensureBuiltinRightNavButtons(rightNavRaw, stagingItemConfig),
       )
     } else {
       setForm({
@@ -232,7 +232,7 @@ export default function TemplateForm({
       setModelTabs(getModelTabConfig([]))
       setPrototypeTabs([])
       setPrototypeStagingConfig({})
-      setPrototypeRightNavButtons(ensureStagingRightNavButton([]))
+      setPrototypeRightNavButtons(ensureBuiltinRightNavButtons([]))
       setPrototypeTabsVariant('tab')
       setPrototypeTabsBorderRadius('round')
       setLocalSidebarPlugin(null)
@@ -262,7 +262,7 @@ export default function TemplateForm({
         setModelTabs([])
         setPrototypeTabs([])
         setPrototypeStagingConfig({})
-        setPrototypeRightNavButtons(ensureStagingRightNavButton([]))
+        setPrototypeRightNavButtons(ensureBuiltinRightNavButtons([]))
         setPrototypeTabsBorderRadius('round')
         setLocalSidebarPlugin(null)
         setLocalRuntimePlugin(null)
@@ -326,7 +326,7 @@ export default function TemplateForm({
         : {}
       setPrototypeStagingConfig(stagingItemConfig2)
       setPrototypeRightNavButtons(
-        ensureStagingRightNavButton(rightNavRaw2, stagingItemConfig2),
+        ensureBuiltinRightNavButtons(rightNavRaw2, stagingItemConfig2),
       )
     }
   }, [open, isCreate, initialData])
@@ -712,8 +712,7 @@ export default function TemplateForm({
                         className="shrink-0 gap-1.5"
                         onClick={() => handleRequestPrototypeAddonSelect(null)}
                       >
-                        <TbPuzzle className="w-4 h-4" />
-                        <TbPlus className="w-3.5 h-3.5" />
+                        <TbPlus className="w-4 h-4" />
                         Add-ons
                       </Button>
                     </div>
