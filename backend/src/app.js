@@ -130,6 +130,15 @@ app.use('/v2', dataSync.middleware);
 
 app.use('/v2', routesV2);
 app.use('/static', express.static(path.join(__dirname, '../static')));
+// Per-deployment kit message hook (replace backend/kit-hooks/default.hook.js)
+app.get('/kit-hooks/hook.js', (req, res) => {
+  res.type('application/javascript');
+  res.set('Cache-Control', 'no-cache');
+  res.sendFile(path.join(__dirname, '../kit-hooks/default.hook.js'), (err) => {
+    // A deployment without a hook file simply has no hook (the frontend passes messages through)
+    if (err && !res.headersSent) res.status(err.code === 'ENOENT' ? 404 : 500).end();
+  });
+});
 app.use('/builtin-widgets', express.static(path.join(__dirname, '../static/builtin-widgets')));
 app.use('/images', express.static(path.join(__dirname, '../static/images')));
 app.use('/static/plugin', express.static(path.join(__dirname, '../static/plugin'), { dotfiles: 'ignore' }));

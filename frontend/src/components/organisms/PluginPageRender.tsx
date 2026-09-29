@@ -14,6 +14,7 @@ import { getPluginById, getPluginBySlug } from '@/services/plugin.service'
 import { updateModelService, getComputedAPIs, getApiDetailService, replaceAPIsService } from '@/services/model.service'
 import config from '@/configs/config'
 import { io } from 'socket.io-client'
+import { withKitHook } from '@/lib/kitMessageHook'
 import { listAssetsService, createAssetService, updateAssetService, deleteAssetService, shareMyAsset, removeUserFromShareList, getAssetById } from '@/services/asset.service'
 import { searchUserByEmailService } from '@/services/search.service'
 import { updatePrototypeService, countCodeExecution } from '@/services/prototype.service'
@@ -379,9 +380,15 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     user_id: currentUser?.id || 'plugin',
     domain: 'domain',
   }
+  const kitHookCtx = () => ({
+    source: 'plugin-helper',
+    prototypeId: prototype_id,
+    userId: currentUser?.id,
+    userName: currentUser?.name,
+  })
   const handleFetchSignalMapping = useCallback((kitName: string): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const socket = io(KIT_SERVER_URL)
+      const socket = withKitHook(io(KIT_SERVER_URL), kitHookCtx)
       const kitId = kitName
       let settled = false
 
@@ -430,7 +437,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
 
   const handleFetchVss = useCallback((kitName: string): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const socket = io(KIT_SERVER_URL)
+      const socket = withKitHook(io(KIT_SERVER_URL), kitHookCtx)
       const kitId = kitName
       let settled = false
 
@@ -479,7 +486,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
 
   const handleReplaceVss = useCallback((kitName: string, vssContent: string): Promise<void> => {
     return new Promise((resolve, reject) => {
-      const socket = io(KIT_SERVER_URL)
+      const socket = withKitHook(io(KIT_SERVER_URL), kitHookCtx)
       const kitId = kitName
       let settled = false
 
@@ -521,7 +528,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     if (!model_id) throw new Error('No model available for VSS upload')
 
     return new Promise((resolve, reject) => {
-      const socket = io(KIT_SERVER_URL)
+      const socket = withKitHook(io(KIT_SERVER_URL), kitHookCtx)
       const kitId = kitName
       let settled = false
 

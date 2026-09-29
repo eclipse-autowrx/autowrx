@@ -41,6 +41,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/kit-hooks': {
+        target: 'http://localhost:3200',
+        changeOrigin: true,
+        secure: false,
+      },
       '/static': {
         target: 'http://localhost:3200',
         changeOrigin: true,

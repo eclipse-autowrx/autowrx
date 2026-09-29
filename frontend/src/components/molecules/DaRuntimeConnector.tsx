@@ -14,6 +14,7 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useAssets } from '@/hooks/useAssets'
 
 import { io } from 'socket.io-client'
+import { withKitHook } from '@/lib/kitMessageHook'
 import { useSiteConfig } from '@/utils/siteConfig'
 import { parseReadFileReply, prepareKitFileContentForWrite } from '@/utils/kitReply'
 
@@ -90,6 +91,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const { data: currentUser } = useSelfProfileQuery()
     const currentUserRef = useRef(currentUser)
     currentUserRef.current = currentUser
+    const prototypeRef = useRef(prototype)
+    prototypeRef.current = prototype
     const { useFetchAssets } = useAssets()
     const { data: assets } = useFetchAssets()
 
@@ -455,7 +458,14 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         }, 10000)
       }
 
-      setSocketIo(io(kitServerUrl, effectiveSocketIoConfig))
+      setSocketIo(
+        withKitHook(io(kitServerUrl, effectiveSocketIoConfig), () => ({
+          source: 'connector',
+          prototypeId: prototypeRef.current?.id,
+          userId: currentUserRef.current?.id,
+          userName: currentUserRef.current?.name,
+        })),
+      )
       // Only re-create socket if kitServerUrl changes, not if config changes
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [kitServerUrl, JSON.stringify(socketIoConfig)])
