@@ -15,16 +15,16 @@ import { Components } from 'react-markdown'
  */
 const privacyMarkdownComponents: Components = {
   h1: ({ children }) => (
-    <h1 className="text-4xl font-bold text-foreground mt-10 mb-4 leading-tight">{children}</h1>
+    <h1 className="text-4xl font-bold text-primary mt-10 mb-4 leading-tight">{children}</h1>
   ),
   h2: ({ children }) => (
-    <h2 className="text-2xl font-semibold text-foreground mt-10 mb-3 leading-snug border-b border-border pb-2">{children}</h2>
+    <h2 className="text-2xl font-semibold text-primary mt-10 mb-3 leading-snug border-b border-border pb-2">{children}</h2>
   ),
   h3: ({ children }) => (
-    <h3 className="text-xl font-semibold text-foreground mt-8 mb-2">{children}</h3>
+    <h3 className="text-xl font-semibold text-primary mt-8 mb-2">{children}</h3>
   ),
   h4: ({ children }) => (
-    <h4 className="text-lg font-semibold text-foreground mt-6 mb-2">{children}</h4>
+    <h4 className="text-lg font-semibold text-primary mt-6 mb-2">{children}</h4>
   ),
   p: ({ children }) => (
     <p className="text-base text-foreground leading-7 mb-5">{children}</p>
