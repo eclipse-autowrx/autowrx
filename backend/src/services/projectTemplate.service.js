@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
-const { ProjectTemplate } = require('../models');
+const { ProjectTemplate, ProjectTemplateSeed } = require('../models');
 const ApiError = require('../utils/ApiError');
 const logger = require('../config/logger');
 
@@ -64,8 +64,13 @@ const removeById = async (id) => {
 };
 
 /**
- * Seed predefined project templates on server startup.
- * Uses $setOnInsert so existing (admin-modified) templates are never overwritten.
+ * Seed predefined project templates on server startup, once per template.
+ * A template is identified by its predefined name. Once seeded it is recorded in
+ * ProjectTemplateSeed, so deleting or renaming it in the admin UI is respected.
+ * Templates added to the predefined list in a later release are seeded once.
+ *
+ * Databases created before seeding was tracked have templates but no records:
+ * all current predefined names are then marked as seeded without re-inserting.
  */
 const seedProjectTemplates = async (predefinedTemplates, systemUserId) => {
   if (!predefinedTemplates || predefinedTemplates.length === 0) return;
@@ -75,25 +80,44 @@ const seedProjectTemplates = async (predefinedTemplates, systemUserId) => {
   }
 
   try {
-    const operations = predefinedTemplates.map((tpl) => ({
-      updateOne: {
-        filter: { name: tpl.name },
-        update: {
-          $setOnInsert: {
-            name: tpl.name,
-            description: tpl.description || '',
-            data: tpl.data,
-            visibility: 'public',
-            created_by: systemUserId,
-            updated_by: systemUserId,
-          },
-        },
-        upsert: true,
-      },
-    }));
+    const seededKeys = new Set((await ProjectTemplateSeed.find({}, { key: 1 }).lean()).map((s) => s.key));
+    const isLegacyDb = seededKeys.size === 0 && (await ProjectTemplate.estimatedDocumentCount()) > 0;
+    const pending = predefinedTemplates.filter((tpl) => !seededKeys.has(tpl.name));
 
-    await ProjectTemplate.bulkWrite(operations);
-    logger.info(`Seeded ${predefinedTemplates.length} project template(s)`);
+    let inserted = 0;
+    if (!isLegacyDb && pending.length > 0) {
+      const result = await ProjectTemplate.bulkWrite(
+        pending.map((tpl) => ({
+          updateOne: {
+            filter: { name: tpl.name },
+            update: {
+              $setOnInsert: {
+                name: tpl.name,
+                description: tpl.description || '',
+                data: tpl.data,
+                visibility: 'public',
+                created_by: systemUserId,
+                updated_by: systemUserId,
+              },
+            },
+            upsert: true,
+          },
+        })),
+      );
+      inserted = result.upsertedCount || 0;
+    }
+    if (pending.length > 0) {
+      await ProjectTemplateSeed.bulkWrite(
+        pending.map((tpl) => ({
+          updateOne: { filter: { key: tpl.name }, update: { $setOnInsert: { key: tpl.name } }, upsert: true },
+        })),
+      );
+    }
+
+    const legacyNote = isLegacyDb ? `, ${pending.length} marked as seeded (existing database)` : '';
+    logger.info(
+      `Project templates: ${inserted} seeded, ${predefinedTemplates.length - pending.length} already seeded earlier${legacyNote}`,
+    );
   } catch (error) {
     logger.error('Failed to seed project templates:', error);
   }
