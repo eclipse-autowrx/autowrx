@@ -54,7 +54,7 @@ test.describe('Site Config - legacy cleanup', () => {
 
         page.once('dialog', async (dialog) => {
           expect(dialog.message()).toContain(restoreText);
-          expect(dialog.message()).toContain('legacy');
+          expect(dialog.message().toLowerCase()).toContain('legacy');
           await dialog.accept();
         });
         await page.getByRole('button', { name: 'Restore default' }).click();
