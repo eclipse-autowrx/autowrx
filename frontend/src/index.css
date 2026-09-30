@@ -306,6 +306,8 @@ body:has(.monaco-editor .find-widget.visible) .workbench-hover-container .action
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent, var(--muted));
+  --color-accent-foreground: var(--accent-foreground, var(--foreground));
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
