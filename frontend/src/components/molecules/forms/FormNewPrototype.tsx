@@ -598,15 +598,7 @@ const FormNewPrototype = ({
                 />
             )}
 
-            {isLoadingTemplates ? (
-                <div className="mt-4 flex flex-col gap-1.5">
-                    <Label>Prototype Template *</Label>
-                    <div className="flex h-10 border px-2 rounded-md shadow-sm items-center">
-                        <TbLoader className="size-4 animate-spin mr-2" /> Loading
-                        templates...
-                    </div>
-                </div>
-            ) : templateOptions.length > 1 ? (
+            {templateOptions.length > 1 ? (
                 <div className="mt-4 flex flex-col gap-1.5">
                     <Label>Prototype Template *</Label>
                     <Select
