@@ -322,6 +322,15 @@ type SectionTab =
   | 'genai'
   | 'privacy'
 
+// A site config key is "supported" when the app still defines/manages it.
+// Anything else left in the DB is legacy and hidden from the admin tabs.
+export const isSupportedSiteConfigKey = (key: string): boolean =>
+  PREDEFINED_SITE_CONFIGS.some((c) => c.key === key) ||
+  PREDEFINED_AUTH_CONFIGS.some((c) => c.key === key) ||
+  EXCLUDED_FROM_SITE_CONFIG_KEYS.includes(key) ||
+  key === 'CFG_HOME_CONTENT' ||
+  key === 'SSO_PROVIDERS'
+
 // Every Site Config sidebar section, in render order. A deployment can hide
 // any of these via env (see configs/config.ts / adminUi.hiddenSiteConfigSections).
 const SECTIONS: {

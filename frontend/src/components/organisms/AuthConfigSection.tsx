@@ -14,7 +14,7 @@ import { Label } from '@/components/atoms/label'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import { PREDEFINED_AUTH_CONFIGS } from '@/pages/SiteConfigManagement'
+import { PREDEFINED_AUTH_CONFIGS, isSupportedSiteConfigKey } from '@/pages/SiteConfigManagement'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import { reloadSoon, restoreConfigsFromSnapshot } from '@/utils/siteConfigAdmin'
 
@@ -64,9 +64,9 @@ const AuthConfigSection: React.FC = () => {
           limit: 100,
         })
 
-        setConfigs(updatedRes.results || [])
+        setConfigs((updatedRes.results || []).filter((c) => isSupportedSiteConfigKey(c.key)))
       } else {
-        setConfigs(existingConfigs)
+        setConfigs(existingConfigs.filter((c) => isSupportedSiteConfigKey(c.key)))
       }
     } catch (err) {
       toast({
