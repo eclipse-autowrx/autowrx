@@ -47,3 +47,31 @@ describe('siteConfig.service pruneLegacySiteConfigs', () => {
     expect(SiteConfig.deleteMany).not.toHaveBeenCalled();
   });
 });
+
+describe('predefined site config parity with the admin frontend', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const predefinedSite = require('../../../src/config/predefinedSiteConfigs');
+  const predefinedAuth = require('../../../src/config/predefinedAuthConfigs');
+
+  const frontendKeys = (source, exportName) => {
+    const start = source.indexOf(`export const ${exportName}`);
+    const end = source.indexOf('\nexport ', start + 1);
+    return [...source.slice(start, end).matchAll(/^ {4}key: '([A-Z0-9_]+)'/gm)].map((m) => m[1]);
+  };
+
+  // The frontend list decides what tabs show; the backend list decides what
+  // Restore default may prune. A key missing on the backend would be deleted.
+  test('every frontend predefined key exists in the backend predefined lists', () => {
+    const source = fs.readFileSync(
+      path.join(__dirname, '../../../../frontend/src/pages/SiteConfigManagement.tsx'),
+      'utf8'
+    );
+    const backendKeys = new Set([...predefinedSite, ...predefinedAuth].map((c) => c.key));
+    const missing = [
+      ...frontendKeys(source, 'PREDEFINED_SITE_CONFIGS'),
+      ...frontendKeys(source, 'PREDEFINED_AUTH_CONFIGS'),
+    ].filter((key) => !backendKeys.has(key));
+    expect(missing).toEqual([]);
+  });
+});
