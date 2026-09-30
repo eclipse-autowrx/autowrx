@@ -10,7 +10,6 @@ import {
   configManagementService,
   type Config,
   type RestoreSiteConfigSnapshotRequest,
-  type RestoreSiteConfigSnapshotResponse,
 } from '@/services/configManagement.service'
 
 type ConfigRef = Pick<Config, 'id' | 'key'>
@@ -27,8 +26,8 @@ export const reloadSoon = (delayMs: number = 800) => {
 
 export const restoreConfigsFromSnapshot = async (
   filter: RestoreSiteConfigSnapshotRequest,
-): Promise<RestoreSiteConfigSnapshotResponse> => {
-  return configManagementService.restoreSiteConfigSnapshot(filter)
+): Promise<void> => {
+  await configManagementService.restoreSiteConfigSnapshot(filter)
 }
 
 export const deleteConfigsById = async (

@@ -610,7 +610,7 @@ Admins/DevOps (recover config after a bad change or migration).
 
 ### API contract
 
-- `POST /v2/site-config/restore-snapshot` (auth + `MANAGE_USERS`) → `200` with the restored config and per-key source. Optional body flag `pruneLegacy: true` also deletes non-secret `scope:'site'` rows in the filter's categories (plus uncategorized rows when `keys` is given) whose key is not predefined and not in the keep list (`SSO_PROVIDERS`, `STAGING_FRAME`, `STANDARD_STAGE`, `EMAIL_CONFIG`, `NAV_BAR_ACTIONS`); the response then includes `removed: string[]`. Secret configs are never pruned.
+- `POST /v2/site-config/restore-snapshot` (auth + `MANAGE_USERS`) → `200` with the restored config and per-key source.
 - Caller may send `keys?: string[]`, `categories?: string[]`, `secret?: boolean`; at least one filter is required (the system returns `400` on an empty filter).
 - The snapshot is auto-synced when the deploy seeder runs; the snapshot preserves `secret`-flagged configs in their encrypted form and restore re-upserts encrypted values (no decryption during restore).
 - Per-key source labels: `snapshot`/`predefined`/`mixed`/`none`; snapshot wins per key.

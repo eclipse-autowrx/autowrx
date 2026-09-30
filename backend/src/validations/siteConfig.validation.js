@@ -152,7 +152,6 @@ const restoreSiteConfigSnapshot = {
       keys: Joi.array().items(Joi.string().trim()),
       categories: Joi.array().items(Joi.string().trim()),
       secret: Joi.boolean(),
-      pruneLegacy: Joi.boolean(),
     })
     .or('keys', 'categories', 'secret'),
 };

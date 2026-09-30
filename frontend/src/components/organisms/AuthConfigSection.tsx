@@ -118,7 +118,7 @@ const AuthConfigSection: React.FC = () => {
   const handleFactoryReset = async () => {
     if (
       !window.confirm(
-        'Restore all auth configs to the deployment snapshot? This will reset authentication settings to their deployed values. Legacy configs that are no longer supported will also be removed.'
+        'Restore all auth configs to the deployment snapshot? This will reset authentication settings to their deployed values.'
       )
     )
       return
@@ -126,11 +126,11 @@ const AuthConfigSection: React.FC = () => {
     try {
       setIsLoading(true)
 
-      const res = await restoreConfigsFromSnapshot({ categories: ['auth'], pruneLegacy: true })
+      await restoreConfigsFromSnapshot({ categories: ['auth'] })
 
       toast({
         title: 'Restored',
-        description: `Auth configs restored from deployment snapshot${res.removed?.length ? `; removed ${res.removed.length} legacy config(s)` : ''}. Reloading page...`,
+        description: 'Auth configs restored from deployment snapshot. Reloading page...',
       })
 
       reloadSoon()

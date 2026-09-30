@@ -212,36 +212,6 @@ const PREDEFINED_SITE_CONFIGS = [
     category: 'model_prototype',
   },
   {
-    key: 'HIDE_MODEL_PAGE',
-    scope: 'site',
-    value: false,
-    secret: false,
-    valueType: 'boolean',
-    description:
-      'When enabled, hides the Vehicle Models list page (/model) and redirects visitors to Home. Also removes the "Vehicle Models" breadcrumb entry.',
-    category: 'model_prototype',
-  },
-  {
-    key: 'VSS_PLUGINS',
-    scope: 'site',
-    value: [{ label: 'A2L Importer', plugin: 'a2l-importer' }],
-    secret: false,
-    valueType: 'array',
-    description:
-      'Plugin tabs to show on the Vehicle API (COVESA VSS) page. Each entry needs a "label" (tab display name) and "plugin" (plugin slug). Example: [{"label":"A2L Importer","plugin":"a2l-importer"}]. Only plugins that are installed will appear.',
-    category: 'model_prototype',
-  },
-  {
-    key: 'MODEL_API_PLUGINS',
-    scope: 'site',
-    value: [],
-    secret: false,
-    valueType: 'array',
-    description:
-      'Plugin tabs to show in the Vehicle API page Tab Bar (top-level, alongside COVESA API / custom API sets). Each entry needs a "label" (tab display name) and "plugin" (plugin slug). Example: [{"label":"My Plugin","plugin":"my-plugin"}]. Only plugins that are installed will appear.',
-    category: 'model_prototype',
-  },
-  {
     key: 'PUBLIC_VIEWING',
     scope: 'site',
     value: true,

@@ -32,16 +32,6 @@ const ALL_PREDEFINED_RESTORE_DEFAULTS = (() => {
   return Array.from(byKey.values());
 })();
 
-// Keys managed outside the predefined lists that must never be pruned as legacy.
-const LEGACY_PRUNE_KEEP_KEYS = new Set([
-  'SSO_PROVIDERS',
-  'STAGING_FRAME',
-  'STANDARD_STAGE',
-  'EMAIL_CONFIG',
-  'E2E_TEST_ENABLED',
-  'NAV_BAR_ACTIONS',
-]);
-
 /**
  * Encrypt sensitive fields in EMAIL_CONFIG value before storage.
  * Only encrypts values that are not already encrypted (no colon separator).
@@ -1051,45 +1041,8 @@ const resolveRestoreConfigs = (filter, snapshots) => {
 };
 
 /**
- * Delete non-secret site configs that are no longer supported (not predefined).
- * Scope: rows in the filter's categories, plus uncategorized ('general') rows when
- * the filter targets keys (public tab). Secret configs are admin-defined and never pruned.
- * @param {{ keys?: string[], categories?: string[] }} filter
- * @returns {Promise<string[]>} removed keys
- */
-const pruneLegacySiteConfigs = async (filter) => {
-  const categories = [...(filter.categories || [])];
-  if (filter.keys?.length) {
-    categories.push('general');
-  }
-  if (!categories.length) return [];
-
-  const supportedKeys = new Set([
-    ...ALL_PREDEFINED_RESTORE_DEFAULTS.map((config) => config.key),
-    ...LEGACY_PRUNE_KEEP_KEYS,
-  ]);
-  const categoryClauses = [{ category: { $in: categories } }];
-  if (categories.includes('general')) {
-    categoryClauses.push({ category: { $exists: false } }, { category: null });
-  }
-
-  const legacy = await SiteConfig.find({
-    scope: 'site',
-    secret: { $ne: true },
-    key: { $nin: Array.from(supportedKeys) },
-    $or: categoryClauses,
-  })
-    .select('key')
-    .lean();
-
-  if (!legacy.length) return [];
-  await SiteConfig.deleteMany({ _id: { $in: legacy.map((config) => config._id) } });
-  return legacy.map((config) => config.key);
-};
-
-/**
  * Restore site configs from deployment snapshot.
- * @param {{ keys?: string[], categories?: string[], secret?: boolean, pruneLegacy?: boolean }} filter
+ * @param {{ keys?: string[], categories?: string[], secret?: boolean }} filter
  * @param {string} userId
  * @returns {Promise<{ restored: number, keys: string[], source: string }>}
  */
@@ -1111,15 +1064,15 @@ const restoreSiteConfigFromSnapshot = async (filter, userId) => {
 
   const { configs, source } = resolveRestoreConfigs(filter, snapshots);
 
-  if (configs.length) {
-    await bulkUpsertSiteConfigs(configs, userId);
+  if (!configs.length) {
+    return { restored: 0, keys: [], source: 'none' };
   }
-  const removed = filter.pruneLegacy ? await pruneLegacySiteConfigs(filter) : [];
+
+  await bulkUpsertSiteConfigs(configs, userId);
 
   return {
     restored: configs.length,
     keys: configs.map((c) => c.key),
-    removed,
     source,
   };
 };
@@ -1144,5 +1097,4 @@ module.exports = {
   seedPredefinedSiteConfigs,
   syncSiteConfigSnapshotsIfNeeded,
   restoreSiteConfigFromSnapshot,
-  pruneLegacySiteConfigs,
 };

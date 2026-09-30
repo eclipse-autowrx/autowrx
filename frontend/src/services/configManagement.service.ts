@@ -64,13 +64,11 @@ export interface RestoreSiteConfigSnapshotRequest {
   keys?: string[];
   categories?: string[];
   secret?: boolean;
-  pruneLegacy?: boolean;
 }
 
 export interface RestoreSiteConfigSnapshotResponse {
   restored: number;
   keys: string[];
-  removed?: string[];
   source?: 'snapshot' | 'predefined' | 'mixed' | 'none';
 }
 

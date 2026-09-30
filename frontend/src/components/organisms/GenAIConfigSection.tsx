@@ -97,7 +97,7 @@ const GenAIConfigSection: React.FC = () => {
   const handleFactoryReset = async () => {
     if (
       !window.confirm(
-        'Restore all GenAI configs to the deployment snapshot? This will reset ProtoPilot / GenAI settings to their deployed values. Legacy configs that are no longer supported will also be removed.',
+        'Restore all GenAI configs to the deployment snapshot? This will reset ProtoPilot / GenAI settings to their deployed values.',
       )
     ) {
       return
@@ -106,11 +106,12 @@ const GenAIConfigSection: React.FC = () => {
     try {
       setIsLoading(true)
 
-      const res = await restoreConfigsFromSnapshot({ categories: ['genai'], pruneLegacy: true })
+      await restoreConfigsFromSnapshot({ categories: ['genai'] })
 
       toast({
         title: 'Restored',
-        description: `GenAI configs restored from deployment snapshot${res.removed?.length ? `; removed ${res.removed.length} legacy config(s)` : ''}. Reloading page...`,
+        description:
+          'GenAI configs restored from deployment snapshot. Reloading page...',
       })
 
       reloadSoon()
