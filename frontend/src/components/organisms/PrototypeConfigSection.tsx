@@ -18,7 +18,7 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import ConfigList from '@/components/molecules/ConfigList'
 import type { SiteConfigHistorySection } from '@/components/molecules/ConfigList'
 import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
-import { PREDEFINED_SITE_CONFIGS } from '@/pages/SiteConfigManagement'
+import { PREDEFINED_SITE_CONFIGS, isSupportedSiteConfigKey } from '@/pages/SiteConfigManagement'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
 
@@ -80,9 +80,9 @@ const PrototypeConfigSection: React.FC = () => {
                     limit: 100,
                 })
 
-                setConfigs(updatedRes.results || [])
+                setConfigs((updatedRes.results || []).filter((c) => isSupportedSiteConfigKey(c.key)))
             } else {
-                setConfigs(existingConfigs)
+                setConfigs(existingConfigs.filter((c) => isSupportedSiteConfigKey(c.key)))
             }
         } catch (err) {
             toast({
@@ -99,7 +99,7 @@ const PrototypeConfigSection: React.FC = () => {
     const handleFactoryReset = async () => {
         if (
             !window.confirm(
-                'Restore all Model & Prototype configs to the deployment snapshot? This will reset Model & Prototype settings to their deployed values.',
+                'Restore all Model & Prototype configs to the deployment snapshot? This will reset Model & Prototype settings to their deployed values. Legacy configs that are no longer supported will also be removed.',
             )
         ) {
             return
@@ -108,12 +108,14 @@ const PrototypeConfigSection: React.FC = () => {
         try {
             setIsLoading(true)
 
-            await restoreConfigsFromSnapshot({ categories: ['model_prototype'] })
+            const res = await restoreConfigsFromSnapshot({
+                categories: ['model_prototype'],
+                pruneLegacy: true,
+            })
 
             toast({
                 title: 'Restored',
-                description:
-                    'Model & Prototype configs restored from deployment snapshot. Reloading page...',
+                description: `Model & Prototype configs restored from deployment snapshot${res.removed?.length ? `; removed ${res.removed.length} legacy config(s)` : ''}. Reloading page...`,
             })
 
             reloadSoon()

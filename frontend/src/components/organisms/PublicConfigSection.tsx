@@ -220,7 +220,7 @@ const PublicConfigSection: React.FC = () => {
   }
 
   const handleFactoryReset = async () => {
-    if (!window.confirm('Restore all public configs to the deployment snapshot? This will overwrite your current settings.')) return
+    if (!window.confirm('Restore all public configs to the deployment snapshot? This will overwrite your current settings and remove legacy configs that are no longer supported.')) return
 
     try {
       setIsLoading(true)
@@ -228,9 +228,9 @@ const PublicConfigSection: React.FC = () => {
         (config) => !isSpecialSectionKey(config.key),
       ).map((config) => config.key)
 
-      await restoreConfigsFromSnapshot({ keys: publicKeys })
+      const res = await restoreConfigsFromSnapshot({ keys: publicKeys, pruneLegacy: true })
 
-      toast({ title: 'Restored', description: 'Public configs restored from deployment snapshot. Reloading page...' })
+      toast({ title: 'Restored', description: `Public configs restored from deployment snapshot${res.removed?.length ? `; removed ${res.removed.length} legacy config(s)` : ''}. Reloading page...` })
 
       // Reload page to show changes immediately
       reloadSoon()

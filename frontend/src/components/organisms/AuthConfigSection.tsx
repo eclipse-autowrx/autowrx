@@ -14,7 +14,7 @@ import { Label } from '@/components/atoms/label'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import { PREDEFINED_AUTH_CONFIGS } from '@/pages/SiteConfigManagement'
+import { PREDEFINED_AUTH_CONFIGS, isSupportedSiteConfigKey } from '@/pages/SiteConfigManagement'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import { reloadSoon, restoreConfigsFromSnapshot } from '@/utils/siteConfigAdmin'
 
@@ -64,9 +64,9 @@ const AuthConfigSection: React.FC = () => {
           limit: 100,
         })
 
-        setConfigs(updatedRes.results || [])
+        setConfigs((updatedRes.results || []).filter((c) => isSupportedSiteConfigKey(c.key)))
       } else {
-        setConfigs(existingConfigs)
+        setConfigs(existingConfigs.filter((c) => isSupportedSiteConfigKey(c.key)))
       }
     } catch (err) {
       toast({
@@ -118,7 +118,7 @@ const AuthConfigSection: React.FC = () => {
   const handleFactoryReset = async () => {
     if (
       !window.confirm(
-        'Restore all auth configs to the deployment snapshot? This will reset authentication settings to their deployed values.'
+        'Restore all auth configs to the deployment snapshot? This will reset authentication settings to their deployed values. Legacy configs that are no longer supported will also be removed.'
       )
     )
       return
@@ -126,11 +126,11 @@ const AuthConfigSection: React.FC = () => {
     try {
       setIsLoading(true)
 
-      await restoreConfigsFromSnapshot({ categories: ['auth'] })
+      const res = await restoreConfigsFromSnapshot({ categories: ['auth'], pruneLegacy: true })
 
       toast({
         title: 'Restored',
-        description: 'Auth configs restored from deployment snapshot. Reloading page...',
+        description: `Auth configs restored from deployment snapshot${res.removed?.length ? `; removed ${res.removed.length} legacy config(s)` : ''}. Reloading page...`,
       })
 
       reloadSoon()

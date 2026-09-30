@@ -138,7 +138,7 @@ const bulkUpsertSiteConfigs = catchAsync(async (req, res) => {
 });
 
 const restoreSiteConfigSnapshot = catchAsync(async (req, res) => {
-  const filter = pick(req.body, ['keys', 'categories', 'secret']);
+  const filter = pick(req.body, ['keys', 'categories', 'secret', 'pruneLegacy']);
   const result = await siteConfigService.restoreSiteConfigFromSnapshot(filter, req.user.id);
   res.status(httpStatus.OK).send(result);
 });

@@ -17,7 +17,7 @@ import { useToast } from '@/components/molecules/toaster/use-toast'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import ConfigList from '@/components/molecules/ConfigList'
 import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
-import { PREDEFINED_SITE_CONFIGS } from '@/pages/SiteConfigManagement'
+import { PREDEFINED_SITE_CONFIGS, isSupportedSiteConfigKey } from '@/pages/SiteConfigManagement'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
 
@@ -78,9 +78,9 @@ const GenAIConfigSection: React.FC = () => {
           limit: 100,
         })
 
-        setConfigs(updatedRes.results || [])
+        setConfigs((updatedRes.results || []).filter((c) => isSupportedSiteConfigKey(c.key)))
       } else {
-        setConfigs(existingConfigs)
+        setConfigs(existingConfigs.filter((c) => isSupportedSiteConfigKey(c.key)))
       }
     } catch (err) {
       toast({
@@ -97,7 +97,7 @@ const GenAIConfigSection: React.FC = () => {
   const handleFactoryReset = async () => {
     if (
       !window.confirm(
-        'Restore all GenAI configs to the deployment snapshot? This will reset ProtoPilot / GenAI settings to their deployed values.',
+        'Restore all GenAI configs to the deployment snapshot? This will reset ProtoPilot / GenAI settings to their deployed values. Legacy configs that are no longer supported will also be removed.',
       )
     ) {
       return
@@ -106,12 +106,11 @@ const GenAIConfigSection: React.FC = () => {
     try {
       setIsLoading(true)
 
-      await restoreConfigsFromSnapshot({ categories: ['genai'] })
+      const res = await restoreConfigsFromSnapshot({ categories: ['genai'], pruneLegacy: true })
 
       toast({
         title: 'Restored',
-        description:
-          'GenAI configs restored from deployment snapshot. Reloading page...',
+        description: `GenAI configs restored from deployment snapshot${res.removed?.length ? `; removed ${res.removed.length} legacy config(s)` : ''}. Reloading page...`,
       })
 
       reloadSoon()
