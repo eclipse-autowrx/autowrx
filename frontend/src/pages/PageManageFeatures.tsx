@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { useState, useEffect } from 'react'
-import config from '@/configs/config'
+import { useAdminUiConfig } from '@/hooks/useAdminUiConfig'
 import {
   listUsersByRolesService,
   assignRoleToUserService,
@@ -44,6 +44,7 @@ const PageManageFeatures = () => {
   const [features, setFeatures] = useState<any[]>([])
   const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
   const { toast } = useToast()
+  const { adminUi } = useAdminUiConfig()
 
   const fetchUsersWithRoles = async () => {
     try {
@@ -63,10 +64,10 @@ const PageManageFeatures = () => {
   const fetchPermissions = async () => {
     try {
       let response = await fetchFeaturesService()
-      // A deployment can restrict which categories show here via env
-      // (VITE_ADMIN_CLEAN_MODE / VITE_ADMIN_VISIBLE_FEATURE_CATEGORIES, see
-      // configs/config.ts). null means no allowlist configured -> show all.
-      const { visibleFeatureCategories } = config.adminUi
+      // Deployment can restrict categories via backend ADMIN_CLEAN_MODE /
+      // ADMIN_VISIBLE_FEATURE_CATEGORIES (GET /site-config/admin-ui).
+      // null means no allowlist configured -> show all.
+      const { visibleFeatureCategories } = adminUi
       if (visibleFeatureCategories) {
         response = response.filter((feature: { name: string }) =>
           visibleFeatureCategories.includes(feature.name),
@@ -132,7 +133,8 @@ const PageManageFeatures = () => {
       fetchUsersWithRoles()
       fetchPermissions()
     }
-  }, [isAuthorized])
+    // Re-filter when runtime admin-ui config arrives from the backend.
+  }, [isAuthorized, adminUi.visibleFeatureCategories])
 
   useEffect(() => {
     const activeFeature = features.find((feature) => feature.name === activeTab)

@@ -105,6 +105,16 @@ class ConfigManagementService {
     return response.data;
   }
 
+  // Runtime Admin UI visibility from backend process.env (printenv / container env)
+  async getAdminUiConfig(): Promise<{
+    cleanMode: boolean;
+    hiddenSiteConfigSections: string[];
+    visibleFeatureCategories: string[] | null;
+  }> {
+    const response = await serverAxios.get(`${this.baseUrl}/admin-ui`);
+    return response.data;
+  }
+
   // Admin endpoints (auth required)
   async getAllConfigs(scope: string = 'site', target_id?: string): Promise<Record<string, any>> {
     const params: any = { scope };

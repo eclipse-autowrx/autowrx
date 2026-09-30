@@ -167,17 +167,24 @@ VITE_SERVER_VERSION=v2
 
 ### Admin page visibility
 
-The following optional `VITE_` variables control what the built frontend shows
-on **Admin → Site Config** and **Manage Features**. Add them to `frontend/.env`
-before starting or building the frontend; changing them requires a frontend
-restart or rebuild. With all three unset, all Site Config sections and all
-feature categories normally available on Manage Features remain visible.
+Admin → Site Config and Manage Features visibility is controlled at **runtime**
+by the backend process environment (what `printenv` shows in the container).
+The frontend loads it from `GET /v2/site-config/admin-ui`. Changing the env and
+restarting the backend is enough — no frontend rebuild required.
+
+Prefer the `ADMIN_*` names. `VITE_ADMIN_*` aliases are accepted for deployments
+that already set the old Vite build-time names. Optional `VITE_ADMIN_*` values
+in `frontend/.env` remain only as a fallback when the API is unreachable
+(e.g. frontend-only Playwright).
+
+With all three unset, all Site Config sections and all feature categories
+normally available on Manage Features remain visible.
 
 | Variable | Effect |
 |---|---|
-| `VITE_ADMIN_CLEAN_MODE=true` | Hides the Auth, GenAI / ProtoPilot, SSO, Email, Secret, and Standard Staging sections; shows only `Unlimited model` and `Admin` feature categories. |
-| `VITE_ADMIN_HIDDEN_SITE_CONFIG_SECTIONS` | Comma-separated section keys to hide. Overrides the clean mode section list when set. Valid keys: `public`, `home`, `style`, `auth`, `model_prototype`, `genai`, `sso`, `email`, `secrets`, `staging`, `privacy`. |
-| `VITE_ADMIN_VISIBLE_FEATURE_CATEGORIES` | Comma-separated category names to show, matching names returned by the API exactly. Overrides the clean mode category list when set. |
+| `ADMIN_CLEAN_MODE=true` (or `VITE_ADMIN_CLEAN_MODE=true`) | Hides the Auth, GenAI / ProtoPilot, SSO, Email, Secret, and Standard Staging sections; shows only `Unlimited model` and `Admin` feature categories. |
+| `ADMIN_HIDDEN_SITE_CONFIG_SECTIONS` (or `VITE_ADMIN_…`) | Comma-separated section keys to hide. Overrides the clean mode section list when set. Valid keys: `public`, `home`, `style`, `auth`, `model_prototype`, `genai`, `sso`, `email`, `secrets`, `staging`, `privacy`. |
+| `ADMIN_VISIBLE_FEATURE_CATEGORIES` (or `VITE_ADMIN_…`) | Comma-separated category names to show, matching names returned by the API exactly. Overrides the clean mode category list when set. |
 
 The two lists can be overridden independently. An explicitly empty list clears
 that list's clean mode default: empty hidden sections shows every section;
@@ -187,8 +194,9 @@ first visible section instead. If every section is hidden, the sidebar and
 content area have no section to show.
 
 These settings only filter the frontend UI. They do not change API permissions,
-backend configuration, or the roles already assigned to users. For deployment
-details, see [Deployment](../guides/deployment/README.md).
+backend configuration, or the roles already assigned to users. They are not
+editable via the Site Config admin UI. For deployment details, see
+[Deployment](../guides/deployment/README.md).
 
 ### MongoDB Setup Details
 

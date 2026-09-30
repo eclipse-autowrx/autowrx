@@ -9,7 +9,7 @@
 // Comma-separated env value -> trimmed, non-empty entries. Returns null when
 // the env var isn't set at all, so callers can distinguish "not configured"
 // from "configured as empty".
-const parseCsvEnv = (raw: string | undefined): string[] | null => {
+export const parseCsvEnv = (raw: string | undefined): string[] | null => {
   if (raw === undefined) return null
   return raw
     .split(',')
@@ -20,7 +20,7 @@ const parseCsvEnv = (raw: string | undefined): string[] | null => {
 // Default "clean" admin UI, matching what a lean ETAS-style deployment shows:
 // only Public/Home/Style/Model & Prototype/Privacy in Site Config, and only
 // Unlimited model/Admin in Manage Features.
-const ADMIN_CLEAN_MODE_HIDDEN_SITE_CONFIG_SECTIONS = [
+export const ADMIN_CLEAN_MODE_HIDDEN_SITE_CONFIG_SECTIONS = [
   'auth',
   'genai',
   'sso',
@@ -28,7 +28,44 @@ const ADMIN_CLEAN_MODE_HIDDEN_SITE_CONFIG_SECTIONS = [
   'secrets',
   'staging',
 ]
-const ADMIN_CLEAN_MODE_VISIBLE_FEATURE_CATEGORIES = ['Unlimited model', 'Admin']
+
+export const ADMIN_CLEAN_MODE_VISIBLE_FEATURE_CATEGORIES = [
+  'Unlimited model',
+  'Admin',
+]
+
+export type AdminUiConfig = {
+  cleanMode: boolean
+  hiddenSiteConfigSections: Set<string>
+  // null means "no allowlist configured" -> show every category the API returns.
+  visibleFeatureCategories: string[] | null
+}
+
+/**
+ * Resolve Admin UI visibility from Vite build-time env.
+ * Used as a fallback when the backend `/site-config/admin-ui` endpoint is
+ * unavailable (e.g. Playwright frontend-only servers). Runtime source of
+ * truth is the backend process env via that endpoint.
+ */
+export const resolveAdminUiFromViteEnv = (): AdminUiConfig => {
+  const cleanMode =
+    (import.meta.env.VITE_ADMIN_CLEAN_MODE || '').trim().toLowerCase() ===
+    'true'
+
+  const hiddenSiteConfigSectionsList =
+    parseCsvEnv(import.meta.env.VITE_ADMIN_HIDDEN_SITE_CONFIG_SECTIONS) ??
+    (cleanMode ? ADMIN_CLEAN_MODE_HIDDEN_SITE_CONFIG_SECTIONS : [])
+
+  const visibleFeatureCategories =
+    parseCsvEnv(import.meta.env.VITE_ADMIN_VISIBLE_FEATURE_CATEGORIES) ??
+    (cleanMode ? ADMIN_CLEAN_MODE_VISIBLE_FEATURE_CATEGORIES : null)
+
+  return {
+    cleanMode,
+    hiddenSiteConfigSections: new Set(hiddenSiteConfigSectionsList),
+    visibleFeatureCategories,
+  }
+}
 
 const config: any = {
   instance: 'autowrx',
@@ -50,30 +87,9 @@ const config: any = {
   // strictAuth has been replaced by granular auth configs (PUBLIC_VIEWING, SELF_REGISTRATION, etc.)
   // See useAuthConfigs hook for the new implementation
   //
-  // Env-controlled visibility for the Admin pages (Site Config sidebar,
-  // Manage Features categories). Set at build time so it can't be flipped
-  // back on through the Admin UI itself. Unset = show everything (today's
-  // behavior). VITE_ADMIN_CLEAN_MODE=true applies the defaults below for
-  // whichever of the two list vars isn't explicitly set.
-  adminUi: (() => {
-    const cleanMode =
-      (import.meta.env.VITE_ADMIN_CLEAN_MODE || '').trim().toLowerCase() ===
-      'true'
-
-    const hiddenSiteConfigSectionsList =
-      parseCsvEnv(import.meta.env.VITE_ADMIN_HIDDEN_SITE_CONFIG_SECTIONS) ??
-      (cleanMode ? ADMIN_CLEAN_MODE_HIDDEN_SITE_CONFIG_SECTIONS : [])
-
-    const visibleFeatureCategories =
-      parseCsvEnv(import.meta.env.VITE_ADMIN_VISIBLE_FEATURE_CATEGORIES) ??
-      (cleanMode ? ADMIN_CLEAN_MODE_VISIBLE_FEATURE_CATEGORIES : null)
-
-    return {
-      hiddenSiteConfigSections: new Set(hiddenSiteConfigSectionsList),
-      // null means "no allowlist configured" -> show every category the API returns.
-      visibleFeatureCategories,
-    }
-  })(),
+  // Build-time fallback only. Prefer runtime values from
+  // GET /v2/site-config/admin-ui (backend process.env / printenv).
+  adminUi: resolveAdminUiFromViteEnv(),
 }
 
 export default config

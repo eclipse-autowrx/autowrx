@@ -31,6 +31,9 @@ The `CORS_ORIGINS` variable accepts comma-separated regex patterns. The system a
 | `JWT_COOKIE_DOMAIN`             | JWT cookie domain (production only)     | -       |
 | `ADMIN_EMAILS`                  | Admin emails (comma- or semicolon-separated) | -       |
 | `ADMIN_PASSWORD`                | Auto-provisioned admin password         | -       |
+| `ADMIN_CLEAN_MODE`              | When `true`, hide lean-deploy Site Config sections and limit Manage Features categories (also accepts `VITE_ADMIN_CLEAN_MODE`) | unset (= show all) |
+| `ADMIN_HIDDEN_SITE_CONFIG_SECTIONS` | Comma-separated Site Config section keys to hide; overrides clean-mode default (also `VITE_ADMIN_HIDDEN_SITE_CONFIG_SECTIONS`) | - |
+| `ADMIN_VISIBLE_FEATURE_CATEGORIES` | Comma-separated Manage Features category names to show; overrides clean-mode default (also `VITE_ADMIN_VISIBLE_FEATURE_CATEGORIES`) | - |
 | `GITHUB_CLIENT_ID`              | GitHub OAuth client ID                  | -       |
 | `GITHUB_CLIENT_SECRET`          | GitHub OAuth client secret              | -       |
 
