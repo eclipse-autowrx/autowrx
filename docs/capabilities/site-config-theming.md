@@ -69,7 +69,7 @@ Admins (configure the platform); end users (consume public config); the app (fea
 ### API contract
 
 - `GET/POST /v2/site-config` → `200`/`201`; `GET /v2/site-config/all`; `POST /v2/site-config/by-keys`; `POST /v2/site-config/bulk-upsert`; `GET/PATCH/DELETE /v2/site-config/:id`; `/key/:key`; `/:scope/:target_id[/all]` → `200`/`201`/`204` as appropriate. Admin CRUD/scope/by-keys/bulk-upsert routes require authentication and `MANAGE_USERS`.
-- `GET /v2/site-config/public[/:key|/:scope/:target_id[/:key]]` (anonymous) → only non-secret configs. `GET /v2/site-config/sso/providers` (anonymous) → enabled providers without `clientSecret`.
+- `GET /v2/site-config/public[/:key|/:scope/:target_id[/:key]]` (anonymous) → only non-secret configs. `GET /v2/site-config/sso/providers` (anonymous) → enabled providers without `clientSecret`. `GET /v2/site-config/admin-ui` (anonymous) → Admin UI visibility derived from backend process env (`ADMIN_CLEAN_MODE` / list overrides; `VITE_ADMIN_*` aliases accepted).
 - Caller sends a valid scope enum (`site`/`user`/`model`/`prototype`/`api`), conditional `target_id`, a `valueType` enum (string/boolean/number/array/object/image_url/color/date), and a `secret` boolean; `value` accepts any shape.
 - The `secret` flag excludes values from public reads; `SSO_PROVIDERS.clientSecret` and `EMAIL_CONFIG.apiKey`/`smtpConfig.pass` are encrypted at rest (AES-256-CBC) and decrypted only for admin display.
 - Predefined configs are seeded on startup via `predefinedSiteConfigs.js` (`$setOnInsert`) and never overwrite admin-set values.
@@ -91,7 +91,7 @@ flowchart LR
 Public routes public; everything else requires `MANAGE_USERS`. `secret` configs are never exposed publicly.
 
 **Coverage:**
-- **Auth:** Anyone can read public config anonymously (`GET /v2/site-config/public*`, `GET /v2/site-config/sso/providers`); all other site-config routes require authentication and `MANAGE_USERS`.
+- **Auth:** Anyone can read public config anonymously (`GET /v2/site-config/public*`, `GET /v2/site-config/sso/providers`, `GET /v2/site-config/admin-ui`); all other site-config routes require authentication and `MANAGE_USERS`.
 - **Authorization:** `MANAGE_USERS` required for every admin CRUD, scope, by-keys, bulk-upsert, restore-snapshot, global-css, and email-test route; public reads have no permission check.
 - **Input validation:** Caller must send a valid scope enum (`site`/`user`/`model`/`prototype`/`api`), conditional `target_id`, a `valueType` enum, and a `secret` boolean; the `value` field itself accepts any shape (no server-side schema check).
 - **Rate limiting:** not applied.
@@ -140,7 +140,7 @@ Admins (central configuration); end users (see published branding/home/style/pri
 
 ### Acceptance criteria
 
-- When an **admin** opens the Site Config admin page at **Admin → Site Config (`/admin/site-config`)**, they see the 11 section tabs by default; when they select a tab, the corresponding section loads. A frontend build configured with `VITE_ADMIN_CLEAN_MODE=true` hides Auth, GenAI / ProtoPilot, SSO, Email, Secret, and Standard Staging; `VITE_ADMIN_HIDDEN_SITE_CONFIG_SECTIONS` can override the hidden section keys. A URL requesting a hidden section falls back to the first visible section.
+- When an **admin** opens the Site Config admin page at **Admin → Site Config (`/admin/site-config`)**, they see the 11 section tabs by default; when they select a tab, the corresponding section loads. When the backend process env has `ADMIN_CLEAN_MODE=true` (or the `VITE_ADMIN_CLEAN_MODE` alias), the frontend loads visibility from `GET /v2/site-config/admin-ui` and hides Auth, GenAI / ProtoPilot, SSO, Email, Secret, and Standard Staging; `ADMIN_HIDDEN_SITE_CONFIG_SECTIONS` (or `VITE_ADMIN_HIDDEN_SITE_CONFIG_SECTIONS`) can override the hidden section keys. A URL requesting a hidden section falls back to the first visible section.
 - When an **admin** edits keys in a section and saves at **Admin → Site Config (`/admin/site-config`)**, the system persists them and they apply site-wide.
 - When an **admin** opens a section's edit history and restores a prior entry at **Admin → Site Config (`/admin/site-config`)**, the section reverts to that snapshot.
 - When an **admin** opens a secret-bearing section at **Admin → Site Config (`/admin/site-config`)**, secret values are masked and only revealed for admin display.

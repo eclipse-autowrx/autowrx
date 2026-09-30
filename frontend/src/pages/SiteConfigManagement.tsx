@@ -6,9 +6,9 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import config from '@/configs/config'
+import { useAdminUiConfig } from '@/hooks/useAdminUiConfig'
 import PublicConfigSection from '@/components/organisms/PublicConfigSection'
 import SecretConfigSection from '@/components/organisms/SecretConfigSection'
 import SiteStyleSection from '@/components/organisms/SiteStyleSection'
@@ -332,7 +332,7 @@ export const isSupportedSiteConfigKey = (key: string): boolean =>
   key === 'SSO_PROVIDERS'
 
 // Every Site Config sidebar section, in render order. A deployment can hide
-// any of these via env (see configs/config.ts / adminUi.hiddenSiteConfigSections).
+// any of these via backend ADMIN_* env (GET /site-config/admin-ui).
 const SECTIONS: {
   key: SectionTab
   label: string
@@ -361,28 +361,41 @@ const SECTIONS: {
 
 const SiteConfigManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
+  const { adminUi } = useAdminUiConfig()
 
-  // Sections a deployment can hide via VITE_ADMIN_CLEAN_MODE /
-  // VITE_ADMIN_HIDDEN_SITE_CONFIG_SECTIONS (see configs/config.ts). Order
-  // here is the order they render in.
-  const visibleSections = SECTIONS.filter(
-    (section) => !config.adminUi.hiddenSiteConfigSections.has(section.key),
+  // Sections a deployment can hide via backend ADMIN_CLEAN_MODE /
+  // ADMIN_HIDDEN_SITE_CONFIG_SECTIONS (see GET /site-config/admin-ui).
+  // Order here is the order they render in.
+  const visibleSections = useMemo(
+    () =>
+      SECTIONS.filter(
+        (section) => !adminUi.hiddenSiteConfigSections.has(section.key),
+      ),
+    [adminUi.hiddenSiteConfigSections],
   )
 
-  const getSectionFromUrl = (): SectionTab => {
-    const section = searchParams.get('section')
+  const resolveSection = (sectionParam: string | null): SectionTab => {
     if (
-      section &&
-      visibleSections.some((s) => s.key === section)
+      sectionParam &&
+      visibleSections.some((s) => s.key === sectionParam)
     ) {
-      return section as SectionTab
+      return sectionParam as SectionTab
     }
     return visibleSections[0]?.key || 'public'
   }
 
-  const [activeTab, setActiveTab] = useState<SectionTab>(
-    getSectionFromUrl(),
+  const [activeTab, setActiveTab] = useState<SectionTab>(() =>
+    resolveSection(searchParams.get('section')),
   )
+
+  // When runtime admin-ui config loads (or URL changes), drop onto a visible section.
+  useEffect(() => {
+    const next = resolveSection(searchParams.get('section'))
+    if (next !== activeTab) {
+      setActiveTab(next)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- visibleSections identity tracks adminUi
+  }, [visibleSections, searchParams])
 
   // Update URL when activeTab changes
   useEffect(() => {

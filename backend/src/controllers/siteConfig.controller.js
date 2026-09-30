@@ -11,9 +11,15 @@ const catchAsync = require('../utils/catchAsync');
 const { siteConfigService, ssoService, emailService } = require('../services');
 const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
+const { resolveAdminUiConfig } = require('../config/adminUi');
 const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
+
+// Public, env-backed Admin UI visibility (Site Config / Manage Features filters).
+const getAdminUiConfig = catchAsync(async (req, res) => {
+  res.status(httpStatus.OK).send(resolveAdminUiConfig());
+});
 
 const createSiteConfig = catchAsync(async (req, res) => {
   const siteConfigBody = {
@@ -179,6 +185,7 @@ module.exports = {
   bulkUpsertSiteConfigs,
   restoreSiteConfigSnapshot,
   getPublicSSOProviders,
+  getAdminUiConfig,
   sendTestEmail,
   // global.css helpers
   getGlobalCss: catchAsync(async (req, res) => {

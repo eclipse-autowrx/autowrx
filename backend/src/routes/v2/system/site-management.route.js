@@ -28,6 +28,9 @@ router.get('/public/:scope/:target_id/:key', siteConfigController.getPublicConfi
 // SSO providers public endpoint (no secrets)
 router.get('/sso/providers', siteConfigController.getPublicSSOProviders);
 
+// Admin UI visibility from process.env (no secrets; not editable via Site Config)
+router.get('/admin-ui', siteConfigController.getAdminUiConfig);
+
 // Admin-only routes (require authentication and admin permission)
 router.use(auth(), checkPermission(PERMISSIONS.ADMIN));
 

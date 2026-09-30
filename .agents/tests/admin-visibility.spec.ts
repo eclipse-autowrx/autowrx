@@ -15,7 +15,33 @@ const roles = [
   { id: 'other', name: 'Other feature', not_feature: false },
 ];
 
-test.beforeEach(async ({ page }) => {
+const adminUiByProject: Record<
+  string,
+  {
+    cleanMode: boolean;
+    hiddenSiteConfigSections: string[];
+    visibleFeatureCategories: string[] | null;
+  }
+> = {
+  'clean-mode': {
+    cleanMode: true,
+    hiddenSiteConfigSections: ['auth', 'genai', 'sso', 'email', 'secrets', 'staging'],
+    visibleFeatureCategories: ['Unlimited model', 'Admin'],
+  },
+  'custom-visibility': {
+    cleanMode: true,
+    hiddenSiteConfigSections: ['auth', 'staging'],
+    visibleFeatureCategories: ['Admin'],
+  },
+};
+
+test.beforeEach(async ({ page }, testInfo) => {
+  const adminUi = adminUiByProject[testInfo.project.name] || adminUiByProject['clean-mode'];
+  // Runtime source of truth is backend process.env; mock it so this frontend-only
+  // suite stays deterministic regardless of whatever is on :3200.
+  await page.route('**/v2/site-config/admin-ui', async (route) => {
+    await route.fulfill({ json: adminUi });
+  });
   await loginAsAdmin(page);
 });
 
