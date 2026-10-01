@@ -368,7 +368,7 @@ export const DaPrototypeCard = ({
                   tooltipMessage={`This prototype has been run ${prototype.executed_turns} times`}
                   tooltipDelay={300}
                 >
-                  <div className="flex w-fit items-center text-sm font-semibold mx-1">
+                  <div className="flex w-fit items-center text-sm font-semibold mx-2">
                     <TbTerminal2 className="size-[18px] mr-1 text-primary" />
                     {prototype.executed_turns}
                   </div>
