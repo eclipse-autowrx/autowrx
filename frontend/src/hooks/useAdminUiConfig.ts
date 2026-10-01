@@ -30,6 +30,16 @@ const toAdminUiConfig = (payload: {
       : payload.visibleFeatureCategories,
 })
 
+const isSameConfig = (a: AdminUiConfig, b: AdminUiConfig): boolean =>
+  a.cleanMode === b.cleanMode &&
+  a.hiddenSiteConfigSections.size === b.hiddenSiteConfigSections.size &&
+  [...a.hiddenSiteConfigSections].every((k) => b.hiddenSiteConfigSections.has(k)) &&
+  JSON.stringify(a.visibleFeatureCategories) ===
+    JSON.stringify(b.visibleFeatureCategories)
+
+const isCacheFresh = (): boolean =>
+  !!adminUiCache && !!cacheExpiry && Date.now() < cacheExpiry
+
 const fetchAdminUiConfig = async (): Promise<AdminUiConfig> => {
   const now = Date.now()
   if (adminUiCache && cacheExpiry && now < cacheExpiry) {
@@ -38,7 +48,9 @@ const fetchAdminUiConfig = async (): Promise<AdminUiConfig> => {
 
   try {
     const remote = await configManagementService.getAdminUiConfig()
-    adminUiCache = toAdminUiConfig(remote)
+    const next = toAdminUiConfig(remote)
+    // Keep the previous object when nothing changed so consumers don't re-render.
+    if (!adminUiCache || !isSameConfig(adminUiCache, next)) adminUiCache = next
     cacheExpiry = now + CACHE_DURATION
     return adminUiCache
   } catch (error) {
@@ -64,7 +76,8 @@ export const useAdminUiConfig = () => {
 
   const loadConfig = async () => {
     try {
-      setLoading(true)
+      // Only show a loading state when there is nothing cached to render yet.
+      if (!adminUiCache) setLoading(true)
       setError(null)
       setAdminUi(await fetchAdminUiConfig())
     } catch (err) {
@@ -76,6 +89,11 @@ export const useAdminUiConfig = () => {
   }
 
   useEffect(() => {
+    if (isCacheFresh() && adminUiCache) {
+      setAdminUi(adminUiCache)
+      setLoading(false)
+      return
+    }
     loadConfig()
   }, [])
 
