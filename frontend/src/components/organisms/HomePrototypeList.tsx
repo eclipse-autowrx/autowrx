@@ -21,6 +21,7 @@ import {
   TbChevronLeft,
   TbChevronRight,
   TbInfoCircle,
+  TbSortDescending,
 } from 'react-icons/tb'
 import { HiPlus } from 'react-icons/hi'
 import {
@@ -30,7 +31,12 @@ import {
   TooltipTrigger,
 } from '../atoms/tooltip'
 import { Button } from '../atoms/button'
-import DaFilter from '../atoms/DaFilter'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../atoms/dropdown-menu'
 import DaDialog from '../molecules/DaDialog'
 import useAuthStore from '@/stores/authStore'
 import { DaPrototypeCard, DaPrototypeCardSkeleton } from '../molecules/DaPrototypeCard'
@@ -365,13 +371,6 @@ const HomePrototypeList = ({
 
   const isEmptyRaw = totalResults === 0
 
-  const handleSortFilterChange = (selected: string[]) => {
-    const label = selected[0]
-    if (!label) return
-    const option = SORT_LABEL_TO_OPTION[label]
-    if (option) setSortBy(option)
-  }
-
   const handlePrototypeClick = (prototype: Prototype) => {
     if (authConfigs.PUBLIC_VIEWING || user) {
       navigate(
@@ -463,23 +462,38 @@ const HomePrototypeList = ({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <DaFilter
-            key={sortBy}
-            categories={{ 'Sort By': SORT_FILTER_OPTIONS }}
-            onChange={handleSortFilterChange}
-            singleSelect
-            showCategory={false}
-            defaultValue={[SORT_LABELS[sortBy]]}
-            label={SORT_LABELS[sortBy]}
-            disabled={isEmpty}
-            className="mr-0 h-8 shadow-none border-transparent bg-transparent px-2 text-base font-normal hover:bg-accent"
-          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" disabled={isEmpty}>
+                <TbSortDescending className="min-[1080px]:mr-1 text-base" />
+                <span className="inline max-[1080px]:hidden text-base">
+                  {SORT_LABELS[sortBy]}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {SORT_FILTER_OPTIONS.map((label) => {
+                const option = SORT_LABEL_TO_OPTION[label]
+                return (
+                  <DropdownMenuItem
+                    key={label}
+                    onClick={() => setSortBy(option)}
+                    className={
+                      sortBy === option ? 'font-semibold bg-accent' : ''
+                    }
+                  >
+                    {label}
+                  </DropdownMenuItem>
+                )
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Add prototype button */}
           <Button
             variant="outline"
             size="sm"
-            className="border-primary bg-transparent text-primary max-[1080px]:px-[7px]!"
+            className="border-primary bg-transparent text-primary hover:bg-slate-100 max-[1080px]:px-[7px]!"
             onClick={() => navigate('/new-prototype')}
           >
             <HiPlus className="text-base" />

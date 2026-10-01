@@ -87,6 +87,7 @@ export const PrototypeRightActionButton = ({
     <Button
       className={cn(
         'flex items-center gap-0 [&_svg]:size-full!',
+        isCopy && 'border-primary',
         config.corners === 'round'
           ? 'rounded-lg'
           : config.corners === 'full'

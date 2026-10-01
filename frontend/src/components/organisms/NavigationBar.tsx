@@ -47,6 +47,7 @@ import useAuthStore from '@/stores/authStore'
 import {
   partitionNavBarActions,
   getNavBarActionOpenTarget,
+  getNavBarActionPosition,
   getNavBarActionUrl,
   type NavBarAction,
 } from '@/components/molecules/NavBarActionsEditor'
@@ -159,7 +160,11 @@ const NavigationBar = ({ }) => {
         href={href}
         target={openTarget}
         {...(openTarget === '_blank' ? { rel: 'noopener noreferrer' } : {})}
-        className="da-primary-nav-action flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium transition-colors hover:bg-muted dark:hover:bg-muted/50"
+        className={
+          getNavBarActionPosition(action) === 'left'
+            ? 'da-primary-nav-action flex items-center gap-1 text-sm font-medium text-white/90 hover:text-white transition-colors'
+            : 'da-primary-nav-action flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium transition-colors hover:bg-muted dark:hover:bg-muted/50'
+        }
         title={action.label}
       >
         {action.icon && (
@@ -172,7 +177,9 @@ const NavigationBar = ({ }) => {
             className="w-6 h-6 flex items-center justify-center"
           />
         )}
-        {action.label && <span className="ml-1">{action.label}</span>}
+        {action.label && (
+          <span className={action.icon ? 'ml-1' : undefined}>{action.label}</span>
+        )}
       </a>
     )
   }

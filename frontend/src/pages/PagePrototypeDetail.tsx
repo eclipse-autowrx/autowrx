@@ -47,6 +47,7 @@ import { getModelTabConfig } from '@/lib/modelTabUtils'
 import { hasPrototypeCode } from '@/lib/prototypeCodeUtils'
 import PagePrototypePlugin from '@/pages/PagePrototypePlugin'
 import PrototypeRightAction from '@/pages/PrototypeRightAction'
+import { cn } from '@/lib/utils'
 import { configManagementService } from '@/services/configManagement.service'
 import { updateModelService } from '@/services/model.service'
 import { Plugin } from '@/services/plugin.service'
@@ -522,15 +523,22 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             </div>
           )}
           <div className="grow"></div>
-          <PrototypeRightAction
-            prototype={prototype}
-            actions={
-              isModelLoading
-                ? undefined
-                : (model?.custom_template?.prototype_right_nav_buttons ?? [])
-            }
-            onCopyClick={handleCopyPrototype}
-          />
+          <div
+            className={cn(
+              'flex items-center',
+              !canOpenPrototypeMoreMenu && 'pr-2',
+            )}
+          >
+            <PrototypeRightAction
+              prototype={prototype}
+              actions={
+                isModelLoading
+                  ? undefined
+                  : (model?.custom_template?.prototype_right_nav_buttons ?? [])
+              }
+              onCopyClick={handleCopyPrototype}
+            />
+          </div>
           {canOpenPrototypeMoreMenu && (
             <DropdownMenu open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
               <DropdownMenuTrigger asChild>

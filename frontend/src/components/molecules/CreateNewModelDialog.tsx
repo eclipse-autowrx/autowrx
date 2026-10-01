@@ -8,6 +8,7 @@
 
 import { ReactNode } from 'react'
 import DaDialog from '@/components/molecules/DaDialog'
+import { DialogTitle } from '@/components/atoms/dialog'
 import FormCreateModel from '@/components/molecules/forms/FormCreateModel'
 import { cn } from '@/lib/utils'
 
@@ -26,17 +27,19 @@ const CreateNewModelDialog = ({
   onOpenChange,
   onClose,
   className,
-  hideHeaderDivider,
 }: CreateNewModelDialogProps) => (
   <DaDialog
     open={open}
     onOpenChange={onOpenChange}
     onClose={onClose}
     trigger={trigger}
-    dialogTitle="Create New Model"
-    hideHeaderDivider={hideHeaderDivider}
-    className={cn('w-115 max-w-[calc(100vw-40px)]', className)}
+    closeIconClassName="w-4 h-4"
+    contentContainerClassName="py-6"
+    className={cn('w-128 max-w-[calc(100vw-40px)]', className)}
   >
+    <DialogTitle className="mb-4 text-lg font-semibold text-primary">
+      Create New Model
+    </DialogTitle>
     <FormCreateModel />
   </DaDialog>
 )

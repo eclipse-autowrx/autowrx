@@ -108,6 +108,7 @@ interface DaDialogProps {
   preventOutsideClose?: boolean
   disabled?: boolean
   hideHeaderDivider?: boolean
+  closeIconClassName?: string
 }
 
 const DaDialog = ({
@@ -125,6 +126,7 @@ const DaDialog = ({
   preventOutsideClose = false,
   disabled = false,
   hideHeaderDivider = false,
+  closeIconClassName,
 }: DaDialogProps) => {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const isOpen = controlledOpen ?? uncontrolledOpen
@@ -169,7 +171,7 @@ const DaDialog = ({
         aria-label="Close"
         type="button"
       >
-        <TbX className="w-5 h-5" />
+        <TbX className={cn('w-5 h-5', closeIconClassName)} />
       </button>
     </DismissableLayerBranch>
   )
