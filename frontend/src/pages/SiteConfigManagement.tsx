@@ -9,6 +9,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAdminUiConfig } from '@/hooks/useAdminUiConfig'
+import type { AdminUiConfig } from '@/configs/config'
 import PublicConfigSection from '@/components/organisms/PublicConfigSection'
 import SecretConfigSection from '@/components/organisms/SecretConfigSection'
 import SiteStyleSection from '@/components/organisms/SiteStyleSection'
@@ -359,9 +360,10 @@ const SECTIONS: {
   { key: 'privacy', label: 'Privacy Policy', Component: PrivacyPolicySection },
 ]
 
-const SiteConfigManagement: React.FC = () => {
+const SiteConfigManagementContent: React.FC<{ adminUi: AdminUiConfig }> = ({
+  adminUi,
+}) => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const { adminUi } = useAdminUiConfig()
 
   // Sections a deployment can hide via backend ADMIN_CLEAN_MODE /
   // ADMIN_HIDDEN_SITE_CONFIG_SECTIONS (see GET /site-config/admin-ui).
@@ -461,6 +463,36 @@ const SiteConfigManagement: React.FC = () => {
       </div>
     </div>
   )
+}
+
+// Wait for the runtime admin-ui config before rendering the sections, so the
+// sidebar and active tab are resolved once instead of flashing from the
+// build-time fallback to the backend values.
+const SiteConfigManagement: React.FC = () => {
+  const { adminUi, loading } = useAdminUiConfig()
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8 flex flex-col">
+            <h1 className="text-4xl font-semibold text-foreground">
+              Site Management
+            </h1>
+            <p className="mt-2 text-base text-muted-foreground">
+              Manage site configurations and settings
+            </p>
+          </div>
+          <div className="flex gap-6 animate-pulse" aria-busy="true">
+            <div className="w-64 shrink-0 h-72 rounded-lg border border-border bg-muted/40" />
+            <div className="flex-1 min-w-0 h-96 rounded-lg border border-border bg-muted/40" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return <SiteConfigManagementContent adminUi={adminUi} />
 }
 
 export default SiteConfigManagement
