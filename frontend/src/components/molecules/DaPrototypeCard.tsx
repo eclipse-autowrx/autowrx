@@ -353,8 +353,11 @@ export const DaPrototypeCard = ({
             </>
           )}
         </div>
-        <div className="flex items-center w-full space-y-0">
-          <p className="text-base font-semibold line-clamp-1 text-foreground prototype-grid-item-name min-w-0 text-ellipsis">
+        <div className="flex items-center w-full min-h-10 space-y-0">
+          <p
+            title={prototype.name ?? ''}
+            className="text-base leading-5 font-semibold line-clamp-2 break-words text-foreground prototype-grid-item-name min-w-0 text-ellipsis"
+          >
             {prototype.name ?? ''}
           </p>
           <div className="grow" />

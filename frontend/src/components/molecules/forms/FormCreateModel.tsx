@@ -218,14 +218,14 @@ const FormCreateModel = () => {
       className="flex min-h-[300px] w-full flex-col bg-background"
     >
       <div className="flex flex-col gap-1.5">
-        <Label>Model Name *</Label>
+        <Label className="text-sm leading-none">Model Name *</Label>
         <Input
           name="name"
           value={data.name}
           onChange={(e) => handleChange('name', e.target.value)}
           placeholder="Model name"
+          className="text-sm focus-visible:ring-0"
           data-id="form-create-model-input-name"
-          autoFocus
         />
         {isDuplicateName && (
           <DaDuplicateNameHint
@@ -239,7 +239,7 @@ const FormCreateModel = () => {
 
       <div className="mt-4" />
 
-      <Label>Signal *</Label>
+      <Label className="leading-6">Signal *</Label>
       <div className="border mt-1 rounded-lg p-2">
         <div className="flex items-stretch gap-2">
           {!data.api_data_url && (
@@ -248,7 +248,7 @@ const FormCreateModel = () => {
                 <p className="text-xs text-muted-foreground">VSS version</p>
                 <Select onValueChange={handleVSSChange} defaultValue="v4.1">
                   <SelectTrigger
-                    className="w-full"
+                    className="w-full text-sm"
                     data-id="form-create-model-select-api"
                   >
                     <SelectValue placeholder="Select VSS version" />
@@ -297,12 +297,14 @@ const FormCreateModel = () => {
 
       {/* Template Selection */}
       <div className="mt-6 flex flex-col gap-1.5">
-        <Label>{defaultTemplate ? 'Template' : 'Start from Template (Optional)'}</Label>
+        <Label className="text-sm leading-none">
+          {defaultTemplate ? 'Template' : 'Start from Template (Optional)'}
+        </Label>
         <Select
           value={selectedTemplateId ?? '__scratch__'}
           onValueChange={(v) => setSelectedTemplateId(v === '__scratch__' ? null : v)}
         >
-          <SelectTrigger className="mt-1 w-full">
+          <SelectTrigger className="mt-1 w-full text-sm">
             <SelectValue placeholder="Select a template" />
           </SelectTrigger>
           <SelectContent>

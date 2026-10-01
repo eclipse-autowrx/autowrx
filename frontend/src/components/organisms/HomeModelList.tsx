@@ -516,7 +516,7 @@ const HomeModelList = ({ title }: HomeModelListProps) => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-primary bg-transparent text-primary max-[1080px]:px-[7px]!"
+                    className="border-primary bg-transparent text-primary hover:bg-slate-100 max-[1080px]:px-[7px]!"
                   >
                     <HiPlus className="text-base" />
                     <span className="inline max-[1080px]:hidden">
