@@ -46,6 +46,7 @@ import {
 } from 'react-icons/tb'
 import { downloadModelZip } from '@/lib/zipUtils'
 import useCurrentModel from '@/hooks/useCurrentModel'
+import { invalidateModelListQueries } from '@/hooks/useModelQueries'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { cn } from '@/lib/utils'
@@ -238,6 +239,9 @@ const PageModelDetail = () => {
         const { url } = await uploadFileService(file)
         await updateModelService(model.id, { model_home_image_file: url })
         await refetch()
+        // Keep model-list caches (home grid pickers, duplicate-name checks)
+        // in sync with the new image.
+        await invalidateModelListQueries(queryClient)
       } catch (error) {
         console.error('Failed to update avatar:', error)
       } finally {
@@ -252,6 +256,9 @@ const PageModelDetail = () => {
     try {
       await updateModelService(model.id, { name: newName.trim() })
       await refetch()
+      // Keep react-query model lists (home grid, pickers) in sync with the
+      // new name.
+      await invalidateModelListQueries(queryClient)
       setIsEditingName(false)
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 409) {

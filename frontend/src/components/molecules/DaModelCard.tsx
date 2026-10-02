@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import * as React from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { ModelLite } from '@/types/model.type'
 import {
   getModelStatsByIds,
@@ -15,7 +16,6 @@ import {
 } from '@/services/model.service'
 import { uploadFileService } from '@/services/upload.service'
 import { downloadModelZip } from '@/lib/zipUtils'
-import DaImportFile from '@/components/atoms/DaImportFile'
 import { TbLoader } from 'react-icons/tb'
 import {
   Tooltip,
@@ -53,6 +53,7 @@ import {
 } from '@/components/atoms/context-menu'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import usePermissionHook from '@/hooks/usePermissionHook'
+import { invalidateModelListQueries } from '@/hooks/useModelQueries'
 import { PERMISSIONS } from '@/data/permission'
 import { useDefaultModelImage } from '@/utils/siteConfig'
 import { useToast } from '@/components/molecules/toaster/use-toast'
@@ -166,6 +167,7 @@ export const DaModelCard = React.memo(
 
     const { data: user } = useSelfProfileQuery()
     const defaultModelImage = useDefaultModelImage()
+    const queryClient = useQueryClient()
     const { toast } = useToast()
     const createdBy = model?.created_by as unknown as
       | string
@@ -239,6 +241,7 @@ export const DaModelCard = React.memo(
     const [dotsMenuOpen, setDotsMenuOpen] = React.useState(false)
     const suppressClickRef = React.useRef(false)
     const suppressTimeoutRef = React.useRef<ReturnType<typeof setTimeout>>()
+    const imageInputRef = React.useRef<HTMLInputElement | null>(null)
 
     const runAfterMenuClose = React.useCallback((action: () => void) => {
       document.dispatchEvent(
@@ -262,6 +265,12 @@ export const DaModelCard = React.memo(
       window.setTimeout(action, 0)
     }, [])
 
+    const handleImageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      e.target.value = ''
+      if (file) handleImageFileChange(file)
+    }
+
     const handleImageFileChange = React.useCallback(
       async (file: File) => {
         if (!modelId) return
@@ -274,6 +283,11 @@ export const DaModelCard = React.memo(
           await updateModelService(modelId, {
             model_home_image_file: url,
           } as any)
+          // The home grid refetches via onAction below, but model pickers and
+          // the model detail page read react-query caches that would keep the
+          // old image until the stale-time refetch.
+          await invalidateModelListQueries(queryClient)
+          await queryClient.invalidateQueries({ queryKey: ['model', modelId] })
           onAction?.('imageUpdated', modelId)
         } catch (error) {
           console.error('Failed to update model image:', error)
@@ -281,7 +295,7 @@ export const DaModelCard = React.memo(
           setIsUploading(false)
         }
       },
-      [modelId, onAction],
+      [modelId, onAction, queryClient],
     )
 
     const handleExport = React.useCallback(async () => {
@@ -335,16 +349,10 @@ export const DaModelCard = React.memo(
           <TbEdit className="size-4" /> Rename
         </MenuItem>
         <MenuItem
-          className="gap-2 cursor-pointer p-0!"
-          onSelect={(e: Event) => e.preventDefault()}
+          className="gap-2 cursor-pointer"
+          onSelect={() => imageInputRef.current?.click()}
         >
-          <DaImportFile
-            onFileChange={handleImageFileChange}
-            accept=".png,.jpg,.jpeg"
-            className="flex w-full items-center gap-2 px-2 py-1.5 text-sm cursor-pointer"
-          >
-            <TbPhotoEdit className="size-4 shrink-0" /> Update Image
-          </DaImportFile>
+          <TbPhotoEdit className="size-4 shrink-0" /> Update Image
         </MenuItem>
         <MenuSeparator />
         <MenuItem
@@ -572,6 +580,18 @@ export const DaModelCard = React.memo(
             {cardContent}
           </div>
         )}
+
+        {/* The file input must stay mounted outside the menus: opening the
+            native picker blurs the window, the menu unmounts, and an in-menu
+            input would be detached before its change event fires. */}
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept=".png,.jpg,.jpeg"
+          className="hidden"
+          onClick={(e) => e.stopPropagation()}
+          onChange={handleImageInputChange}
+        />
       </div>
     )
   },
