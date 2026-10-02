@@ -35,6 +35,9 @@ const DaImportFile: React.FC<DaImportFileProps> = ({
     if (file) {
       onFileChange(file)
     }
+    // Allow picking the same file again: browsers skip `change` while the
+    // input's value is unchanged.
+    e.target.value = ''
   }
 
   return (

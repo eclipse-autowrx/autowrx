@@ -70,9 +70,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
   const defaultPrototypeImage = useDefaultPrototypeImage()
   const queryClient = useQueryClient()
   const { data: model } = useCurrentModel()
-  const { data: modelPrototypes, refetch: refetchModelPrototypes } = useListModelPrototypes(
-    model?.id || '',
-  )
+  const { data: modelPrototypes } = useListModelPrototypes(model?.id || '')
 
   const existingPrototypeNames = useMemo(
     () => modelPrototypes?.filter((p: Prototype) => p.id !== prototype.id).map((p: Prototype) => p.name) ?? [],
@@ -123,7 +121,9 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
     }
     try {
       await updatePrototypeService(prototype.id, updateData)
-      await refetchModelPrototypes()
+      // Refresh every prototype list (model library + home lists) so the new
+      // name shows without waiting for the stale-time refetch.
+      await invalidatePrototypeListQueries(queryClient)
       if (currentUser) {
         await addLog({
           name: `User ${currentUser.email} updated prototype ${localPrototype.name}`,
@@ -193,6 +193,9 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
         }
       })
       await updatePrototypeService(prototype.id, { image_file: url })
+      // Keep library/home cards in sync with the new image.
+      await invalidatePrototypeListQueries(queryClient)
+      await refetchCurrentPrototype()
     } catch (error) {
       console.error('Failed to update prototype image:', error)
       toast.error('Failed to update prototype image')

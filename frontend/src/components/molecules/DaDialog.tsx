@@ -106,6 +106,8 @@ interface DaDialogProps {
   showCloseButton?: boolean
   onClose?: () => void
   preventOutsideClose?: boolean
+  /** Let Escape close the dialog even when preventOutsideClose is set. */
+  allowEscapeClose?: boolean
   disabled?: boolean
   hideHeaderDivider?: boolean
   closeIconClassName?: string
@@ -124,6 +126,7 @@ const DaDialog = ({
   showCloseButton = true,
   onClose,
   preventOutsideClose = false,
+  allowEscapeClose = false,
   disabled = false,
   hideHeaderDivider = false,
   closeIconClassName,
@@ -209,7 +212,7 @@ const DaDialog = ({
             dismissOpenSelects()
             return
           }
-          if (preventOutsideClose) e.preventDefault()
+          if (preventOutsideClose && !allowEscapeClose) e.preventDefault()
         }}
         aria-describedby={undefined}
       >

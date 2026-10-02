@@ -19,6 +19,7 @@ import {
 import { listModelPrototypes } from '@/services/prototype.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { invalidatePrototypeListQueries } from '@/hooks/usePrototypeQueries'
+import { invalidateModelListQueries } from '@/hooks/useModelQueries'
 import useImportModel from '@/hooks/useImportModel'
 import { useUrlQueryParam } from '@/hooks/useUrlQueryParam'
 import { HiPlus } from 'react-icons/hi'
@@ -246,6 +247,8 @@ const HomeModelList = ({ title }: HomeModelListProps) => {
         name: renameValue.trim(),
       } as any)
       await refetchModels()
+      // Keep react-query model lists (pickers, duplicate-name checks) in sync.
+      await invalidateModelListQueries(queryClient)
       setRenameModelId(null)
       setTimeout(() => {
         document.body.style.removeProperty('pointer-events')
@@ -255,7 +258,7 @@ const HomeModelList = ({ title }: HomeModelListProps) => {
     } finally {
       setIsRenaming(false)
     }
-  }, [renameModelId, renameValue, refetchModels])
+  }, [renameModelId, renameValue, refetchModels, queryClient])
 
   const handleDeleteModel = useCallback(async () => {
     if (!deleteModelId) return
@@ -264,6 +267,7 @@ const HomeModelList = ({ title }: HomeModelListProps) => {
       await deleteModelService(deleteModelId)
       await refetchModels()
       await invalidatePrototypeListQueries(queryClient)
+      await invalidateModelListQueries(queryClient)
     } catch (error) {
       console.error('Failed to delete model:', error)
     } finally {

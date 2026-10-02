@@ -49,7 +49,6 @@ import { updatePrototypeService, deletePrototypeService } from '@/services/proto
 import { invalidatePrototypeListQueries } from '@/hooks/usePrototypeQueries'
 import { uploadFileService } from '@/services/upload.service'
 import { downloadPrototypeZip } from '@/lib/zipUtils'
-import DaImportFile from '../atoms/DaImportFile'
 import DaConfirmPopup from './DaConfirmPopup'
 import DaDialog from './DaDialog'
 import { Button } from '../atoms/button'
@@ -132,6 +131,7 @@ export const DaPrototypeCard = ({
 
   const suppressClickRef = useRef(false)
   const suppressTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
+  const imageInputRef = useRef<HTMLInputElement>(null)
 
   const withClickSuppression = useCallback(
     (setter: React.Dispatch<React.SetStateAction<boolean>>) =>
@@ -165,12 +165,6 @@ export const DaPrototypeCard = ({
     )
   }, [existingPrototypeNamesProp, siblingPrototypes, prototype.id])
 
-  const invalidatePrototypeQueries = useCallback(async () => {
-    await queryClient.invalidateQueries({
-      queryKey: ['listModelPrototypes', prototype.model_id || ''],
-    })
-  }, [queryClient, prototype.model_id])
-
   const { isDuplicate: isDuplicateName, suggestedName } = useDuplicateNameCheck(
     newName,
     existingPrototypeNames,
@@ -182,7 +176,14 @@ export const DaPrototypeCard = ({
     setIsSaving(true)
     try {
       await updatePrototypeService(prototype.id, { name: newName.trim() })
-      await invalidatePrototypeQueries()
+      // Rename must also reach the home-page lists (['prototypes', …]) fed by
+      // useRecentPrototypes/usePopularPrototypes, not just the model's list.
+      await invalidatePrototypeListQueries(queryClient)
+      // …and the cached current prototype: it drives the breadcrumb/page header
+      // and is mirrored into modelStore.prototype by PagePrototypeDetail.
+      await queryClient.invalidateQueries({
+        queryKey: ['prototype', prototype.id],
+      })
       onUpdate?.()
       setRenameOpen(false)
     } catch (error) {
@@ -190,6 +191,12 @@ export const DaPrototypeCard = ({
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const handleImageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (file) handleImageFileChange(file)
   }
 
   const handleImageFileChange = async (file: File) => {
@@ -200,7 +207,12 @@ export const DaPrototypeCard = ({
     try {
       const { url } = await uploadFileService(file)
       await updatePrototypeService(prototype.id, { image_file: url })
-      await invalidatePrototypeQueries()
+      await invalidatePrototypeListQueries(queryClient)
+      // Same as rename: the cached current prototype feeds the detail page
+      // header and must not keep the old image.
+      await queryClient.invalidateQueries({
+        queryKey: ['prototype', prototype.id],
+      })
       onUpdate?.()
     } catch (error) {
       console.error('Failed to update prototype image:', error)
@@ -250,17 +262,11 @@ export const DaPrototypeCard = ({
         Rename
       </MenuItem>
       <MenuItem
-        className="cursor-pointer p-0!"
-        onSelect={(e: Event) => e.preventDefault()}
+        className="cursor-pointer gap-2"
+        onSelect={() => imageInputRef.current?.click()}
       >
-        <DaImportFile
-          onFileChange={handleImageFileChange}
-          accept=".png,.jpg,.jpeg,.gif,.webp"
-          className="flex w-full items-center gap-2 px-2 py-1.5 text-sm cursor-pointer"
-        >
-          <TbPhotoEdit className="size-4 shrink-0" />
-          Update Image
-        </DaImportFile>
+        <TbPhotoEdit className="size-4 shrink-0" />
+        Update Image
       </MenuItem>
       <MenuSeparator />
       <MenuItem
@@ -554,6 +560,18 @@ export const DaPrototypeCard = ({
           )}
         </div>
       </DaDialog>
+
+      {/* The file input must stay mounted outside the menus: opening the
+          native picker blurs the window, the menu unmounts, and an in-menu
+          input would be detached before its change event fires. */}
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept=".png,.jpg,.jpeg,.gif,.webp"
+        className="hidden"
+        onClick={(e) => e.stopPropagation()}
+        onChange={handleImageInputChange}
+      />
 
       {isOwner && (
         <DaConfirmPopup

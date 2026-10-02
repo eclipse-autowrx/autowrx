@@ -316,6 +316,7 @@ const NewPrototypeLayout: FC = () => {
       <DaDialog
         open={openNewPrototypeDialog}
         preventOutsideClose
+        allowEscapeClose
         onOpenChange={setOpenNewPrototypeDialog}
         onClose={handleLeavePage}
         dialogTitle="New Prototype"
