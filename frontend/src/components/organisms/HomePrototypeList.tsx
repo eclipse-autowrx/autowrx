@@ -445,7 +445,6 @@ const HomePrototypeList = ({
                 <Button
                   key={cat.value}
                   variant="ghost"
-                  disabled={isEmpty}
                   className={cn(
                     activeCategory === cat.value
                       ? 'border-[#7B838B]'
