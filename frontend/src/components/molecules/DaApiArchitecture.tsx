@@ -6,8 +6,8 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { ImageAreaEdit, ImageAreaPreview } from '@mekong89/image-area-lib'
-import axios, { AxiosError } from 'axios'
+import { ImageAreaEditor, ImageAreaPreview } from '@/components/organisms/image-area'
+import { AxiosError } from 'axios'
 import { Button } from '@/components/atoms/button'
 import { useEffect, useState } from 'react'
 import { TbArrowLeft, TbEdit } from 'react-icons/tb'
@@ -22,6 +22,7 @@ import {
   createExtendedApi,
 } from '@/services/extendedApis.service'
 import { ExtendedApi, ExtendedApiCreate, Skeleton } from '@/types/api.type'
+import { uploadFileService } from '@/services/upload.service'
 
 const MASTER_ITEM = 'master'
 
@@ -244,28 +245,22 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
   }
 
   const handleUploadImage = async (file: File) => {
-    const formData = new FormData()
-    formData.append('path', `/${file.name}`)
-    formData.append('uploaded_file', file)
     try {
-      let data = (await axios.post(
-        'https://bewebstudio.digitalauto.tech/project/TxV9WvrPjKrg/upload-file?excludeRoot=false&&force=true',
-        formData,
-        { headers: { 'Content-Type': 'form-data/multipart' } },
-      )) as any
-      if (!data || !data.data || !data.data.fileLink) return
+      const { url } = await uploadFileService(file)
+      if (!url) return
       let tmpSkele =
         typeof skeleton === 'string' ? JSON.parse(skeleton) : skeleton
       if (!tmpSkele.nodes) tmpSkele.nodes = []
       let nodes = tmpSkele.nodes
       let node = nodes[0]
       if (node) {
-        node.bgImage = data.data.fileLink
+        node.bgImage = url
         setSkeleton(tmpSkele)
         await saveAPISkeleton(tmpSkele)
-      } else {
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error('Error uploading architecture image:', err)
+    }
   }
 
   const saveAPISkeleton = async (skele: any) => {
@@ -289,6 +284,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
 
     node.shapes = data.shapes
     node.bgImage = data.bgImage
+    node.bgColor = data.bgColor
     await saveAPISkeleton(tmpSkele)
     setSkeleton(tmpSkele)
     setPendingSkeletonUpdate(data)
@@ -374,9 +370,10 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
         activeSkeleton.nodes.length > 0 && (
           <div className="flex w-full h-auto">
             {isEditMode ? (<>
-              <ImageAreaEdit
+              <ImageAreaEditor
                 shapes={activeSkeleton?.nodes[0]?.shapes}
                 bgImage={activeSkeleton?.nodes[0]?.bgImage}
+                bgColor={activeSkeleton?.nodes[0]?.bgColor}
                 onSave={onSaveRequested}
                 handleUploadImage={handleUploadImage}
               />
@@ -386,6 +383,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
               <ImageAreaPreview
                 shapes={activeSkeleton?.nodes[0]?.shapes}
                 bgImage={activeSkeleton?.nodes[0]?.bgImage}
+                bgColor={activeSkeleton?.nodes[0]?.bgColor}
                 navigate={handleNavigate}
               />
             </>}
