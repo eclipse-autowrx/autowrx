@@ -245,6 +245,39 @@ test.describe('Home Prototype List', () => {
     ).toBeVisible({ timeout: 20000 });
   });
 
+  test('category tabs are disabled when All is empty', async ({ page }) => {
+    await page.route(
+      (url) => url.pathname.endsWith('/prototypes'),
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            results: [],
+            totalResults: 0,
+            totalPages: 0,
+            page: 1,
+            limit: 1,
+          }),
+        });
+      },
+    );
+
+    await gotoHomePrototypeList(page);
+    const section = getHomePrototypeListSection(page);
+    const allButton = section.getByRole('button', { name: 'All', exact: true });
+    const myButton = section.getByRole('button', { name: 'My Prototypes', exact: true });
+
+    await expect(section.getByText('No prototypes found')).toBeVisible();
+    await expect(allButton).toBeDisabled();
+    await expect(myButton).toBeDisabled();
+
+    await page.goto('/?prototype-category=mine');
+    await expect(section.getByText('No prototypes found')).toBeVisible();
+    await expect(allButton).toBeDisabled();
+    await expect(myButton).toBeDisabled();
+  });
+
   test.describe('sort options', () => {
     test('sort by Newest orders prototype cards', async ({ page }) => {
       const timestamp = Date.now();

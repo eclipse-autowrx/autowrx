@@ -220,6 +220,20 @@ const HomePrototypeList = ({
     enabled: authBootstrapped && !userLoading && !isClientViewSort,
   })
 
+  const allCategoryTotalQuery = useQuery({
+    queryKey: prototypeQueryKeys.paged({
+      category: 'all',
+      viewerId: user?.id,
+      page: 1,
+      limit: 1,
+      fields: 'id',
+    }),
+    queryFn: () => listPrototypesPaged({ page: 1, limit: 1, fields: 'id' }),
+    select: (data) => data.totalResults,
+    enabled:
+      authBootstrapped && !userLoading && !!user && activeCategory === 'mine',
+  })
+
   const pagedTotalResults = page0Query.data?.totalResults
   const totalResults = isClientViewSort
     ? allForViewSortQuery.data?.length
@@ -397,6 +411,8 @@ const HomePrototypeList = ({
   // the initial load `totalResults` is 0 simply because nothing has arrived yet,
   // which used to render permanently disabled tabs on slow connections (#666).
   const isEmpty = authBootstrapped && !isInitialLoading && isEmptyRaw
+  const isAllEmpty =
+    activeCategory === 'all' ? isEmpty : allCategoryTotalQuery.data === 0
 
   // Number of item slots to render in the flex strip. Before the first response (initial
   // loading) render `itemsPerView` placeholder slots so the carousel reserves the right
@@ -445,6 +461,7 @@ const HomePrototypeList = ({
                 <Button
                   key={cat.value}
                   variant="ghost"
+                  disabled={isAllEmpty}
                   className={cn(
                     activeCategory === cat.value
                       ? 'border-[#7B838B]'
