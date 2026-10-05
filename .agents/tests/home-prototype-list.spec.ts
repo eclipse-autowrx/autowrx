@@ -1,3 +1,11 @@
+// Copyright (c) 2026 Eclipse Foundation.
+//
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { test, expect } from '@playwright/test';
 import {
   loginAsAdmin,
@@ -196,6 +204,78 @@ test.describe('Home Prototype List', () => {
     ).toHaveCount(0, { timeout: 10000 });
 
     await saveScreenshot(page, 'home-prototype-list-my-prototypes-filter');
+  });
+
+  test('All remains available when My Prototypes is empty', async ({ page }) => {
+    const timestamp = Date.now();
+    const protoName = `E2E_HomeProtoOtherUser_${timestamp}`;
+    const modelId = await createPublicReleasedModelViaApi(
+      page,
+      `E2E_HomeProtoOtherUserModel_${timestamp}`,
+    );
+    createdModelIds.push(modelId);
+    const { prototypeId } = await createTestPrototype(page, protoName, modelId);
+    await setPrototypeStateViaApi(page, prototypeId, 'Released');
+
+    const testUser = await createTestUserViaApi(page, {
+      email: `e2e_home_empty_my_proto_${timestamp}@example.com`,
+      password: TEST_USER.password,
+      name: `E2E User ${timestamp}`,
+    });
+    testUserId = testUser.id;
+
+    await logout(page);
+    await loginAs(page, testUser.email, TEST_USER.password);
+    await gotoHomePrototypeList(page);
+
+    const section = getHomePrototypeListSection(page);
+    const allButton = section.getByRole('button', { name: 'All', exact: true });
+    await expect(
+      section.locator(`[data-id^="prototype-item-"]:has-text("${protoName}")`).first(),
+    ).toBeVisible({ timeout: 20000 });
+
+    await selectHomePrototypeCategory(page, 'My Prototypes');
+    await expect(section.getByText('No prototypes found')).toBeVisible();
+    await expect(allButton).toBeEnabled();
+
+    await allButton.click();
+    await expect(page).not.toHaveURL(/prototype-category=mine/);
+    await expect(
+      section.locator(`[data-id^="prototype-item-"]:has-text("${protoName}")`).first(),
+    ).toBeVisible({ timeout: 20000 });
+  });
+
+  test('category tabs are disabled when All is empty', async ({ page }) => {
+    await page.route(
+      (url) => url.pathname.endsWith('/prototypes'),
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            results: [],
+            totalResults: 0,
+            totalPages: 0,
+            page: 1,
+            limit: 1,
+          }),
+        });
+      },
+    );
+
+    await gotoHomePrototypeList(page);
+    const section = getHomePrototypeListSection(page);
+    const allButton = section.getByRole('button', { name: 'All', exact: true });
+    const myButton = section.getByRole('button', { name: 'My Prototypes', exact: true });
+
+    await expect(section.getByText('No prototypes found')).toBeVisible();
+    await expect(allButton).toBeDisabled();
+    await expect(myButton).toBeDisabled();
+
+    await page.goto('/?prototype-category=mine');
+    await expect(section.getByText('No prototypes found')).toBeVisible();
+    await expect(allButton).toBeDisabled();
+    await expect(myButton).toBeDisabled();
   });
 
   test.describe('sort options', () => {
