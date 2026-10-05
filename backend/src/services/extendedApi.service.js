@@ -9,7 +9,7 @@
 const httpStatus = require('http-status');
 const { ExtendedApi } = require('../models');
 const ApiError = require('../utils/ApiError');
-const { permissionService } = require('.');
+const permissionService = require('./permission.service');
 const { PERMISSIONS } = require('../config/roles');
 const Joi = require('joi');
 const { extendedApiValidation } = require('../validations');
