@@ -567,12 +567,26 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     }
   }, [data])
 
-  // Open app_logic.py on first load: it is the entry point of every generated
-  // project, so landing on the empty Introduction screen is never what the user
-  // wants. Only applies while nothing else is open.
+  // Open the project's entry file on first load, so landing on the empty
+  // Introduction screen never happens. Entry-file lookup falls back through
+  // the shapes real deployments produce: root app_logic.py, app_logic.py or
+  // main.py at any depth (e.g. python-project/main.py from the generated
+  // template), and finally the first file in tree order. Only applies while
+  // nothing else is open.
   useEffect(() => {
     if (activeFile || openFiles.length > 0 || fsData.length === 0) return
-    const defaultFile = collectFilesByPathFromRoot(fsData).get('app_logic.py')
+    const filesByPath = collectFilesByPathFromRoot(fsData)
+    const findByBaseName = (base: string): File | undefined => {
+      const entry = [...filesByPath.entries()].find(
+        ([path]) => path === base || path.endsWith(`/${base}`),
+      )
+      return entry ? entry[1] : undefined
+    }
+    const defaultFile =
+      filesByPath.get('app_logic.py') ??
+      findByBaseName('app_logic.py') ??
+      findByBaseName('main.py') ??
+      [...filesByPath.values()][0]
     if (defaultFile) {
       setOpenFiles([defaultFile])
       setActiveFile(defaultFile)
