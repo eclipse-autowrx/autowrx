@@ -59,6 +59,16 @@ function collectFilesByPathFromRoot(
   return out
 }
 
+/**
+ * The items the file tree actually renders paths from: when the project is a
+ * single top-level folder (the template shape, e.g. python-project/), the tree
+ * shows its contents directly, so tree paths start *inside* that folder.
+ * Tab paths must be derived from the same base or tree clicks and open tabs
+ * never match (no highlight, duplicate tabs, reconcile dropping tabs).
+ */
+const treeBaseItems = (rootItems: FileSystemItem[]): FileSystemItem[] =>
+  rootItems[0]?.type === 'folder' ? rootItems[0].items : rootItems
+
 const ProjectEditor: React.FC<ProjectEditorProps> = ({
   data,
   onChange,
@@ -546,7 +556,9 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       // Reconcile open tabs and active file: drop paths that no longer exist and
       // adopt the incoming content for the ones that do — an external write (AI,
       // plugin, another tab) would otherwise leave open tabs showing stale text.
-      const filesByPath = collectFilesByPathFromRoot(parsed)
+      // Paths use the tree's base (inside the top-level folder) so tree-opened
+      // tabs match — the full-walk map never matched them and dropped every tab.
+      const filesByPath = collectFilesByPathFromRoot(treeBaseItems(parsed))
       const refresh = (f: File): File => {
         const incoming = filesByPath.get(f.path || f.name)
         return incoming ? { ...f, content: incoming.content } : f
@@ -571,11 +583,18 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
   // Introduction screen never happens. Entry-file lookup falls back through
   // the shapes real deployments produce: root app_logic.py, app_logic.py or
   // main.py at any depth (e.g. python-project/main.py from the generated
-  // template), and finally the first file in tree order. Only applies while
-  // nothing else is open.
+  // template), and finally the first file in stored order. Paths use the
+  // tree's base so the opened tab matches tree clicks (highlight + dedup).
+  // First-load only: once any tab has been open, never auto-open again —
+  // closing all tabs to view the Introduction must stick.
+  const autoOpenedRef = useRef(false)
   useEffect(() => {
-    if (activeFile || openFiles.length > 0 || fsData.length === 0) return
-    const filesByPath = collectFilesByPathFromRoot(fsData)
+    if (activeFile || openFiles.length > 0) {
+      autoOpenedRef.current = true
+      return
+    }
+    if (autoOpenedRef.current || fsData.length === 0) return
+    const filesByPath = collectFilesByPathFromRoot(treeBaseItems(fsData))
     const findByBaseName = (base: string): File | undefined => {
       const entry = [...filesByPath.entries()].find(
         ([path]) => path === base || path.endsWith(`/${base}`),
@@ -588,6 +607,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       findByBaseName('main.py') ??
       [...filesByPath.values()][0]
     if (defaultFile) {
+      autoOpenedRef.current = true
       setOpenFiles([defaultFile])
       setActiveFile(defaultFile)
     }
