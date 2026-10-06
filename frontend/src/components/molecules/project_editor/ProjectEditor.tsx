@@ -37,25 +37,21 @@ interface ProjectEditorProps {
   prototypeName?: string
 }
 
-/** Index every file in root-level fsData by the same path used by FileTree. */
-function collectFilesByPathFromRoot(
-  rootItems: FileSystemItem[],
-): Map<string, File> {
+/**
+ * Index every file under `items` by path (files and folders at any level,
+ * basePath ''). The single path convention for tab bookkeeping — always feed
+ * it the same base the tree renders (see treeBaseItems).
+ */
+function collectFilesByPath(items: FileSystemItem[]): Map<string, File> {
   const out = new Map<string, File>()
-  function walk(items: FileSystemItem[], basePath: string) {
-    items.forEach((item) => {
+  function walk(arr: FileSystemItem[], basePath: string) {
+    arr.forEach((item) => {
       const path = basePath ? `${basePath}/${item.name}` : item.name
       if (item.type === 'file') out.set(path, { ...item, path })
-      else if (item.type === 'folder') walk(item.items, path)
+      else if (item.type === 'folder') walk(item.items || [], path)
     })
   }
-  rootItems.forEach((rootItem) => {
-    if (rootItem.type === 'folder') {
-      // Use '' for root folder so paths match FileTree (e.g. "utils/bar" not "root/utils/bar")
-      const basePath = rootItem.name === 'root' ? '' : (rootItem.name || '')
-      walk(rootItem.items, basePath)
-    }
-  })
+  walk(items, '')
   return out
 }
 
@@ -65,9 +61,11 @@ function collectFilesByPathFromRoot(
  * shows its contents directly, so tree paths start *inside* that folder.
  * Tab paths must be derived from the same base or tree clicks and open tabs
  * never match (no highlight, duplicate tabs, reconcile dropping tabs).
+ * Guarded for malformed data (folder without items) — degrade to no files
+ * rather than crash.
  */
 const treeBaseItems = (rootItems: FileSystemItem[]): FileSystemItem[] =>
-  rootItems[0]?.type === 'folder' ? rootItems[0].items : rootItems
+  rootItems[0]?.type === 'folder' ? (rootItems[0].items ?? []) : rootItems
 
 const ProjectEditor: React.FC<ProjectEditorProps> = ({
   data,
@@ -558,7 +556,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       // plugin, another tab) would otherwise leave open tabs showing stale text.
       // Paths use the tree's base (inside the top-level folder) so tree-opened
       // tabs match — the full-walk map never matched them and dropped every tab.
-      const filesByPath = collectFilesByPathFromRoot(treeBaseItems(parsed))
+      const filesByPath = collectFilesByPath(treeBaseItems(parsed))
       const refresh = (f: File): File => {
         const incoming = filesByPath.get(f.path || f.name)
         return incoming ? { ...f, content: incoming.content } : f
@@ -594,7 +592,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       return
     }
     if (autoOpenedRef.current || fsData.length === 0) return
-    const filesByPath = collectFilesByPathFromRoot(treeBaseItems(fsData))
+    const filesByPath = collectFilesByPath(treeBaseItems(fsData))
     const findByBaseName = (base: string): File | undefined => {
       const entry = [...filesByPath.entries()].find(
         ([path]) => path === base || path.endsWith(`/${base}`),
@@ -1790,6 +1788,8 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
               setActiveFile(null)
               setUnsavedFiles(new Set())
               setPendingChanges(new Map())
+              // New project content: allow the entry-file auto-open again
+              autoOpenedRef.current = false
             })
             .catch((error) => {
               console.error('Error processing zip file:', error)
