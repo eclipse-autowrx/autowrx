@@ -129,6 +129,7 @@ export type SkeletonNode = {
     shapes: any[]
   }
   bgImage: string
+  bgColor?: string
 }
 
 export type Skeleton = {
