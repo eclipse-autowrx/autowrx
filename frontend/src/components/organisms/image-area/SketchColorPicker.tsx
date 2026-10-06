@@ -5,6 +5,9 @@
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
+//
+// Portions derived from react-color (MIT, (c) 2015 Case Sandberg).
+// See NOTICE.md in this folder.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {

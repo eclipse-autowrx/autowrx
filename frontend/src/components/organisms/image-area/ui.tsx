@@ -5,6 +5,9 @@
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
+//
+// Portions derived from @mekong89/image-area-lib (MIT, (c) Chieucasmen).
+// See NOTICE.md in this folder.
 
 import { useEffect, useRef, useState } from 'react'
 import { ShapeIconSvg } from './icons'

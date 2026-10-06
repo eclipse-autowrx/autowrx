@@ -5,6 +5,9 @@
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
+//
+// Portions derived from react-color (MIT, (c) 2015 Case Sandberg).
+// See NOTICE.md in this folder.
 
 // Color math for the in-repo Sketch-style picker, mirroring the behaviour of
 // react-color's ColorWrap (as bundled in @mekong89/image-area-lib): any input
