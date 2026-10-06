@@ -231,6 +231,7 @@
 | API list loads | Signal tree renders | ✅ `vehicle-api.spec.ts` |
 | Search signal | Filter by name | ✅ `vehicle-api.spec.ts` |
 | Signal detail | View signal metadata | ❌ |
+| API architecture diagram | Edit skeleton: draw rectangle + hover message, bg color/image, save + preview persistence | ✅ `api-architecture.spec.ts` |
 
 ---
 
