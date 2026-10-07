@@ -7,39 +7,44 @@ import {
   waitForPrototypeTabs,
   createTestModelViaApi,
   createTestPrototype,
+  createTestPrototypeViaApi,
+  deleteModelViaApi,
   goToPrototypeOverview,
 } from './helpers';
 
-// Helper: get first available prototype URL
-async function getFirstPrototypeUrl(page: any): Promise<{ modelId: string; protoId: string } | null> {
-  await page.goto('/model');
-  await page.waitForTimeout(5000);
-
-  const firstModel = page.locator('a[href*="/model/"]').first();
-  await expect(firstModel).toBeVisible({ timeout: 8000 });
-  const modelHref = await firstModel.getAttribute('href');
-  const modelId = modelHref?.split('/model/')[1]?.split('/')[0];
-  if (!modelId) return null;
-
-  await page.goto(`/model/${modelId}/library/list`);
-  await page.waitForTimeout(5000);
-
-  const firstProto = page.locator('[data-id^="prototype-item-"]').first();
-  await expect(firstProto).toBeVisible({ timeout: 10000 });
-  const dataId = await firstProto.getAttribute('data-id');
-  const protoId = dataId?.replace('prototype-item-', '');
-  if (!protoId) return null;
-
-  return { modelId, protoId };
-}
+// Hermetic fixture: a dedicated model+prototype so the tests never depend on
+// whatever model happens to be first on the instance — a model with plugin
+// prototype-tabs auto-redirects /view to /plug and breaks the assertions.
+let fixtureModelId = '';
+let fixtureProtoId = '';
 
 test.describe('Prototype Tabs - Layout Check', () => {
+  test.beforeAll(async ({ browser }) => {
+    const page = await browser.newPage();
+    await loginAsAdmin(page);
+    const ts = Date.now();
+    fixtureModelId = await createTestModelViaApi(page, `E2E_TabsFix_Model_${ts}`, 'public');
+    fixtureProtoId = (
+      await createTestPrototypeViaApi(page, {
+        name: `E2E_TabsFix_Proto_${ts}`,
+        modelId: fixtureModelId,
+      })
+    ).prototypeId;
+    await page.close();
+  });
+
+  test.afterAll(async ({ browser }) => {
+    if (!fixtureModelId) return;
+    const page = await browser.newPage();
+    await loginAsAdmin(page);
+    await deleteModelViaApi(page, fixtureModelId).catch(() => {});
+    await page.close();
+  });
 
   test('Overview tab loads and has no layout errors', async ({ page }) => {
     await loginAsAdmin(page);
-    const ids = await getFirstPrototypeUrl(page);
-    if (!ids) return;
-    const { modelId, protoId } = ids;
+    const modelId = fixtureModelId;
+    const protoId = fixtureProtoId;
 
     await page.goto(`/model/${modelId}/library/prototype/${protoId}/view`);
     await page.waitForTimeout(5000);
@@ -57,9 +62,8 @@ test.describe('Prototype Tabs - Layout Check', () => {
 
   test('SDV Code tab loads and has no layout errors', async ({ page }) => {
     await loginAsAdmin(page);
-    const ids = await getFirstPrototypeUrl(page);
-    if (!ids) return;
-    const { modelId, protoId } = ids;
+    const modelId = fixtureModelId;
+    const protoId = fixtureProtoId;
 
     await page.goto(`/model/${modelId}/library/prototype/${protoId}/code`);
     await page.waitForTimeout(6000);
@@ -78,9 +82,8 @@ test.describe('Prototype Tabs - Layout Check', () => {
 
   test('Dashboard tab loads and has no layout errors', async ({ page }) => {
     await loginAsAdmin(page);
-    const ids = await getFirstPrototypeUrl(page);
-    if (!ids) return;
-    const { modelId, protoId } = ids;
+    const modelId = fixtureModelId;
+    const protoId = fixtureProtoId;
 
     await page.goto(`/model/${modelId}/library/prototype/${protoId}/dashboard`);
     await page.waitForTimeout(6000);
@@ -98,9 +101,8 @@ test.describe('Prototype Tabs - Layout Check', () => {
 
   test('Customer Journey tab loads and has no layout errors', async ({ page }) => {
     await loginAsAdmin(page);
-    const ids = await getFirstPrototypeUrl(page);
-    if (!ids) return;
-    const { modelId, protoId } = ids;
+    const modelId = fixtureModelId;
+    const protoId = fixtureProtoId;
 
     await page.goto(`/model/${modelId}/library/prototype/${protoId}/journey`);
     await page.waitForTimeout(6000);
@@ -116,9 +118,8 @@ test.describe('Prototype Tabs - Layout Check', () => {
 
   test('Navigate through all tabs sequentially and check each', async ({ page }) => {
     await loginAsAdmin(page);
-    const ids = await getFirstPrototypeUrl(page);
-    if (!ids) return;
-    const { modelId, protoId } = ids;
+    const modelId = fixtureModelId;
+    const protoId = fixtureProtoId;
 
     const BASE = `/model/${modelId}/library/prototype/${protoId}`;
     const tabs = [
