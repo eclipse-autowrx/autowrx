@@ -65,6 +65,7 @@ How-to material for building on the platform.
     [Deployment](./guides/plugin/deployment.md)
 - [Custom API System](./guides/custom-api-system.md) — model-specific API catalogs
 - [Deployment](./guides/deployment/README.md) — production deployment (instance-setup)
+- [Automated Test Catalog](./testing/e2e-test-cases.md) — every E2E test case explained in plain language (no technical background needed)
 
 ---
 

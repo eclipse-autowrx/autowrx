@@ -4,6 +4,9 @@ This folder contains automated test suites for the autowrx frontend.
 Tests are written in Playwright (TypeScript) and can be run by AI agents
 or developers to validate app behavior after changes.
 
+> **Non-technical reader?** The plain-language list of every test case lives in
+> [`../docs/testing/e2e-test-cases.md`](../docs/testing/e2e-test-cases.md).
+
 ## Setup
 
 ```bash
