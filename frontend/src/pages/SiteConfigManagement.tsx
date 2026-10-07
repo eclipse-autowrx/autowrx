@@ -107,7 +107,8 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
   {
     key: 'ALLOW_ADDING_FILES',
     scope: 'site',
-    value: false,
+    // Editing files is core editor UX; hosts opt out explicitly (PR #695 regression).
+    value: true,
     secret: false,
     valueType: 'boolean',
     description:
