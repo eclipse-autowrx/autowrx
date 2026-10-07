@@ -14,8 +14,18 @@ npx playwright install chromium
 
 ## Running Tests
 
+`yarn test` / `npm test` self-setup: a `pretest` hook (`.agents/scripts/setup-env.mjs`) ensures, before any test runs:
+
+1. `.env` files exist (backend, frontend, `.agents` — created from the `*.env.example` when missing; `.agents/.env` admin creds are aligned with the backend's `ADMIN_EMAILS`/`ADMIN_PASSWORD` bootstrap values when available)
+2. `node_modules` installed (backend, frontend, `.agents`) and Playwright chromium downloaded
+3. backend (`API_URL`, default `:3200`) and frontend (`BASE_URL`, default `:3210`) dev servers running — started detached when down, logs in `.agents/.setup-logs/`, left running afterwards
+4. admin login works (the backend creates admins at startup from `backend/.env` `ADMIN_EMAILS`/`ADMIN_PASSWORD`)
+5. site-config keys `E2E_TEST_ENABLED=true` and `PUBLIC_VIEWING=true` are set
+
+Steps 3-5 are applied only to local targets (`localhost`/`127.0.0.1`) unless `E2E_ALLOW_ANY_ENV=1` — the same fail-closed convention as the env guard. Individual suites (`yarn test:<name>`) do not run the setup hook; run `yarn exec node scripts/setup-env.mjs` once first if the environment isn't up.
+
 ```bash
-# All tests
+# All tests (with automatic environment setup)
 npx playwright test
 
 # Specific suite

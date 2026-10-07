@@ -15,6 +15,7 @@ import {
   setPrototypeImageViaApi,
   routeBrokenImageUrls,
   expectCardImageFallback,
+  getEffectiveDefaultImage,
   DEFAULT_MODEL_IMAGE,
   DEFAULT_PROTOTYPE_IMAGE,
 } from './helpers';
@@ -58,7 +59,12 @@ test.describe('Image Fallback', () => {
       const section = getHomeModelListSection(page);
       const card = section.locator(`[aria-label="${modelName}"]`);
       await expect(card).toBeVisible({ timeout: 20000 });
-      await expectCardImageFallback(card, DEFAULT_MODEL_IMAGE);
+      const expectedImage = await getEffectiveDefaultImage(
+        page,
+        'DEFAULT_MODEL_IMAGE',
+        DEFAULT_MODEL_IMAGE,
+      );
+      await expectCardImageFallback(card, expectedImage);
 
       await saveScreenshot(page, 'image-fallback-model-card');
     } finally {
@@ -84,7 +90,12 @@ test.describe('Image Fallback', () => {
 
       const card = getPrototypeCard(page, protoName);
       await expect(card).toBeVisible({ timeout: 20000 });
-      await expectCardImageFallback(card, DEFAULT_PROTOTYPE_IMAGE);
+      const expectedProtoImage = await getEffectiveDefaultImage(
+        page,
+        'DEFAULT_PROTOTYPE_IMAGE',
+        DEFAULT_PROTOTYPE_IMAGE,
+      );
+      await expectCardImageFallback(card, expectedProtoImage);
 
       await saveScreenshot(page, 'image-fallback-prototype-card');
     } finally {

@@ -1478,11 +1478,7 @@ export async function selectHomePrototypeSort(
     name: /Newest|Oldest|Name A-Z|Name Z-A|Last Viewed|First Viewed/,
   });
   await sortButton.click();
-  await page
-    .locator('ul')
-    .locator('label')
-    .filter({ has: page.getByText(option, { exact: true }) })
-    .click();
+  await page.getByRole('menuitem', { name: option }).click();
   await page.waitForTimeout(1000);
 }
 
@@ -1904,6 +1900,19 @@ export async function expectCardImageFallback(
     'src',
     new RegExp(expectedFallbackSrc.replace(/\//g, '\\/')),
   );
+}
+
+// Instances can override the built-in default images via site config
+// (DEFAULT_MODEL_IMAGE / DEFAULT_PROTOTYPE_IMAGE); resolve the effective value.
+export async function getEffectiveDefaultImage(
+  page: Page,
+  key: 'DEFAULT_MODEL_IMAGE' | 'DEFAULT_PROTOTYPE_IMAGE',
+  fallback: string,
+): Promise<string> {
+  const res = await page.request.get(`${API_URL}/v2/site-config/public/${key}`);
+  if (!res.ok()) return fallback;
+  const body = (await res.json().catch(() => null)) as { value?: string } | null;
+  return body?.value || fallback;
 }
 
 export async function checkLayoutAnomalies(page: Page, testName: string) {

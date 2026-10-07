@@ -28,7 +28,9 @@
 
     function callUpdate(options) {
       setStatus('pending');
-      var updates = { description: 'updated-' + Date.now() };
+      // Backend validation requires description to be an object
+      // ({ problem, says_who, solution, status, text }).
+      var updates = { description: { status: 'updated-' + Date.now() } };
       Promise.resolve()
         .then(function () {
           return api.updatePrototype(updates, options);

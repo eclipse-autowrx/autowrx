@@ -138,6 +138,12 @@ test.describe('Home Page Sections', () => {
     await page.goto('/');
     await page.waitForTimeout(3000);
 
+    // The E2E host may have no direct internet (proxy-only), so fulfill the
+    // external URL locally; page routes do not cover popups, hence context level.
+    await page.context().route('https://example.com/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'text/html', body: '<html><body>e2e</body></html>' }),
+    );
+
     const popupPromise = page.waitForEvent('popup');
     await page.getByRole('button', { name: 'Example Docs' }).click();
     const popup = await popupPromise;
