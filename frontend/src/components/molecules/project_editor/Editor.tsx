@@ -8,6 +8,7 @@
 
 import React, { useRef, useEffect, useState } from 'react'
 import Editor from '@monaco-editor/react'
+import '@/lib/monacoSetup'
 import { File } from './types'
 import Introduction from './Introduction'
 import { VscSave, VscSaveAll, VscChevronLeft, VscChevronRight } from 'react-icons/vsc'

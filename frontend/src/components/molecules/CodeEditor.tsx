@@ -11,6 +11,7 @@ import clsx from 'clsx'
 import { Spinner } from '../atoms/spinner'
 import { useEffect, useImperativeHandle, useRef, forwardRef, useState } from 'react'
 import { useMonaco } from '@monaco-editor/react'
+import '@/lib/monacoSetup'
 
 export interface CodeEditorProps {
   code: string
@@ -115,7 +116,9 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function CodeEd
             wordWrap: 'on',
             'semanticHighlighting.enabled': true,
             fontSize,
-            alwaysConsumeMouseWheel,
+            scrollbar: {
+              alwaysConsumeMouseWheel,
+            },
             // lineNumbers: (num) => (num + 5).toString(),
           }}
           loading={
