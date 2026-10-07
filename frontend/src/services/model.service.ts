@@ -92,7 +92,12 @@ export interface AllModelsResponse {
 }
 
 export const listAllModels = async (): Promise<AllModelsResponse> => {
-  const { data } = await serverAxios.get<AllModelsResponse>('/models/all')
+  // The home page sorts/filters these lists client-side; request a larger
+  // working set than the default page so models aren't silently dropped on
+  // instances with more models than one page.
+  const { data } = await serverAxios.get<AllModelsResponse>('/models/all', {
+    params: { limit: 1000 },
+  })
   return data
 }
 

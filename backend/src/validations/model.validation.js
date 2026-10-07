@@ -46,6 +46,10 @@ const createModel = {
 const listAllModels = {
   query: Joi.object().keys({
     fields: Joi.string().allow(''),
+    // The home page sorts/filters the full working set client-side, so it may
+    // request more than the default page size (instances with >100 models
+    // would silently drop the rest otherwise).
+    limit: Joi.number().integer().min(1).max(1000),
   }),
 };
 
