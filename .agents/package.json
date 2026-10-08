@@ -5,6 +5,7 @@
   "scripts": {
     "pretest": "node scripts/setup-env.mjs",
     "test": "playwright test",
+    "test:fast": "node scripts/setup-env.mjs && node scripts/test-parallel.mjs",
     "test:auth": "playwright test tests/auth.spec.ts",
     "test:models": "playwright test tests/vehicle-models.spec.ts",
     "test:prototype": "playwright test tests/prototype.spec.ts",
