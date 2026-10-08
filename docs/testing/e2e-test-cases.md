@@ -42,7 +42,9 @@ in everyday words, what each one checks. No technical background needed.
 | /manage-features page loads | The feature management page opens. |
 | Create new user — fill form and cancel | Starting "create user" and pressing cancel adds nobody. |
 | Assign user to feature via UI | An administrator can give a user a feature licence, and it stays after refreshing. |
-| Legacy site-config keys are hidden (3 tests) | Old/retired settings no longer appear on the settings page, while current ones do — in every settings category. |
+| Legacy keys hidden in auth settings | Old/retired auth settings no longer appear, current ones do. |
+| Legacy keys hidden in model/prototype settings | Same check for the model & prototype category. |
+| Legacy keys hidden in genai settings | Same check for the Generative AI category. |
 | Restore default reverts modified public config | Pressing "restore default" on a changed setting puts the original value back. |
 | Restore default cancel keeps modified value | Cancelling the restore leaves your changed value in place. |
 
@@ -67,7 +69,12 @@ in everyday words, what each one checks. No technical background needed.
 | Admin sees category tabs and model actions | Signed-in users get the tabs (All / My Models / …) and the buttons. |
 | My Models category shows owned private model | "My Models" lists your own models, even private ones. |
 | Public category shows only public released models | The Public tab filters correctly. |
-| Sort by Newest / Oldest / Name A-Z / Name Z-A / Last viewed / First viewed (6 tests) | Each sort option puts the cards in the right order. |
+| Sort by Newest | The newest model card is listed first. |
+| Sort by Oldest | The oldest model card is listed first. |
+| Sort by Name A-Z | Model cards are ordered alphabetically. |
+| Sort by Name Z-A | Model cards are ordered in reverse alphabetical order. |
+| Sort by Last viewed | Recently opened models come first. |
+| Sort by First viewed | Never-opened or oldest-opened models come first. |
 | Rename model via home context menu | The card's right-click menu renames the model. |
 | Deleting a model refreshes the sibling prototype list | After a model is deleted, the lists around it update immediately. |
 | My Contributions shows model for contributor | If you were invited to help on a model, it appears under My Contributions. |
@@ -94,9 +101,11 @@ in everyday words, what each one checks. No technical background needed.
 | Test case | What it checks |
 |---|---|
 | Setup: create model and prototype owned by admin | Prepares the demo data used by the checks below. |
-| Flag on — model page menu shows items (2 tests) | With the customization switch on, the model menu lists the extra admin entries. |
+| Flag on — model page menu lists admin entries | With the customization switch on, the model menu shows the extra admin items. |
+| Flag on — prototype page menu lists items | With the switch on, the prototype menu shows layout/template entries. |
 | Flag on — prototype page menu shows items | Same for the prototype page menu. |
-| Flag off — menu hidden even for admin (2 tests) | With the switch off, nobody sees the customization menu. |
+| Flag off — model page menu hidden even for admin | With the switch off, the model menu disappears for everyone. |
+| Flag off — prototype page menu hidden even for admin | With the switch off, the prototype menu disappears for everyone. |
 | Save Model as Template opens dialog | The "save as template" entry really opens the template window. |
 | Admin sees menu on a model they do not own | Administrators always see the menu, even on other people's models. |
 | Non-admin owner sees items but not Save Prototype as Template | Normal owners get a reduced menu. |
@@ -118,7 +127,12 @@ in everyday words, what each one checks. No technical background needed.
 | My Prototypes shows only owned prototypes | The tab filters to your own work. |
 | All remains available when My Prototypes is empty | Having no own prototypes doesn't break the tabs. |
 | Category tabs are disabled when All is empty | With no prototypes at all, the tabs grey out sensibly. |
-| Sort by Newest / Oldest / Name A-Z / Name Z-A / Last Viewed / First Viewed (6 tests) | Each sort option orders prototype cards correctly. |
+| Sort by Newest | The newest prototype card is listed first. |
+| Sort by Oldest | The oldest prototype card is listed first. |
+| Sort by Name A-Z | Prototype cards are ordered alphabetically. |
+| Sort by Name Z-A | Prototype cards are ordered in reverse alphabetical order. |
+| Sort by Last Viewed | Recently opened prototypes come first. |
+| Sort by First Viewed | Never-opened or oldest-opened prototypes come first. |
 | Clicking prototype card navigates to detail | Cards open the prototype's detail page. |
 
 ## 9. Home page sections and popular prototypes
@@ -177,7 +191,10 @@ in everyday words, what each one checks. No technical background needed.
 
 | Test case | What it checks |
 |---|---|
-| Overview / SDV Code / Dashboard / Customer Journey tabs load (4 tests) | Each main tab opens cleanly with no broken layout. |
+| Overview tab loads cleanly | The Overview tab opens with no broken layout. |
+| SDV Code tab loads cleanly | The SDV Code tab opens with an editor present. |
+| Dashboard tab loads cleanly | The Dashboard tab opens with no broken layout. |
+| Customer Journey tab loads cleanly | The Customer Journey tab opens with no broken layout. |
 | Navigate through all tabs sequentially | Walking through every tab in order works. |
 | Tabs are all visible in the tab bar | The tab bar shows Overview, SDV Code, Dashboard and Customer Journey. |
 
@@ -268,7 +285,8 @@ in everyday words, what each one checks. No technical background needed.
 
 | Test case | What it checks |
 |---|---|
-| Debug login — press Enter / via API then cookie (2 tests) | Helper checks used while debugging sign-in automation. Not product features. |
+| Debug login — press Enter | Helper check for the sign-in automation via keyboard. Not a product feature. |
+| Debug login — via API then cookie | Helper check for sign-in through the backend API. Not a product feature. |
 
 ---
 
