@@ -1,0 +1,29 @@
+name: test-catalog-check
+
+# Advisory guard for docs/testing/e2e-test-cases.md: fails when the number of
+# Playwright test declarations and the number of catalog rows drift apart.
+# continue-on-error until the feature branch carrying project-editor-smoke
+# merges (its 3 catalog rows describe tests this branch does not have yet).
+
+on:
+  push:
+    paths:
+      - ".agents/tests/**"
+      - "docs/testing/**"
+      - "scripts/check-test-catalog.mjs"
+  pull_request:
+    paths:
+      - ".agents/tests/**"
+      - "docs/testing/**"
+      - "scripts/check-test-catalog.mjs"
+
+jobs:
+  catalog-sync:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/check-test-catalog.mjs
