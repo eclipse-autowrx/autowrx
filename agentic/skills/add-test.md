@@ -6,6 +6,9 @@
 - When closing a coverage gap surfaced by `run-tests` or `code-review`.
 - When a Playwright spec is missing for a page/flow you changed (check `.agents/SITEMAP.md` coverage status).
 
+> Also update `docs/testing/e2e-test-cases.md` (the plain-language catalog);
+> CI fails when its row count drifts from the number of test declarations.
+
 ## Steps
 
 ### 1. Pick the kind
