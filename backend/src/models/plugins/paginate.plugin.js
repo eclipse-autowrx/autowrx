@@ -66,7 +66,15 @@ const paginate = (schema) => {
     let docsPromise = this.find(match).sort(sort).skip(skip).limit(limit);
 
     if (options.populate) {
-      docsPromise = docsPromise.populate(...options.populate);
+      if (Array.isArray(options.populate)) {
+        // preserve the historical spread: populate('created_by', 'name image_file')
+        docsPromise = docsPromise.populate(...options.populate);
+      } else {
+        // documented contract: comma-separated path string
+        docsPromise = docsPromise.populate(
+          options.populate.split(',').map((field) => field.trim()),
+        );
+      }
     }
 
     if (options.fields) {
