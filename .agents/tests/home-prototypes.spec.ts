@@ -4,6 +4,7 @@ import {
   saveScreenshot,
   createTestModelViaApi,
   createTestPrototype,
+  deleteModelViaApi,
   setPrototypeStateViaApi,
   boostPrototypePopularity,
   expectPrototypeInPopular,
@@ -17,6 +18,7 @@ test.describe.configure({ mode: 'serial' });
 
 test.describe('Home Popular Prototypes', () => {
   let originalHomeContent: unknown = null;
+  const createdModelIds: string[] = [];
 
   test.beforeAll(async ({ browser }) => {
     const page = await browser.newPage();
@@ -39,12 +41,26 @@ test.describe('Home Popular Prototypes', () => {
     await configureHomePopularSection(page);
   });
 
+  test.afterEach(async ({ browser }) => {
+    // boost leftovers would otherwise squat the 8-slot popular list forever
+    const page = await browser.newPage();
+    await loginAsAdmin(page);
+    while (createdModelIds.length > 0) {
+      const modelId = createdModelIds.pop();
+      if (modelId) {
+        await deleteModelViaApi(page, modelId).catch(() => {});
+      }
+    }
+    await page.close();
+  });
+
   test('popular prototype appears when model is public and state is Released', async ({ page }) => {
     const timestamp = Date.now();
     const modelName = `HomePublic_${timestamp}`;
     const protoName = `HomePopular_${timestamp}`;
 
     const modelId = await createTestModelViaApi(page, modelName, 'public');
+    createdModelIds.push(modelId);
     const { prototypeId } = await createTestPrototype(page, protoName, modelId);
     await setPrototypeStateViaApi(page, prototypeId, 'Released');
     await boostPrototypePopularity(page, prototypeId);
@@ -60,6 +76,7 @@ test.describe('Home Popular Prototypes', () => {
     const protoName = `HomePrivateProto_${timestamp}`;
 
     const modelId = await createTestModelViaApi(page, modelName, 'private');
+    createdModelIds.push(modelId);
     const { prototypeId } = await createTestPrototype(page, protoName, modelId);
     await setPrototypeStateViaApi(page, prototypeId, 'Released');
 
@@ -73,6 +90,7 @@ test.describe('Home Popular Prototypes', () => {
     const protoName = `HomeDeveloping_${timestamp}`;
 
     const modelId = await createTestModelViaApi(page, modelName, 'public');
+    createdModelIds.push(modelId);
     await createTestPrototype(page, protoName, modelId);
 
     await expectPrototypeInPopular(page, protoName, false);

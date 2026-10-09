@@ -17,8 +17,29 @@ npx playwright install chromium
 
 ## Running Tests
 
+`yarn test` / `npm test` self-setup: a `pretest` hook (`.agents/scripts/setup-env.mjs`) ensures, before any test runs:
+
+1. `.env` files exist (backend, frontend, `.agents` — created from the `*.env.example` when missing; `.agents/.env` admin creds are aligned with the backend's `ADMIN_EMAILS`/`ADMIN_PASSWORD` bootstrap values when available)
+2. `node_modules` installed (backend, frontend, `.agents`) and Playwright chromium downloaded
+3. backend (`API_URL`, default `:3200`) and frontend (`BASE_URL`, default `:3210`) dev servers running — started detached when down, logs in `.agents/.setup-logs/`, left running afterwards
+4. admin login works (the backend creates admins at startup from `backend/.env` `ADMIN_EMAILS`/`ADMIN_PASSWORD`)
+5. site-config keys `E2E_TEST_ENABLED=true` and `PUBLIC_VIEWING=true` are set
+
+Steps 3-5 are applied only to local targets
+### Parallel run (experimental — known unstable on constrained hosts)
+
+`yarn test:fast` splits the suite into two concurrent Playwright processes:
+15 site-config-mutating files run serially (77 tests, 1 worker) while the
+other 25 self-contained files run in a second process (78 tests, 1 worker).
+Measured on a 32 GB host: 35 m wall vs 43-46 m serial, but with 9 failures
+and 11 flakes vs 0-3 serial — 3 concurrent browsers saturate the box and
+not every spec is hermetic yet. Use `yarn test` (serial) as the source of
+truth; try `test:fast` only on beefier machines. Follow-up: hermetic
+fixtures everywhere, then revisit sharding.
+ (`localhost`/`127.0.0.1`) unless `E2E_ALLOW_ANY_ENV=1` — the same fail-closed convention as the env guard. Individual suites (`yarn test:<name>`) do not run the setup hook; run `yarn exec node scripts/setup-env.mjs` once first if the environment isn't up.
+
 ```bash
-# All tests
+# All tests (with automatic environment setup)
 npx playwright test
 
 # Specific suite

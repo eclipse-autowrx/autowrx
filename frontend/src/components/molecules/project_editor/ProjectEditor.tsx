@@ -125,8 +125,10 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
   const unsavedFilesRef = useRef<Set<string>>(unsavedFiles)
 
   // When disabled the project structure is fixed: the file tree is read-only and
-  // the create/import toolbar is hidden.
-  const allowAddingFiles = useSiteConfig('ALLOW_ADDING_FILES', false)
+  // the create/import toolbar is hidden. Defaults to enabled — editing files is
+  // core editor UX and instances without this config key must stay editable
+  // (a false default regressed this; see PR #695).
+  const allowAddingFiles = useSiteConfig('ALLOW_ADDING_FILES', true)
 
   // Update refs whenever state changes
   useEffect(() => {

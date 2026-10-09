@@ -6,5 +6,6 @@ Repo-resident knowledge base. Each entry is a short, durable, non-obvious fact �
 - [Gotchas](gotchas.md) — repo-specific traps and known gaps that bite if you don't know them.
 - [Verified facts](verified-facts.md) — non-obvious facts confirmed by reading the code, worth not re-discovering.
 - [Decisions](decisions.md) — ADR-style record of key choices and their rationale.
+- [E2E suite gotchas](e2e-suite-gotchas.md) — PUBLIC_VIEWING gates guest tests; nodemon must ignore static/; Chromium has no internet; editor code shape.
 
 Update rule: propose changes via PR (see [`../skills/learn-and-update.md`](../skills/learn-and-update.md)). Never edit rules to "fix" a memory fact — fix the code, then update memory.

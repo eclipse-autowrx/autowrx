@@ -22,28 +22,21 @@ const { publiclyVisibleVisibilities } = require('../config/enums');
 
 const listAllModels = catchAsync(async (req, res) => {
   const options = pick(req.query, ['fields']);
+  // The home page sorts/filters these lists client-side, so clients can ask
+  // for a larger working set than the default page size.
+  const limit = req.query.limit ? Number(req.query.limit) : config.constraints.defaultPageSize;
 
   const ownedModels = req.user?.id
-    ? await modelService.queryModels(
-        { created_by: req.user?.id },
-        { ...options, limit: config.constraints.defaultPageSize, page: 1 },
-        {},
-        req.user?.id,
-      )
+    ? await modelService.queryModels({ created_by: req.user?.id }, { ...options, limit, page: 1 }, {}, req.user?.id)
     : { results: [] };
 
   const contributedModels = req.user?.id
-    ? await modelService.queryModels(
-        {},
-        { ...options, limit: config.constraints.defaultPageSize, page: 1 },
-        { is_contributor: req.user?.id },
-        req.user?.id,
-      )
+    ? await modelService.queryModels({}, { ...options, limit, page: 1 }, { is_contributor: req.user?.id }, req.user?.id)
     : { results: [] };
 
   const publicReleasedModels = await modelService.queryModels(
     { visibility: { $in: publiclyVisibleVisibilities }, state: 'released' },
-    { ...options, limit: config.constraints.defaultPageSize, page: 1 },
+    { ...options, limit, page: 1 },
     {},
     req.user?.id,
   );

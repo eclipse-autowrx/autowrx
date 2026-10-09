@@ -45,7 +45,8 @@ const getUsers = {
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
-    search: Joi.string(),
+    // the UI always sends search= (empty when the box is clear)
+    search: Joi.string().allow(''),
     id: Joi.string(),
     includeFullDetails: Joi.boolean().default(false),
   }),

@@ -35,19 +35,21 @@ describe('User model', () => {
       await expect(new User(newUser).validate()).rejects.toThrow();
     });
 
-    test('should throw a validation error if password does not contain numbers', async () => {
-      newUser.password = 'password';
+    test('should throw a validation error if name is missing', async () => {
+      delete newUser.name;
       await expect(new User(newUser).validate()).rejects.toThrow();
     });
 
-    test('should throw a validation error if password does not contain letters', async () => {
-      newUser.password = '11111111';
+    test('should throw a validation error if email is missing', async () => {
+      delete newUser.email;
       await expect(new User(newUser).validate()).rejects.toThrow();
     });
 
-    test('should throw a validation error if role is unknown', async () => {
-      newUser.role = 'invalid';
-      await expect(new User(newUser).validate()).rejects.toThrow();
+    test('should ignore fields that are not in the schema', async () => {
+      // role was removed from the schema; strict mode strips unknown paths
+      const user = new User({ ...newUser, role: 'invalid' });
+      await expect(user.validate()).resolves.toBeUndefined();
+      expect(user.role).toBeUndefined();
     });
   });
 

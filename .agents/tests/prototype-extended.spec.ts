@@ -59,6 +59,8 @@ async function getFirstPrototypeHref(page: any): Promise<string | null> {
 }
 
 test.describe('Prototype Extended', () => {
+  const createdModelIds: string[] = []
+
   test.afterAll(async ({ browser }) => {
     const page = await browser.newPage()
     if (seededModelId) {
@@ -70,6 +72,14 @@ test.describe('Prototype Extended', () => {
       }
       seededModelId = null
     }
+    while (createdModelIds.length > 0) {
+      const modelId = createdModelIds.pop()
+      if (modelId) {
+        await loginAsAdmin(page)
+        await deleteModelViaApi(page, modelId).catch(() => {})
+      }
+    }
+    await page.close()
   })
 
 
@@ -151,7 +161,15 @@ test.describe('Prototype Extended', () => {
     const timestamp = Date.now();
     const protoName = `StatusRelease_${timestamp}`;
 
-    const { modelId, prototypeId } = await createTestPrototype(page, protoName);
+    // Own model: reusing "the first model on the instance" breaks when that
+    // model's prototype_tabs lead with a plugin tab (auto-redirects to /plug).
+    const statusModelId = await createTestModelViaApi(
+      page,
+      `E2E_StatusModel_${timestamp}`,
+      'public',
+    );
+    createdModelIds.push(statusModelId);
+    const { modelId, prototypeId } = await createTestPrototype(page, protoName, statusModelId);
     await goToPrototypeOverview(page, modelId, prototypeId);
 
     await expect(page.getByText('Developing', { exact: true }).first()).toBeVisible({ timeout: 10000 });

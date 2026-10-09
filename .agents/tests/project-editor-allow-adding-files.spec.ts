@@ -22,9 +22,17 @@ const CONFIG_KEY = 'ALLOW_ADDING_FILES';
 const README_CONTENT = '# E2E Doc\n\nThis is **bold** markdown, not raw source.';
 
 function multiFileProject() {
+  // The editor renders fsData[0].items only when the first entry is a folder,
+  // so seed the canonical root-folder-wrapped project shape.
   return JSON.stringify([
-    { type: 'file', name: 'app_logic.py', content: 'speed = Vehicle.Speed\n' },
-    { type: 'file', name: 'README.md', content: README_CONTENT },
+    {
+      type: 'folder',
+      name: 'root',
+      items: [
+        { type: 'file', name: 'app_logic.py', content: 'speed = Vehicle.Speed\n' },
+        { type: 'file', name: 'README.md', content: README_CONTENT },
+      ],
+    },
   ]);
 }
 

@@ -64,9 +64,19 @@ export async function loginAs(page: Page, email: string, password: string) {
     await page.waitForTimeout(1500);
   }
 
-  // Open login modal
+  // Open login modal. The first render can stall for a while under load
+  // (dev server transforms, browser contention) - reload and retry once.
   const signInBtn = page.locator('button:has-text("Sign In"), a:has-text("Sign In")').first();
-  await signInBtn.click();
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      await signInBtn.click({ timeout: 20000 });
+      break;
+    } catch {
+      if (attempt === 2) throw new Error('Sign In button never appeared on the homepage');
+      await page.reload();
+      await page.waitForTimeout(3000);
+    }
+  }
   await page.waitForTimeout(1000);
 
   await page.locator('input[name="email"], input[type="email"], input[placeholder*="email" i]').first().fill(email);
@@ -1444,7 +1454,7 @@ export async function gotoHomePrototypeList(page: Page, title = 'All Prototypes'
     )
     .catch(() => null);
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 20000 });
+  await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 45000 });
   await responsePromise;
   await page.waitForTimeout(500);
 }
@@ -1478,11 +1488,7 @@ export async function selectHomePrototypeSort(
     name: /Newest|Oldest|Name A-Z|Name Z-A|Last Viewed|First Viewed/,
   });
   await sortButton.click();
-  await page
-    .locator('ul')
-    .locator('label')
-    .filter({ has: page.getByText(option, { exact: true }) })
-    .click();
+  await page.getByRole('menuitem', { name: option }).click();
   await page.waitForTimeout(1000);
 }
 
@@ -1538,7 +1544,7 @@ export async function gotoHomeModelList(page: Page, title = 'Vehicle Models'): P
     )
     .catch(() => null);
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 20000 });
+  await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 45000 });
   await responsePromise;
   await page.waitForTimeout(500);
 }
@@ -1904,6 +1910,19 @@ export async function expectCardImageFallback(
     'src',
     new RegExp(expectedFallbackSrc.replace(/\//g, '\\/')),
   );
+}
+
+// Instances can override the built-in default images via site config
+// (DEFAULT_MODEL_IMAGE / DEFAULT_PROTOTYPE_IMAGE); resolve the effective value.
+export async function getEffectiveDefaultImage(
+  page: Page,
+  key: 'DEFAULT_MODEL_IMAGE' | 'DEFAULT_PROTOTYPE_IMAGE',
+  fallback: string,
+): Promise<string> {
+  const res = await page.request.get(`${API_URL}/v2/site-config/public/${key}`);
+  if (!res.ok()) return fallback;
+  const body = (await res.json().catch(() => null)) as { value?: string } | null;
+  return body?.value || fallback;
 }
 
 export async function checkLayoutAnomalies(page: Page, testName: string) {

@@ -99,7 +99,9 @@ const PREDEFINED_SITE_CONFIGS = [
   {
     key: 'ALLOW_ADDING_FILES',
     scope: 'site',
-    value: false,
+    // Editing files is core editor UX; hosts that want a read-only tree must
+    // opt out explicitly. A false default regressed this (see PR #695).
+    value: true,
     secret: false,
     valueType: 'boolean',
     description: 'Allow adding, renaming and deleting files in the Prototype Code tab project editor.',

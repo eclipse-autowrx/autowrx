@@ -359,6 +359,16 @@ const loadDefaultConfigValue = (key) => {
  * @param {Object} siteConfigBody
  * @returns {Promise<SiteConfig>}
  */
+// Admin config writes must be visible on the public endpoint immediately;
+// without this the 5-minute public/auth caches serve stale values after
+// every write. Lazy require: utils/siteConfig depends on this service.
+const invalidateConfigCaches = () => {
+  // eslint-disable-next-line global-require
+  const { clearCache, clearAuthCache } = require('../utils/siteConfig');
+  clearCache();
+  clearAuthCache();
+};
+
 const createSiteConfig = async (siteConfigBody) => {
   const { key, scope = 'site', target_id, value, valueType: clientValueType, secret = false, description, category = 'general', created_by } = siteConfigBody;
   
@@ -384,7 +394,7 @@ const createSiteConfig = async (siteConfigBody) => {
     processedValue = encryptEmailConfigSecrets(value);
   }
 
-  return SiteConfig.create({
+  const created = await SiteConfig.create({
     key,
     scope,
     target_id: scope === 'site' ? undefined : target_id,
@@ -396,6 +406,8 @@ const createSiteConfig = async (siteConfigBody) => {
     created_by,
     updated_by: created_by,
   });
+  invalidateConfigCaches();
+  return created;
 };
 
 /**
@@ -693,6 +705,7 @@ const updateSiteConfigById = async (siteConfigId, updateBody) => {
 
   Object.assign(siteConfig, updateBody);
   await siteConfig.save();
+  invalidateConfigCaches();
 
   // Return decrypted version for admin access
   if (siteConfig.key === 'SSO_PROVIDERS' && Array.isArray(siteConfig.value)) {
@@ -743,6 +756,7 @@ const updateSiteConfigByKey = async (key, updateBody) => {
     }
 
     siteConfig = await SiteConfig.create(newConfigBody);
+    invalidateConfigCaches();
 
     // Return decrypted version for admin access
     if (siteConfig.key === 'SSO_PROVIDERS' && Array.isArray(siteConfig.value)) {
@@ -770,6 +784,7 @@ const updateSiteConfigByKey = async (key, updateBody) => {
 
   Object.assign(siteConfig, updateBody);
   await siteConfig.save();
+  invalidateConfigCaches();
 
   // Return decrypted version for admin access
   if (siteConfig.key === 'SSO_PROVIDERS' && Array.isArray(siteConfig.value)) {
@@ -794,6 +809,7 @@ const deleteSiteConfigById = async (siteConfigId) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Site config not found');
   }
   await siteConfig.deleteOne();
+  invalidateConfigCaches();
   return siteConfig;
 };
 
@@ -809,6 +825,7 @@ const deleteSiteConfigByKey = async (key) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Site config not found');
   }
   await siteConfig.deleteOne();
+  invalidateConfigCaches();
   return siteConfig;
 };
 
@@ -837,6 +854,7 @@ const bulkUpsertSiteConfigs = async (configs, userId) => {
   }));
 
   await SiteConfig.bulkWrite(operations);
+  invalidateConfigCaches();
   return SiteConfig.find({ key: { $in: configs.map(c => c.key) } });
 };
 
