@@ -242,6 +242,26 @@ async function main() {
     }
   }
 
+  // 6. warm the Vite module graph: visit the main routes once so lazy
+  // dependencies get discovered and pre-bundled BEFORE tests run - mid-run
+  // dependency discovery force-reloads every open page and fails tests.
+  if (mutateAllowed || isLocal(BASE_URL)) {
+    try {
+      const { chromium } = await import('playwright');
+      const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+      const page = await browser.newPage();
+      const routes = ['/', '/model', '/manage-features', '/admin/templates', '/my-assets', '/settings'];
+      for (const route of routes) {
+        await page.goto(`${BASE_URL}${route}`, { timeout: 60000 }).catch(() => {});
+        await page.waitForTimeout(1500);
+      }
+      await browser.close();
+      log(`warmed ${routes.length} routes (vite module graph ready)`);
+    } catch (e) {
+      warn(`route warm-up skipped: ${e.message}`);
+    }
+  }
+
   log('environment ready')
 }
 

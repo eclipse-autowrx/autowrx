@@ -29,6 +29,11 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  optimizeDeps: {
+    // discovered lazily mid-suite before (aspect-ratio lives in a lazy
+    // dashboard chunk); mid-run re-optimization force-reloads every open page
+    include: ['@radix-ui/react-aspect-ratio'],
+  },
   server: {
     // pre-transform the entry + pages at startup so the first test/page hit
     // doesn't race on-demand transforms (source of intermittent blank pages)
