@@ -64,9 +64,19 @@ export async function loginAs(page: Page, email: string, password: string) {
     await page.waitForTimeout(1500);
   }
 
-  // Open login modal
+  // Open login modal. The first render can stall for a while under load
+  // (dev server transforms, browser contention) - reload and retry once.
   const signInBtn = page.locator('button:has-text("Sign In"), a:has-text("Sign In")').first();
-  await signInBtn.click();
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      await signInBtn.click({ timeout: 20000 });
+      break;
+    } catch {
+      if (attempt === 2) throw new Error('Sign In button never appeared on the homepage');
+      await page.reload();
+      await page.waitForTimeout(3000);
+    }
+  }
   await page.waitForTimeout(1000);
 
   await page.locator('input[name="email"], input[type="email"], input[placeholder*="email" i]').first().fill(email);
