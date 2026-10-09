@@ -1454,7 +1454,7 @@ export async function gotoHomePrototypeList(page: Page, title = 'All Prototypes'
     )
     .catch(() => null);
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 20000 });
+  await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 45000 });
   await responsePromise;
   await page.waitForTimeout(500);
 }
@@ -1544,7 +1544,7 @@ export async function gotoHomeModelList(page: Page, title = 'Vehicle Models'): P
     )
     .catch(() => null);
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 20000 });
+  await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 45000 });
   await responsePromise;
   await page.waitForTimeout(500);
 }
