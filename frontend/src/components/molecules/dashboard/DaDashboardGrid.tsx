@@ -27,6 +27,7 @@ interface PropsWidgetItem {
   vssTree?: any
   isAppRunning?: boolean
   activeRuntimeName?: string
+  isRuntimeBusyByOther?: boolean
 }
 
 const WidgetItem: FC<PropsWidgetItem> = ({
@@ -36,6 +37,7 @@ const WidgetItem: FC<PropsWidgetItem> = ({
   vssTree,
   isAppRunning,
   activeRuntimeName,
+  isRuntimeBusyByOther,
 }) => {
   const [rSpan, setRSpan] = useState<number>(0)
   const [cSpan, setCSpan] = useState<number>(0)
@@ -119,21 +121,38 @@ const WidgetItem: FC<PropsWidgetItem> = ({
     '/builtin-widgets/runtime-preview',
   )
 
+  // One combined message so a runtime switch always notifies the widget,
+  // even when isRunning/isBusy happen to keep the same value across the
+  // switch (isolated per-field effects would then never re-fire).
+  useEffect(() => {
+    if (!iframeLoaded) return
+    frameElement?.current?.contentWindow?.postMessage(
+      JSON.stringify({
+        cmd: 'runtime-state',
+        runtimeName: activeRuntimeName ?? null,
+        isRunning: !!isAppRunning,
+        isBusy: !!isRuntimeBusyByOther,
+      }),
+      '*',
+    )
+  }, [activeRuntimeName, isAppRunning, isRuntimeBusyByOther, iframeLoaded])
+
   // Access token must never be postMessage'd to arbitrary/plugin/external widgets.
-  // Only the same-origin builtin runtime-preview receives runtime-info (+ token).
+  // Only the same-origin builtin runtime-preview receives it: autowrx's preview
+  // proxy is auth-protected and the iframe cannot set an Authorization header.
   useEffect(() => {
     if (!iframeLoaded || !isRuntimePreviewWidget) return
     frameElement?.current?.contentWindow?.postMessage(
       JSON.stringify({
         cmd: 'runtime-info',
-        runtimeName: activeRuntimeName ?? null,
         accessToken: accessToken ?? null,
       }),
       window.location.origin,
     )
-  }, [activeRuntimeName, accessToken, iframeLoaded, isRuntimePreviewWidget])
+  }, [accessToken, iframeLoaded, isRuntimePreviewWidget])
 
   // Send app running state to widget whenever it changes
+  // (kept for autowrx widgets consuming it via syncer.js, e.g. chart-signals)
   useEffect(() => {
     if (!iframeLoaded) return
     frameElement?.current?.contentWindow?.postMessage(
@@ -197,14 +216,24 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({
   // Memoize VSS tree to prevent unnecessary re-renders with large data
   const memoizedVssTree = useMemo(() => cvi, [cvi])
 
-  const [apisValue, traceVars, appLog, isAppRunning, activeRuntimeName, remountCountByRuntime] = useRuntimeStore((state) => [
+  const [apisValue, traceVars, appLog, isAppRunning, activeRuntimeName, remountCountByRuntime, isRuntimeBusyByOther] = useRuntimeStore((state) => [
     state.apisValue,
     state.traceVars,
     state.appLog,
     state.isAppRunning,
     state.activeRuntimeName,
     state.remountCountByRuntime,
+    state.isRuntimeBusyByOther,
   ])
+
+  // Both counters only increase, so their sum always changes, forcing a remount.
+  const remountTrigger = remountCountByRuntime + remountCountByWidgetConfig
+
+  // Runtime Preview already updates live via postMessage (runtime-state,
+  // run-app/stop-app) - remounting it on every run only replays its own
+  // guess-then-verify startup race and flashes a stale panel needlessly.
+  const remountTriggerFor = (widget?: string) =>
+    widget === 'Runtime Preview' ? remountCountByWidgetConfig : remountTrigger
 
   const [allVars, setAllVars] = useState<any>({})
 
@@ -284,13 +313,14 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({
               renderedWidgets.add(widgetIndex)
               return (
                 <WidgetItem
-                  key={`instance-${cell}-${remountCountByWidgetConfig + remountCountByRuntime}`}
+                  key={`instance-${cell}-${remountTriggerFor(widgetConfigs[widgetIndex]?.widget)}`}
                   widgetConfig={widgetConfigs[widgetIndex]}
                   apisValue={allVars}
                   appLog={appLog}
                   vssTree={memoizedVssTree}
                   isAppRunning={isAppRunning}
                   activeRuntimeName={activeRuntimeName}
+                  isRuntimeBusyByOther={isRuntimeBusyByOther}
                 />
               )
             } else if (widgetIndex === -1) {

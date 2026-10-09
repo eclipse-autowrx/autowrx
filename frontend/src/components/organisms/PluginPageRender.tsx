@@ -608,6 +608,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     if ('appLog' in state) store.setAppLog(state.appLog || '')
     if ('isAppRunning' in state) store.setIsAppRunning(!!state.isAppRunning)
     if ('activeRuntimeName' in state) store.setActiveRuntimeName(state.activeRuntimeName)
+    if ('isRuntimeBusyByOther' in state) store.setIsRuntimeBusyByOther(!!state.isRuntimeBusyByOther)
   }, [])
 
   const handleGetRuntimeState = useCallback((): PluginRuntimeState => {

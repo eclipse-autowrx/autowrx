@@ -31,9 +31,9 @@
       opacity: 0.4;
     }
 
-    /* Error / connecting states */
+    /* Error state, and busy state shares the same layout */
     #error-state,
-    #connecting-state {
+    #busy-state {
       display: none;
       flex-direction: column;
       align-items: center;
@@ -46,7 +46,7 @@
     }
 
     #error-state .error-icon,
-    #connecting-state .error-icon {
+    #busy-state .error-icon {
       width: 52px;
       height: 52px;
       border-radius: 50%;
@@ -57,18 +57,19 @@
       margin-bottom: 4px;
     }
 
-    #error-state .error-icon svg {
+    #error-state .error-icon svg,
+    #busy-state .error-icon svg {
       width: 26px;
       height: 26px;
       color: #9ca3af;
     }
 
-    #connecting-state .spinner {
-      width: 24px;
-      height: 24px;
+    #loading-state .spinner {
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
-      border: 2px solid #e5e7eb;
-      border-top-color: #9ca3af;
+      border: 3px solid #e5e7eb;
+      border-top-color: #6b7280;
       animation: spin 0.8s linear infinite;
     }
 
@@ -79,7 +80,7 @@
     }
 
     #error-state .error-title,
-    #connecting-state .error-title {
+    #busy-state .error-title {
       font-size: 15px;
       font-weight: 600;
       color: #374151;
@@ -87,7 +88,7 @@
     }
 
     #error-state .error-subtitle,
-    #connecting-state .error-subtitle {
+    #busy-state .error-subtitle {
       font-size: 13px;
       color: #9ca3af;
       margin: 0;
@@ -96,7 +97,7 @@
     }
 
     #error-state .error-badge,
-    #connecting-state .error-badge {
+    #busy-state .error-badge {
       margin-top: 4px;
       display: inline-flex;
       align-items: center;
@@ -111,12 +112,31 @@
     }
 
     #error-state .error-badge .dot,
-    #connecting-state .error-badge .dot {
+    #busy-state .error-badge .dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
       background: #d1d5db;
       flex-shrink: 0;
+    }
+
+    /* Loading / retry state */
+    #loading-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 12px;
+      text-align: center;
+      padding: 32px;
+      background: #fafafa;
+    }
+
+    #loading-state .loading-text {
+      font-size: 13px;
+      color: #9ca3af;
+      margin: 0;
     }
   </style>
 </head>
@@ -130,19 +150,6 @@
           d="M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-4M9 3l6 0m-6 0v6m6-6v6m0 0H9m6 0v8" />
       </svg>
       <span id="placeholder-text">No runtime selected</span>
-    </div>
-
-    <!-- Waiting for the app's HTTP server to come up -->
-    <div id="connecting-state">
-      <div class="error-icon">
-        <div class="spinner"></div>
-      </div>
-      <p class="error-title">Starting application</p>
-      <p class="error-subtitle">Waiting for the application to serve the preview.</p>
-      <span class="error-badge" id="connecting-runtime-badge" style="display:none">
-        <span class="dot"></span>
-        <span id="connecting-runtime-label"></span>
-      </span>
     </div>
 
     <!-- Connection / runtime error -->
@@ -161,6 +168,28 @@
       </span>
     </div>
 
+    <!-- Runtime occupied by another session -->
+    <div id="busy-state">
+      <div class="error-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zM12 15.75h.008v.008H12v-.008z" />
+        </svg>
+      </div>
+      <p class="error-title">Runtime is busy</p>
+      <p class="error-subtitle">Another session is running an app here. Please wait until it finishes.</p>
+      <span class="error-badge" id="busy-runtime-badge" style="display:none">
+        <span class="dot"></span>
+        <span id="busy-runtime-label"></span>
+      </span>
+    </div>
+
+    <!-- Loading / retry state -->
+    <div id="loading-state">
+      <div class="spinner"></div>
+      <p class="loading-text" id="loading-text">Connecting to runtime...</p>
+    </div>
+
     <!-- allow-same-origin is required: without it the frame gets an opaque origin and every
          subresource it loads is blocked by Cross-Origin-Resource-Policy: same-origin -->
     <iframe id="preview-frame" sandbox="allow-scripts allow-forms allow-same-origin" style="display:none" title="Runtime preview"></iframe>
@@ -168,29 +197,24 @@
 
   <script>
     const DEFAULT_MAPPINGS = []
-
-    // The app is reported as running as soon as the user hits Run, but the kit's HTTP
-    // server may need seconds to bind. Until then the proxy answers 502 with a valid
-    // (empty) HTML body, so iframe load/error events cannot tell us when it is up.
-    // Keep probing the preview URL and swap the iframe in the moment it answers 200.
-    const FAST_PROBE_INTERVAL = 700
-    const SLOW_PROBE_INTERVAL = 2000
-    const IDLE_PROBE_INTERVAL = 5000
-    const FAST_PROBE_WINDOW = 20000
+    const MAX_RETRIES = 3
+    const RETRY_DELAY_MS = 2000
+    const PERIODIC_RETRY_MS = 5000
 
     let runtimeMappings = DEFAULT_MAPPINGS
     // When true the preview shows app-core's built-in default route instead of
     // the UI the running application generates.
     let showDefaultUi = false
     let currentRuntimeName = null
-    let lastPreviewUrl = null
+    let currentPreviewUrl = null
+    let retryCount = 0
+    let retryTimer = null
+    let periodicTimer = null
+    let appRunning = false
+    let runtimeBusy = false
+    let optionsLoaded = false
     // JWT access token from parent — iframe.src cannot set Authorization
     let accessToken = null
-
-    let probeTimer = null
-    let probeGeneration = 0
-    let isAppRunning = false
-    let waitStartedAt = 0
 
     function onWidgetLoaded(options) {
       if (options && Array.isArray(options.runtimeMappings) && options.runtimeMappings.length > 0) {
@@ -199,9 +223,12 @@
       if (options && typeof options.showDefaultUi === 'boolean') {
         showDefaultUi = options.showDefaultUi
       }
-      // Widget options can arrive after runtime-info, so rebuild the preview in
-      // case runtimeMappings/showDefaultUi changed where it should point.
-      if (currentRuntimeName) applyPreview(currentRuntimeName)
+      optionsLoaded = true
+      // widget-options can arrive after runtime-state, so re-apply it in case
+      // runtimeMappings/showDefaultUi has changed.
+      if (currentRuntimeName) {
+        applyRuntimeState(currentRuntimeName, appRunning, runtimeBusy)
+      }
     }
 
     function el(id) {
@@ -209,14 +236,177 @@
     }
 
     function buildPreviewUrl(previewPath) {
-      let url = window.location.origin + previewPath
+      // Absolute mapping paths load from their own origin as-is - needed when the
+      // runtime UI isn't reverse-proxied under this origin (e.g. no prefix support).
+      let url = /^https?:\/\//i.test(previewPath) ? previewPath : window.location.origin + previewPath
       if (accessToken) {
         url += (previewPath.indexOf('?') >= 0 ? '&' : '?') + 'access_token=' + encodeURIComponent(accessToken)
       }
       return url
     }
 
-    function applyBadge(badgeId, labelId, runtimeName) {
+    function computePreviewPath(name) {
+      const match = runtimeMappings.find(function (m) {
+        return name.endsWith(m.suffix) || name === m.suffix
+      })
+
+      // Zero-config fallback: the backend proxy (app.js) keys on the bare runtime
+      // name, while the kit registers as RUNTIME_PREFIX + name. "Runtime-" is the
+      // syncer's default prefix; a custom one must be mapped explicitly.
+      // Guessing is safe: verifyAndLoadPreview() checks the response first.
+      const basePath = match ? match.path : '/runtime-preview/' + name.replace(/runtime-/i, '')
+      // app-core's ApplicationRuntime.mount() always registers a fixed default
+      // route alongside the base path, so Default UI is reached by appending
+      // /default.
+      return showDefaultUi ? basePath.replace(/\/+$/, '') + '/default' : basePath
+    }
+
+    function applyPreviewForRuntimeName(name, forceReload = false) {
+      // if a runtime-state message reports no active runtime (e.g. disconnect)
+      if (!name) {
+        resetFrame()
+        // null so a later reconnect is not skipped by the dedup check below
+        currentPreviewUrl = null
+        el('placeholder-text').textContent = 'No runtime selected'
+        showOnly('placeholder')
+        return
+      }
+
+      const newUrl = buildPreviewUrl(computePreviewPath(name))
+      // if runtime has changed but is pointing to the same preview URL, set forceReload=true
+      if (!forceReload && newUrl === currentPreviewUrl) return
+      currentPreviewUrl = newUrl
+      retryCount = 0
+      clearTimers()
+      showLoading(0)
+      verifyAndLoadPreview(currentPreviewUrl, false)
+    }
+
+    // A path that can never be a real runtime name - any server-side fallback
+    // (dev-server SPA history fallback, prod try_files, etc.) returns the same
+    // generic body for it as for a wrong/unmapped target. Fetched fresh every
+    // time (never cached) so a frontend redeploy can't leave a stale reference.
+    function fetchCanaryText() {
+      const canaryUrl = buildPreviewUrl('/runtime-preview/__canary-' + Math.random().toString(36).slice(2))
+      return fetch(canaryUrl, { cache: 'no-store' }).then(function (r) { return r.text() })
+    }
+
+    // Single entry point for every preview load attempt (initial + retries).
+    // Cross-origin absolute targets are always explicitly configured by a human
+    // (never guessed) and CORS blocks reading their body anyway - load them
+    // directly. Same-origin targets are compared against the canary response
+    // first so a bad guess or misconfigured mapping is caught and rejected
+    // before it ever reaches the visible iframe.
+    function verifyAndLoadPreview(url, isPeriodicRetry) {
+      if (new URL(url, window.location.origin).origin !== window.location.origin) {
+        // CORS blocks reading the body, but a no-cors fetch still rejects on a
+        // real connection failure (e.g. app not listening yet right after
+        // start) - catches that before it reaches the iframe as an
+        // undetectable, unrecoverable browser error page (see loadPreview).
+        fetch(url, { mode: 'no-cors', cache: 'no-store' })
+          .then(function () {
+            if (url !== currentPreviewUrl) return
+            loadPreview(url, !!isPeriodicRetry)
+          })
+          .catch(function () {
+            if (url !== currentPreviewUrl) return
+            if (!isPeriodicRetry) handleLoadError()
+          })
+        return
+      }
+      // Started alongside the target fetch, not after, so both run concurrently.
+      const canaryPromise = fetchCanaryText()
+      fetch(url, { cache: 'no-store', credentials: 'include' })
+        .then(function (res) {
+          // A newer switch may supersede this fetch - ignore stale results.
+          if (url !== currentPreviewUrl) return
+          if (!res.ok) {
+            // widget-options can still be in flight - a guessed path only fails
+            // for real once the actual mapping had a chance to load and correct it.
+            // TODO: if options never arrive, this hangs - add a bounded timeout if it happens.
+            if (!optionsLoaded) { showLoading(0); return }
+            if (!isPeriodicRetry) handleLoadError()
+            return
+          }
+          return res.text().then(function (text) {
+            return canaryPromise.then(function (canaryText) {
+              if (url !== currentPreviewUrl) return
+              if (text === canaryText) {
+                if (!optionsLoaded) { showLoading(0); return }
+                if (!isPeriodicRetry) showPreviewUnavailable(currentRuntimeName)
+                return
+              }
+              loadPreview(url, !!isPeriodicRetry)
+            })
+          })
+        })
+        .catch(function () {
+          if (url !== currentPreviewUrl) return
+          if (!optionsLoaded) { showLoading(0); return }
+          if (!isPeriodicRetry) handleLoadError()
+        })
+    }
+
+    // Single entry point for the host's combined runtime-state message - see
+    // the comment on the host side (DaDashboardGrid.tsx) for why this must be
+    // one atomic update instead of three independently-diffed fields.
+    function applyRuntimeState(name, isRunning, isBusy) {
+      currentRuntimeName = name
+      appRunning = isRunning
+      runtimeBusy = isBusy
+
+      if (!name) {
+        applyPreviewForRuntimeName(null)
+        return
+      }
+
+      if (appRunning) {
+        const previewVisible = el('preview-frame').style.display !== 'none'
+        applyPreviewForRuntimeName(name, !previewVisible)
+      } else {
+        showIdleState()
+      }
+    }
+
+    // "Idle" here means "not showing my own live preview" - split further into
+    // someone-else-is-running (busy) vs genuinely nothing running (empty).
+    function showIdleState() {
+      if (runtimeBusy) showBusy(currentRuntimeName)
+      else showIdle(currentRuntimeName)
+    }
+
+    function clearTimers() {
+      if (retryTimer) { clearTimeout(retryTimer); retryTimer = null }
+      if (periodicTimer) { clearInterval(periodicTimer); periodicTimer = null }
+    }
+
+    function resetFrame() {
+      // must NOT clear currentPreviewUrl that is required by showError's periodic retry
+      clearTimers()
+      retryCount = 0
+      const frame = el('preview-frame')
+      // clear stale handlers so the about:blank load cannot retrigger them
+      frame.onload = null
+      frame.onerror = null
+      frame.src = 'about:blank'
+    }
+
+    function showOnly(id) {
+      ['placeholder', 'error-state', 'busy-state', 'loading-state', 'preview-frame'].forEach(function (name) {
+        const d = el(name)
+        d.style.display = name === id ? (name === 'preview-frame' ? 'block' : 'flex') : 'none'
+      })
+    }
+
+    function showLoading(attempt) {
+      el('loading-text').textContent = attempt > 0
+        ? 'Waiting for connection... (' + attempt + '/' + MAX_RETRIES + ')'
+        : 'Connecting to runtime...'
+      showOnly('loading-state')
+    }
+
+    // Shared by every panel with a runtime-name pill (error- and busy-state).
+    function renderRuntimeBadge(badgeId, labelId, runtimeName) {
       const badge = el(badgeId)
       if (runtimeName) {
         el(labelId).textContent = runtimeName
@@ -226,141 +416,115 @@
       }
     }
 
-    // Single owner of visibility: 'placeholder' | 'connecting' | 'error' | 'preview'
-    function setState(state, runtimeName) {
-      const frame = el('preview-frame')
-
-      el('placeholder').style.display = state === 'placeholder' ? 'flex' : 'none'
-      el('connecting-state').style.display = state === 'connecting' ? 'flex' : 'none'
-      el('error-state').style.display = state === 'error' ? 'flex' : 'none'
-      frame.style.display = state === 'preview' ? 'block' : 'none'
-
-      if (state !== 'preview' && frame.src !== 'about:blank') {
-        frame.src = 'about:blank'
-      }
-
-      applyBadge('connecting-runtime-badge', 'connecting-runtime-label', runtimeName)
-      applyBadge('error-runtime-badge', 'error-runtime-label', runtimeName)
+    // Mechanical renderer for idle/connection-failed/unavailable; not a state transition.
+    function renderMessagePanel(title, subtitle, runtimeName, options) {
+      resetFrame()
+      showOnly('error-state')
+      document.querySelector('#error-state .error-title').textContent = title
+      document.querySelector('#error-state .error-subtitle').textContent = subtitle
+      renderRuntimeBadge('error-runtime-badge', 'error-runtime-label', runtimeName)
+      if (options && options.retry) startPeriodicRetry()
     }
 
+    // Connection to a *running* app failed - keep retrying, it may come back.
     function showError(runtimeName) {
-      setState('error', runtimeName)
+      renderMessagePanel(
+        'No application running',
+        'Start your application and it will appear here automatically.',
+        runtimeName,
+        { retry: true },
+      )
     }
 
-    function showPreview() {
-      setState('preview', currentRuntimeName)
-      el('preview-frame').src = lastPreviewUrl
+    // Our app is running, but the computed preview URL didn't check out (see
+    // verifyAndLoadPreview) - unlike showError this must not retry the exact
+    // same guessed/misconfigured target that just failed verification.
+    function showPreviewUnavailable(runtimeName) {
+      renderMessagePanel(
+        'App is running',
+        'No verified live preview is available for this runtime.',
+        runtimeName,
+      )
     }
 
-    async function probePreview(url) {
+    // Nothing is running anywhere on this runtime - there is nothing to
+    // reconnect to, so unlike showError this must not start a retry loop.
+    function showIdle(runtimeName) {
+      renderMessagePanel(
+        'No application running',
+        'Start your application and it will appear here automatically.',
+        runtimeName,
+      )
+    }
+
+    // No periodic retry needed: the host pushes a fresh runtime-state
+    // message whenever the underlying lock actually changes.
+    function showBusy(runtimeName) {
+      resetFrame()
+      showOnly('busy-state')
+      renderRuntimeBadge('busy-runtime-badge', 'busy-runtime-label', runtimeName)
+    }
+
+    function startPeriodicRetry() {
+      if (periodicTimer) return
+      periodicTimer = setInterval(function () {
+        if (!currentPreviewUrl || !currentRuntimeName) return
+        verifyAndLoadPreview(currentPreviewUrl, true)
+      }, PERIODIC_RETRY_MS)
+    }
+
+    /**
+     * Try to read the iframe body text and detect a JSON error payload.
+     */
+    function iframeHasErrorPayload(frame) {
       try {
-        const res = await fetch(url, { method: 'GET', cache: 'no-store', credentials: 'include' })
-        if (res.body && typeof res.body.cancel === 'function') {
-          try {
-            await res.body.cancel()
-          } catch {
-            // ignore
-          }
-        }
-        return res.ok
+        const doc = frame.contentDocument || frame.contentWindow.document
+        if (!doc) return false
+        const text = (doc.body && doc.body.innerText) || ''
+        const trimmed = text.trim()
+        if (!trimmed.startsWith('{')) return false
+        const json = JSON.parse(trimmed)
+        return !!(json.code || json.message?.toLowerCase().includes('error'))
       } catch {
         return false
       }
     }
 
-    function nextProbeInterval() {
-      if (!isAppRunning) return IDLE_PROBE_INTERVAL
-      return Date.now() - waitStartedAt < FAST_PROBE_WINDOW ? FAST_PROBE_INTERVAL : SLOW_PROBE_INTERVAL
-    }
-
-    function stopProbing() {
-      probeGeneration++
-      if (probeTimer) {
-        clearTimeout(probeTimer)
-        probeTimer = null
-      }
-    }
-
-    // Never give up while a runtime is selected: a slow app can take far longer than a
-    // single check, and a late start must still be picked up on its own.
-    function startProbing() {
-      if (!lastPreviewUrl) return
-      stopProbing()
-
-      const gen = probeGeneration
-      const url = lastPreviewUrl
-      waitStartedAt = Date.now()
-      setState('connecting', currentRuntimeName)
-
-      const tick = async function () {
-        if (gen !== probeGeneration) return
-
-        const ok = await probePreview(url)
-        // Runtime/token may have changed while the probe was in flight
-        if (gen !== probeGeneration || url !== lastPreviewUrl) return
-
-        if (ok) {
-          probeTimer = null
-          showPreview()
-          return
-        }
-
-        if (!isAppRunning || Date.now() - waitStartedAt >= FAST_PROBE_WINDOW) {
-          showError(currentRuntimeName)
-        }
-        probeTimer = setTimeout(tick, nextProbeInterval())
-      }
-
-      tick()
-    }
-
-    function computePreviewPath(name) {
-      const match = runtimeMappings.find(function (m) {
-        return name.endsWith(m.suffix) || name === m.suffix
-      })
-
-      const basePath = match ? match.path : '/runtime-preview/' + name.replace(/runtime-/i, '')
-      // app-core's ApplicationRuntime.mount() always registers a fixed default
-      // route alongside the base path, so Default UI is reached by appending
-      // /default.
-      return showDefaultUi ? basePath.replace(/\/+$/, '') + '/default' : basePath
-    }
-
-    function applyPreview(name) {
-      if (!name) {
-        stopProbing()
-        lastPreviewUrl = null
-        el('placeholder-text').textContent = 'No runtime selected'
-        setState('placeholder')
-        return
-      }
-
-      lastPreviewUrl = buildPreviewUrl(computePreviewPath(name))
-
-      startProbing()
-    }
-
-    function applyRuntimeName(name) {
-      if (name === currentRuntimeName) return
-      currentRuntimeName = name
-      applyPreview(name)
-    }
-
-    function onAppRunningStateChanged(running) {
-      isAppRunning = !!running
-
-      if (isAppRunning) {
-        // Restart the fast window even if a slow poll was already running
-        if (lastPreviewUrl) startProbing()
-        return
-      }
-
-      stopProbing()
-      if (currentRuntimeName || lastPreviewUrl) {
-        showError(currentRuntimeName)
+    function handleLoadError() {
+      if (retryCount < MAX_RETRIES) {
+        retryCount++
+        showLoading(retryCount)
+        retryTimer = setTimeout(function () {
+          verifyAndLoadPreview(currentPreviewUrl, false)
+        }, RETRY_DELAY_MS)
       } else {
-        setState('placeholder')
+        showError(currentRuntimeName)
       }
+    }
+
+    function loadPreview(url, isPeriodicRetry) {
+      const frame = el('preview-frame')
+
+      frame.onload = function () {
+        if (iframeHasErrorPayload(frame)) {
+          if (isPeriodicRetry) return // stay on error state, try again next interval
+          handleLoadError()
+        } else {
+          // Success
+          retryCount = 0
+          clearTimers()
+          showOnly('preview-frame')
+        }
+      }
+
+      frame.onerror = function () {
+        if (isPeriodicRetry) return
+        handleLoadError()
+      }
+
+      // Bust cache on retries
+      const bustUrl = url + (url.indexOf('?') === -1 ? '?' : '&') + '_t=' + Date.now()
+      frame.src = bustUrl
     }
 
     window.addEventListener('message', function (e) {
@@ -373,18 +537,33 @@
       } catch {
         return
       }
-      if (payload && payload.cmd === 'runtime-info') {
+      if (payload && payload.cmd === 'runtime-state') {
+        applyRuntimeState(payload.runtimeName || null, !!payload.isRunning, !!payload.isBusy)
+      } else if (payload && payload.cmd === 'runtime-info') {
+        // Token-only companion message (autowrx: the preview proxy is auth-protected).
         if (Object.prototype.hasOwnProperty.call(payload, 'accessToken')) {
           const nextToken = payload.accessToken || null
           if (nextToken !== accessToken) {
             accessToken = nextToken
-            // Force URL rebuild when token arrives/changes after runtime was selected
-            currentRuntimeName = null
+            // Re-apply the current state so the URL is rebuilt with the new token
+            if (currentRuntimeName) {
+              applyRuntimeState(currentRuntimeName, appRunning, runtimeBusy)
+            }
           }
         }
-        applyRuntimeName(payload.runtimeName || null)
+      } else if (payload && payload.action === 'run-app') {
+        appRunning = true
+        applyPreviewForRuntimeName(currentRuntimeName, true)
+      } else if (payload && payload.action === 'stop-app') {
+        appRunning = false
+        showIdleState()
       }
     })
+
+    // Widget iframes remount on every run (see DaDashboardGrid.tsx's remount
+    // counter) - default to loading, not "no app running", so a remount mid-
+    // run doesn't flash a stale message before the first runtime-state arrives.
+    showLoading(0)
   </script>
 </body>
 </html>
