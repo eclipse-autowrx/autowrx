@@ -18,6 +18,8 @@ type RuntimeState = {
   isAppRunning: boolean
   /** Bumped to remount dashboard widgets (e.g. after a runtime starts an app) */
   remountCountByRuntime: number
+  /** The active runtime is occupied by another session (single source for the Preview widget) */
+  isRuntimeBusyByOther: boolean
 }
 
 type Actions = {
@@ -27,6 +29,7 @@ type Actions = {
   setActiveRuntimeName: (name: string | undefined) => void
   setIsAppRunning: (isRunning: boolean) => void
   incrementRemountCountByRuntime: () => void
+  setIsRuntimeBusyByOther: (isBusy: boolean) => void
 }
 
 const useRuntimeStore = createWithEqualityFn<RuntimeState & Actions>()(
@@ -36,6 +39,7 @@ const useRuntimeStore = createWithEqualityFn<RuntimeState & Actions>()(
     activeRuntimeName: undefined,
     isAppRunning: false,
     remountCountByRuntime: 0,
+    isRuntimeBusyByOther: false,
     setAppLog: (log) => {
       set((state) => {
         state.appLog = log
@@ -60,6 +64,10 @@ const useRuntimeStore = createWithEqualityFn<RuntimeState & Actions>()(
     incrementRemountCountByRuntime: () =>
       set((state) => {
         state.remountCountByRuntime += 1
+      }),
+    setIsRuntimeBusyByOther: (isBusy) =>
+      set((state) => {
+        state.isRuntimeBusyByOther = isBusy
       }),
   }))
 )

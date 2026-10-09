@@ -26,6 +26,8 @@ export interface PluginRuntimeState {
   appLog: string
   isAppRunning: boolean
   activeRuntimeName?: string
+  /** The active runtime is occupied by another session (feeds the Runtime Preview widget) */
+  isRuntimeBusyByOther?: boolean
 }
 
 /**
