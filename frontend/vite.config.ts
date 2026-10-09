@@ -30,6 +30,11 @@ export default defineConfig({
     },
   },
   server: {
+    // pre-transform the entry + pages at startup so the first test/page hit
+    // doesn't race on-demand transforms (source of intermittent blank pages)
+    warmup: {
+      clientFiles: ['./src/main.tsx', './src/App.tsx', './src/pages/**/*.tsx', './src/layouts/**/*.tsx'],
+    },
     proxy: {
       '/v2': {
         target: 'http://localhost:3200',
