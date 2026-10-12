@@ -18,34 +18,37 @@ test.describe('Admin Panel', () => {
 
   test('site config page loads', async ({ page }) => {
     await page.goto('/admin/site-config');
-    await page.waitForTimeout(2000);
+    await expect(page.getByRole('heading', { name: 'Site Management' })).toBeVisible({
+      timeout: 30000,
+    });
     await saveScreenshot(page, 'admin-site-config');
     await checkLayoutAnomalies(page, 'admin-site-config');
-
-    const hasContent = await page.locator('form, input, [role="main"]').count();
-    expect(hasContent).toBeGreaterThan(0);
   });
 
   test('user management page loads', async ({ page }) => {
     await page.goto('/admin/manage-users');
-    await page.waitForTimeout(2000);
+    await expect(page.getByRole('button', { name: 'Create new user' })).toBeVisible({
+      timeout: 30000,
+    });
     await saveScreenshot(page, 'admin-manage-users');
     await checkLayoutAnomalies(page, 'admin-manage-users');
   });
 
   test('manage users via /manage-users route', async ({ page }) => {
     await page.goto('/manage-users');
-    await page.waitForTimeout(2000);
+    await expect(page.getByRole('button', { name: 'Create new user' })).toBeVisible({
+      timeout: 30000,
+    });
+    await expect(page.getByPlaceholder('Search name or email')).toBeVisible();
     await saveScreenshot(page, 'admin-manage-users-route');
-
-    // Page content: any meaningful element (button, input, list, etc.)
-    const hasContent = await page.locator('button, input, table, ul, [class*="user"], [class*="User"], h1, h2').count();
-    expect(hasContent).toBeGreaterThan(0);
+    expect(page.url()).toContain('/manage-users');
   });
 
   test('plugins page loads', async ({ page }) => {
     await page.goto('/admin/plugins');
-    await page.waitForTimeout(2000);
+    await expect(page.getByRole('heading', { name: 'Plugin Management' })).toBeVisible({
+      timeout: 30000,
+    });
     await saveScreenshot(page, 'admin-plugins');
     await checkLayoutAnomalies(page, 'admin-plugins');
   });

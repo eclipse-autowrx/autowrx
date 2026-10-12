@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, saveScreenshot, createPublicReleasedModelViaApi, getAuthToken, API_URL } from './helpers';
+import { loginAsAdmin, saveScreenshot, createPublicReleasedModelViaApi, getAuthToken, gotoUntilVisible, API_URL } from './helpers';
 
 // Test model name — unique per run
 const MODEL_NAME = `AgentTest_${Date.now()}`;
@@ -20,11 +20,11 @@ test.describe('Vehicle Models - CRUD', () => {
 
   test('CREATE: open "Create New Model" dialog', async ({ page }) => {
     await loginAsAdmin(page);
-    await page.goto('/model');
-    await page.waitForTimeout(2000);
+    const createBtn = page.locator('[data-id="btn-open-form-create"]');
+    await gotoUntilVisible(page, '/model', createBtn);
 
     // Click the "Create New Model" button
-    await page.locator('[data-id="btn-open-form-create"]').click();
+    await createBtn.click();
     await page.waitForTimeout(1000);
     await saveScreenshot(page, 'model-create-dialog');
 
@@ -98,10 +98,14 @@ test.describe('Vehicle Models - CRUD', () => {
   test('UPDATE: edit model name inline', async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto('/model');
-    await page.waitForTimeout(2000);
 
-    // Go into first model
     const firstModel = page.locator('a[href*="/model/"]').first();
+    if (!(await firstModel.isVisible().catch(() => false))) {
+      await firstModel.waitFor({ state: 'visible', timeout: 20000 }).catch(async () => {
+        await page.goto('/model');
+      });
+    }
+    await expect(firstModel).toBeVisible({ timeout: 30000 });
     await firstModel.click();
     await page.waitForTimeout(2000);
 

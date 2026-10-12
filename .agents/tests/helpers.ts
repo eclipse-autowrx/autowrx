@@ -53,31 +53,31 @@ export type NavBarActionConfig = {
   openTarget?: '_blank' | '_self';
 };
 
+async function visibleSoon(locator: Locator, timeout: number): Promise<boolean> {
+  return locator.waitFor({ state: 'visible', timeout }).then(() => true).catch(() => false);
+}
+
 export async function loginAs(page: Page, email: string, password: string) {
-  await page.goto('/');
-  await page.waitForTimeout(1500);
+  await page.goto('/', { timeout: 30000 });
 
   const userProfile = page.locator('img[alt="User profile"]').first();
-  if (await userProfile.isVisible().catch(() => false)) {
-    await logout(page);
-    await page.goto('/');
-    await page.waitForTimeout(1500);
+  const signInBtn = page.locator('button:has-text("Sign In"), a:has-text("Sign In")').first();
+  // Auth resolves after the logo paints. Wait for the avatar or Sign In,
+  // not the logo, or a restored session hides Sign In and the click never starts.
+  const authControl = signInBtn.or(userProfile);
+  if (!(await visibleSoon(authControl, 25000))) {
+    await page.reload({ timeout: 20000 });
+    await expect(authControl).toBeVisible({ timeout: 25000 });
   }
 
-  // Open login modal. The first render can stall for a while under load
-  // (dev server transforms, browser contention) - reload and retry once.
-  const signInBtn = page.locator('button:has-text("Sign In"), a:has-text("Sign In")').first();
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      await signInBtn.click({ timeout: 20000 });
-      break;
-    } catch {
-      if (attempt === 2) throw new Error('Sign In button never appeared on the homepage');
-      await page.reload();
-      await page.waitForTimeout(3000);
-    }
+  if (email === ADMIN.email && (await page.getByRole('button', { name: 'Admin Tools' }).isVisible().catch(() => false))) {
+    return;
   }
-  await page.waitForTimeout(1000);
+
+  if (await userProfile.isVisible().catch(() => false)) {
+    await logout(page);
+  }
+  await signInBtn.click();
 
   await page.locator('input[name="email"], input[type="email"], input[placeholder*="email" i]').first().fill(email);
   await page.locator('input[type="password"]').first().fill(password);
@@ -92,12 +92,25 @@ export async function loginAsAdmin(page: Page) {
 }
 
 export async function logout(page: Page) {
-  // Click user avatar (img[alt="User profile"] inside a ghost button)
-  await page.locator('img[alt="User profile"]').first().click();
-  await page.waitForTimeout(800);
-  // Click Logout in dropdown
-  await page.locator('[role="menuitem"]:has-text("Logout")').first().click();
-  await page.waitForTimeout(1500);
+  // Leave the app before dropping the cookie. A 401 in the live page calls
+  // logOut(), which assigns window.location to "/" after the logout request
+  // returns and pulls a later navigation back to the home page.
+  await page.goto('about:blank');
+  await page.context().clearCookies();
+  await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  const signInBtn = page.locator('button:has-text("Sign In"), a:has-text("Sign In")').first();
+  if (!(await visibleSoon(signInBtn, 20000))) {
+    await page.reload({ timeout: 20000 });
+    await expect(signInBtn).toBeVisible({ timeout: 25000 });
+  }
+}
+
+export async function gotoUntilVisible(page: Page, url: string, ready: Locator, timeout = 20000) {
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  if (!(await visibleSoon(ready, timeout))) {
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  }
+  await expect(ready).toBeVisible({ timeout });
 }
 
 export async function searchPrototypeLibrary(page: Page, query: string) {
@@ -431,11 +444,15 @@ export async function createTestPrototype(page: Page, name: string, modelId?: st
     await page.waitForTimeout(4000);
   } else {
     await page.goto(`/model/${modelId}/library/list`);
-    await page.waitForTimeout(2000);
   }
 
-  await page.locator('[data-id="btn-create-new-prototype"]').click();
-  await page.waitForTimeout(1500);
+  await expect(page).toHaveURL(/\/library/, { timeout: 30000 });
+  const createBtn = page.locator('[data-id="btn-create-new-prototype"]');
+  if (!(await visibleSoon(createBtn, 15000))) {
+    await page.reload({ timeout: 20000 });
+  }
+  await expect(createBtn).toBeVisible({ timeout: 30000 });
+  await createBtn.click();
 
   const nameInput = page.locator('[data-id="prototype-name-input"]').first();
   await expect(nameInput).toBeVisible({ timeout: 15000 });
@@ -670,11 +687,12 @@ export function getNavBarCustomSearchButtons(page: Page): Locator {
 }
 
 export async function openSiteConfigNavBarActions(page: Page) {
-  await page.goto('/admin/site-config?section=public');
-  await page.waitForTimeout(3000);
-  await expect(page.getByRole('heading', { name: 'Navigation Bar Actions' })).toBeVisible({
-    timeout: 15000,
-  });
+  await gotoUntilVisible(
+    page,
+    '/admin/site-config?section=public',
+    page.getByRole('heading', { name: 'Navigation Bar Actions' }),
+    20000,
+  );
 }
 
 export async function reloadForNavBarConfig(page: Page) {
@@ -740,10 +758,11 @@ export type CreatedPlugin = {
 
 export async function openAdminPrototypePlugins(page: Page) {
   await page.goto('/admin/plugins?section=prototype');
-  await page.waitForTimeout(2000);
-  await expect(page.getByRole('heading', { name: 'Prototype Plugins' })).toBeVisible({
-    timeout: 15000,
-  });
+  const heading = page.getByRole('heading', { name: 'Prototype Plugins' });
+  if (!(await visibleSoon(heading, 15000))) {
+    await page.reload({ timeout: 20000 });
+  }
+  await expect(heading).toBeVisible({ timeout: 30000 });
 }
 
 async function findPluginByNameViaApi(page: Page, name: string): Promise<CreatedPlugin> {
@@ -1225,9 +1244,11 @@ export function getPrototypeLibraryCreateWrapper(page: Page): Locator {
 }
 
 export async function assertPrototypeLibraryCreateEnabled(page: Page, enabled: boolean) {
-  await expect(page.locator('[data-id="btn-create-new-prototype"]').first()).toBeVisible({
-    timeout: 15000,
-  });
+  const createBtn = page.locator('[data-id="btn-create-new-prototype"]').first();
+  if (!(await visibleSoon(createBtn, 15000))) {
+    await page.reload({ timeout: 20000 });
+  }
+  await expect(createBtn).toBeVisible({ timeout: 30000 });
   const wrapper = getPrototypeLibraryCreateWrapper(page);
   if (enabled) {
     await expect(wrapper).toHaveClass(/pointer-events-auto/);
@@ -1415,6 +1436,43 @@ export async function findMyPluginByNameViaApi(page: Page, name: string) {
   return (data?.results || []).find((p: { name: string }) => p.name === name) || null;
 }
 
+export type HomeContentBlock = { type: string; title?: string };
+
+export const E2E_HOME_CONTENT: HomeContentBlock[] = [
+  { type: 'model-list', title: 'Vehicle Models' },
+  { type: 'prototype-list', title: 'All Prototypes' },
+];
+
+function homeContentIncludesType(value: unknown, type: string): boolean {
+  return Array.isArray(value) && value.some((block) => block?.type === type);
+}
+
+export async function ensureHomePageSections(
+  page: Page,
+  content: HomeContentBlock[] = E2E_HOME_CONTENT,
+): Promise<void> {
+  await setSiteConfigJson(page, 'CFG_HOME_CONTENT', content);
+  const requiredTypes = content.map((block) => block.type);
+  const deadline = Date.now() + 15000;
+  let last: unknown = null;
+  while (Date.now() < deadline) {
+    const res = await page.request.get(
+      `${API_URL}/v2/site-config/public/CFG_HOME_CONTENT?scope=site`,
+    );
+    if (res.ok()) {
+      const data = await res.json();
+      last = data?.value;
+      if (requiredTypes.every((type) => homeContentIncludesType(last, type))) {
+        return;
+      }
+    }
+    await page.waitForTimeout(250);
+  }
+  throw new Error(
+    `CFG_HOME_CONTENT public value missing homepage sections ${requiredTypes.join(', ')}: ${JSON.stringify(last)}`,
+  );
+}
+
 export async function configureHomePopularSection(
   page: Page,
   title = 'Popular Prototypes',
@@ -1426,14 +1484,53 @@ export async function configureHomeModelListSection(
   page: Page,
   title = 'Vehicle Models',
 ): Promise<void> {
-  await setSiteConfigJson(page, 'CFG_HOME_CONTENT', [{ type: 'model-list', title }]);
+  await ensureHomePageSections(page, [
+    { type: 'model-list', title },
+    { type: 'prototype-list', title: 'All Prototypes' },
+  ]);
 }
 
 export async function configureHomePrototypeListSection(
   page: Page,
   title = 'All Prototypes',
 ): Promise<void> {
-  await setSiteConfigJson(page, 'CFG_HOME_CONTENT', [{ type: 'prototype-list', title }]);
+  await ensureHomePageSections(page, [
+    { type: 'model-list', title: 'Vehicle Models' },
+    { type: 'prototype-list', title },
+  ]);
+}
+
+async function gotoHomeWithSection(
+  page: Page,
+  title: string,
+  type: string,
+  listResponse: Promise<unknown>,
+): Promise<void> {
+  const contentResponse = page
+    .waitForResponse(
+      (res) =>
+        res.url().includes('/site-config/public/CFG_HOME_CONTENT') &&
+        res.request().method() === 'GET' &&
+        res.ok(),
+      { timeout: 20000 },
+    )
+    .catch(() => null);
+
+  await page.goto('/');
+
+  const heading = page.getByRole('heading', { name: title });
+  const shown = await heading
+    .waitFor({ state: 'visible', timeout: 20000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!shown) {
+    await page.reload({ timeout: 20000 });
+    await expect(heading, `home ${type} section "${title}"`).toBeVisible({ timeout: 30000 });
+  }
+
+  void contentResponse;
+  await listResponse;
+  await page.waitForTimeout(500);
 }
 
 export function getHomePrototypeListSection(page: Page, title = 'All Prototypes'): Locator {
@@ -1453,10 +1550,7 @@ export async function gotoHomePrototypeList(page: Page, title = 'All Prototypes'
       { timeout: 20000 },
     )
     .catch(() => null);
-  await page.goto('/');
-  await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 45000 });
-  await responsePromise;
-  await page.waitForTimeout(500);
+  await gotoHomeWithSection(page, title, 'prototype-list', responsePromise);
 }
 
 export async function selectHomePrototypeCategory(
@@ -1543,10 +1637,7 @@ export async function gotoHomeModelList(page: Page, title = 'Vehicle Models'): P
       { timeout: 20000 },
     )
     .catch(() => null);
-  await page.goto('/');
-  await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 45000 });
-  await responsePromise;
-  await page.waitForTimeout(500);
+  await gotoHomeWithSection(page, title, 'model-list', responsePromise);
 }
 
 export function getHomeModelListSection(page: Page, title = 'Vehicle Models'): Locator {

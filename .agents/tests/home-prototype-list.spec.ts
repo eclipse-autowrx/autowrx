@@ -14,7 +14,7 @@ import {
   saveScreenshot,
   createPublicReleasedModelViaApi,
   createTestModelViaApi,
-  createTestPrototype,
+  createTestPrototypeViaApi,
   createTestUserViaApi,
   deleteModelViaApi,
   deleteTestUserViaApi,
@@ -93,11 +93,10 @@ test.describe('Home Prototype List', () => {
       `E2E_HomeProtoPublicModel_${timestamp}`,
     );
     createdModelIds.push(publicModelId);
-    const { prototypeId: publicPrototypeId } = await createTestPrototype(
-      adminPage,
-      publicProtoName,
-      publicModelId,
-    );
+    const { prototypeId: publicPrototypeId } = await createTestPrototypeViaApi(adminPage, {
+      name: publicProtoName,
+      modelId: publicModelId,
+    });
     await setPrototypeStateViaApi(adminPage, publicPrototypeId, 'Released');
 
     const privateModelId = await createTestModelViaApi(
@@ -106,11 +105,10 @@ test.describe('Home Prototype List', () => {
       'private',
     );
     createdModelIds.push(privateModelId);
-    const { prototypeId: privatePrototypeId } = await createTestPrototype(
-      adminPage,
-      privateProtoName,
-      privateModelId,
-    );
+    const { prototypeId: privatePrototypeId } = await createTestPrototypeViaApi(adminPage, {
+      name: privateProtoName,
+      modelId: privateModelId,
+    });
     await setPrototypeStateViaApi(adminPage, privatePrototypeId, 'Released');
     await configureHomePrototypeListSection(adminPage);
     await adminContext.close();
@@ -165,10 +163,9 @@ test.describe('Home Prototype List', () => {
     const adminProtoName = `E2E_HomeMyProtoAdmin_${timestamp}`;
     const userProtoName = `E2E_HomeMyProtoUser_${timestamp}`;
 
-    await loginAsAdmin(page);
     const adminModelId = await createTestModelViaApi(page, `E2E_HomeMyProtoAdminModel_${timestamp}`, 'private');
     createdModelIds.push(adminModelId);
-    await createTestPrototype(page, adminProtoName, adminModelId);
+    await createTestPrototypeViaApi(page, { name: adminProtoName, modelId: adminModelId });
 
     const testUser = await createTestUserViaApi(page, {
       email: `e2e_home_my_proto_${timestamp}@example.com`,
@@ -186,7 +183,11 @@ test.describe('Home Prototype List', () => {
       { email: testUser.email, password: TEST_USER.password },
     );
     createdModelIds.push(userModelId);
-    await createTestPrototype(page, userProtoName, userModelId);
+    await createTestPrototypeViaApi(page, {
+      name: userProtoName,
+      modelId: userModelId,
+      auth: { email: testUser.email, password: TEST_USER.password },
+    });
 
     await logout(page);
     await loginAsAdmin(page);
@@ -214,7 +215,7 @@ test.describe('Home Prototype List', () => {
       `E2E_HomeProtoOtherUserModel_${timestamp}`,
     );
     createdModelIds.push(modelId);
-    const { prototypeId } = await createTestPrototype(page, protoName, modelId);
+    const { prototypeId } = await createTestPrototypeViaApi(page, { name: protoName, modelId });
     await setPrototypeStateViaApi(page, prototypeId, 'Released');
 
     const testUser = await createTestUserViaApi(page, {
@@ -286,8 +287,9 @@ test.describe('Home Prototype List', () => {
 
       const modelId = await createTestModelViaApi(page, `E2E_HomeProtoSortModel_${timestamp}`, 'private');
       createdModelIds.push(modelId);
-      await createTestPrototype(page, firstName, modelId);
-      await createTestPrototype(page, secondName, modelId);
+      await createTestPrototypeViaApi(page, { name: firstName, modelId });
+      await page.waitForTimeout(1000);
+      await createTestPrototypeViaApi(page, { name: secondName, modelId });
 
       await gotoHomePrototypeList(page);
       await selectHomePrototypeCategory(page, 'My Prototypes');
@@ -308,8 +310,9 @@ test.describe('Home Prototype List', () => {
 
       const modelId = await createTestModelViaApi(page, `E2E_HomeProtoSortModel_${timestamp}`, 'private');
       createdModelIds.push(modelId);
-      await createTestPrototype(page, firstName, modelId);
-      await createTestPrototype(page, secondName, modelId);
+      await createTestPrototypeViaApi(page, { name: firstName, modelId });
+      await page.waitForTimeout(1000);
+      await createTestPrototypeViaApi(page, { name: secondName, modelId });
 
       await gotoHomePrototypeList(page);
       await selectHomePrototypeCategory(page, 'My Prototypes');
@@ -327,8 +330,8 @@ test.describe('Home Prototype List', () => {
 
       const modelId = await createTestModelViaApi(page, `E2E_HomeProtoSortModel_${timestamp}`, 'private');
       createdModelIds.push(modelId);
-      await createTestPrototype(page, nameZ, modelId);
-      await createTestPrototype(page, nameA, modelId);
+      await createTestPrototypeViaApi(page, { name: nameZ, modelId });
+      await createTestPrototypeViaApi(page, { name: nameA, modelId });
 
       await gotoHomePrototypeList(page);
       await selectHomePrototypeCategory(page, 'My Prototypes');
@@ -346,8 +349,8 @@ test.describe('Home Prototype List', () => {
 
       const modelId = await createTestModelViaApi(page, `E2E_HomeProtoSortModel_${timestamp}`, 'private');
       createdModelIds.push(modelId);
-      await createTestPrototype(page, nameZ, modelId);
-      await createTestPrototype(page, nameA, modelId);
+      await createTestPrototypeViaApi(page, { name: nameZ, modelId });
+      await createTestPrototypeViaApi(page, { name: nameA, modelId });
 
       await gotoHomePrototypeList(page);
       await selectHomePrototypeCategory(page, 'My Prototypes');
@@ -365,8 +368,14 @@ test.describe('Home Prototype List', () => {
 
       const modelId = await createTestModelViaApi(page, `E2E_HomeProtoViewModel_${timestamp}`, 'private');
       createdModelIds.push(modelId);
-      const { prototypeId: protoAId } = await createTestPrototype(page, protoAName, modelId);
-      const { prototypeId: protoBId } = await createTestPrototype(page, protoBName, modelId);
+      const { prototypeId: protoAId } = await createTestPrototypeViaApi(page, {
+        name: protoAName,
+        modelId,
+      });
+      const { prototypeId: protoBId } = await createTestPrototypeViaApi(page, {
+        name: protoBName,
+        modelId,
+      });
 
       await setPrototypeLastViewedMap(page, {
         [protoAId]: 1000,
@@ -389,8 +398,14 @@ test.describe('Home Prototype List', () => {
 
       const modelId = await createTestModelViaApi(page, `E2E_HomeProtoViewModel_${timestamp}`, 'private');
       createdModelIds.push(modelId);
-      const { prototypeId: protoAId } = await createTestPrototype(page, protoAName, modelId);
-      const { prototypeId: protoBId } = await createTestPrototype(page, protoBName, modelId);
+      const { prototypeId: protoAId } = await createTestPrototypeViaApi(page, {
+        name: protoAName,
+        modelId,
+      });
+      const { prototypeId: protoBId } = await createTestPrototypeViaApi(page, {
+        name: protoBName,
+        modelId,
+      });
 
       await setPrototypeLastViewedMap(page, {
         [protoAId]: 1000,
@@ -411,10 +426,9 @@ test.describe('Home Prototype List', () => {
     const timestamp = Date.now();
     const protoName = `E2E_HomeProtoClick_${timestamp}`;
 
-    await loginAsAdmin(page);
     const modelId = await createTestModelViaApi(page, `E2E_HomeProtoClickModel_${timestamp}`, 'private');
     createdModelIds.push(modelId);
-    await createTestPrototype(page, protoName, modelId);
+    await createTestPrototypeViaApi(page, { name: protoName, modelId });
 
     await waitForPrototypeInHomeList(page, protoName);
 

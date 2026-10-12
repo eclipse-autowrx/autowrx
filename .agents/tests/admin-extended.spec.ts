@@ -9,59 +9,49 @@ test.describe('Admin Extended', () => {
 
   test('/admin/templates page loads', async ({ page }) => {
     await page.goto('/admin/templates');
-    await page.waitForTimeout(5000);
+    await expect(page.getByRole('heading', { name: 'Templates', exact: true })).toBeVisible({
+      timeout: 30000,
+    });
     await saveScreenshot(page, 'admin-templates');
     await checkLayoutAnomalies(page, 'admin-templates');
 
-    // Should not be a 404
     const hasError = await page.locator('text=404, text=Not Found').count();
     expect(hasError).toBe(0);
-
-    // Should have some content
-    const hasContent = await page.locator(
-      'button, input, table, [class*="template" i], [class*="card" i], h1, h2, ul'
-    ).count();
-    expect(hasContent).toBeGreaterThan(0);
-
     expect(page.url()).toContain('/admin/templates');
   });
 
   test('/admin/dashboard-templates page loads', async ({ page }) => {
     await page.goto('/admin/dashboard-templates');
-    await page.waitForTimeout(5000);
+    await expect(page.getByRole('heading', { name: 'Dashboard Templates' })).toBeVisible({
+      timeout: 30000,
+    });
+    await expect(page.getByRole('button', { name: 'New Template' })).toBeVisible();
     await saveScreenshot(page, 'admin-dashboard-templates');
     await checkLayoutAnomalies(page, 'admin-dashboard-templates');
 
-    // Should not be a 404
     const hasError = await page.locator('text=404, text=Not Found').count();
     expect(hasError).toBe(0);
-
-    const hasContent = await page.locator(
-      'button, input, table, [class*="template" i], [class*="dashboard" i], h1, h2, ul'
-    ).count();
-    expect(hasContent).toBeGreaterThan(0);
+    expect(page.url()).toContain('/admin/dashboard-templates');
   });
 
   test('/manage-features page loads', async ({ page }) => {
     await page.goto('/manage-features');
-    await page.waitForTimeout(5000);
+    await expect(page.getByRole('heading', { name: 'Feature Management' })).toBeVisible({
+      timeout: 30000,
+    });
     await saveScreenshot(page, 'manage-features');
     await checkLayoutAnomalies(page, 'manage-features');
 
-    // Should not be a 404
     const hasError = await page.locator('text=404, text=Not Found').count();
     expect(hasError).toBe(0);
-
-    const hasContent = await page.locator(
-      'button, input, [class*="feature" i], [class*="toggle" i], [class*="switch" i], ' +
-      'h1, h2, table, ul, [role="list"]'
-    ).count();
-    expect(hasContent).toBeGreaterThan(0);
+    expect(page.url()).toContain('/manage-features');
   });
 
   test('create new user - fill form and cancel', async ({ page }) => {
     await page.goto('/admin/manage-users');
-    await page.waitForTimeout(5000);
+    await expect(page.getByRole('button', { name: 'Create new user' })).toBeVisible({
+      timeout: 30000,
+    });
     await saveScreenshot(page, 'admin-manage-users-loaded');
     await checkLayoutAnomalies(page, 'admin-manage-users-loaded');
 

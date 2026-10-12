@@ -197,8 +197,10 @@ test.describe('Navigation Bar Actions', () => {
     await page.waitForTimeout(300);
 
     await page.getByRole('button', { name: 'Save Navigation Bar Actions' }).click();
-    await page.waitForLoadState('load');
-    await page.waitForTimeout(3000);
+    await reloadForNavBarConfig(page);
+    await expect(getNavBarCustomLinks(page).filter({ hasText: nameZ })).toBeVisible({
+      timeout: 20000,
+    });
 
     linkTexts = await getNavBarCustomLinks(page).allTextContents();
     const combined = linkTexts.map((t) => t.trim()).join(' ');

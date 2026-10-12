@@ -1,15 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, saveScreenshot, searchPrototypeLibrary, ADMIN, API_URL } from './helpers';
+import { loginAsAdmin, saveScreenshot, searchPrototypeLibrary, gotoUntilVisible, ADMIN, API_URL } from './helpers';
 
 const PROTO_NAME = `AgentProto_${Date.now()}`;
 
 // Helper: go to first model's library/prototype page, return modelId
 async function goToFirstModelLibrary(page: any) {
-  await page.goto('/model');
-  await page.waitForTimeout(3000);
-
   const firstModel = page.locator('a[href*="/model/"]').first();
-  await expect(firstModel).toBeVisible({ timeout: 20000 });
+  await gotoUntilVisible(page, '/model', firstModel);
   const href = await firstModel.getAttribute('href');
   const modelId = href?.split('/model/')[1]?.split('/')[0];
   // Try /library/list first (new route), fallback /library/list (old route)
@@ -50,11 +47,9 @@ test.describe('Prototypes - CRUD', () => {
     await loginAsAdmin(page);
 
     const modelId = await goToFirstModelLibrary(page);
-    await page.goto(`/new-prototype?model_id=${modelId}`);
-    await saveScreenshot(page, 'proto-new-page');
-
     const nameInput = page.locator('[data-id="prototype-name-input"]');
-    await expect(nameInput).toBeVisible({ timeout: 15000 });
+    await gotoUntilVisible(page, `/new-prototype?model_id=${modelId}`, nameInput, 20000);
+    await saveScreenshot(page, 'proto-new-page');
     expect(new URL(page.url()).searchParams.get('model_id')).toBe(modelId);
     await nameInput.fill(`NewPage_${Date.now()}`);
 
@@ -72,13 +67,17 @@ test.describe('Prototypes - CRUD', () => {
     await saveScreenshot(page, 'proto-library-before-create');
 
     // Click "Create" button
-    await page.locator('[data-id="btn-create-new-prototype"]').click();
-    await page.waitForTimeout(1500);
+    const createBtn = page.locator('[data-id="btn-create-new-prototype"]');
+    if (!(await createBtn.isVisible().catch(() => false))) {
+      await page.reload({ timeout: 20000 });
+    }
+    await expect(createBtn).toBeVisible({ timeout: 30000 });
+    await createBtn.click();
     await saveScreenshot(page, 'proto-create-dialog');
 
     // Fill name
     const nameInput = page.locator('[data-id="prototype-name-input"]').first();
-    await expect(nameInput).toBeVisible({ timeout: 15000 });
+    await expect(nameInput).toBeVisible({ timeout: 20000 });
     await nameInput.fill(PROTO_NAME);
     await page.waitForTimeout(300);
     await saveScreenshot(page, 'proto-create-filled');
@@ -108,9 +107,11 @@ test.describe('Prototypes - CRUD', () => {
     const { modelId } = await createTestPrototype(page, protoName);
 
     // Go back to library
-    await page.goto(`/model/${modelId}/library/list`);
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
+    await gotoUntilVisible(
+      page,
+      `/model/${modelId}/library/list`,
+      page.locator('input[placeholder="Search prototypes"]').first(),
+    );
     console.log('Library URL:', page.url());
     await searchPrototypeLibrary(page, protoName);
     console.log('Searched for:', protoName);
@@ -201,8 +202,11 @@ test.describe('Prototypes - CRUD', () => {
     const { modelId } = await createTestPrototype(page, deleteName);
 
     // Go to library, find prototype
-    await page.goto(`/model/${modelId}/library/list`);
-    await page.waitForTimeout(2000);
+    await gotoUntilVisible(
+      page,
+      `/model/${modelId}/library/list`,
+      page.locator('input[placeholder="Search prototypes"]').first(),
+    );
     await searchPrototypeLibrary(page, deleteName);
     await page.waitForTimeout(1000);
 

@@ -18,6 +18,8 @@ import {
   deletePrototypeViaApi,
   openPrototypeContextMenu,
   searchPrototypeLibrary,
+  gotoUntilVisible,
+  LIBRARY_SEARCH_SELECTOR,
   getPrototypeIdFromUrl,
   getSiteConfigValue,
   updateSiteConfigValue,
@@ -143,7 +145,11 @@ test.describe('Prototype Copy', () => {
   test('Copy Prototype is offered in the prototype card context menu', async ({ page }) => {
     const { protoName } = await seedSourcePrototype(page, 'Menu');
 
-    await page.goto(`/model/${modelId}/library/list`);
+    await gotoUntilVisible(
+      page,
+      `/model/${modelId}/library/list`,
+      page.locator(LIBRARY_SEARCH_SELECTOR).first(),
+    );
     await searchPrototypeLibrary(page, protoName);
 
     await openPrototypeContextMenu(page, protoName);
@@ -180,7 +186,11 @@ test.describe('Prototype Copy', () => {
   }) => {
     const { protoName } = await seedSourcePrototype(page, 'Flow');
 
-    await page.goto(`/model/${modelId}/library/list`);
+    await gotoUntilVisible(
+      page,
+      `/model/${modelId}/library/list`,
+      page.locator(LIBRARY_SEARCH_SELECTOR).first(),
+    );
     await searchPrototypeLibrary(page, protoName);
 
     await openPrototypeContextMenu(page, protoName);
@@ -254,7 +264,11 @@ test.describe('Prototype Copy', () => {
   }) => {
     const { protoName } = await seedSourcePrototype(page, 'PatchFail');
 
-    await page.goto(`/model/${modelId}/library/list`);
+    await gotoUntilVisible(
+      page,
+      `/model/${modelId}/library/list`,
+      page.locator(LIBRARY_SEARCH_SELECTOR).first(),
+    );
     await searchPrototypeLibrary(page, protoName);
 
     await openPrototypeContextMenu(page, protoName);

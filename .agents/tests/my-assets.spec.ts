@@ -8,23 +8,15 @@ test.describe('My Assets Page', () => {
 
   test('my-assets page loads with content', async ({ page }) => {
     await page.goto('/my-assets');
-    await page.waitForTimeout(5000);
+    await expect(page.getByRole('heading', { name: 'My Assets' })).toBeVisible({
+      timeout: 30000,
+    });
     await saveScreenshot(page, 'my-assets-loaded');
     await checkLayoutAnomalies(page, 'my-assets-loaded');
 
-    // Should not show 404 or error
     const hasError = await page.locator('text=404, text=Not Found').count();
     expect(hasError).toBe(0);
-
-    // Should be on the assets page
     expect(page.url()).toContain('/my-assets');
-
-    // Page should have some content
-    const hasContent = await page.locator(
-      'button, input, [class*="card" i], [class*="asset" i], [class*="item" i], ' +
-      'h1, h2, ul, table, [role="list"]'
-    ).count();
-    expect(hasContent).toBeGreaterThan(0);
 
     // Scroll through the page
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));

@@ -31,11 +31,13 @@ test.describe('My Plugins', () => {
     createdPluginName = pluginName;
 
     await page.goto('/me/plugins');
-    await page.waitForTimeout(3000);
-
-    await expect(page.getByRole('heading', { name: 'Plugins' })).toBeVisible({
-      timeout: 15000,
-    });
+    const heading = page.getByRole('heading', { name: 'Plugins' });
+    if (!(await heading.isVisible().catch(() => false))) {
+      await heading.waitFor({ state: 'visible', timeout: 15000 }).catch(async () => {
+        await page.reload({ timeout: 20000 });
+      });
+    }
+    await expect(heading).toBeVisible({ timeout: 30000 });
 
     await page.getByRole('button', { name: 'New' }).click();
     await expect(page.getByRole('heading', { name: 'Create Plugin' })).toBeVisible({

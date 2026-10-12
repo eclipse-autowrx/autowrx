@@ -17,6 +17,7 @@ import {
   createTestPrototypeViaApi,
   deleteModelViaApi,
   goToPrototypeOverview,
+  gotoUntilVisible,
 } from './helpers';
 
 // Hermetic fixture: a dedicated model+prototype so the tests never depend on
@@ -73,17 +74,11 @@ test.describe('Prototype Tabs - Layout Check', () => {
     const protoId = fixtureProtoId;
 
     await page.goto(`/model/${modelId}/library/prototype/${protoId}/code`);
-    await page.waitForTimeout(6000);
+    await expect(page.locator('[data-id="tab-code"]').first()).toBeVisible({ timeout: 30000 });
     await saveScreenshot(page, 'tab-code');
 
     const anomalies = await checkLayoutAnomalies(page, 'tab-code');
     if (anomalies.length > 0) console.warn('⚠️ Code tab anomalies:', anomalies);
-
-    // Check code editor or content is present
-    const hasCodeContent = await page.locator(
-      '[data-id="tab-code"], [class*="editor"], [class*="monaco"], textarea, [class*="code"]'
-    ).count();
-    expect(hasCodeContent).toBeGreaterThan(0);
     console.log('✅ SDV Code tab loaded');
   });
 
@@ -92,15 +87,18 @@ test.describe('Prototype Tabs - Layout Check', () => {
     const modelId = fixtureModelId;
     const protoId = fixtureProtoId;
 
-    await page.goto(`/model/${modelId}/library/prototype/${protoId}/dashboard`);
-    await page.waitForTimeout(6000);
+    const dashboardTab = page.locator('[data-id="tab-dashboard"]').first();
+    await gotoUntilVisible(
+      page,
+      `/model/${modelId}/library/prototype/${protoId}/dashboard`,
+      dashboardTab,
+      30000,
+    );
     await prepareRuntimePanelForLayoutCheck(page);
     await saveScreenshot(page, 'tab-dashboard');
 
     const anomalies = await checkLayoutAnomalies(page, 'tab-dashboard');
     if (anomalies.length > 0) console.warn('⚠️ Dashboard tab anomalies:', anomalies);
-
-    await expect(page.locator('[data-id="tab-dashboard"]').first()).toBeVisible({ timeout: 5000 });
     const url = page.url();
     expect(url).toContain('/dashboard');
     console.log('✅ Dashboard tab loaded');

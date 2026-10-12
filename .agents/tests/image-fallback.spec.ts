@@ -18,6 +18,8 @@ import {
   getHomeModelListSection,
   getPrototypeCard,
   searchPrototypeLibrary,
+  gotoUntilVisible,
+  LIBRARY_SEARCH_SELECTOR,
   setModelImageViaApi,
   setPrototypeImageViaApi,
   routeBrokenImageUrls,
@@ -91,8 +93,11 @@ test.describe('Image Fallback', () => {
 
     const unroute = await routeBrokenImageUrls(page);
     try {
-      await page.goto(`/model/${modelId}/library/list`);
-      await page.waitForTimeout(3000);
+      await gotoUntilVisible(
+        page,
+        `/model/${modelId}/library/list`,
+        page.locator(LIBRARY_SEARCH_SELECTOR).first(),
+      );
       await searchPrototypeLibrary(page, protoName);
 
       const card = getPrototypeCard(page, protoName);

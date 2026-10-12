@@ -60,7 +60,15 @@ test.describe('Model Customization Menu', () => {
 
   async function gotoModelPage(page: Page, id: string) {
     await page.goto(`/model/${id}`);
-    await expect(page.locator('.da-model-detail-tab-bar')).toBeVisible({ timeout: 30000 });
+    const tabBar = page.locator('.da-model-detail-tab-bar');
+    const seen = await tabBar
+      .waitFor({ state: 'visible', timeout: 15000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!seen) {
+      await page.reload({ timeout: 20000 });
+    }
+    await expect(tabBar).toBeVisible({ timeout: 30000 });
   }
 
   async function gotoPrototypePage(page: Page, mId: string, pId: string) {

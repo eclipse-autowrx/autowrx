@@ -9,19 +9,14 @@ test.describe('Profile Page', () => {
 
   test('profile page layout full check', async ({ page }) => {
     await page.goto('/profile');
-    await page.waitForTimeout(5000);
+    await expect(page.getByRole('heading', { name: 'Profile', exact: true })).toBeVisible({
+      timeout: 30000,
+    });
     await saveScreenshot(page, 'profile-full-layout');
     await checkLayoutAnomalies(page, 'profile-full-layout');
 
-    // Should not show 404 or error
     const hasError = await page.locator('text=404, text=Not Found, text=Something went wrong').count();
     expect(hasError).toBe(0);
-
-    // Should have some content
-    const hasContent = await page.locator('input, button, form, img, [class*="profile" i], [class*="avatar" i], h1, h2').count();
-    expect(hasContent).toBeGreaterThan(0);
-
-    // URL should contain /profile
     expect(page.url()).toContain('/profile');
 
     // Scroll down
