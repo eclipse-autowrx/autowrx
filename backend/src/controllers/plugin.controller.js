@@ -74,11 +74,18 @@ async function ensureDir(dir) {
   await fsp.mkdir(dir, { recursive: true });
 }
 
+const isRequestAdmin = async (req) =>
+  (Array.isArray(req.user.roles) && req.user.roles.includes('admin')) || pluginService.isAdminUser(req.user.id);
+
+const sendPage = async (res, result) => {
+  res.send({ ...result, results: await pluginService.withTrust(result.results) });
+};
+
 const listPlugins = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['type', 'slug', 'name']);
   const options = pick(req.query, ['sortBy', 'limit', 'page', 'fields']);
   const result = await pluginService.queryPlugins(filter, options);
-  res.send(result);
+  await sendPage(res, result);
 });
 
 // List plugins created by admin users (public)
@@ -86,7 +93,7 @@ const listAdminPlugins = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['type', 'slug', 'name']);
   const options = pick(req.query, ['sortBy', 'limit', 'page', 'fields']);
   const result = await pluginService.queryAdminPlugins(filter, options);
-  res.send(result);
+  await sendPage(res, result);
 });
 
 // List plugins created by the current user
@@ -94,19 +101,19 @@ const listMyPlugins = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['type', 'slug', 'name']);
   const options = pick(req.query, ['sortBy', 'limit', 'page', 'fields']);
   const result = await pluginService.queryPlugins({ ...filter, created_by: req.user.id }, options);
-  res.send(result);
+  await sendPage(res, result);
 });
 
 const getPluginById = catchAsync(async (req, res) => {
   const plugin = await pluginService.getPluginById(req.params.id);
   if (!plugin) throw new ApiError(httpStatus.NOT_FOUND, 'Plugin not found');
-  res.send(plugin);
+  res.send(await pluginService.withTrust(plugin));
 });
 
 const getPluginBySlug = catchAsync(async (req, res) => {
   const plugin = await pluginService.getPluginBySlug(req.params.slug);
   if (!plugin) throw new ApiError(httpStatus.NOT_FOUND, 'Plugin not found');
-  res.send(plugin);
+  res.send(await pluginService.withTrust(plugin));
 });
 
 const createPlugin = catchAsync(async (req, res) => {
@@ -115,8 +122,9 @@ const createPlugin = catchAsync(async (req, res) => {
     created_by: req.user.id,
     updated_by: req.user.id,
   };
-  const plugin = await pluginService.createPlugin(body);
-  res.status(httpStatus.CREATED).send(plugin);
+  const actor = { id: req.user.id, isAdmin: await isRequestAdmin(req) };
+  const plugin = await pluginService.createPlugin(body, actor);
+  res.status(httpStatus.CREATED).send(await pluginService.withTrust(plugin));
 });
 
 const updatePlugin = catchAsync(async (req, res) => {
@@ -124,14 +132,9 @@ const updatePlugin = catchAsync(async (req, res) => {
     ...req.body,
     updated_by: req.user.id,
   };
-  const isAdmin =
-    (Array.isArray(req.user.roles) && req.user.roles.includes('admin')) || (await pluginService.isAdminUser(req.user.id));
-  const actor = {
-    id: req.user.id,
-    isAdmin,
-  };
+  const actor = { id: req.user.id, isAdmin: await isRequestAdmin(req) };
   const plugin = await pluginService.updatePluginById(req.params.id, body, actor);
-  res.send(plugin);
+  res.send(await pluginService.withTrust(plugin));
 });
 
 /* eslint-disable no-await-in-loop, no-continue, no-restricted-syntax */
@@ -333,12 +336,7 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
   // including on the 403 authorization path and other pre-extraction throws,
   // which would otherwise leak files under static/uploads (disk-exhaustion DoS).
   try {
-    const actor = {
-      id: req.user.id,
-      isAdmin:
-        (Array.isArray(req.user.roles) && req.user.roles.includes('admin')) ||
-        (await pluginService.isAdminUser(req.user.id)),
-    };
+    const actor = { id: req.user.id, isAdmin: await isRequestAdmin(req) };
 
     // Authorization: if a plugin with this slug already exists, verify
     // ownership BEFORE extracting any files (CWE-862).
@@ -457,12 +455,7 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
 });
 
 const removePlugin = catchAsync(async (req, res) => {
-  const isAdmin =
-    (Array.isArray(req.user.roles) && req.user.roles.includes('admin')) || (await pluginService.isAdminUser(req.user.id));
-  const actor = {
-    id: req.user.id,
-    isAdmin,
-  };
+  const actor = { id: req.user.id, isAdmin: await isRequestAdmin(req) };
   const deleted = await pluginService.deletePluginById(req.params.id, actor);
   // Internal plugins extract to static/plugin/<slug> on upload; the DB
   // record carries no reference back to that directory once deleted, so

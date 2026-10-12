@@ -129,11 +129,27 @@ const dataSync = require('./sync');
 app.use('/v2', dataSync.middleware);
 
 app.use('/v2', routesV2);
+// Plugin bundles (mounted before the generic /static handler so these headers
+// apply): allow cross-origin reads so the opaque-origin plugin sandbox
+// (frontend sandbox-plugin.html) can load them as module scripts, and sandbox
+// any HTML so a bundle opened directly can't run script on the app origin.
+const pluginStaticOptions = {
+  dotfiles: 'ignore',
+  setHeaders: (res, filePath) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    // helmet defaults CORP to same-origin, which blocks the opaque-origin sandbox.
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    if (/\.html?$/i.test(filePath)) {
+      res.setHeader('Content-Security-Policy', 'sandbox allow-scripts');
+    }
+  },
+};
+app.use('/static/plugin', express.static(path.join(__dirname, '../static/plugin'), pluginStaticOptions));
+app.use('/plugin', express.static(path.join(__dirname, '../static/plugin'), pluginStaticOptions));
 app.use('/static', express.static(path.join(__dirname, '../static')));
 app.use('/builtin-widgets', express.static(path.join(__dirname, '../static/builtin-widgets')));
 app.use('/images', express.static(path.join(__dirname, '../static/images')));
-app.use('/static/plugin', express.static(path.join(__dirname, '../static/plugin'), { dotfiles: 'ignore' }));
-app.use('/plugin', express.static(path.join(__dirname, '../static/plugin'), { dotfiles: 'ignore' }));
 // Serve uploaded files with date-based directory structure
 app.use(
   '/d',
@@ -442,6 +458,12 @@ if (config.env === 'development') {
               res.setHeader('Content-Type', 'text/css; charset=utf-8');
             } else if (filePath.endsWith('.js')) {
               res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+            }
+            // The plugin sandbox page runs in an opaque origin, so its module
+            // scripts and styles are cross-origin requests (Origin: null).
+            if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
+              res.setHeader('Access-Control-Allow-Origin', '*');
+              res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
             }
           }
         } catch (err) {

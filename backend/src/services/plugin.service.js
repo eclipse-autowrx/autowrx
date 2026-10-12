@@ -10,11 +10,6 @@ const httpStatus = require('http-status');
 const { Plugin, Role, UserRole } = require('../models');
 const ApiError = require('../utils/ApiError');
 
-/**
- * Create plugin
- * @param {Object} body
- * @returns {Promise<Plugin>}
- */
 const slugify = (name) =>
   name
     .toString()
@@ -39,7 +34,43 @@ const ensureUniqueSlug = async (base) => {
   return `${candidate}-${Date.now()}`;
 };
 
-const createPlugin = async (body) => {
+const isHttpUrl = (value) => {
+  try {
+    const { protocol } = new URL(value);
+    return protocol === 'http:' || protocol === 'https:';
+  } catch (_) {
+    return false;
+  }
+};
+
+/**
+ * Non-admins may only register external http(s) plugins. Internal bundles
+ * (zip uploads served same-origin under /plugin/<slug>) are admin-only.
+ * Unchanged values on an existing plugin are accepted, so owners of legacy
+ * internal plugins can still edit name/description/config.
+ * @param {Object} body create/update payload
+ * @param {{ isAdmin: boolean }} actor
+ * @param {Plugin} [existing] current plugin when updating
+ */
+const assertPluginWriteAllowed = (body, actor, existing) => {
+  if (actor && actor.isAdmin) return;
+  if (body.is_internal === true && !(existing && existing.is_internal)) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Only admins can add internal (uploaded) plugins.');
+  }
+  const urlChanged = body.url !== undefined && (!existing || body.url !== existing.url);
+  if (urlChanged && !isHttpUrl(body.url)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Plugin URL must be an absolute http(s) URL.');
+  }
+};
+
+/**
+ * Create plugin
+ * @param {Object} body
+ * @param {{ isAdmin: boolean }} actor
+ * @returns {Promise<Plugin>}
+ */
+const createPlugin = async (body, actor) => {
+  assertPluginWriteAllowed(body, actor);
   const base = slugify(body.name || '');
   const slug = await ensureUniqueSlug(base);
   return Plugin.create({ ...body, slug });
@@ -105,6 +136,34 @@ const isAdminUser = async (userId) => {
   return !!exists;
 };
 
+/**
+ * Ids of all users holding the admin role (role ref "admin")
+ * @returns {Promise<Array>}
+ */
+const getAdminUserIds = async () => {
+  const adminRole = await Role.findOne({ ref: 'admin' }).select('_id');
+  if (!adminRole) return [];
+  return UserRole.find({ role: adminRole.id }).distinct('user');
+};
+
+/**
+ * Serialize plugins with a server-computed `is_trusted` flag: true when the
+ * creator currently holds the admin role. The frontend runs trusted plugins
+ * in-page and sandboxes the rest. Computed at read time (never stored) so a
+ * demoted admin's plugins lose trust immediately.
+ * @param {Plugin|Plugin[]|null} plugins
+ */
+const withTrust = async (plugins) => {
+  if (!plugins) return plugins;
+  const list = Array.isArray(plugins) ? plugins : [plugins];
+  const adminIds = new Set((await getAdminUserIds()).map(String));
+  const serialized = list.map((plugin) => {
+    const json = typeof plugin.toJSON === 'function' ? plugin.toJSON() : { ...plugin };
+    return { ...json, is_trusted: adminIds.has(String(plugin.created_by)) };
+  });
+  return Array.isArray(plugins) ? serialized : serialized[0];
+};
+
 /** Get plugin by id */
 const getPluginById = async (id) => Plugin.findById(id);
 
@@ -126,6 +185,8 @@ const updatePluginById = async (id, updateBody, actor) => {
   if (!isOwner && !isAdmin) {
     throw new ApiError(httpStatus.FORBIDDEN, 'You cannot modify this plugin because it belongs to another account.');
   }
+
+  assertPluginWriteAllowed(updateBody, actor, plugin);
 
   Object.assign(plugin, updateBody);
   await plugin.save();
@@ -166,6 +227,8 @@ module.exports = {
   queryPlugins,
   queryAdminPlugins,
   isAdminUser,
+  assertPluginWriteAllowed,
+  withTrust,
   getPluginById,
   getPluginBySlug,
   updatePluginById,
