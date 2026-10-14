@@ -54,10 +54,11 @@ Plugin authors (publish plugins); model owners/admins (attach plugins as addon t
 - When an **owner** edits a plugin at **My Plugins (`/me/plugins`)**, the slug cannot be changed.
 - When an **owner** browses the public plugin list at **Plugin list (public)**, they see all published plugins; when an **owner** opens their own plugins view at **My Plugins (`/me/plugins`)**, they see only the plugins they own.
 - When an **owner** leaves the required fields (name, URL) missing at **My Plugins (`/me/plugins`)**, the Save button is disabled and they cannot publish.
+- When a non-admin **owner** enters a URL that is not an absolute `http(s)` URL at **My Plugins (`/me/plugins`)**, they are prevented from saving; only **admins** can register internal (uploaded) plugins.
 
 ### API contract
 
-- `GET /v2/plugin` (public) → public list; `GET /v2/plugin/{admin,id/:id,slug/:slug}` → admin/own/by-id/by-slug results; `GET /v2/plugin/mine` (auth) → my own plugins; `POST /v2/plugin` (auth) → creates the plugin, returns `201`; `PUT /v2/plugin/:id` (auth + ownership/admin) → updates, returns `200`; `DELETE /v2/plugin/:id` (auth + ownership/admin) → deletes, returns `204`.
+- `GET /v2/plugin` (public) → public list; `GET /v2/plugin/{admin,id/:id,slug/:slug}` → admin/own/by-id/by-slug results; `GET /v2/plugin/mine` (auth) → my own plugins; `POST /v2/plugin` (auth) → creates the plugin, returns `201` (non-admin: `is_internal: true` → `403`, non-`http(s)` URL → `400`); `PUT /v2/plugin/:id` (auth + ownership/admin) → updates, returns `200` (same non-admin rules for changed values); `DELETE /v2/plugin/:id` (auth + ownership/admin) → deletes, returns `204`.
 - Create auto-generates a unique `slug` (with auto-suffix); update rejects `slug` (immutable).
 
 ### Quality control
@@ -76,19 +77,19 @@ flowchart LR
 
 ### Security
 
-Reads public; writes require auth + ownership (or admin). The upload admin gate is commented out — any authenticated user can upload (subject to per-slug ownership).
+Reads public; writes require auth + ownership (or admin). Non-admins may only register external `http(s)` plugins; internal plugins and zip upload are admin-only. Every read response carries a server-computed `is_trusted` flag (creator currently holds the admin role) that drives frontend sandboxing (CAP-PLUGIN-03).
 
 **Coverage:**
 - **Auth:** Reads are public (`GET /v2/plugin`, `/admin`, `/id/:id`, `/slug/:slug`); writes (POST/PUT/DELETE/`mine`) require authentication.
-- **Authorization:** Update/delete require owner-or-admin; create has no admin gate; the upload admin gate is disabled (commented out), so any authenticated user can upload.
-- **Input validation:** Caller must send valid plugin fields (validated on create/update/list/get); `slug` is rejected on update; `config` is not validated (accepted as-is); `url` is URI-validated only for external plugins.
+- **Authorization:** Update/delete require owner-or-admin; create/update by non-admins is limited to `is_internal: false` + absolute `http(s)` URL (`pluginService.assertPluginWriteAllowed`; unchanged values on a legacy internal plugin are accepted so its owner can still edit metadata); upload is admin-only (CAP-PLUGIN-02).
+- **Input validation:** Caller must send valid plugin fields (validated on create/update/list/get); `slug` is rejected on update; `config` is not validated (accepted as-is); external `url` must be an `http`/`https` URI; `is_trusted` is response-only (never accepted).
 - **Rate limiting:** not applied — `authLimiter` is defined but not wired into any plugin route (or any route at all).
 - **Secrets:** none handled by CRUD; the untyped `config` field could hold author-supplied secrets, but they are not protected or surfaced specially.
 
 **Risks:**
 - **Anonymous-style metadata spoofing:** public read access lets attackers enumerate all plugin slugs, URLs, and config, mapping the attack surface for later exploitation or impersonation via look-alike slugs. *Mitigation:* none currently — public read is by design for plugin discovery; constrain sensitive values in `config` and consider slug look-alike warnings.
 - **Ownership bypass on update/delete:** a broken ownership check would let any authenticated user overwrite or delete another author's plugin, swapping a trusted bundle for a malicious one (supply-chain takeover). *Mitigation:* owner-or-admin check enforced on PUT/DELETE; monitor for check regressions.
-- **Commented-out admin gate:** with the `ADMIN` check disabled on upload, any authenticated user can publish plugins, lowering the bar for injecting malicious code into the registry. *Mitigation:* none currently — re-enable the admin gate on the upload route.
+- **Untrusted author code:** any authenticated user can still register an external plugin URL that other users open. *Mitigation:* non-admin plugins (`is_trusted: false`) run in an opaque-origin sandboxed iframe with a restricted PluginAPI bridge (CAP-PLUGIN-03); same-origin URLs are admin-only.
 
 ### Personal data processing
 ❌ No — this capability does not process personal data directly; `created_by`/`updated_by` are user ObjectIds (no email/name PII collected).
@@ -118,26 +119,28 @@ Plugin metadata + `config` (Mixed) stored in `plugins` with `created_by`/`update
 
 | Actor | Where | Personal data | E2E coverage |
 |---|---|---|---|
-| owner (plugin author) | My Plugins (`/me/plugins`) (upload form) | ❌ No | ✅ 1 case, ≈40% (est.) |
+| admin | Admin → Plugins (`/admin/plugins`) (upload form) | ❌ No | ✅ 1 case, ≈40% (est.) |
 
 ### Description
 
-As a plugin author, I can upload a plugin as a zip bundle and have AutoWRX host it for me, so that I do not need an external CDN. AutoWRX extracts the bundle and detects the entry point automatically.
+As an admin, I can upload a plugin as a zip bundle and have AutoWRX host it for me, so that I do not need an external CDN. AutoWRX extracts the bundle and detects the entry point automatically.
 
 ### Who uses it / value
 
-Plugin authors (host plugins without an external CDN); admins (bundle system plugins).
+Admins (host and bundle trusted plugins without an external CDN). Non-admin authors host their bundles externally and register them by URL (CAP-PLUGIN-01).
 
 ### Acceptance criteria
 
-- When an **owner** opens the plugin form at **My Plugins (`/me/plugins`)**, enters a name, chooses "Upload ZIP", and selects a zip file, the bundle is uploaded and extracted, and the entry-point URL is filled in for them.
-- When an **owner** re-uploads to a slug they own at **My Plugins (`/me/plugins`)**, their bundle is updated; when an **owner** uploads to a slug owned by another non-admin user at **My Plugins (`/me/plugins`)**, they are prevented (the action is denied).
-- When an upload or extraction fails at **My Plugins (`/me/plugins`)**, the **owner** sees an error message and the URL is not set.
+- When an **admin** opens the plugin form, enters a name, chooses "Upload ZIP", and selects a zip file, the bundle is uploaded and extracted, and the entry-point URL is filled in for them.
+- When an **admin** re-uploads to an existing slug, the bundle is updated.
+- When a non-admin **user** opens the plugin form at **My Plugins (`/me/plugins`)**, the "Upload ZIP" control is not shown; a direct upload request is denied.
+- When an upload or extraction fails, the **admin** sees an error message and the URL is not set.
 
 ### API contract
 
-- `POST /v2/plugin/upload/:slug` (auth; multipart `file`) → extracts the bundle, returns `200 { plugin, url }`; the plugin is served at `/plugin/<slug>/<entry>` with `is_internal=true`.
-- Upload to an existing slug owned by another non-admin → `403`.
+- `POST /v2/plugin/upload/:slug` (auth + `ADMIN` permission, checked before multer; multipart `file`) → non-admin `403`; extracts the bundle, returns `200 { plugin, url }`; the plugin is served at `/plugin/<slug>/<entry>` with `is_internal=true`.
+- Upload to an existing slug owned by another user is additionally owner-or-admin checked in the controller (defense-in-depth).
+- `/plugin/*` and `/static/plugin/*` responses carry `X-Content-Type-Options: nosniff`, `Access-Control-Allow-Origin: *` and `Cross-Origin-Resource-Policy: cross-origin` (so the sandbox can load bundles); `.html` files also get `Content-Security-Policy: sandbox allow-scripts`, so a bundle page opened directly cannot run on the app origin.
 
 ### Quality control
 
@@ -159,18 +162,18 @@ sequenceDiagram
 
 ### Security
 
-Auth required; ownership enforced on existing slug. Upload accepts any file type (50 MB limit) and runs system `unzip` — treat as trusted code. Admin gate commented out (see above).
+Auth + `ADMIN` permission required (gate runs before multer, so non-admin requests never write a temp file). Extraction uses `safeExtractZip` (rejects traversal/symlinks, size caps).
 
 **Coverage:**
 - **Auth:** required for `POST /v2/plugin/upload/:slug`.
-- **Authorization:** ownership is enforced on existing slug (owner or admin); the admin gate is commented out, so a new slug can be uploaded by any authenticated user.
+- **Authorization:** `checkPermission(PERMISSIONS.ADMIN)` on the route; ownership additionally enforced on an existing slug (owner or admin).
 - **Input validation:** only the `slug` param is validated; the file filter accepts any file type; 50 MB size limit (`limits.fileSize`); no zip-content validation.
 - **Rate limiting:** not applied — `authLimiter` defined but not wired into the upload route.
 - **Secrets:** none handled by the route; bundle contents are code (authors could embed secrets, but the system does not inspect or protect them).
 
 **Risks:**
 - **Zip-slip / arbitrary file write:** invoking system `unzip` on untrusted archives risks path-traversal (zip-slip) writing files outside `static/plugin/:slug`, potentially overwriting server code or config. *Mitigation:* none currently — use a zip library that rejects `..`/absolute paths, or sanitize extraction targets.
-- **Malicious bundle execution:** the uploaded bundle runs unsandboxed in every visitor's browser; a compromised or rogue author can push XSS, token theft, or data-exfiltration code to all users who open the tab. *Mitigation:* none currently — plugins run unsandboxed by design; only install trusted plugins, and don't pass tokens/PII into PluginAPI/config/data.
+- **Malicious bundle execution:** uploaded bundles are served same-origin. *Mitigation:* upload is admin-only; legacy bundles uploaded by non-admins before this gate are `is_trusted: false` and therefore run in the sandbox (CAP-PLUGIN-03); bundle HTML is served with `CSP: sandbox`.
 - **Unrestricted file type:** accepting any file type with only a 50 MB cap allows non-JS payloads (e.g. large binary blobs, polyglot files) to be hosted and abused for storage abuse or content-type confusion attacks. *Mitigation:* none currently — restrict accepted MIME types and validate bundle entrypoints.
 
 ### Personal data processing
@@ -220,7 +223,7 @@ End users (plugin renders in tabs); plugin authors (the load contract).
 
 ### API contract
 
-No HTTP surface — transparent runtime behavior. The loader fetches the plugin, loads it, and renders it with `{ data, editable, config, api }`; reuses the cached registration on tab switch (no reload); times out when a plugin fails to register within 15 s. `editable` is derived from `WRITE_MODEL` (advisory only). Plugin scripts run same-origin, unsandboxed.
+No HTTP surface — transparent runtime behavior. The loader fetches the plugin, loads it, and renders it with `{ data, editable, config, api }`; reuses the cached registration on tab switch (no reload); times out when a plugin fails to register within 15 s. `editable` is derived from `WRITE_MODEL` (advisory only). Tiered trust: plugins with `is_trusted: true` (creator is an admin) run in-page as before; all others (missing flag included) render in `SandboxedPluginFrame` — an `<iframe src="/sandbox-plugin.html" sandbox="allow-scripts allow-forms allow-popups allow-downloads">` (no `allow-same-origin`, so an opaque origin) that talks to the host over a postMessage RPC bridge.
 
 ### Quality control
 
@@ -240,7 +243,7 @@ flowchart TD
 
 ### Security
 
-Same-origin, unsandboxed — full DOM/window access. Only public site configs surfaced (secrets never exposed). `editable` from `WRITE_MODEL` permission; advisory only (plugin can ignore).
+Trusted (admin-created) plugins run same-origin with full DOM/window access. Untrusted plugins run in an opaque-origin sandboxed iframe: no access to host cookies, `localStorage`, DOM or globals; PluginAPI calls are proxied over postMessage, only accepted from the frame's own `contentWindow`, and `shareAsset`, `removeAssetAccess`, `searchUserByEmail`, `getAssetUsers`, `replaceAPIs`, `replaceVss`, `replaceSignalMapping` are denied (`UNTRUSTED_PLUGIN_API_DENYLIST`). Only public site configs surfaced. `editable` from `WRITE_MODEL` permission; advisory only.
 
 **Coverage:**
 - **Auth:** N/A — tab access follows the model's read-access gating; the loader itself adds no auth.
@@ -250,8 +253,9 @@ Same-origin, unsandboxed — full DOM/window access. Only public site configs su
 - **Secrets:** none — the plugin API exposes only public site config (no tokens/secrets); no auth tokens are passed to the plugin.
 
 **Risks:**
-- **Unsandboxed code execution:** a loaded plugin has full access to `window`, DOM, cookies, and `localStorage`, enabling XSS, session-token theft, and silent exfiltration of any data the page holds. *Mitigation:* none currently — plugins run unsandboxed by design; only install trusted plugins, and don't pass tokens/PII into PluginAPI/config/data.
-- **Global namespace pollution:** priming `window.React`, `window.ReactDOM`, the `require` shim, and `__webpack_require__.cache` lets a malicious plugin tamper with shared globals, breaking or hijacking other plugins and the host app. *Mitigation:* none currently — consider namespacing plugin globals or sandboxing plugins in an iframe/Web Worker.
+- **Code execution of trusted plugins:** admin-created plugins still have full access to `window`, DOM, cookies and `localStorage`. *Mitigation:* only admins can create trusted plugins; trust is recomputed at read time, so demoting an admin sandboxes their plugins.
+- **Bridge abuse by untrusted plugins:** a sandboxed plugin still acts as the viewing user through the allowed PluginAPI methods. *Mitigation:* risky methods denied; backend permission checks apply to every proxied call.
+- **Global namespace pollution:** priming `window.React`, `window.ReactDOM`, the `require` shim, and `__webpack_require__.cache` lets a malicious plugin tamper with shared globals, breaking or hijacking other plugins and the host app. *Mitigation:* applies to trusted plugins only — untrusted plugins get their own globals inside the sandbox iframe.
 - **Advisory-only `editable`:** the `editable` flag is advisory; a plugin can ignore it and mutate model data despite the user lacking `WRITE_MODEL`, causing unauthorized data modification. *Mitigation:* none currently — enforce write checks server-side on every `PluginAPI` mutation, do not trust the client-side `editable` flag.
 
 ### Personal data processing

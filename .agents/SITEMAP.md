@@ -207,6 +207,8 @@
 | Plugin list | Shows installed plugins | ✅ `admin.spec.ts` |
 | Install plugin (external URL) | Add plugin via admin UI with external URL | ✅ `plugin-management.spec.ts` |
 | Install plugin (ZIP upload) | Add plugin via admin UI with ZIP upload | ✅ `plugin-management.spec.ts` |
+| Plugin authz (#626) | Non-admin: no ZIP upload / internal / same-origin URL (403/400) | ✅ `plugin-sandbox.spec.ts` |
+| Plugin trust tiers | Admin plugin in-page; non-admin plugin in opaque-origin sandbox iframe, storage/cookie/parent blocked, API bridge + denylist | ✅ `plugin-sandbox.spec.ts` |
 
 ---
 

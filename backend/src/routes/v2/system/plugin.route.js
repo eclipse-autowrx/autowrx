@@ -12,6 +12,8 @@ const validate = require('../../../middlewares/validate');
 const { pluginValidation } = require('../../../validations');
 const { pluginController } = require('../../../controllers');
 const upload = require('../../../middlewares/upload');
+const { checkPermission } = require('../../../middlewares/permission');
+const { PERMISSIONS } = require('../../../config/roles');
 
 const router = express.Router();
 
@@ -31,10 +33,12 @@ router.post('/', validate(pluginValidation.createPlugin), pluginController.creat
 router.put('/:id', validate(pluginValidation.updatePlugin), pluginController.updatePlugin);
 router.delete('/:id', pluginController.removePlugin);
 
-// Upload and extract internal plugin zip
+// Upload and extract internal plugin zip — admin only. The permission gate
+// runs before multer so a non-admin request never writes a temp file.
 router.post(
   '/upload/:slug',
   validate(pluginValidation.uploadInternal),
+  checkPermission(PERMISSIONS.ADMIN),
   upload.single('file'),
   pluginController.uploadInternalPlugin,
 );

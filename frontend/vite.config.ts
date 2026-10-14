@@ -23,6 +23,12 @@ export default defineConfig({
     // For Docker builds, this should be ../backend/static/frontend-dist
     // For local development, you can change this to 'dist' if needed
     outDir: process.env.VITE_BUILD_OUT_DIR ? path.resolve(__dirname, process.env.VITE_BUILD_OUT_DIR) : path.resolve(__dirname, '../backend/static/frontend-dist'),
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        sandbox: path.resolve(__dirname, 'sandbox-plugin.html'),
+      },
+    },
   },
   resolve: {
     alias: {
@@ -30,6 +36,9 @@ export default defineConfig({
     },
   },
   server: {
+    // The plugin sandbox iframe has an opaque origin ("null"); module scripts
+    // it loads need CORS to be permitted.
+    cors: true,
     proxy: {
       '/v2': {
         target: 'http://localhost:3200',

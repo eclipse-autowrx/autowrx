@@ -26,6 +26,8 @@ import {
   type Plugin,
 } from '@/services/plugin.service'
 import { toast } from 'react-toastify'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 
 type PluginFormProps = {
   open: boolean
@@ -45,6 +47,7 @@ const PluginForm = ({
   defaultType,
 }: PluginFormProps) => {
   const qc = useQueryClient()
+  const [isAdmin] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
   const [isOpen, setIsOpen] = useState(open)
 
   useEffect(() => setIsOpen(open), [open])
@@ -91,6 +94,7 @@ const PluginForm = ({
   const [activeTab, setActiveTab] = useState<'meta' | 'config'>('meta')
   const [jsonText, setJsonText] = useState<string>('{}')
   const [jsonError, setJsonError] = useState<string | null>(null)
+  const [urlError, setUrlError] = useState<string | null>(null)
 
   useEffect(() => {
     if (initial) {
@@ -128,11 +132,31 @@ const PluginForm = ({
         setJsonError(e?.message || 'Invalid JSON')
         throw new Error('Invalid JSON in Config tab')
       }
+      // Non-admins can only point at an external plugin URL; internal hosting
+      // is admin-only, so never send is_internal for them.
+      let isInternal = !!form.is_internal
+      if (!isAdmin) {
+        let hasAbsoluteHttpUrl = false
+        try {
+          const parsedUrl = new URL(String(form.url || ''))
+          hasAbsoluteHttpUrl =
+            parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:'
+        } catch {
+          hasAbsoluteHttpUrl = false
+        }
+        if (!hasAbsoluteHttpUrl) {
+          const message = 'URL must be an absolute http(s) URL'
+          setUrlError(message)
+          throw new Error(message)
+        }
+        isInternal = false
+      }
+      setUrlError(null)
       const payload: any = {
         name: form.name,
         image: form.image,
         description: form.description,
-        is_internal: !!form.is_internal,
+        is_internal: isInternal,
         url: form.url,
         config: parsedConfig,
         type: form.type || defaultType || 'prototype_function',
@@ -284,9 +308,13 @@ const PluginForm = ({
                   rows={2}
                   required
                 />
+                {urlError && (
+                  <p className="text-sm text-destructive">{urlError}</p>
+                )}
               </div>
 
-              {/* Upload button to derive URL via internal ZIP */}
+              {/* Upload button to derive URL via internal ZIP (admins only) */}
+              {isAdmin && (
               <div className="space-y-2 flex items-center gap-2">
                 <DaImportFile
                   accept=".zip"
@@ -305,6 +333,7 @@ const PluginForm = ({
                   </Button>
                 </DaImportFile>
               </div>
+              )}
             </div>
           )}
 

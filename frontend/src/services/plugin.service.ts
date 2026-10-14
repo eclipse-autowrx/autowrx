@@ -15,6 +15,8 @@ export interface Plugin {
   image?: string
   description?: string
   is_internal: boolean
+  /** True when the plugin was created by an admin - only trusted plugins run same-origin */
+  is_trusted?: boolean
   url?: string
   config?: any
   type?: 'prototype_function' | 'deploy' | string

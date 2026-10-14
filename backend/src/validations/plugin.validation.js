@@ -20,7 +20,9 @@ const createPlugin = {
     url: Joi.when('is_internal', {
       is: true,
       then: Joi.string().allow(''),
-      otherwise: Joi.string().uri().required(),
+      otherwise: Joi.string()
+        .uri({ scheme: ['http', 'https'] })
+        .required(),
     }),
     config: Joi.any(),
     type: Joi.string().valid('prototype_function', 'deploy').allow(null, ''),
