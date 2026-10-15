@@ -28,7 +28,7 @@
 
     function callUpdate(options) {
       setStatus('pending');
-      var updates = { description: 'updated-' + Date.now() };
+      var updates = { description: { text: 'updated-' + Date.now() } };
       Promise.resolve()
         .then(function () {
           return api.updatePrototype(updates, options);

@@ -7,7 +7,8 @@
 // SPDX-License-Identifier: MIT
 
 import { copyFile, mkdir, readFile, rm } from 'fs/promises';
-import { join } from 'path';
+import { existsSync } from 'fs';
+import { join, resolve } from 'path';
 import { tmpdir } from 'os';
 import { Locator, Page, expect } from '@playwright/test';
 
@@ -55,17 +56,27 @@ export type NavBarActionConfig = {
 
 export async function loginAs(page: Page, email: string, password: string) {
   await page.goto('/');
-  await page.waitForTimeout(1500);
-
   const userProfile = page.locator('img[alt="User profile"]').first();
+  const signInBtn = page.locator('button:has-text("Sign In"), a:has-text("Sign In")').first();
+
+  // Wait for the header to render before deciding whether a session is active;
+  // a fixed sleep here raced with slow loads and missed the logout pre-check.
+  // The Vite dev server intermittently stalls a boot-time module load (page
+  // stays blank; same URL renders fine right after) — one reload recovers.
+  const headerVisible = () =>
+    expect(userProfile.or(signInBtn)).toBeVisible({ timeout: 30000 });
+  try {
+    await headerVisible();
+  } catch {
+    await page.reload();
+    await headerVisible();
+  }
   if (await userProfile.isVisible().catch(() => false)) {
     await logout(page);
-    await page.goto('/');
-    await page.waitForTimeout(1500);
+    await expect(signInBtn).toBeVisible({ timeout: 15000 });
   }
 
   // Open login modal
-  const signInBtn = page.locator('button:has-text("Sign In"), a:has-text("Sign In")').first();
   await signInBtn.click();
   await page.waitForTimeout(1000);
 
@@ -515,7 +526,29 @@ export async function setPrototypeDashboardConfigViaApi(
   }
 }
 
+// The frontend loads the Monaco editor from cdn.jsdelivr.net at runtime.
+// On networks without direct outbound access the loader fails and the code
+// editor never mounts, so serve the locally installed copy instead. The
+// monaco-editor devDependency is pinned to the version the app's
+// @monaco-editor/loader requests. Falls through to the real CDN when absent.
+const MONACO_CDN_PATTERN = /^https:\/\/cdn\.jsdelivr\.net\/npm\/monaco-editor@[^/]+\/min\/vs\/(.*)$/;
+
+export async function serveMonacoLocally(page: Page) {
+  const monacoRoot = resolve(__dirname, '..', 'node_modules', 'monaco-editor', 'min', 'vs');
+  if (!existsSync(monacoRoot)) return;
+  await page.route(MONACO_CDN_PATTERN, async (route) => {
+    const relPath = route.request().url().match(MONACO_CDN_PATTERN)?.[1] ?? '';
+    const filePath = resolve(monacoRoot, relPath);
+    if (!filePath.startsWith(monacoRoot + '/') || !existsSync(filePath)) {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({ path: filePath });
+  });
+}
+
 export async function goToPrototypeCodeTab(page: Page, modelId: string, prototypeId: string) {
+  await serveMonacoLocally(page);
   const responsePromise = page.waitForResponse(
     (res) =>
       res.url().includes(`/prototypes/${prototypeId}`) &&
@@ -1478,11 +1511,7 @@ export async function selectHomePrototypeSort(
     name: /Newest|Oldest|Name A-Z|Name Z-A|Last Viewed|First Viewed/,
   });
   await sortButton.click();
-  await page
-    .locator('ul')
-    .locator('label')
-    .filter({ has: page.getByText(option, { exact: true }) })
-    .click();
+  await page.getByRole('menuitem', { name: option }).click();
   await page.waitForTimeout(1000);
 }
 
@@ -1891,7 +1920,12 @@ export async function routeBrokenImageUrls(
     await route.continue();
   };
   await page.route('**/*', handler);
-  return () => page.unroute('**/*', handler);
+  return async () => {
+    // A timed-out test body may leave the page already closed; unrouting a
+    // closed page throws and masks the original failure.
+    if (page.isClosed()) return;
+    await page.unroute('**/*', handler).catch(() => {});
+  };
 }
 
 export async function expectCardImageFallback(

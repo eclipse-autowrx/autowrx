@@ -19,3 +19,7 @@ coverage
 data/clock.txt
 
 ./DS_Store
+# Runtime plugin uploads (extracted ZIPs); only the sample-* seed dirs are tracked
+static/plugin/*
+!static/plugin/sample-esm
+!static/plugin/sample-tsx

@@ -27,6 +27,7 @@ pids
 dist/
 build/
 out/
+frontend/dist-e2e/
 **/flow-plugin.generated.css
 
 ### Caches

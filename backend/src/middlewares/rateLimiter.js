@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -20,7 +20,8 @@ const RATE_LIMITS = {
   // Failed logins per IP + email
   login: { windowMs: 15 * MINUTE, max: 10, skipSuccessfulRequests: true },
   register: { windowMs: 60 * MINUTE, max: 5 },
-  // Failed refreshes per IP; successful ones happen on every page load and are not counted
+  // Failed refreshes per IP; successful ones happen on every page load and are not
+  // counted; cookieless probes are skipped entirely (see refreshLimiter below)
   refresh: { windowMs: 15 * MINUTE, max: 60, skipSuccessfulRequests: true },
   // Reset-code emails per IP + email
   forgotPassword: { windowMs: 60 * MINUTE, max: 3 },
@@ -59,7 +60,14 @@ const limitsFor = (name) => ({ ...RATE_LIMITS[name], ...(config.rateLimit.overri
 const authIpLimiter = createLimiter(limitsFor('authIp'));
 const loginLimiter = createLimiter({ ...limitsFor('login'), keyGenerator: ipEmailKey });
 const registerLimiter = createLimiter(limitsFor('register'));
-const refreshLimiter = createLimiter(limitsFor('refresh'));
+// Cookieless refresh probes come from normal session-less clients (fresh
+// browser contexts, first visits); they carry no token to brute-force, always
+// fail auth, and would otherwise exhaust the failed-refresh budget and lock
+// out clients holding a valid refresh cookie.
+const refreshLimiter = createLimiter({
+  ...limitsFor('refresh'),
+  skip: (req) => !config.rateLimit.enabled || !req.cookies?.[config.jwt.cookie.name],
+});
 const forgotPasswordLimiter = createLimiter({ ...limitsFor('forgotPassword'), keyGenerator: ipEmailKey });
 const resetPasswordLimiter = createLimiter({ ...limitsFor('resetPassword'), keyGenerator: ipEmailKey });
 const verifyEmailLimiter = createLimiter(limitsFor('verifyEmail'));
