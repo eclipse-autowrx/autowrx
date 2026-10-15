@@ -16,23 +16,31 @@ const userService = require('./user.service');
 const { Token } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { tokenTypes } = require('../config/tokens');
+const { JWT_ALGORITHM, getSigningKey, verifyJwt } = require('../utils/jwtKeys');
 
 /**
  * Generate token
  * @param {ObjectId} userId
  * @param {Moment} expires
  * @param {string} type
- * @param {string} [secret]
+ * @param {string} [secret] - explicit secret; when omitted, signs with the active key and sets its `kid`
+ * @param {Object} [extraClaims]
+ * @param {string} [extraClaims.tid] - tenant id; set by multitenancy (#2.8), unused until then
  * @returns {string}
  */
-const generateToken = (userId, expires, type, secret = config.jwt.secret) => {
+const generateToken = (userId, expires, type, secret, extraClaims = {}) => {
   const payload = {
     sub: userId,
     iat: moment().unix(),
     exp: expires.unix(),
     type,
+    ...(extraClaims.tid && { tid: extraClaims.tid }),
   };
-  return jwt.sign(payload, secret);
+  if (secret) {
+    return jwt.sign(payload, secret, { algorithm: JWT_ALGORITHM });
+  }
+  const signingKey = getSigningKey();
+  return jwt.sign(payload, signingKey.secret, { algorithm: JWT_ALGORITHM, keyid: signingKey.kid });
 };
 
 /**
@@ -62,7 +70,7 @@ const saveToken = async (token, userId, expires, type, blacklisted = false) => {
  * @returns {Promise<Token>}
  */
 const verifyToken = async (token, type) => {
-  const payload = jwt.verify(token, config.jwt.secret);
+  const payload = verifyJwt(token);
   const tokenDoc = await Token.findOne({ token, type, user: new mongoose.Types.ObjectId(payload.sub), blacklisted: false });
   if (!tokenDoc) {
     throw new Error('Token not found');
@@ -73,14 +81,17 @@ const verifyToken = async (token, type) => {
 /**
  * Generate auth tokens
  * @param {User} user
+ * @param {Object} [options]
+ * @param {string} [options.tenantId] - added as the `tid` claim; set by multitenancy (#2.8), unused until then
  * @returns {Promise<Object>}
  */
-const generateAuthTokens = async (user) => {
+const generateAuthTokens = async (user, { tenantId } = {}) => {
+  const claims = { tid: tenantId };
   const accessTokenExpires = moment().add(config.jwt.accessExpirationValue, config.jwt.accessExpirationUnit);
-  const accessToken = generateToken(user._id, accessTokenExpires, tokenTypes.ACCESS);
+  const accessToken = generateToken(user._id, accessTokenExpires, tokenTypes.ACCESS, undefined, claims);
 
   const refreshTokenExpires = moment().add(config.jwt.refreshExpirationDays, 'days');
-  const refreshToken = generateToken(user._id, refreshTokenExpires, tokenTypes.REFRESH);
+  const refreshToken = generateToken(user._id, refreshTokenExpires, tokenTypes.REFRESH, undefined, claims);
   await saveToken(refreshToken, user._id, refreshTokenExpires, tokenTypes.REFRESH);
 
   return {

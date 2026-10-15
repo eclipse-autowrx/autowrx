@@ -96,6 +96,8 @@ Create the corresponding `mongodb-url`, `jwt-secret`, and `admin-password` secre
 **Important Notes:**
 - Keep `.env.prod` private; it is ignored by Git.
 - `JWT_SECRET`: Use a strong, random secret (e.g., `openssl rand -base64 32`)
+  - Keep it stable. To rotate signing keys, use `JWT_KEYS` + `JWT_ACTIVE_KID` instead — see [Rotating the JWT signing key](../backend/src/docs/environment-variables.md#rotating-the-jwt-signing-key)
+- `TRUST_PROXY`: Number of reverse proxies in front of the backend (default `1`). Set `false` if the backend port is exposed directly; a wrong value lets clients spoof their IP and bypass auth rate limits
 - `CORS_ORIGINS`: Escape dots with `\\.` (e.g., `example\\.com`)
 - Authentication settings (self-registration, public viewing, etc.) are configured via the Site Configuration in the admin panel after deployment
 

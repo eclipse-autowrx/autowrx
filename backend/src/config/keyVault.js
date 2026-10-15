@@ -14,6 +14,7 @@ const { SecretClient } = require('@azure/keyvault-secrets');
 const secretMappings = {
   'mongodb-url': 'MONGODB_URL',
   'jwt-secret': 'JWT_SECRET',
+  'jwt-keys': 'JWT_KEYS',
   'github-client-secret': 'GITHUB_CLIENT_SECRET',
   'email-api-key': 'EMAIL_API_KEY',
   'aws-public-key': 'AWS_PUBLIC_KEY',

@@ -7,12 +7,20 @@
 // SPDX-License-Identifier: MIT
 
 const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
-const config = require('./config');
 const { tokenTypes } = require('./tokens');
+const { JWT_ALGORITHM, resolveVerificationKey } = require('../utils/jwtKeys');
 const { User, Asset } = require('../models');
 
 const jwtOptions = {
-  secretOrKey: config.jwt.secret,
+  // Pick the verification secret per token from its `kid` header (key rotation)
+  secretOrKeyProvider: (req, rawJwtToken, done) => {
+    try {
+      done(null, resolveVerificationKey(rawJwtToken));
+    } catch (error) {
+      done(error);
+    }
+  },
+  algorithms: [JWT_ALGORITHM],
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
 };
 

@@ -23,6 +23,12 @@
 | Variable                                    | Description                                                           | Default          |
 | ------------------------------------------- | --------------------------------------------------------------------- | ---------------- |
 | `config.jwt.secret`                         | Secret key used for JWT signing/verification                          | Required         |
+| `config.jwt.keys`                           | JWT key ring by kid (`JWT_KEYS`, or `{ default: JWT_SECRET }`)         | From `JWT_SECRET` |
+| `config.jwt.activeKid`                      | Kid that signs new tokens (`JWT_ACTIVE_KID`)                           | `'default'`      |
+| `config.jwt.acceptLegacySecret`             | Verify `JWT_SECRET`-signed tokens (kid `default` / no kid) after rotation (`JWT_ACCEPT_LEGACY_SECRET`) | `true` |
+| `config.rateLimit.enabled`                  | Rate-limit auth endpoints (`RATE_LIMIT_ENABLED`)                       | `true` (`false` in test) |
+| `config.rateLimit.overrides`                | Per-limiter overrides (`AUTH_RATE_LIMITS`)                             | `{}`             |
+| `config.trustProxy`                         | Express `trust proxy` setting (`TRUST_PROXY`)                          | `1`              |
 | `config.jwt.accessExpirationValue`          | Value for access token expiration                                     | `30`             |
 | `config.jwt.accessExpirationUnit`           | Unit for access token expiration ('minutes' or 'days' in development) | `'minutes'`      |
 | `config.jwt.refreshExpirationDays`          | Days until refresh tokens expire                                      | `30`             |
