@@ -28,6 +28,13 @@ const envVarsSchema = Joi.object()
     JWT_VERIFY_EMAIL_EXPIRATION_MINUTES: Joi.number()
       .default(10)
       .description('minutes after which verify email token expires'),
+    JWT_KEYS: Joi.string()
+      .allow('')
+      .description('JSON object of JWT signing keys by key id (kid), e.g. {"2026-10":"<secret>"}'),
+    JWT_ACTIVE_KID: Joi.string().allow('').description('Key id in JWT_KEYS used to sign new tokens'),
+    JWT_ACCEPT_LEGACY_SECRET: Joi.boolean()
+      .default(true)
+      .description('Accept tokens signed with JWT_SECRET (no kid or kid "default"); disable once rotated-out tokens expire'),
     JWT_COOKIE_NAME: Joi.string().default('token').description('JWT cookie name'),
     JWT_COOKIE_DOMAIN: Joi.string().default('').description('JWT cookie domain'),
     SMTP_HOST: Joi.string().description('server that will send the emails'),
@@ -74,6 +81,12 @@ const envVarsSchema = Joi.object()
     ADMIN_PASSWORD: Joi.string().description('Admin password'),
     // Change Logs max size
     LOGS_MAX_SIZE: Joi.number().default(100).description('Max size of change logs in megabytes'),
+    // Rate limiting & proxy
+    RATE_LIMIT_ENABLED: Joi.boolean().description(
+      'Enable rate limiting on auth endpoints (default: true, false when NODE_ENV=test)',
+    ),
+    AUTH_RATE_LIMITS: Joi.string().allow('').description('JSON overrides for auth rate limits, e.g. {"login":{"max":20}}'),
+    TRUST_PROXY: Joi.string().default('1').description('Express trust proxy setting: hop count, true/false, or subnet list'),
     // File upload settings
     MAX_IMAGE_DIMENSION: Joi.number().default(1024).description('Maximum image dimension in pixels'),
   })
@@ -102,6 +115,61 @@ if (envVars.AUTH_PROVIDER === 'platform' && !platformHeaders.email) {
     'Config validation error: AUTH_PLATFORM_HEADERS must include an "email" key when AUTH_PROVIDER is platform'
   );
 }
+
+// JWT key ring for rotation. Without JWT_KEYS, JWT_SECRET is the single key
+// under kid "default" so existing deployments keep working unchanged.
+let jwtKeys = {};
+if (envVars.JWT_KEYS) {
+  try {
+    jwtKeys = JSON.parse(envVars.JWT_KEYS);
+  } catch (e) {
+    throw new Error('Config validation error: JWT_KEYS must be valid JSON');
+  }
+  if (typeof jwtKeys !== 'object' || jwtKeys === null || Array.isArray(jwtKeys)) {
+    throw new Error('Config validation error: JWT_KEYS must be a JSON object');
+  }
+  const secrets = Object.values(jwtKeys);
+  if (secrets.length === 0 || secrets.some((secret) => typeof secret !== 'string' || !secret)) {
+    throw new Error('Config validation error: JWT_KEYS must contain at least one non-empty string secret');
+  }
+}
+
+const jwtActiveKid = envVars.JWT_ACTIVE_KID || (envVars.JWT_KEYS ? undefined : 'default');
+if (envVars.JWT_KEYS && !Object.prototype.hasOwnProperty.call(jwtKeys, jwtActiveKid)) {
+  throw new Error('Config validation error: JWT_ACTIVE_KID must name a key in JWT_KEYS');
+}
+
+// Tokens signed before rotation carry kid "default" (or no kid) and are signed with JWT_SECRET.
+// Keep verifying them until JWT_ACCEPT_LEGACY_SECRET is turned off.
+const jwtAcceptLegacySecret = envVars.JWT_ACCEPT_LEGACY_SECRET && Boolean(envVars.JWT_SECRET);
+if (!envVars.JWT_KEYS && envVars.JWT_SECRET) {
+  jwtKeys = { default: envVars.JWT_SECRET };
+} else if (jwtAcceptLegacySecret && !Object.prototype.hasOwnProperty.call(jwtKeys, 'default')) {
+  jwtKeys = { ...jwtKeys, default: envVars.JWT_SECRET };
+}
+
+let authRateLimitOverrides = {};
+if (envVars.AUTH_RATE_LIMITS) {
+  try {
+    authRateLimitOverrides = JSON.parse(envVars.AUTH_RATE_LIMITS);
+  } catch (e) {
+    throw new Error('Config validation error: AUTH_RATE_LIMITS must be valid JSON');
+  }
+  if (
+    typeof authRateLimitOverrides !== 'object' ||
+    authRateLimitOverrides === null ||
+    Array.isArray(authRateLimitOverrides)
+  ) {
+    throw new Error('Config validation error: AUTH_RATE_LIMITS must be a JSON object');
+  }
+}
+
+const parseTrustProxy = (value) => {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  if (/^\d+$/.test(value)) return Number(value);
+  return value;
+};
 
 // Shared by CORS and by anything that redirects based on a caller-supplied origin
 // (OAuth/SSO return URLs). Same allowlist, same CORS_ORIGINS patterns, so a host
@@ -143,8 +211,16 @@ const config = {
     url: envVars.MONGODB_URL + (envVars.NODE_ENV === 'test' ? '-test' : ''),
     options: {},
   },
+  trustProxy: parseTrustProxy(envVars.TRUST_PROXY),
+  rateLimit: {
+    enabled: envVars.RATE_LIMIT_ENABLED ?? envVars.NODE_ENV !== 'test',
+    overrides: authRateLimitOverrides,
+  },
   jwt: {
     secret: envVars.JWT_SECRET,
+    keys: jwtKeys,
+    activeKid: jwtActiveKid,
+    acceptLegacySecret: jwtAcceptLegacySecret,
     accessExpirationValue: envVars.JWT_ACCESS_EXPIRATION_MINUTES,
     accessExpirationUnit: 'minutes',
     refreshExpirationDays: envVars.JWT_REFRESH_EXPIRATION_DAYS,

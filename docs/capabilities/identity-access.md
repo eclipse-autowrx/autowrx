@@ -107,17 +107,17 @@ sequenceDiagram
 
 ### Security
 
-Access token short-lived (`JWT_ACCESS_EXPIRATION_MINUTES`, 30 min prod / 30 days in dev), never persisted. Refresh token persisted server-side (`Token` collection, no TTL index), revoked on logout. `trust proxy` enabled. ⚠️ `authLimiter` is defined but **not applied to any route** — login endpoints are effectively unrate-limited (known gap).
+Access token short-lived (`JWT_ACCESS_EXPIRATION_MINUTES`, 30 min prod / 30 days in dev), never persisted. Refresh token persisted server-side (`Token` collection, no TTL index), revoked on logout. `trust proxy` set from `TRUST_PROXY` (default `1` hop). Brute-forceable auth routes are rate limited (`middlewares/rateLimiter.js`, in-memory store, per instance; `RATE_LIMIT_ENABLED`, overrides via `AUTH_RATE_LIMITS`). JWTs are HS256 with a `kid` header from the `JWT_KEYS`/`JWT_ACTIVE_KID` key ring; tokens with kid `default` or no `kid` verify against `JWT_SECRET` while `JWT_ACCEPT_LEGACY_SECRET` is on (default).
 
 **Coverage:**
 - **Auth:** I sign in with email + password; the system returns an access token in the response body (`{ user, tokens: { access } }`) and sets the refresh token as an httpOnly cookie. An SSO-only account (no password) → `401`. The `/login`, `/logout`, `/refresh-tokens` endpoints themselves require no prior session.
 - **Authorization:** N/A — sign-in establishes my identity; sign-out/refresh authorize me via the refresh-token cookie (verified against the `Token` collection).
 - **Input validation:** I must send a valid email and password (validated). `refreshTokens`/`logout` rely on the cookie-bound token (no body validation on the route).
-- **Rate limiting:** not applied — no rate limit protects me from credential brute-force on `/login`, `/refresh-tokens`, `/logout` (`authLimiter` is defined but not wired to any route; known gap).
-- **Secrets:** My access/refresh tokens are signed with the JWT secret (`config.jwt.secret`); my password is bcrypt-hashed; my refresh token is stored server-side in the `Token` collection.
+- **Rate limiting:** `POST /login` — 10 failed attempts / 15 min per IP+email plus 50 failed auth attempts / 15 min per IP (`429`); `POST /refresh-tokens` — 60 failed / 15 min per IP. `/logout` is not limited.
+- **Secrets:** My access/refresh tokens are signed with the active key of the JWT key ring (`config.jwt.keys[config.jwt.activeKid]`, `kid` in the header); my password is bcrypt-hashed; my refresh token is stored server-side in the `Token` collection.
 
 **Risks:**
-- **Credential brute-force / online guessing:** `authLimiter` is defined but not wired to any route, so `POST /v2/auth/login` can be hammered without throttling — weak passwords are exposed to online brute-force and credential-stuffing attacks. *Mitigation:* none currently — wire `authLimiter` to login/register/reset.
+- **Credential brute-force / online guessing:** `POST /v2/auth/login` is a target for online brute-force and credential stuffing against weak passwords. *Mitigation:* per-IP+email and per-IP failed-login limits (`loginLimiter`, `authIpLimiter`); in-memory, so counters reset on restart and are not shared across replicas.
 - **Refresh-token theft:** the long-lived refresh cookie is the equivalent of a long-lived session; an XSS-less cookie steal (e.g. via a compromised subdomain or log injection capturing the cookie) yields persistent account takeover, since the cookie is `httpOnly` but not bound to the access token or device. *Mitigation:* none currently — bind the refresh token to the access token/device fingerprint and rotate on reuse.
 - **No expiry sweep:** the `Token` collection has no TTL index, so revoked/abandoned refresh tokens accumulate, and a stolen refresh token stays valid until explicit logout — extending the window of a token-theft attack. *Mitigation:* none currently — add a TTL index on the `Token` collection.
 
@@ -200,12 +200,12 @@ Registration is gated by the `SELF_REGISTRATION` site auth flag; no admin needed
 - **Auth:** None on the route itself; I'm gated by the `SELF_REGISTRATION` site auth flag (`403` if disabled). On success the system issues me tokens + sets the refresh cookie.
 - **Authorization:** N/A — open self-service when the flag is enabled; no admin or role required.
 - **Input validation:** I must send a valid email, a password, and a name; `image_file`/`provider` are optional (validated).
-- **Rate limiting:** not applied — no rate limit protects me from account-spam on `/register` (`authLimiter` gap).
+- **Rate limiting:** `POST /register` — 5 requests / hour per IP (`429`).
 - **Secrets:** My password is bcrypt-hashed and stored; the system issues me JWT access/refresh tokens.
 
 **Risks:**
-- **Account-spam / namespace squatting:** with `SELF_REGISTRATION` enabled and no rate limit (the `authLimiter` gap), an attacker can bulk-create accounts to squat names/emails or enumerate which addresses are already registered via the `400` duplicate signal. *Mitigation:* none currently — wire `authLimiter` to login/register/reset.
-- **Welcome-email enumeration / abuse:** the welcome email is sent on every successful registration; a script can weaponize registration to spam arbitrary addresses from the platform's mail reputation. *Mitigation:* none currently — throttle welcome-email sends and add a per-IP registration cap.
+- **Account-spam / namespace squatting:** with `SELF_REGISTRATION` enabled, an attacker can bulk-create accounts to squat names/emails or enumerate which addresses are already registered via the `400` duplicate signal. *Mitigation:* `registerLimiter` caps registrations at 5 / hour per IP; no CAPTCHA.
+- **Welcome-email enumeration / abuse:** the welcome email is sent on every successful registration; a script can weaponize registration to spam arbitrary addresses from the platform's mail reputation. *Mitigation:* `registerLimiter` caps registrations (and so welcome emails) at 5 / hour per IP.
 
 ### Personal data processing
 
@@ -293,11 +293,11 @@ My reset code is persisted in `Token` (`type=RESET_PASSWORD`); existing reset to
 - **Auth:** `forgot-password`/`reset-password`/`verify-email` are anonymous for me (the code/token is the bearer); `send-verification-email` requires me to be signed in. Password change is gated by the `PASSWORD_MANAGEMENT` site flag.
 - **Authorization:** N/A for reset/forgot/verify (the emailed code/token authorizes my action); `send-verification-email` is self-scoped to me as the authenticated user.
 - **Input validation:** I must send a valid email (validated); for reset, the query `token` is optional and body `email`/`code` are optional with `password` required (validated); for verify, the query `token` is required (validated).
-- **Rate limiting:** not applied — no rate limit protects me from brute-force on `/reset-password` within the 60-min code window (`authLimiter` gap).
+- **Rate limiting:** `POST /forgot-password` — 3 / hour per IP+email; `POST /reset-password` — 5 failed / 15 min per IP+email; both also count toward the 50 failed / 15 min per-IP limit; `POST /verify-email` — 10 / 15 min per IP.
 - **Secrets:** I receive a 6-digit reset code (`crypto.randomInt`), a JWT legacy reset token, and a JWT verify-email token; my new password is bcrypt-hashed.
 
 **Risks:**
-- **6-digit code brute-force:** the primary reset is a 6-digit code with no documented rate limit on `POST /v2/auth/reset-password`; an attacker holding an email can attempt codes until success within the 60-minute window (only ~1M space, and the always-`200` forgot-password response prevents enumeration but not guessing). *Mitigation:* none currently — wire `authLimiter` to login/register/reset and add per-email code-attempt throttling.
+- **6-digit code brute-force:** the primary reset is a 6-digit code with no documented rate limit on `POST /v2/auth/reset-password`; an attacker holding an email can attempt codes until success within the 60-minute window (only ~1M space, and the always-`200` forgot-password response prevents enumeration but not guessing). *Mitigation:* `resetPasswordLimiter` (5 failed guesses / 15 min per IP+email) and `authIpLimiter`; a distributed attacker rotating IPs is still bounded only per IP.
 - **Account takeover via legacy token path:** the `?token` legacy reset path is retained; if those tokens are predictable, long-lived, or not single-use, an attacker can forge or reuse them to reset passwords without controlling the email. *Mitigation:* none currently — retire the legacy token path or enforce single-use + short TTL on legacy tokens.
 - **Audit gap on reset:** reset events are logged but only `forgot-password` is noted as logged — a successful `reset-password` from a stolen code leaves a thin trail, complicating takeover forensics. *Mitigation:* none currently — log successful `reset-password` events with origin/referer to match `forgot-password`.
 
@@ -392,7 +392,7 @@ Provider `clientSecret`s are **encrypted at rest**, decrypted only for admin dis
 - **Auth:** SSO endpoints are anonymous for me — `/sso` validates the provider is enabled + decodes my ID token; `/github-sso/start`/`/callback` run the OAuth code exchange; `/github/callback` (legacy) emits a token over my socket. Auto-registration is gated by `SSO_AUTO_REGISTRATION`.
 - **Authorization:** N/A — the provider-issued ID token / OAuth code governs my access; admins configure providers in `SSO_PROVIDERS`.
 - **Input validation:** I must send `providerId` and `idToken` (validated); on GitHub start/callback my query params (`providerId`, `code`, `state`) are validated manually in the controller.
-- **Rate limiting:** not applied — no rate limit protects me from abuse on SSO routes (`authLimiter` gap).
+- **Rate limiting:** `POST /sso` and `GET /github-sso/start` — 30 / 15 min per IP (`ssoLimiter`); OAuth callbacks are not limited.
 - **Secrets:** Provider `clientSecret`s are encrypted at rest; the GitHub `client_secret` is used for code exchange; JWT access/refresh tokens are issued to me on success.
 
 **Risks:**

@@ -10,9 +10,8 @@ const { Server } = require('socket.io');
 const logger = require('./logger');
 const ApiError = require('../utils/ApiError');
 const httpStatus = require('http-status');
-const jwt = require('jsonwebtoken');
-const config = require('./config');
 const { jwtVerify } = require('./passport');
+const { verifyJwt } = require('../utils/jwtKeys');
 const { tokenTypes } = require('./tokens');
 const permissionService = require('../services/permission.service');
 const { PERMISSIONS } = require('./roles');
@@ -29,22 +28,25 @@ const init = (server) => {
 
   io.use(function (socket, next) {
     if (socket.handshake.query && socket.handshake.query.access_token) {
-      jwt.verify(socket.handshake.query.access_token, config.jwt.secret, async function (err, decoded) {
-        if (err) return next(new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate'));
-        await jwtVerify(
-          {
-            type: tokenTypes.ACCESS,
-            sub: decoded.sub,
-          },
-          async (error, user) => {
-            if (error || !user) {
-              return next(new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate'));
-            }
-            socket.user = user;
-            next();
+      let decoded;
+      try {
+        decoded = verifyJwt(socket.handshake.query.access_token);
+      } catch (err) {
+        return next(new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate'));
+      }
+      jwtVerify(
+        {
+          type: tokenTypes.ACCESS,
+          sub: decoded.sub,
+        },
+        async (error, user) => {
+          if (error || !user) {
+            return next(new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate'));
           }
-        );
-      });
+          socket.user = user;
+          next();
+        },
+      );
     } else {
       next(new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate'));
     }

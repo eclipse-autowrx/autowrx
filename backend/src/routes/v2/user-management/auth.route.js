@@ -11,6 +11,16 @@ const validate = require('../../../middlewares/validate');
 const authValidation = require('../../../validations/auth.validation');
 const authController = require('../../../controllers/auth.controller');
 const auth = require('../../../middlewares/auth');
+const {
+  authIpLimiter,
+  loginLimiter,
+  registerLimiter,
+  refreshLimiter,
+  forgotPasswordLimiter,
+  resetPasswordLimiter,
+  verifyEmailLimiter,
+  ssoLimiter,
+} = require('../../../middlewares/rateLimiter');
 const ApiError = require('../../../utils/ApiError');
 const httpStatus = require('http-status');
 
@@ -22,9 +32,9 @@ router.post('/authenticate', auth(), authController.authenticate);
 router.post('/authorize', validate(authValidation.authorize), authController.authorize);
 
 router.get('/github/callback', authController.githubCallback);
-router.get('/github-sso/start', authController.githubSsoStart);
+router.get('/github-sso/start', ssoLimiter, authController.githubSsoStart);
 router.get('/github-sso/callback', authController.githubSsoCallback);
-router.post('/sso', validate(authValidation.sso), authController.sso);
+router.post('/sso', ssoLimiter, validate(authValidation.sso), authController.sso);
 
 // Registration endpoint - always registered but checks SELF_REGISTRATION config
 router.post('/register', 
@@ -35,17 +45,30 @@ router.post('/register',
     }
     next();
   },
+  registerLimiter,
   validate(authValidation.register), 
   authController.register
 );
 
-router.post('/login', validate(authValidation.login), authController.login);
+router.post('/login', authIpLimiter, loginLimiter, validate(authValidation.login), authController.login);
 router.post('/logout', authController.logout);
-router.post('/refresh-tokens', authController.refreshTokens);
-router.post('/forgot-password', validate(authValidation.forgotPassword), authController.forgotPassword);
-router.post('/reset-password', validate(authValidation.resetPassword), authController.resetPassword);
+router.post('/refresh-tokens', refreshLimiter, authController.refreshTokens);
+router.post(
+  '/forgot-password',
+  authIpLimiter,
+  forgotPasswordLimiter,
+  validate(authValidation.forgotPassword),
+  authController.forgotPassword,
+);
+router.post(
+  '/reset-password',
+  authIpLimiter,
+  resetPasswordLimiter,
+  validate(authValidation.resetPassword),
+  authController.resetPassword,
+);
 router.post('/send-verification-email', auth(), authController.sendVerificationEmail);
-router.post('/verify-email', validate(authValidation.verifyEmail), authController.verifyEmail);
+router.post('/verify-email', verifyEmailLimiter, validate(authValidation.verifyEmail), authController.verifyEmail);
 
 module.exports = router;
 

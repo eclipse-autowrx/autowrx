@@ -30,8 +30,9 @@ const auth = require('./middlewares/auth');
 const app = express();
 
 // Trust proxy when running behind Nginx or other reverse proxy
-// This is essential for correct handling of X-Forwarded-* headers
-app.set('trust proxy', true);
+// This is essential for correct handling of X-Forwarded-* headers. Defaults to one hop
+// (TRUST_PROXY=1) so clients can't spoof req.ip via X-Forwarded-For to dodge rate limits.
+app.set('trust proxy', config.trustProxy);
 
 if (config.env !== 'test') {
   app.use(morgan.successHandler);
