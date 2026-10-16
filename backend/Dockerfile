@@ -63,5 +63,9 @@ EXPOSE 3200
 
 ENV PORT=3200
 
+# Startup connects to Mongo and seeds data before the server listens,
+# so the start period is long; the probe itself is node src/healthcheck.js
+HEALTHCHECK --interval=15s --timeout=5s --start-period=90s --retries=3 CMD ["node", "src/healthcheck.js"]
+
 CMD ["yarn", "prod:test"]
 

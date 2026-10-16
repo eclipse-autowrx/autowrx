@@ -121,6 +121,39 @@ async function checkSSO() {
   }
 }
 
+// Reject with `message` if `promise` does not settle within `ms`
+function withTimeout(promise, ms, message) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+// Cheap readiness probe: MongoDB only, short timeout. Unlike runHealthCheck it
+// performs no admin login and no external calls, so it is safe to hit every
+// few seconds from the container healthcheck and the deploy gates.
+const READINESS_TIMEOUT_MS = 2000;
+
+async function checkReadiness() {
+  let mongodb;
+  try {
+    mongodb = await withTimeout(
+      checkMongoDB(),
+      READINESS_TIMEOUT_MS,
+      `MongoDB check timed out after ${READINESS_TIMEOUT_MS}ms`,
+    );
+  } catch (err) {
+    mongodb = { status: STATUS.ERROR, message: err.message };
+  }
+
+  return {
+    status: mongodb.status === STATUS.OK ? STATUS.OK : STATUS.ERROR,
+    checkedAt: new Date().toISOString(),
+    services: { mongodb },
+  };
+}
+
 // Run all checks and return consolidated report
 async function runHealthCheck() {
   const [mongodb, jwtCheck, auth, upload, runtimeServer, sso] = await Promise.all([
@@ -146,4 +179,4 @@ async function runHealthCheck() {
   };
 }
 
-module.exports = { runHealthCheck };
+module.exports = { runHealthCheck, checkReadiness };

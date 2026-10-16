@@ -127,22 +127,35 @@ EOF
 
 pm2 start ecosystem.dev-stage.json
 
-# Wait and check
-sleep 5
+# Wait for readiness (same retry loop as the deploy workflow)
 PORT=$(grep -E "^PORT=" .env 2>/dev/null | cut -d'=' -f2 || echo "3202")
 
-echo ""
-echo "=========================================="
-if curl -sf "http://localhost:$PORT/" > /dev/null 2>&1; then
-    echo "  Deployment Successful!"
-    echo "=========================================="
-    echo ""
-    echo "Service running on port: $PORT"
-    echo ""
-    pm2 status
-else
-    echo "  Warning: Health check failed"
-    echo "=========================================="
-    echo ""
-    echo "Check logs with: pm2 logs"
-fi
+MAX_RETRIES=10
+RETRY_INTERVAL=3
+
+for i in $(seq 1 $MAX_RETRIES); do
+    if curl -sf "http://localhost:$PORT/v2/health/ready" > /dev/null 2>&1; then
+        echo ""
+        echo "=========================================="
+        echo "  Deployment Successful!"
+        echo "=========================================="
+        echo ""
+        echo "Service running on port: $PORT"
+        echo ""
+        pm2 status
+        exit 0
+    fi
+
+    if [ $i -eq $MAX_RETRIES ]; then
+        echo ""
+        echo "=========================================="
+        echo "  Health check failed after $MAX_RETRIES attempts"
+        echo "=========================================="
+        echo ""
+        echo "Check logs with: pm2 logs"
+        exit 1
+    fi
+
+    echo "Attempt $i/$MAX_RETRIES - waiting..."
+    sleep $RETRY_INTERVAL
+done
