@@ -117,6 +117,13 @@ app.options(
   }),
 );
 
+// Health probes are mounted before passport/auth-config/dataSync middleware:
+// those do DB queries and buffer ~10s when Mongo is down, so /v2/health/live
+// and /v2/health/ready must bypass them (the only DB touch is the readiness
+// ping itself) to answer fast while the container is unhealthy.
+const { probeRouter } = require('./routes/v2/system/health.route');
+app.use('/v2/health', probeRouter);
+
 // jwt authentication
 app.use(passport.initialize());
 passport.use('jwt', jwtStrategy);

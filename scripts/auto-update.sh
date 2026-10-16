@@ -42,20 +42,22 @@ if echo "$PULL_OUTPUT" | grep -q "Downloaded newer image\|Status: Image is up to
     if echo "$PULL_OUTPUT" | grep -q "Downloaded newer image"; then
         log "New images found, deploying..."
 
-        # Deploy with zero downtime
-        docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --remove-orphans
-
-        # Wait for services to stabilize
-        log "Waiting for services to stabilize..."
-        sleep 15
+        # Deploy with zero downtime, then wait until containers report healthy
+        log "Deploying new images and waiting for health..."
+        # (guarded: `set -e` would otherwise exit before the logs below are captured)
+        if ! docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --remove-orphans --wait --wait-timeout "${WAIT_TIMEOUT:-180}"; then
+            log "✗ Services did not become healthy"
+            log "Service logs:"
+            docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" logs --tail=50 | tee -a "$LOG_FILE"
+            exit 1
+        fi
 
         # Get frontend port from env or use default
         FRONTEND_PORT=$(grep FRONTEND_PORT "$ENV_FILE" | cut -d'=' -f2 | tr -d ' ' || echo "8090")
 
         # Health check
         log "Performing health check on port $FRONTEND_PORT..."
-        if curl -sf "http://localhost:${FRONTEND_PORT}/health" > /dev/null 2>&1 || \
-           curl -sf "http://localhost:${FRONTEND_PORT}/" > /dev/null 2>&1; then
+        if curl -sf "http://localhost:${FRONTEND_PORT}/v2/health/ready" > /dev/null 2>&1; then
             log "✓ Deployment successful"
 
             # Show running services

@@ -182,7 +182,7 @@ jobs:
           RETRY_INTERVAL=3
           
           for i in $(seq 1 $MAX_RETRIES); do
-            if curl -sf "http://localhost:$PORT/" > /dev/null 2>&1; then
+            if curl -sf "http://localhost:$PORT/v2/health/ready" > /dev/null 2>&1; then
               echo "✓ Service is healthy on port $PORT"
               break
             fi

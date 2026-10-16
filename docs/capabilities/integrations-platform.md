@@ -676,12 +676,16 @@ DevOps/monitoring.
 ### API contract
 
 - `GET /v2/health` (public — no auth) → `200` with per-service messages for `ok`/`degraded`, or `503` for `error`.
-- Services checked: MongoDB, JWT sign/verify, auth login, upload dir, runtime server, SSO reachability.
+- `GET /v2/health/live` (public — no auth) → always `200 { status: 'ok' }` — liveness only (the process is serving HTTP); `Cache-Control: no-store`.
+- `GET /v2/health/ready` (public — no auth) → `200` when MongoDB is connected and answers a ping (2s budget), `503` otherwise; `Cache-Control: no-store`. Deliberately cheap — no admin login, no external calls — so it can be polled every few seconds.
+- Services checked: MongoDB, JWT sign/verify, auth login, upload dir, runtime server, SSO reachability (`GET /v2/health` report only; `/live` and `/ready` check nothing beyond the process and MongoDB).
+- Mounting: `/live` and `/ready` are mounted ahead of the auth-config/dataSync middleware in `app.js` (separate probe router), so probes never touch the DB except the readiness ping and answer fast when Mongo is down.
 - Operator UI: `/health` page (`PageHealth.tsx`) shows status badges.
+- Deployment wiring: `backend/Dockerfile` and `docker-compose.prod.yml` define a container `healthcheck` running `node src/healthcheck.js` (probes `/v2/health/ready`, 15s interval, 90s start period); deploy gates wait on it (`instance-setup/up.sh` uses `up --wait`, `scripts/auto-update.sh` and the dev-stage deploy curl `/v2/health/ready`).
 
 ### Quality control
 
-I hit `/v2/health` and see the status plus per-service messages; if I stop Mongo, the status degrades.
+I hit `/v2/health` and see the status plus per-service messages; if I stop Mongo, the status degrades. If I stop Mongo, `/v2/health/ready` returns `503` (container goes `unhealthy`) while `/v2/health/live` still returns `200`; restarting Mongo flips both back.
 
 ```mermaid
 flowchart TD
@@ -694,6 +698,11 @@ flowchart TD
     C --> U[Upload dir]
     C --> S[Runtime server]
     C --> SSO[SSO reachability]
+    L["GET /v2/health/live"] --> LIVE["always 200 (process serving HTTP)"]
+    RD["GET /v2/health/ready"] --> MP[(MongoDB ping, 2s budget)]
+    MP -->|ok| RDY200["200 + no-store"]
+    MP -->|down / timed out| RDY503["503 + no-store"]
+    HC["Container healthcheck & deploy gates<br/>(src/healthcheck.js · up.sh --wait · auto-update.sh · dev-stage)"] -.->|probes| RD
 ```
 
 ### Security
@@ -730,7 +739,7 @@ Status info only (no secrets).
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
 - **Estimated coverage:** ≈0% (est.) — no E2E spec
-- **Unit (Jest):** none
+- **Unit (Jest):** 6 cases in `backend/tests/unit/app/health.route.test.js` — `/live` and `/ready` routes (503 paths, no `runHealthCheck` side effects); full `GET /v2/health` report untested
 
 ## CAP-INTEG-10 — File upload
 

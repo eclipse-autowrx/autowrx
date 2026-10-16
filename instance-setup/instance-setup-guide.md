@@ -127,6 +127,21 @@ docker compose -f docker-compose.prod.yml ps
 
 Access your instance at: `http://your-server:${FRONTEND_PORT}`
 
+#### Container health status
+
+The `autowrx` image defines a Docker healthcheck that probes `GET /v2/health/ready` (via `backend/src/healthcheck.js`) every 15s. Readiness depends only on MongoDB answering a ping — unlike `GET /v2/health`, it does not log in as admin or probe external hosts, so it is safe to poll continuously. Startup seeds data before the server listens, hence the 90s start period.
+
+`./up.sh` runs `docker compose up --wait`, which blocks until the container reports `healthy` (bounded by `WAIT_TIMEOUT`, default 180s) and prints the service status plus the last 100 `autowrx` log lines if it doesn't get there.
+
+To read the health status at any time:
+
+```bash
+docker inspect --format '{{.State.Health.Status}}' ${NAME:-prod}-autowrx
+# healthy | starting | unhealthy
+```
+
+`unhealthy` usually means MongoDB is unreachable — check `docker compose -f docker-compose.prod.yml logs autowrx-db` (the SPA at `/` still returns 200 in that state, so don't rely on it as a health signal).
+
 ## Management Commands
 
 **Stop the instance:**

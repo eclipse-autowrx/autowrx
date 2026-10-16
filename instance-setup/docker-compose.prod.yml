@@ -53,6 +53,15 @@ services:
     networks:
       - autowrx-network
     restart: always
+    healthcheck:
+      # Readiness endpoint only — /v2/health also logs in as admin and probes
+      # external hosts, which is too heavy and too flaky for a container probe
+      test: ["CMD", "node", "src/healthcheck.js"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      # Startup seeds data before the server starts listening
+      start_period: 90s
 
   # MongoDB - Database
   autowrx-db:

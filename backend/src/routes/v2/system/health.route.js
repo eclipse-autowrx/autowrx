@@ -7,9 +7,44 @@
 // SPDX-License-Identifier: MIT
 
 const express = require('express');
-const { runHealthCheck } = require('../../../services/health.service');
+const { runHealthCheck, checkReadiness } = require('../../../services/health.service');
 
 const router = express.Router();
+
+// Probes live on a separate router so app.js can mount them ahead of
+// auth-config/dataSync middleware; the main router keeps the full report.
+const probeRouter = express.Router();
+
+/**
+ * GET /v2/health/live
+ * Liveness probe: only proves the process is serving HTTP. Always 200.
+ */
+probeRouter.get('/live', (req, res) => {
+  res.set('Cache-Control', 'no-store').status(200).json({ status: 'ok' });
+});
+
+/**
+ * GET /v2/health/ready
+ * Readiness probe: 200 when MongoDB is connected and answers a ping, 503 otherwise.
+ * Deliberately cheap (no admin login, no external calls) so it can back the
+ * container healthcheck and the deploy gates.
+ */
+probeRouter.get('/ready', async (req, res) => {
+  try {
+    const report = await checkReadiness();
+    const httpStatus = report.status === 'ok' ? 200 : 503;
+    res.set('Cache-Control', 'no-store').status(httpStatus).json(report);
+  } catch (err) {
+    res
+      .set('Cache-Control', 'no-store')
+      .status(503)
+      .json({
+        status: 'error',
+        checkedAt: new Date().toISOString(),
+        message: `Readiness check crashed: ${err.message}`,
+      });
+  }
+});
 
 /**
  * GET /v2/health
@@ -31,3 +66,4 @@ router.get('/', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.probeRouter = probeRouter;
