@@ -16,6 +16,8 @@
  * Set the key on disposable stacks after seeding the admin, e.g.:
  *   PATCH /v2/site-config/key/E2E_TEST_ENABLED  { "value": true }
  */
+import { runE2eDataCleanup } from './e2e-data-cleanup';
+
 export default async function globalSetup() {
   if (process.env.E2E_ALLOW_ANY_ENV === '1') {
     console.warn(
@@ -53,4 +55,6 @@ export default async function globalSetup() {
     );
   }
   console.log(`[e2e-env-guard] ${apiUrl} declares E2E_TEST_ENABLED=true — proceeding.`);
+
+  await runE2eDataCleanup('setup');
 }

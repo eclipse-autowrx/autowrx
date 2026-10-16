@@ -138,11 +138,18 @@ test.describe('Home Page Sections', () => {
     await page.goto('/');
     await page.waitForTimeout(3000);
 
+    // Stub the external origin — the popup must open the right URL, but the
+    // test environment has no outbound internet access.
+    await page.context().route('https://example.com/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'text/html', body: '<html><body>stubbed</body></html>' })
+    );
+
     const popupPromise = page.waitForEvent('popup');
     await page.getByRole('button', { name: 'Example Docs' }).click();
     const popup = await popupPromise;
     expect(popup.url()).toContain('example.com');
     await popup.close();
+    await page.context().unroute('https://example.com/**');
 
     await saveScreenshot(page, 'home-feature-list');
   });

@@ -22,6 +22,7 @@ jest.mock(
 );
 
 const express = require('express');
+const cookies = require('cookie-parser');
 const httpStatus = require('http-status');
 const config = require('../../../src/config/config');
 const { RATE_LIMITS } = require('../../../src/middlewares/rateLimiter');
@@ -30,6 +31,7 @@ const authRoute = require('../../../src/routes/v2/user-management/auth.route');
 
 const app = express();
 app.use(express.json());
+app.use(cookies());
 app.use((req, res, next) => {
   req.authConfig = { SELF_REGISTRATION: true };
   next();
@@ -101,9 +103,19 @@ describe('auth route rate limits', () => {
     expect(codes[codes.length - 1]).toBe(httpStatus.TOO_MANY_REQUESTS);
   });
 
+  test('POST /refresh-tokens rate limits cookie-bearing refreshes, not cookieless probes', async () => {
+    // Cookieless probes carry no token to brute-force; they must not eat the
+    // failed-refresh budget of clients that do hold a refresh cookie.
+    const probes = await statuses(RATE_LIMITS.refresh.max + 1, '/refresh-tokens', {});
+    expect(probes.every((code) => code === httpStatus.UNAUTHORIZED)).toBe(true);
+
+    const headers = { cookie: `${config.jwt.cookie.name}=refresh-token-value` };
+    const codes = await statuses(RATE_LIMITS.refresh.max + 1, '/refresh-tokens', {}, headers);
+    expect(codes[codes.length - 1]).toBe(httpStatus.TOO_MANY_REQUESTS);
+  });
+
   test.each([
     ['/register', { name: 'n', email: 'new@example.com', password: 'password1' }, RATE_LIMITS.register.max],
-    ['/refresh-tokens', {}, RATE_LIMITS.refresh.max],
     ['/verify-email', {}, RATE_LIMITS.verifyEmail.max],
   ])('POST %s is rate limited', async (path, body, max) => {
     const codes = await statuses(max + 1, path, body);

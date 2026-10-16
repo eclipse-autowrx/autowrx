@@ -113,12 +113,39 @@ cp .env.example .env
 ```
 
 ```
-BASE_URL=http://localhost:3210
+BASE_URL=http://localhost:3213
+API_URL=http://localhost:3200
 ADMIN_EMAIL=your-admin@email.com
 ADMIN_PASSWORD=your-password
 ```
 
 ⚠️ Never commit `.env` — it is gitignored.
+
+### Frontend under test: production build via `vite preview` (default)
+
+The suite runs against a **production build** served by `vite preview` on
+port **3213**. `playwright.config.ts` starts it automatically as a
+`webServer` (build into `frontend/dist-e2e`, then preview; reuses an
+already-running server). The built app uses same-origin API calls —
+preview inherits `server.proxy` from `frontend/vite.config.ts`, so
+`/v2`, `/static`, `/plugin`, etc. reach the backend on `localhost:3200`
+exactly as they do in dev.
+
+Why not the dev server: every fresh Playwright browser context re-fetches
+and re-parses hundreds of unbundled modules from `vite dev`, so a page
+load costs seconds of CPU. Transient machine hiccups (cron jobs, file
+indexers, container activity) then blow through 15-20s expect timeouts and
+show up as blank/partially-rendered-page flakes — observed repeatedly on
+shared developer machines. The production build loads a handful of hashed
+assets instead and is immune to that amplification.
+
+To run against a dev server anyway (e.g. debugging HMR behavior):
+
+```bash
+cd frontend && npm run dev        # vite on :3210
+cd ../.agents
+E2E_DEV_SERVER=1 BASE_URL=http://localhost:3210 npx playwright test
+```
 
 ## Snapshot Policy
 

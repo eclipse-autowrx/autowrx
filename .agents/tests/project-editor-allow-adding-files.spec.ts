@@ -15,6 +15,7 @@ import {
   updatePrototypeViaApi,
   getSiteConfigJson,
   setSiteConfigJson,
+  serveMonacoLocally,
 } from './helpers';
 
 const CONFIG_KEY = 'ALLOW_ADDING_FILES';
@@ -22,9 +23,18 @@ const CONFIG_KEY = 'ALLOW_ADDING_FILES';
 const README_CONTENT = '# E2E Doc\n\nThis is **bold** markdown, not raw source.';
 
 function multiFileProject() {
+  // The editor's file tree only mounts items nested under a root folder —
+  // the shape the app itself serializes for multi-file projects. A bare
+  // file array opens the project editor but renders an empty tree.
   return JSON.stringify([
-    { type: 'file', name: 'app_logic.py', content: 'speed = Vehicle.Speed\n' },
-    { type: 'file', name: 'README.md', content: README_CONTENT },
+    {
+      type: 'folder',
+      name: 'root',
+      items: [
+        { type: 'file', name: 'app_logic.py', content: 'speed = Vehicle.Speed\n' },
+        { type: 'file', name: 'README.md', content: README_CONTENT },
+      ],
+    },
   ]);
 }
 
@@ -55,6 +65,12 @@ test.describe('Project Editor - ALLOW_ADDING_FILES config', () => {
     await loginAsAdmin(page);
     await setSiteConfigJson(page, CONFIG_KEY, baseline);
     await page.close();
+  });
+
+  test.beforeEach(async ({ page }) => {
+    // The project editor mounts the Monaco editor from a CDN; serve the
+    // locally cached copy so the file tree renders on offline networks.
+    await serveMonacoLocally(page);
   });
 
   test('file tree is read-only and toolbar mutation buttons are hidden when false', async ({ page }) => {

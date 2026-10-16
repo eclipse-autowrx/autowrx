@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -15,14 +15,18 @@ export default defineConfig({
   plugins: [
     react(),
     visualizer({
-      open: true,
+      // Popups break automated builds (E2E webServer rebuilds on every run);
+      // opt in explicitly when you want the bundle report.
+      open: process.env.VITE_VISUALIZER_OPEN === '1',
     }),
   ],
   build: {
     // Output directory - relative to vite.config.ts location (frontend/)
     // For Docker builds, this should be ../backend/static/frontend-dist
     // For local development, you can change this to 'dist' if needed
-    outDir: process.env.VITE_BUILD_OUT_DIR ? path.resolve(__dirname, process.env.VITE_BUILD_OUT_DIR) : path.resolve(__dirname, '../backend/static/frontend-dist'),
+    outDir: process.env.VITE_BUILD_OUT_DIR
+      ? path.resolve(__dirname, process.env.VITE_BUILD_OUT_DIR)
+      : path.resolve(__dirname, '../backend/static/frontend-dist'),
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'index.html'),
