@@ -32,6 +32,12 @@ const urlToPluginId = new Map<string, string>()
 export interface LoadPluginRegistrationOptions {
   pluginId: string
   pluginUrl: string
+  /**
+   * Plugin script text already fetched by the caller. When set it is executed as
+   * an inline <script> (no network request, no blob: URL, so it works under CSPs
+   * that forbid blob: scripts); pluginUrl then only identifies the plugin.
+   */
+  pluginSource?: string
   /** Called whenever a script element is injected (or cleared); caller owns removing it on unmount. */
   onScriptInjected?: (script: HTMLScriptElement | null) => void
   isCancelled?: () => boolean
@@ -120,6 +126,7 @@ export async function ensurePluginShims(): Promise<void> {
  * Inject the plugin script (module first, classic fallback) and wait until it
  * registers under window.DAPlugins[GLOBAL_KEY] (or in the per-plugin map).
  * Returns the registration and the script element the caller should clean up.
+ * With options.pluginSource the script text is run inline instead of via src.
  */
 export async function loadPluginRegistration(
   options: LoadPluginRegistrationOptions,
@@ -127,6 +134,7 @@ export async function loadPluginRegistration(
   const {
     pluginId,
     pluginUrl: PLUGIN_URL,
+    pluginSource,
     onScriptInjected,
     isCancelled,
   } = options
@@ -138,6 +146,7 @@ export async function loadPluginRegistration(
   // Always use base URL (no versioning) - components stay mounted so script only loads once per component
   // Browser caching will work properly with the same URL
   const scriptUrl = PLUGIN_URL
+  const isInline = typeof pluginSource === 'string'
   let injectedScript: HTMLScriptElement | null = null
 
   const clearInjectedScript = () => {
@@ -164,14 +173,19 @@ export async function loadPluginRegistration(
     })
 
     const script = document.createElement('script')
-    script.src = scriptUrl
-    script.async = true
-    // For ES modules, defer is automatic and redundant - don't set it
-    // For classic scripts, defer helps with execution order
-    if (!asModule) {
-      script.defer = true
+    if (isInline) {
+      // sourceURL keeps stack traces / devtools pointing at the plugin URL
+      script.textContent = `${pluginSource}\n//# sourceURL=${PLUGIN_URL}`
+    } else {
+      script.src = scriptUrl
+      script.async = true
+      // For ES modules, defer is automatic and redundant - don't set it
+      // For classic scripts, defer helps with execution order
+      if (!asModule) {
+        script.defer = true
+      }
+      script.crossOrigin = 'anonymous'
     }
-    script.crossOrigin = 'anonymous'
     if (asModule) script.type = 'module'
 
     if (injectedScript) {
@@ -195,7 +209,12 @@ export async function loadPluginRegistration(
       const sourceStr = typeof source === 'string' ? source : ''
       const eventStr =
         typeof event === 'string' ? event : event?.toString() || 'Unknown error'
-      if (sourceStr === scriptUrl || sourceStr.includes(PLUGIN_URL)) {
+      // Inline scripts report the document (or sourceURL) as source, so don't filter
+      if (
+        isInline ||
+        sourceStr === scriptUrl ||
+        sourceStr.includes(PLUGIN_URL)
+      ) {
         scriptExecutionError =
           error || new Error(`${eventStr} at ${sourceStr}:${lineno}:${colno}`)
         log('Script execution error:', scriptExecutionError)
@@ -209,7 +228,7 @@ export async function loadPluginRegistration(
 
     try {
       await new Promise<void>((resolve, reject) => {
-        script.onload = () => {
+        const onLoaded = () => {
           log('Script loaded successfully:', scriptUrl)
           // Check immediately if script registered synchronously (especially for cached scripts)
           const immediateRegistration = (window as any).DAPlugins?.[GLOBAL_KEY]
@@ -224,6 +243,7 @@ export async function loadPluginRegistration(
           }
           resolve()
         }
+        script.onload = onLoaded
         script.onerror = (e) => {
           scriptLoadError = new Error(
             `Failed to load plugin script: ${scriptUrl}`,
@@ -233,9 +253,13 @@ export async function loadPluginRegistration(
         }
         document.body.appendChild(script)
         log('Script tag appended to DOM:', scriptUrl)
+        // Inline scripts fire no load event: treat insertion as loaded and rely
+        // on the registration polling below (module errors arrive via onerror).
+        if (isInline) onLoaded()
       })
     } finally {
-      window.onerror = originalErrorHandler
+      // Inline module scripts run after insertion, so keep capturing until the yield below
+      if (!isInline) window.onerror = originalErrorHandler
     }
 
     if (scriptLoadError) {
@@ -248,6 +272,7 @@ export async function loadPluginRegistration(
     // Yield so the script has a chance to run (especially important for module scripts).
     // For modules, onload fires when module is loaded, but evaluation happens asynchronously.
     await new Promise((r) => setTimeout(r, YIELD_AFTER_LOAD_MS))
+    if (isInline) window.onerror = originalErrorHandler
     if (isCancelled?.()) return null
 
     if (scriptExecutionError) {

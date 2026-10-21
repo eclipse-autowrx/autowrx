@@ -28,9 +28,10 @@ export default defineConfig({
       ? path.resolve(__dirname, process.env.VITE_BUILD_OUT_DIR)
       : path.resolve(__dirname, '../backend/static/frontend-dist'),
     rollupOptions: {
+      // The plugin sandbox page is built separately (vite.sandbox.config.ts)
+      // as a fully inlined, self-contained document.
       input: {
         main: path.resolve(__dirname, 'index.html'),
-        sandbox: path.resolve(__dirname, 'sandbox-plugin.html'),
       },
     },
   },

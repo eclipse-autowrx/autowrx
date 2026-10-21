@@ -35,7 +35,7 @@ export default defineConfig({
     : {
         webServer: {
           command:
-            'npx vite build --outDir dist-e2e && npx vite preview --outDir dist-e2e --port 3213 --strictPort',
+            'npx vite build --outDir dist-e2e && npx vite build --config vite.sandbox.config.ts --outDir dist-e2e && npx vite preview --outDir dist-e2e --port 3213 --strictPort',
           url: 'http://localhost:3213',
           cwd: resolve(__dirname, '..', 'frontend'),
           reuseExistingServer: true,
