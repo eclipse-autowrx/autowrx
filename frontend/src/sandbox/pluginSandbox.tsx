@@ -9,7 +9,10 @@
 /**
  * Sandbox runtime for untrusted plugins. This document runs in an iframe with
  * an opaque origin (sandbox="allow-scripts ..." without allow-same-origin) and
- * talks to the host app exclusively via postMessage:
+ * talks to the host app exclusively via postMessage. The host delivers this
+ * page via iframe srcdoc and the plugin code in aw-plugin:init (pluginSource),
+ * so the sandbox issues no requests of its own (an opaque-origin frame carries
+ * no cookies, which auth gateways in front of the app reject):
  * - host -> sandbox: aw-plugin:init / aw-plugin:props / aw-plugin:runtime /
  *   aw-plugin:rpc-result / aw-plugin:event
  * - sandbox -> host: aw-plugin:ready / aw-plugin:error / aw-plugin:rpc /
@@ -173,6 +176,10 @@ const handleInit = async (msg: any) => {
     const { registration } = await loadPluginRegistration({
       pluginId: msg.pluginUrl,
       pluginUrl: msg.pluginUrl,
+      // Source fetched by the host (the sandbox itself has no cookies/network
+      // access to the app); absent -> load pluginUrl via <script src>.
+      pluginSource:
+        typeof msg.pluginSource === 'string' ? msg.pluginSource : undefined,
     })
 
     const component = registration?.components?.Page || null

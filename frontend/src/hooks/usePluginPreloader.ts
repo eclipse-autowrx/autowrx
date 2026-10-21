@@ -163,7 +163,7 @@ const preloadScript = (url: string) => {
       cache: 'default',
       // @ts-ignore - priority is not in all TypeScript definitions but is supported in some browsers
       priority: 'low',
-      credentials: 'omit', // Don't send cookies for external scripts
+      credentials: 'same-origin', // Same-origin plugins need the session (auth gateways); cross-origin sends no cookies
     }).catch(() => {
       // Silently ignore fetch errors - prefetch is best-effort
     })
