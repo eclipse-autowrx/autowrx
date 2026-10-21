@@ -16,6 +16,7 @@ const { tokenTypes } = require('../config/tokens');
 const logger = require('../config/logger');
 const config = require('../config/config');
 const listenerService = require('./listener.service');
+const { verifyIdToken } = require('../utils/oidcVerifier');
 
 const githubCallback = async (code, userId) => {
   try {
@@ -266,40 +267,29 @@ const exchangeGithubSSOCode = async (code, provider) => {
 };
 
 /**
- * Parse ID token to extract user data (alternative to calling Graph API)
+ * Verify an SSO ID token against the provider's OIDC metadata (signature, iss, aud, exp/nbf)
+ * and map its claims to our MSGraph format.
  * @param {string} idToken - MSAL ID token (JWT)
- * @param {string} providerId - SSO provider ID
+ * @param {{id: string, authority: string, clientId: string}} provider - SSO provider config
  * @returns {Promise<import('../typedefs/msGraph').MSGraph>}
  */
-const parseIdToken = async (idToken, providerId = null) => {
+const parseIdToken = async (idToken, provider) => {
   try {
-    if (!idToken || typeof idToken !== 'string') {
-      throw new Error('ID token is missing or invalid format');
-    }
+    const payload = await verifyIdToken(idToken, {
+      authority: provider && provider.authority,
+      clientId: provider && provider.clientId,
+    });
 
-    // Decode JWT (ID tokens are not encrypted, just signed)
-    const parts = idToken.split('.');
-    if (parts.length !== 3) {
-      throw new Error('ID token is not a valid JWT (expected 3 parts)');
-    }
-
-    const base64Payload = parts[1];
-    const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString());
-
-    // Extract user data from ID token claims
     // Map common OIDC claims to our MSGraph format
     const userData = {
       id: payload.oid || payload.sub, // oid = Azure AD object ID, sub = subject
       displayName: payload.name,
       mail: payload.email || payload.preferred_username, // email or UPN
       userPhotoUrl: null, // ID token doesn't contain photo
-      providerId,
+      providerId: provider.id,
     };
 
-
-    // Validate required fields
     if (!userData.mail) {
-      logger.error(`Email not found in ID token. Available claims: ${JSON.stringify(payload)}`);
       throw new Error('Email not found in ID token');
     }
 
@@ -310,11 +300,9 @@ const parseIdToken = async (idToken, providerId = null) => {
 
     return userData;
   } catch (error) {
-    logger.error(`Error parsing ID token: ${error.message}`);
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    throw new ApiError(httpStatus.UNAUTHORIZED, `Invalid ID token: ${error.message}`);
+    // Detailed reason is logged only; the client always gets a generic message.
+    logger.warn(`SSO ID token rejected: ${error.message}`);
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid ID token');
   }
 };
 
