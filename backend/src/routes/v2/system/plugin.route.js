@@ -11,7 +11,7 @@ const auth = require('../../../middlewares/auth');
 const validate = require('../../../middlewares/validate');
 const { pluginValidation } = require('../../../validations');
 const { pluginController } = require('../../../controllers');
-const upload = require('../../../middlewares/upload');
+const { uploadPluginZip } = require('../../../middlewares/upload');
 const { checkPermission } = require('../../../middlewares/permission');
 const { PERMISSIONS } = require('../../../config/roles');
 
@@ -39,7 +39,7 @@ router.post(
   '/upload/:slug',
   validate(pluginValidation.uploadInternal),
   checkPermission(PERMISSIONS.ADMIN),
-  upload.single('file'),
+  uploadPluginZip.single('file'),
   pluginController.uploadInternalPlugin,
 );
 

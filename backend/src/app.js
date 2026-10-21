@@ -23,6 +23,7 @@ const { jwtStrategy } = require('./config/passport');
 const routesV2 = require('./routes/v2');
 const { errorConverter, errorHandler } = require('./middlewares/error');
 const ApiError = require('./utils/ApiError');
+const uploadStaticOptions = require('./utils/uploadStatic');
 const { setupProxy } = require('./config/proxyHandler');
 const { init: initSocketIO } = require('./config/socket');
 const auth = require('./middlewares/auth');
@@ -155,20 +156,15 @@ const pluginStaticOptions = {
 };
 app.use('/static/plugin', express.static(path.join(__dirname, '../static/plugin'), pluginStaticOptions));
 app.use('/plugin', express.static(path.join(__dirname, '../static/plugin'), pluginStaticOptions));
+// Serve uploaded files with date-based directory structure, as inert data (see utils/uploadStatic)
+const uploadsDir = path.join(__dirname, '../static/uploads');
+app.use('/d', express.static(uploadsDir, uploadStaticOptions));
+// Same hardening when reached through the generic /static mount below
+app.use('/static/uploads', express.static(uploadsDir, uploadStaticOptions));
+
 app.use('/static', express.static(path.join(__dirname, '../static')));
 app.use('/builtin-widgets', express.static(path.join(__dirname, '../static/builtin-widgets')));
 app.use('/images', express.static(path.join(__dirname, '../static/images')));
-// Serve uploaded files with date-based directory structure
-app.use(
-  '/d',
-  express.static(path.join(__dirname, '../static/uploads'), {
-    setHeaders: (res, path) => {
-      // Set appropriate headers for file downloads
-      res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year cache
-    },
-  }),
-);
-
 // Serve VSS JSON files from /vss/ path
 // Handles URLs like /vss/v5.0/vss_rel_5.0.json -> serves backend/data/v5.0.json
 // Also handles /vss/v4.1.1/vss_rel_4.1.1.json, /vss/v5.1RC0/vss_rel_5.1RC0.json, etc.

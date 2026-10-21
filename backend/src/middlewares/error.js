@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 const mongoose = require('mongoose');
+const multer = require('multer');
 const httpStatus = require('http-status');
 const config = require('../config/config');
 const logger = require('../config/logger');
@@ -14,7 +15,11 @@ const ApiError = require('../utils/ApiError');
 
 const errorConverter = (err, req, res, next) => {
   let error = err;
-  if (!(error instanceof ApiError)) {
+  if (error instanceof multer.MulterError) {
+    // Upload limits / malformed multipart are client errors, not 500s
+    const statusCode = error.code === 'LIMIT_FILE_SIZE' ? httpStatus.REQUEST_ENTITY_TOO_LARGE : httpStatus.BAD_REQUEST;
+    error = new ApiError(statusCode, error.message, true, err.stack);
+  } else if (!(error instanceof ApiError)) {
     const statusCode =
       error.statusCode || error instanceof mongoose.Error ? httpStatus.BAD_REQUEST : httpStatus.INTERNAL_SERVER_ERROR;
     const message = error.message || httpStatus[statusCode];
