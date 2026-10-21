@@ -49,19 +49,25 @@ const forgotPassword = {
 };
 
 const resetPassword = {
+  // Deprecated: token in the query string (it ends up in proxy/access logs). Send it in the body.
   query: Joi.object().keys({
     token: Joi.string(),
   }),
   body: Joi.object().keys({
     email: Joi.string().email(),
     code: Joi.string(),
+    token: Joi.string(),
     password: Joi.string().required().custom(password),
   }),
 };
 
 const verifyEmail = {
+  // Deprecated: token in the query string (it ends up in proxy/access logs). Send it in the body.
   query: Joi.object().keys({
-    token: Joi.string().required(),
+    token: Joi.string(),
+  }),
+  body: Joi.object().keys({
+    token: Joi.string(),
   }),
 };
 

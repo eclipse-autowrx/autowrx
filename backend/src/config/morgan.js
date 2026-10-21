@@ -9,12 +9,15 @@
 const morgan = require('morgan');
 const config = require('./config');
 const logger = require('./logger');
+const { redactUrl } = require('../utils/redactUrl');
 
 morgan.token('message', (req, res) => res.locals.errorMessage || '');
+// Log URLs with secret query values (reset/verify tokens, codes, ...) redacted.
+morgan.token('safe-url', (req) => redactUrl(req.originalUrl || req.url));
 
 const getIpFormat = () => (config.env === 'production' ? ':remote-addr - ' : '');
-const successResponseFormat = `${getIpFormat()}:method :url :status - :response-time ms`;
-const errorResponseFormat = `${getIpFormat()}:method :url :status - :response-time ms - message: :message`;
+const successResponseFormat = `${getIpFormat()}:method :safe-url :status - :response-time ms`;
+const errorResponseFormat = `${getIpFormat()}:method :safe-url :status - :response-time ms - message: :message`;
 
 const successHandler = morgan(successResponseFormat, {
   skip: (req, res) => res.statusCode >= 400,

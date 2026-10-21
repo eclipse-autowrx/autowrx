@@ -147,9 +147,9 @@ const resetPassword = catchAsync(async (req, res) => {
   if (email && code) {
     // Code-based reset (new flow)
     user = await authService.resetPasswordWithCode(email, code, password);
-  } else if (req.query.token) {
-    // Legacy token-based reset (backward compatibility)
-    user = await authService.resetPassword(req.query.token, password);
+  } else if (req.body.token || req.query.token) {
+    // Legacy token-based reset (backward compatibility); the query-string form is deprecated
+    user = await authService.resetPassword(req.body.token || req.query.token, password);
   } else {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email and code are required');
   }
@@ -185,7 +185,12 @@ const sendVerificationEmail = catchAsync(async (req, res) => {
 });
 
 const verifyEmail = catchAsync(async (req, res) => {
-  await authService.verifyEmail(req.query.token);
+  // Body is preferred; the query-string form is deprecated
+  const token = req.body.token || req.query.token;
+  if (!token) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Verification token is required');
+  }
+  await authService.verifyEmail(token);
   res.status(httpStatus.NO_CONTENT).send();
 });
 

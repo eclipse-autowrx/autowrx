@@ -64,17 +64,10 @@ export const resetPasswordWithCodeService = async (email: string, code: string, 
 }
 
 export const resetPasswordService = async (password: string, token: string) => {
-  return serverAxios.post(
-    '/auth/reset-password',
-    {
-      password,
-    },
-    {
-      params: {
-        token,
-      },
-    },
-  )
+  return serverAxios.post('/auth/reset-password', {
+    password,
+    token,
+  })
 }
 
 export const ssoService = async (idToken: string, providerId: string) => {

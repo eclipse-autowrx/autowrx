@@ -259,8 +259,8 @@ End users who lost a password or need to verify email; admins (fewer password re
 ### API contract
 
 - `POST /v2/auth/forgot-password {email}` → `200 { message }` (always, to avoid user enumeration) and emails a 6-digit code (60 min). Reset events are logged.
-- `POST /v2/auth/reset-password` with `{email, code, password}` (primary) → `204`; or with `?token` + `{password}` (legacy) → `204`. Both missing → `400`. Wrong/expired code → `400`.
-- `POST /v2/auth/send-verification-email` (auth) → `204` and emails a verify token; `POST /v2/auth/verify-email?token=…` → `204` and sets `email_verified=true`.
+- `POST /v2/auth/reset-password` with `{email, code, password}` (primary) → `204`; or with `{token, password}` (legacy; `?token` query still accepted but deprecated) → `204`. Both missing → `400`. Wrong/expired code → `400`.
+- `POST /v2/auth/send-verification-email` (auth) → `204` and emails a verify token; `POST /v2/auth/verify-email` with `{token}` (`?token=` query still accepted but deprecated) → `204` and sets `email_verified=true`; no token → `400`. Emailed links carry the token in the URL fragment (`#token=`), and request logs redact secret query values.
 - Password changes require the `PASSWORD_MANAGEMENT` flag.
 
 ### Quality control

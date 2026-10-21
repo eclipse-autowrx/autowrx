@@ -268,10 +268,11 @@ module.exports = router;
  *     parameters:
  *       - in: query
  *         name: token
- *         required: true
+ *         required: false
+ *         deprecated: true
  *         schema:
  *           type: string
- *         description: The reset password token
+ *         description: Deprecated - send the token in the request body instead (query strings are logged)
  *     requestBody:
  *       required: true
  *       content:
@@ -281,6 +282,16 @@ module.exports = router;
  *             required:
  *               - password
  *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Used with code for the code-based reset flow
+ *               code:
+ *                 type: string
+ *                 description: Reset code sent by email
+ *               token:
+ *                 type: string
+ *                 description: Legacy reset password token
  *               password:
  *                 type: string
  *                 format: password
@@ -327,11 +338,23 @@ module.exports = router;
  *     parameters:
  *       - in: query
  *         name: token
- *         required: true
+ *         required: false
+ *         deprecated: true
  *         schema:
  *           type: string
- *         description: The verify email token
+ *         description: Deprecated - send the token in the request body instead (query strings are logged)
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: The verify email token
  *     responses:
+ *       "400":
+ *         description: Verification token is required
  *       "204":
  *         description: No content
  *       "401":

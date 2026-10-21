@@ -169,7 +169,8 @@ const sendWithLegacyConfig = async (to, subject, html) => {
  */
 const sendResetPasswordEmail = async (to, token, domain) => {
   const subject = 'Reset password';
-  const resetPasswordUrl = `${domain || config.client.baseUrl}/reset-password?token=${token}`;
+  // Token goes in the URL fragment so it is never sent to (or logged by) any server or proxy
+  const resetPasswordUrl = `${domain || config.client.baseUrl}/reset-password#token=${encodeURIComponent(token)}`;
   const html = resetPasswordTemplate(to, resetPasswordUrl);
   await sendEmail(to, subject, html);
 };
@@ -182,7 +183,7 @@ const sendResetPasswordEmail = async (to, token, domain) => {
  */
 const sendVerificationEmail = async (to, token) => {
   const subject = 'Email Verification';
-  const verificationEmailUrl = `http://link-to-app/verify-email?token=${token}`;
+  const verificationEmailUrl = `${config.client.baseUrl}/verify-email#token=${encodeURIComponent(token)}`;
   const text = `Dear user,
 To verify your email, click on this link: ${verificationEmailUrl}
 If you did not create an account, then ignore this email.`;

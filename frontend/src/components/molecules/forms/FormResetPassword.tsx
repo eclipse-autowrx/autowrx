@@ -42,7 +42,10 @@ const FormResetPassword = () => {
         return
       }
 
-      const token = new URLSearchParams(window.location.search).get('token')
+      // Emailed links carry the token in the fragment (#token=) so it never reaches server logs
+      const token =
+        new URLSearchParams(window.location.hash.slice(1)).get('token') ||
+        new URLSearchParams(window.location.search).get('token')
       if (!token) {
         setError('Token not found')
         return
