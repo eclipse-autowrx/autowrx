@@ -353,7 +353,7 @@ End users (passwordless login); enterprises (SSO integration); DevOps/integrator
 
 ### API contract
 
-- `POST /v2/auth/sso {providerId, idToken}` → validates provider is enabled, decodes the ID token, creates/updates user, issues tokens + cookie → `200 { user, tokens }`. Disabled/invalid provider → `400`.
+- `POST /v2/auth/sso {providerId, idToken}` → validates provider is enabled and is an `MSAL` provider with `clientId` + `authority`, **verifies the ID token** (RS256 signature via the provider's OIDC discovery `jwks_uri`, `iss` equal to the discovery issuer (`{tenantid}` substituted from the `tid` claim for multi-tenant authorities), `aud` = provider `clientId`, `exp`/`nbf` with 60 s tolerance; `alg` other than RS256 or missing `kid` rejected; discovery cached 1 h — `utils/oidcVerifier.js`), creates/updates user, issues tokens + cookie → `200 { user, tokens }`. Disabled/invalid provider → `400`. Token failing any check → `401 Invalid ID token` (reason logged server-side only).
 - `GET /v2/auth/github-sso/start` → redirects to GitHub; `GET /v2/auth/github-sso/callback` → exchanges the code, fetches profile/emails, logs me in.
 - First SSO login creates the account only if `SSO_AUTO_REGISTRATION` is true; otherwise a matching existing account is required.
 - `GET /v2/auth/github/callback` (legacy) → exchanges the code and emits the token over my socket for account linking.
@@ -389,14 +389,14 @@ sequenceDiagram
 Provider `clientSecret`s are **encrypted at rest**, decrypted only for admin display. Auto-registration is gated by `SSO_AUTO_REGISTRATION`.
 
 **Coverage:**
-- **Auth:** SSO endpoints are anonymous for me — `/sso` validates the provider is enabled + decodes my ID token; `/github-sso/start`/`/callback` run the OAuth code exchange; `/github/callback` (legacy) emits a token over my socket. Auto-registration is gated by `SSO_AUTO_REGISTRATION`.
+- **Auth:** SSO endpoints are anonymous for me — `/sso` validates the provider is enabled + cryptographically verifies my ID token (signature, issuer, audience, expiry); `/github-sso/start`/`/callback` run the OAuth code exchange; `/github/callback` (legacy) emits a token over my socket. Auto-registration is gated by `SSO_AUTO_REGISTRATION`.
 - **Authorization:** N/A — the provider-issued ID token / OAuth code governs my access; admins configure providers in `SSO_PROVIDERS`.
 - **Input validation:** I must send `providerId` and `idToken` (validated); on GitHub start/callback my query params (`providerId`, `code`, `state`) are validated manually in the controller.
 - **Rate limiting:** `POST /sso` and `GET /github-sso/start` — 30 / 15 min per IP (`ssoLimiter`); OAuth callbacks are not limited.
 - **Secrets:** Provider `clientSecret`s are encrypted at rest; the GitHub `client_secret` is used for code exchange; JWT access/refresh tokens are issued to me on success.
 
 **Risks:**
-- **ID-token replay / acceptance of forged tokens:** `POST /v2/auth/sso` trusts a client-supplied `idToken`; if the provider's signature/issuer/audience is not strictly validated (or a stolen ID token is replayed within its lifetime), an attacker can impersonate any user by submitting a captured or crafted token. *Mitigation:* none currently — strictly validate the ID-token signature, issuer, and audience server-side; enforce `nonce` and single-use replay.
+- **ID-token replay:** `POST /v2/auth/sso` verifies the signature, issuer, audience and expiry of the client-supplied `idToken`, so forged tokens are rejected; but a stolen, still-valid ID token can be replayed within its lifetime. *Mitigation:* partial — `nonce` is validated client-side by MSAL only and there is no server-side single-use/replay tracking.
 - **Auto-registration identity squatting:** with `SSO_AUTO_REGISTRATION=true`, an attacker controlling a provider tenant or a permissive email claim can mint accounts matching arbitrary emails, then later collide with a real user's email when that user first signs in. *Mitigation:* none currently — pin auto-registration to a trusted provider tenant list and reconcile on email collision.
 - **Supply-chain / misconfigured provider:** a malicious or misconfigured provider in `SSO_PROVIDERS` (over-broad scopes, leaked `clientSecret` despite encryption-at-rest) becomes a silent backdoor to account creation and login. *Mitigation:* none currently — audit `SSO_PROVIDERS` scopes and rotate `clientSecret`s; enforce least-privilege scopes.
 

@@ -205,10 +205,14 @@ const sso = catchAsync(async (req, res) => {
   const ssoService = require('../services/sso.service');
 
   // Validate that provider exists and is enabled
+  let provider;
   try {
-    await ssoService.getSSOProviderById(providerId, false);
+    provider = await ssoService.getSSOProviderById(providerId, false);
   } catch (error) {
     throw new ApiError(httpStatus.BAD_REQUEST, error.message || 'Invalid or disabled SSO provider');
+  }
+  if (provider.type !== 'MSAL' || !provider.clientId || !provider.authority) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'SSO provider does not support ID token sign-in');
   }
 
   // Validate ID token is provided
@@ -216,13 +220,8 @@ const sso = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'ID token is required');
   }
 
-  // Parse ID token to extract user data (no additional scopes needed)
-  let graphData;
-  try {
-    graphData = await authService.parseIdToken(idToken, providerId);
-  } catch (error) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, `Invalid ID token: ${error.message}`);
-  }
+  // Verify ID token against the provider's OIDC metadata and extract user data
+  const graphData = await authService.parseIdToken(idToken, provider);
   let user = await userService.getUserByEmail(graphData.mail);
   if (!user) {
     // Check if SSO auto-registration is enabled

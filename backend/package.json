@@ -70,6 +70,7 @@
     "jimp": "^1.6.1",
     "joi": "^17.3.0",
     "jsonwebtoken": "^9.0.0",
+    "jwks-rsa": "^3.2.2",
     "lodash": "^4.17.21",
     "moment": "^2.30.0",
     "mongoose": "^8.0.0",
