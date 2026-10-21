@@ -13,6 +13,7 @@ const fs = require('fs');
 const ApiError = require('../utils/ApiError');
 const config = require('../config/config');
 const logger = require('../config/logger');
+const { verifyFileSignature } = require('../utils/fileSignature');
 
 /**
  * Upload file and optionally scale images
@@ -30,6 +31,12 @@ const uploadFile = async (req, res, next) => {
     const filePath = file.path;
     const originalName = file.originalname;
     const fileExt = path.extname(originalName).toLowerCase();
+
+    // The multer filter only checks name/mime, which the client controls —
+    // verify the stored bytes really match the claimed type.
+    if (!(await verifyFileSignature(filePath, originalName))) {
+      throw new ApiError(httpStatus.UNSUPPORTED_MEDIA_TYPE, 'File type not allowed');
+    }
     
     // Get the date directory from the file path
     const dateDir = path.basename(path.dirname(filePath)); // YYYY-MM-DD

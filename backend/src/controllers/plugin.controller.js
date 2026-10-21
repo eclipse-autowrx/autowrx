@@ -16,6 +16,7 @@ const catchAsync = require('../utils/catchAsync');
 const { pluginService } = require('../services');
 const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
+const { verifyFileSignature } = require('../utils/fileSignature');
 
 const PLUGIN_DIR = path.join(__dirname, '../../static/plugin');
 
@@ -349,6 +350,12 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
           'This plugin name is already used by another account. Please choose a different name and upload again.',
         );
       }
+    }
+
+    // The upload filter only checks client-supplied name/mime — confirm the
+    // bytes really are a zip before extracting (temp file removed in finally).
+    if (!(await verifyFileSignature(req.file.path, req.file.originalname))) {
+      throw new ApiError(httpStatus.UNSUPPORTED_MEDIA_TYPE, 'File type not allowed');
     }
 
     // Ensure base plugin directory exists

@@ -760,13 +760,17 @@ End users (avatars, model/prototype images); the app (asset hosting).
 - When a **user** picks a file to upload at **Image/file upload controls** (e.g. an avatar or model/prototype image), the platform uploads it and gives them a URL where the file is served.
 - When a **user** uploads an image at **Image/file upload controls**, the platform auto-scales it (max 1024 px) and serves it at the returned URL with a long cache lifetime.
 - When a **user** uploads a file larger than 50 MB at **Image/file upload controls**, the upload is rejected and they see an error.
+- When a **user** uploads a file type that is not allowed (e.g. HTML, SVG, scripts, executables) at **Image/file upload controls**, the upload is rejected with "File type not allowed" and nothing is stored.
 
 ### API contract
 
-- `POST /v2/file/upload/store-be` (auth) — `multipart` single file (`file` field) → `200 { url }`.
+- `POST /v2/file/upload/store-be` (auth) — `multipart` single file (`file` field) → `200 { url }`; `415 { message: 'File type not allowed' }` for a disallowed type; `413` when over the size cap.
 - File size cap: 50 MB (Multer); field size cap: 10 MB.
 - Images auto-scaled via `sharp` (max 1024 px); served at `/d/...` with a 1-year cache header.
-- Any file type accepted (no MIME/extension validation).
+- Allowlist (`middlewares/upload.js`, `uploadAsset`): extension (case-insensitive) must be one of `.png .jpg .jpeg .gif .webp .bmp .json .pdf .txt .csv .md` **and** the declared MIME type must match that extension (`application/octet-stream` is tolerated only for `.json .md .csv .txt .zip`). SVG and HTML are not accepted. Rejected files are never written to disk. The stored filename uses the lower-cased extension.
+- After the file is written, `utils/fileSignature.js` verifies the content (magic bytes for png/jpeg/gif/webp/bmp/pdf/zip; valid UTF-8 without NUL bytes for `.json .txt .csv .md`; `.json` must parse). On mismatch the file is deleted and the request fails with `415`.
+- `POST /v2/system/plugin/upload/:slug` (admin) uses the separate `uploadPluginZip` filter (`.zip` only) with the same content check.
+- Uploads are served from `/d/...` (and `/static/uploads/...`) with `X-Content-Type-Options: nosniff` and `Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox`; any file whose extension is not a raster image, `.json` or `.pdf` (e.g. legacy `.html`/`.svg` already on disk) is sent with `Content-Disposition: attachment` (`utils/uploadStatic.js`).
 - Stored under `static/uploads/YYYY-MM-DD/`.
 
 ### Quality control
@@ -791,17 +795,17 @@ sequenceDiagram
 
 ### Security
 
-Auth required; any file type allowed (50 MB cap) — validate on use.
+Auth required; extension + MIME allowlist with content verification (50 MB cap); uploads are served as inert data.
 
 **Coverage:**
 - **Auth:** Required — `POST /v2/file/upload/store-be` requires auth.
 - **Authorization:** Any authenticated user — no per-user quota or permission check.
-- **Input validation:** Limits enforced — file size 50 MB, field size 10 MB; any file type accepted (no MIME/extension validation).
+- **Input validation:** Limits enforced — file size 50 MB, field size 10 MB; extension + MIME allowlist (SVG/HTML excluded) and a post-write content-signature check, `415` on mismatch.
 - **Rate limiting:** Not applied.
 - **Secrets:** None.
 
 **Risks:**
-- **Malicious file storage:** any file type is accepted (50 MB cap); an attacker can upload HTML/SVG/executable payloads served from `/d/...`, enabling stored XSS via SVG/HTML or malware hosting. *Mitigation:* validate MIME/extension and serve uploads with `Content-Disposition: attachment` + a strict CSP.
+- **Malicious file storage:** only allowlisted types are accepted and `/d/...` is served with `nosniff`, a restrictive sandboxing CSP and `Content-Disposition: attachment` for non-image/JSON/PDF files, so stored-XSS via HTML/SVG is mitigated. Residual: a polyglot or malicious-but-valid PDF/image is still hosted publicly; no malware scanning.
 - **Storage exhaustion:** with auth but no per-user quota, a user could fill disk with 50 MB uploads, degrading the platform. *Mitigation:* enforce a per-user upload quota and prune orphaned files.
 
 ### Personal data processing
@@ -824,7 +828,7 @@ Files served publicly under `/d/`; retention = files persist until deleted (no a
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
 - **Estimated coverage:** ≈0% (est.) — no E2E spec
-- **Unit (Jest):** none
+- **Unit (Jest):** `backend/tests/unit/middlewares/upload.test.js` (allowlist/415/no file written), `backend/tests/unit/utils/fileSignature.test.js`, `backend/tests/unit/utils/uploadStatic.test.js` (`/d` headers), `backend/tests/unit/app/fileUpload.route.test.js` (store-be and plugin zip routes)
 
 ## CAP-INTEG-11 — Change logs / audit
 

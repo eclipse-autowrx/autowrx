@@ -11,7 +11,7 @@ const auth = require('../../../middlewares/auth');
 const validate = require('../../../middlewares/validate');
 const { fileValidation } = require('../../../validations');
 const fileController = require('../../../controllers').fileController;
-const upload = require('../../../middlewares/upload');
+const { uploadAsset } = require('../../../middlewares/upload');
 
 const router = express.Router();
 
@@ -19,7 +19,7 @@ router
   .route('/upload/store-be')
   .post(
     auth(),
-    upload.single('file'),
+    uploadAsset.single('file'),
     fileController.uploadFile
   );
 

@@ -14,9 +14,11 @@ jest.mock('../../../src/middlewares/auth', () => () => (req, res, next) => {
   next();
 });
 jest.mock('../../../src/middlewares/upload', () => ({
-  single: () => (req, res, next) => {
-    req.multerRan = true;
-    next();
+  uploadPluginZip: {
+    single: () => (req, res, next) => {
+      req.multerRan = true;
+      next();
+    },
   },
 }));
 jest.mock('../../../src/services', () => ({
