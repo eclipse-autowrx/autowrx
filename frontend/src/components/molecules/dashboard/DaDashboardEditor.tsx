@@ -14,7 +14,6 @@ import {
   TbX,
   TbExclamationMark,
   TbCategoryPlus,
-  TbExternalLink,
   TbCategory,
   TbLinkPlus,
   TbCheck,
@@ -29,7 +28,6 @@ import BUILT_IN_WIDGETS, {
   BUILT_IN_EMBEDDED_WIDGETS,
 } from '@/data/builtinWidgets'
 import DaTooltip from '@/components/molecules/DaTooltip'
-import config from '@/configs/config'
 import { isContinuousRectangle, doesOverlap, calculateSpans, parseWidgetConfig, parseCvi } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { WidgetConfig } from '@/types/widget.type'
@@ -40,8 +38,6 @@ import CodeEditor from '@/components/molecules/CodeEditor'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
-import { createNewWidgetByWebStudio } from '@/services/webStudio.service'
-import { toast } from 'react-toastify'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import DaWidgetSetup from '@/components/molecules/widgets/DaWidgetSetup'
@@ -411,7 +407,6 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
   const [activeWidget, setActiveWidget] = useState<any>(null)
   const [pickedCells, setPickedCells] = useState<any[]>([])
   const [optionsStr, setOptionStr] = useState<string>('')
-  const [projectCreating, setProjectCreating] = useState<boolean>(false)
 
   // Related to Widget Gen AI
   const [isWidgetGenAI, setIsWidgetGenAI] = useState<boolean>(true)
@@ -485,48 +480,18 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
   }
 
   const handleCreateFromScratch = async () => {
-    let newWidgetConfig = {}
-    //
-    try {
-      if (!user || !prototype) return
-      if (projectCreating) return
+    if (!user || !prototype) return
+    if (!isWidgetGenAI || !widgetUrl) return
 
-      if (isWidgetGenAI) {
-        if (!widgetUrl) return
-        newWidgetConfig = {
-          plugin: 'Builtin',
-          widget: 'Embedded-Widget',
-          options: {
-            url: widgetUrl,
-          },
-          boxes: pickedCells,
-        }
-      } else {
-        setProjectCreating(true)
-        let reqWidgetURL = await createNewWidgetByWebStudio(
-          `Widget-${prototype.name}-${new Date().getTime()}`,
-          user?.id,
-        )
-        setProjectCreating(false)
-        if (!reqWidgetURL) return
-        newWidgetConfig = {
-          plugin: 'Builtin',
-          widget: 'Embedded-Widget',
-          options: {
-            url: reqWidgetURL,
-          },
-          boxes: pickedCells,
-        }
-        toast.success('New widget created and opened on new tab!', {
-          position: 'top-right',
-          autoClose: 3000,
-        })
-      }
-      setActiveWidget(null)
-    } catch (err) {
-      setProjectCreating(false)
-      return
+    const newWidgetConfig = {
+      plugin: 'Builtin',
+      widget: 'Embedded-Widget',
+      options: {
+        url: widgetUrl,
+      },
+      boxes: pickedCells,
     }
+    setActiveWidget(null)
 
     let curWidgetConfigs = parseWidgetConfig(entireWidgetConfig)
     curWidgetConfigs.push(newWidgetConfig)
@@ -634,20 +599,6 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
               Widget ProtoPilot
             </DaTabItem> */}
           </div>
-          {activeTab !== 'genAI' && <>
-            {/* <Button
-              variant="ghost"
-              className="h-8"
-              onClick={() => {
-                setIsWidgetGenAI(false)
-                handleCreateFromScratch()
-              }}
-              disabled={projectCreating}
-            >
-              <TbExternalLink className="mr-2" />
-              {projectCreating ? '...' : 'Create widget with Studio'}
-            </Button> */}
-          </>}
         </div>
         {(activeTab == 'market' || activeTab == 'builtin') && (
           <div className="flex h-full overflow-y-auto space-x-2">
@@ -693,11 +644,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
                 }
               }}
             >
-              {isWidgetGenAI
-                ? projectCreating
-                  ? 'Creating...'
-                  : 'Add widget'
-                : 'Add selected widget'}
+              {isWidgetGenAI ? 'Add widget' : 'Add selected widget'}
             </Button>
           )}
         </div>
@@ -814,21 +761,6 @@ const DaDashboardEditor = ({
     setIsWidgetLibraryOpen(true)
   }
 
-  const handleOpenWidget = (index: number) => {
-    const widgetConfig = widgetConfigs[index]
-    if (widgetConfig.options?.url?.includes('bewebstudio')) {
-      const urlParts = widgetConfig.options.url
-        .split('/data/projects/')[1]
-        .split('/')
-      const projectId = urlParts[0]
-      const fileName = urlParts.slice(1).join('/')
-      const newUrl = `${config.studioUrl}/project/${projectId}?fileName=/${encodeURIComponent(
-        fileName,
-      )}`
-      window.open(newUrl)
-    }
-  }
-
   const handleSelectCell = (cell: number) => {
     let updatedSelectedCells = selectedCells.includes(cell)
       ? selectedCells.filter((c) => c !== cell)
@@ -938,20 +870,6 @@ const DaDashboardEditor = ({
                 <TbTrash className="mx-2 h-5 w-5"></TbTrash>
               </Button>
             </DaTooltip>
-            {widgetConfig.options?.url &&
-              widgetConfig.options.url.includes('bewebstudio') && (
-                <DaTooltip tooltipMessage="Open widget in Studio">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="!px-0 hover:text-primary"
-                    onClick={() => handleOpenWidget(index)}
-                  >
-                    <TbExternalLink className="mx-2 h-5 w-5" />
-                  </Button>
-                </DaTooltip>
-              )}
-
             <DaTooltip tooltipMessage="Edit widget">
               <Button
                 variant="ghost"
