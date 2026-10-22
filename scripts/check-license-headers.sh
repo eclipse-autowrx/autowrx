@@ -29,8 +29,10 @@ fi
 missing=()
 for f in "${FILES[@]}"; do
   [ -f "$f" ] || continue
-  # Header must be in the first 12 lines.
-  if ! head -12 "$f" | grep -q 'SPDX-License-Identifier: MIT'; then
+  # Header must be in the first 12 lines. Not grep -q: it exits on the
+  # first match, head gets SIGPIPE on files with very long lines, and
+  # pipefail turns that into a false failure.
+  if ! head -12 "$f" | grep 'SPDX-License-Identifier: MIT' > /dev/null; then
     missing+=("$f")
   fi
 done
