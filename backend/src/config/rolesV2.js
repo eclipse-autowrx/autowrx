@@ -39,7 +39,7 @@ async function initDefaultDataAndPolicies(enforcer) {
   await Promise.all(promises);
 }
 
-(async () => {
+const rolesClientReady = (async () => {
   const modelPath = path.join(__dirname, './rolesModel.conf');
   const adapter = await MongooseAdapter.newAdapter(config.mongoose.url);
   rolesClient = await newEnforcer(modelPath, adapter);
@@ -50,4 +50,16 @@ function getRolesClient() {
   return rolesClient;
 }
 
+/**
+ * Close the Casbin adapter's MongoDB connection (used by tests so Jest can exit; not called at runtime).
+ */
+async function closeRolesClient() {
+  await rolesClientReady.catch(() => {});
+  const adapter = rolesClient?.getAdapter();
+  if (adapter?.close) {
+    await adapter.close();
+  }
+}
+
 module.exports.getRolesClient = getRolesClient;
+module.exports.closeRolesClient = closeRolesClient;

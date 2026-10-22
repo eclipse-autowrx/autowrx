@@ -24,7 +24,7 @@ const paginate = (schema) => {
    * @param {Object} [filter] - Mongo filter
    * @param {Object} [options] - Query options
    * @param {string} [options.sortBy] - Sorting criteria using the format: sortField:(desc|asc). Multiple sorting criteria should be separated by commas (,)
-   * @param {string} [options.populate] - Populate data fields. Hierarchy of fields should be separated by (.). Multiple populating criteria should be separated by commas (,)
+   * @param {string|Array} [options.populate] - Populate data fields (or [path, select] array, forwarded to populate()). Hierarchy of fields should be separated by (.). Multiple populating criteria should be separated by commas (,)
    * @param {number} [options.limit] - Maximum number of results per page (default = config.constraints.defaultPageSize)
    * @param {number} [options.page] - Current page (default = 1)
    * @param {number} [options.fields] - Fields to select
@@ -65,7 +65,18 @@ const paginate = (schema) => {
     const countPromise = this.countDocuments(match).exec();
     let docsPromise = this.find(match).sort(sort).skip(skip).limit(limit);
 
-    if (options.populate) {
+    if (typeof options.populate === 'string') {
+      // 'a.b,c' -> populate nested path a.b and path c (as documented above)
+      options.populate.split(',').forEach((populateOption) => {
+        docsPromise = docsPromise.populate(
+          populateOption
+            .split('.')
+            .reverse()
+            .reduce((acc, path) => (acc ? { path, populate: acc } : { path }), null),
+        );
+      });
+    } else if (options.populate) {
+      // Array form used by controllers: [path, select] is forwarded as populate(path, select)
       docsPromise = docsPromise.populate(...options.populate);
     }
 
