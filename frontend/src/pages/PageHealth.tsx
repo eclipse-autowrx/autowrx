@@ -9,6 +9,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { TbCircleCheck, TbCircleX, TbCircleDashed, TbRefresh, TbLoader } from 'react-icons/tb'
 import { DaButton } from '@/components/atoms/DaButton'
+import { serverAxios } from '@/services/base'
 
 type ServiceStatus = 'ok' | 'error' | 'skipped' | 'degraded'
 
@@ -110,12 +111,21 @@ const PageHealth = () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/v2/health')
-      const data: HealthReport = await res.json()
-      setReport(data)
+      const res = await serverAxios.get<HealthReport>('/health')
+      setReport(res.data)
       setSecondsAgo(0)
-    } catch (err) {
-      setError('Failed to reach health endpoint. Is the backend running?')
+    } catch (err: any) {
+      const status = err?.response?.status
+      if (status === 401 || status === 403) {
+        setReport(null)
+        setError('Admin sign-in required to view the system health report')
+      } else if (err?.response?.data?.services) {
+        // 503: the report is still valid, it just describes failing services
+        setReport(err.response.data as HealthReport)
+        setSecondsAgo(0)
+      } else {
+        setError('Failed to reach health endpoint. Is the backend running?')
+      }
     } finally {
       setLoading(false)
     }
