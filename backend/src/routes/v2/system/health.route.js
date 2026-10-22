@@ -8,6 +8,9 @@
 
 const express = require('express');
 const { runHealthCheck, checkReadiness } = require('../../../services/health.service');
+const auth = require('../../../middlewares/auth');
+const { checkPermission } = require('../../../middlewares/permission');
+const { PERMISSIONS } = require('../../../config/roles');
 
 const router = express.Router();
 
@@ -48,10 +51,13 @@ probeRouter.get('/ready', async (req, res) => {
 
 /**
  * GET /v2/health
- * Run comprehensive system health checks.
+ * Run comprehensive system health checks. Admin only (auth + ADMIN permission):
+ * the report logs in as admin and exposes internal topology, so it must not be public.
  * Returns status of MongoDB, JWT, auth, upload, runtime server, and SSO.
+ * Unauthenticated liveness/readiness checks use /live and /ready instead.
  */
-router.get('/', async (req, res) => {
+router.get('/', auth(), checkPermission(PERMISSIONS.ADMIN), async (req, res) => {
+  res.set('Cache-Control', 'no-store');
   try {
     const report = await runHealthCheck();
     const httpStatus = report.status === 'ok' ? 200 : report.status === 'degraded' ? 200 : 503;

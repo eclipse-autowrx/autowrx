@@ -675,21 +675,21 @@ DevOps/monitoring.
 
 ### API contract
 
-- `GET /v2/health` (public — no auth) → `200` with per-service messages for `ok`/`degraded`, or `503` for `error`.
+- `GET /v2/health` (auth + admin: `auth()` + `checkPermission(PERMISSIONS.ADMIN)`) → `200` with per-service messages for `ok`/`degraded`, or `503` for `error`; `401` anonymous, `403` non-admin; `Cache-Control: no-store`.
 - `GET /v2/health/live` (public — no auth) → always `200 { status: 'ok' }` — liveness only (the process is serving HTTP); `Cache-Control: no-store`.
 - `GET /v2/health/ready` (public — no auth) → `200` when MongoDB is connected and answers a ping (2s budget), `503` otherwise; `Cache-Control: no-store`. Deliberately cheap — no admin login, no external calls — so it can be polled every few seconds.
 - Services checked: MongoDB, JWT sign/verify, auth login, upload dir, runtime server, SSO reachability (`GET /v2/health` report only; `/live` and `/ready` check nothing beyond the process and MongoDB).
 - Mounting: `/live` and `/ready` are mounted ahead of the auth-config/dataSync middleware in `app.js` (separate probe router), so probes never touch the DB except the readiness ping and answer fast when Mongo is down.
-- Operator UI: `/health` page (`PageHealth.tsx`) shows status badges.
+- Operator UI: `/health` page (`PageHealth.tsx`) shows status badges; it calls the endpoint via `serverAxios` and shows "Admin sign-in required" on `401`/`403`.
 - Deployment wiring: `backend/Dockerfile` and `docker-compose.prod.yml` define a container `healthcheck` running `node src/healthcheck.js` (probes `/v2/health/ready`, 15s interval, 90s start period); deploy gates wait on it (`instance-setup/up.sh` uses `up --wait`, `scripts/auto-update.sh` and the dev-stage deploy curl `/v2/health/ready`).
 
 ### Quality control
 
-I hit `/v2/health` and see the status plus per-service messages; if I stop Mongo, the status degrades. If I stop Mongo, `/v2/health/ready` returns `503` (container goes `unhealthy`) while `/v2/health/live` still returns `200`; restarting Mongo flips both back.
+As an admin I hit `/v2/health` and see the status plus per-service messages; if I stop Mongo, the status degrades. If I stop Mongo, `/v2/health/ready` returns `503` (container goes `unhealthy`) while `/v2/health/live` still returns `200`; restarting Mongo flips both back.
 
 ```mermaid
 flowchart TD
-    H["GET /v2/health (public)"] --> C{Aggregate checks}
+    H["GET /v2/health (auth + admin)"] --> C{Aggregate checks}
     C -->|ok/degraded| R200["200 + per-service messages"]
     C -->|error| R503["503 + per-service messages"]
     C --> M[(MongoDB)]
@@ -707,11 +707,11 @@ flowchart TD
 
 ### Security
 
-Public.
+Mixed: `/v2/health/live` and `/v2/health/ready` are public; the full `GET /v2/health` report is admin-only.
 
 **Coverage:**
-- **Auth:** Public — `GET /v2/health` requires no auth.
-- **Authorization:** None (public endpoint).
+- **Auth:** `GET /v2/health` requires a valid token (`401` otherwise); `/live` and `/ready` are public.
+- **Authorization:** `GET /v2/health` requires `PERMISSIONS.ADMIN` (`403` otherwise); `/live` and `/ready` have none.
 - **Input validation:** N/A — no request inputs.
 - **Rate limiting:** Not applied.
 - **Secrets:** None exposed (per-service messages only; no secrets in responses).
@@ -734,12 +734,12 @@ Status info only (no secrets).
 - **Encryption:** In transit TLS; no at-rest (nothing stored).
 - **Logging:** The crash case logs `err.message` (may include internal details); normal responses are not logged beyond morgan.
 **Risks:**
-- **Service fingerprinting:** per-service status messages may disclose internal hostnames, error text, or dependency versions, giving an attacker a footprint map of internal infrastructure.
+- **Service fingerprinting:** (mitigated by the admin guard on the full report) per-service status messages may disclose internal hostnames, error text, or dependency versions, giving an attacker a footprint map of internal infrastructure.
 
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
 - **Estimated coverage:** ≈0% (est.) — no E2E spec
-- **Unit (Jest):** 6 cases in `backend/tests/unit/app/health.route.test.js` — `/live` and `/ready` routes (503 paths, no `runHealthCheck` side effects); full `GET /v2/health` report untested
+- **Unit (Jest):** 11 cases in `backend/tests/unit/app/health.route.test.js` — `/live` and `/ready` routes (503 paths, no `runHealthCheck` side effects) and the `GET /v2/health` auth guard (anonymous `401`, non-admin `403`, admin `200`, probes stay public)
 
 ## CAP-INTEG-10 — File upload
 
