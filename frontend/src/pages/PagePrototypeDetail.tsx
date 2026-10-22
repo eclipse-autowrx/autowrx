@@ -118,7 +118,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   >({})
   const [hasWritePermission, isAdmin] = usePermissionHook(
     [PERMISSIONS.WRITE_MODEL, model?.id],
-    [PERMISSIONS.MANAGE_USERS],
+    [PERMISSIONS.ADMIN],
   )
   const queryClient = useQueryClient()
   const [openSaveProjectTemplate, setOpenSaveProjectTemplate] = useState(false)

@@ -13,7 +13,7 @@ import { Prototype } from '@/types/model.type'
 import PrototypeTabCodeDashboardCfg from '@/components/organisms/PrototypeTabCodeDashboardCfg'
 import useCanEditPrototype from '@/hooks/useCanEditPrototype'
 import usePermissionHook from '@/hooks/usePermissionHook'
-import { PERMISSIONS } from '@/const/permission'
+import { PERMISSIONS } from '@/data/permission'
 import {
   TbArrowsMaximize,
   TbArrowsMinimize,
@@ -93,7 +93,7 @@ const DaDashboard = () => {
   const prevWidgetConfigRef = useRef(prototype?.widget_config)
   const [mode, setMode] = useState<string>(MODE_RUN)
   const isAuthorized = useCanEditPrototype(prototype)
-  const [isAdmin] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
+  const [isAdmin] = usePermissionHook([PERMISSIONS.ADMIN])
   const {
     showPrototypeDashboardFullScreen,
     setShowPrototypeDashboardFullScreen,

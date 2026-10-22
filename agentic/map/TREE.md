@@ -32,6 +32,7 @@ frontend/src/                React + Vite + TypeScript SPA (dev port 3210)
   hooks/                     reusable hooks (usePermissionHook, …)
   services/                  API client layer
   configs/routes.tsx         single route table
+  data/permission.ts         GENERATED from backend/src/config/roles.js via scripts/gen-frontend-permissions.mjs (CI: permissions-drift-check) - do not edit
   data/, providers/, lib/, utils/, types/   misc support
 
 .agents/                     Playwright E2E suite

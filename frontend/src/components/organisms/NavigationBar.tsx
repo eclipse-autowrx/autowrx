@@ -28,7 +28,7 @@ import {
   TbFileCode,
 } from 'react-icons/tb'
 import usePermissionHook from '@/hooks/usePermissionHook.ts'
-import { PERMISSIONS } from '@/const/permission.ts'
+import { PERMISSIONS } from '@/data/permission'
 import DaGlobalSearch from '../molecules/DaGlobalSearch'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 // import useCurrentModel from '@/hooks/useCurrentModel'
@@ -80,7 +80,7 @@ const NavigationBar = ({ }) => {
   const authBootstrapped = useAuthStore((state) => state.authBootstrapped)
   const isResolvingAuth = !authBootstrapped || (!user && (isLoading || isFetching))
   // const { data: model } = useCurrentModel()
-  const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.ADMIN])
   const [learningMode, setIsLearningMode] = useState(false)
   const siteTitle = useSiteConfig('SITE_TITLE', 'AutoWRX')
   const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')

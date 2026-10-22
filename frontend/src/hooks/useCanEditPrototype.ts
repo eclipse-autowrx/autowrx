@@ -13,12 +13,12 @@ import type { Prototype } from '@/types/model.type'
 
 /**
  * Returns true iff the current user may edit the given prototype:
- * prototype creator, model writer (WRITE_MODEL), or admin (MANAGE_USERS).
+ * prototype creator, model writer (WRITE_MODEL), or admin (ADMIN).
  */
 const useCanEditPrototype = (prototype?: Prototype | null): boolean => {
   const { data: user } = useSelfProfileQuery()
   const [isAdmin, hasWritePermission] = usePermissionHook(
-    [PERMISSIONS.MANAGE_USERS],
+    [PERMISSIONS.ADMIN],
     [PERMISSIONS.WRITE_MODEL, prototype?.model_id],
   )
   if (!user || !prototype) return false
