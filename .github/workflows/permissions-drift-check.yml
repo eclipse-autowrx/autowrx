@@ -1,0 +1,25 @@
+name: permissions-drift-check
+
+# frontend/src/data/permission.ts is generated from backend/src/config/roles.js.
+# Fails when the committed file no longer matches the generator output.
+
+on:
+  pull_request:
+    paths:
+      - "backend/src/config/roles.js"
+      - "frontend/src/data/permission.ts"
+      - "scripts/gen-frontend-permissions.mjs"
+      - ".github/workflows/permissions-drift-check.yml"
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify frontend permissions match backend roles.js
+        run: node scripts/gen-frontend-permissions.mjs --check

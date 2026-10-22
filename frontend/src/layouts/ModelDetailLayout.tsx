@@ -81,7 +81,7 @@ const ModelDetailLayout = () => {
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [hasWritePermission, isAdmin] = usePermissionHook(
     [PERMISSIONS.WRITE_MODEL, model?.id],
-    [PERMISSIONS.MANAGE_USERS],
+    [PERMISSIONS.ADMIN],
   )
   const enableModelCustomization = useSiteConfig(
     'ENABLE_MODEL_CUSTOMIZATION',

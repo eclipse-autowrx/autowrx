@@ -42,7 +42,7 @@ const PageManageFeatures = () => {
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
   const [features, setFeatures] = useState<any[]>([])
-  const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.ADMIN])
   const { toast } = useToast()
   const { adminUi } = useAdminUiConfig()
 

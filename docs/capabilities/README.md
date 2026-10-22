@@ -125,14 +125,14 @@ Each cluster has an ID prefix (`CAP-<CODE>-NN`).
 
 **Auth gating.** Most read endpoints use `auth({ optional: (req) => req.authConfig.PUBLIC_VIEWING })` — unauthenticated users see public content only when `PUBLIC_VIEWING` is on; private resources still require a permission check. Writes generally require authentication.
 
-**Permissions (RBAC v1, primary).** Roles grant permissions bound to a resource `ref` (a model/asset id or `*`). Owners bypass checks. Frontend permission constants (`frontend/src/data/permission.ts`):
+**Permissions (RBAC v1, primary).** Roles grant permissions bound to a resource `ref` (a model/asset id or `*`). Owners bypass checks. Frontend permission constants (`frontend/src/data/permission.ts`, generated from `backend/src/config/roles.js` by `scripts/gen-frontend-permissions.mjs`; CI-checked):
 
 | Constant | Backend value |
 |---|---|
 | `READ_MODEL` | `readModel` |
 | `WRITE_MODEL` | `writeModel` |
-| `MANAGE_USERS` | `manageUsers` |
-| `USE_GEN_AI` | `generativeAI` |
+| `ADMIN` | `manageUsers` |
+| `GENERATIVE_AI` | `generativeAI` |
 | `UNLIMITED_MODEL` | `unlimitedModel` |
 | `READ_ASSET` / `WRITE_ASSET` | `readAsset` / `writeAsset` |
 | `DEPLOY_HARDWARE` | `deployHardware` |

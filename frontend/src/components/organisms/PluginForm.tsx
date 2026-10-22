@@ -47,7 +47,7 @@ const PluginForm = ({
   defaultType,
 }: PluginFormProps) => {
   const qc = useQueryClient()
-  const [isAdmin] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
+  const [isAdmin] = usePermissionHook([PERMISSIONS.ADMIN])
   const [isOpen, setIsOpen] = useState(open)
 
   useEffect(() => setIsOpen(open), [open])

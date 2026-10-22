@@ -20,7 +20,7 @@ type PluginSection = 'prototype' | 'vehicle-api-schema' | 'vehicle-api' | 'deplo
 
 const PluginManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.ADMIN])
   const customApiSetsEnabled = !useSiteConfig('DISABLE_CUSTOM_API_SETS', false)
 
   // Get initial section from URL or default to 'prototype'
