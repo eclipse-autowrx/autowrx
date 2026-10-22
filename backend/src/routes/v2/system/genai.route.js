@@ -35,7 +35,7 @@ router.get(
   catchAsync(async (req, res) => {
     const result = await serviceTokenService.issueServiceToken(req.query.service);
     res.send(result);
-  })
+  }),
 );
 
 let genaiUrlDeprecationWarned = false;
@@ -44,7 +44,7 @@ const warnGenaiUrlDeprecation = () => {
   if (!genaiUrlDeprecationWarned && config.services.genAI.url) {
     genaiUrlDeprecationWarned = true;
     logger.warn(
-      'GENAI_URL is deprecated. Configure EXTERNAL_GENAI_URL and EXTERNAL_GENAI_DEVICE_TOKEN on the backend instead of using a genai-proxy sidecar.'
+      'GENAI_URL is deprecated. Configure EXTERNAL_GENAI_URL and EXTERNAL_GENAI_DEVICE_TOKEN on the backend instead of using a genai-proxy sidecar.',
     );
   }
 };
@@ -92,7 +92,7 @@ router.all(
   '*',
   catchAsync(async (req, res) => {
     await genaiService.handle(req, res);
-  })
+  }),
 );
 
 module.exports = router;

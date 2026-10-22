@@ -71,7 +71,9 @@ const start = async () => {
   logger.info('Connected to MongoDB ');
   logger.info(`🚀 Backend running in ${config.env.toUpperCase()} mode`);
   logger.info(`📊 CORS Origins: ${config.cors.origins ? 'Custom function' : 'Default'}`);
-  logger.info(`🍪 Cookie Config: secure=${config.jwt.cookie.options.secure}, sameSite=${config.jwt.cookie.options.sameSite}, httpOnly=${config.jwt.cookie.options.httpOnly}`);
+  logger.info(
+    `🍪 Cookie Config: secure=${config.jwt.cookie.options.secure}, sameSite=${config.jwt.cookie.options.sameSite}, httpOnly=${config.jwt.cookie.options.httpOnly}`,
+  );
 
   convertLogsCap();
   await initializeRoles();

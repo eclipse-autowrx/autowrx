@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -43,7 +43,7 @@ const searchPrototypesBySignal = catchAsync(async (req, res) => {
           name: json.model_id?.name,
         },
       };
-    })
+    }),
   );
 });
 

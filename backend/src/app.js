@@ -16,6 +16,7 @@ const passport = require('passport');
 const httpStatus = require('http-status');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const config = require('./config/config');
 const morgan = require('./config/morgan');
@@ -123,6 +124,7 @@ app.options(
 // and /v2/health/ready must bypass them (the only DB touch is the readiness
 // ping itself) to answer fast while the container is unhealthy.
 const { probeRouter } = require('./routes/v2/system/health.route');
+
 app.use('/v2/health', probeRouter);
 
 // jwt authentication
@@ -135,6 +137,7 @@ const loadAuthConfigs = require('./middlewares/authConfig');
 app.use(loadAuthConfigs);
 
 const dataSync = require('./sync');
+
 app.use('/v2', dataSync.middleware);
 
 app.use('/v2', routesV2);
@@ -518,7 +521,7 @@ if (config.env === 'development') {
   });
 }
 
-const server = require('http').createServer(app);
+const server = http.createServer(app);
 
 initSocketIO(server);
 

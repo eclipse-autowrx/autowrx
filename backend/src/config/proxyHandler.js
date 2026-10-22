@@ -1,17 +1,15 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
 
-const { createProxyMiddleware } = require('http-proxy-middleware');
-const config = require('./config');
 const httpStatus = require('http-status');
 const logger = require('./logger');
 
-const setupProxy = (app) => {
+const setupProxy = (_app) => {
   // File upload is now handled directly by the backend
   // No proxy needed for /v2/file
 };
@@ -28,7 +26,7 @@ const proxyHandler =
    * @param {import('http').IncomingMessage} req
    * @param {import('http').ServerResponse} res
    */
-  (req, res, next) => {
+  (req, res, _next) => {
     if (!proxy) {
       return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `${name} is not implemented` });
     }

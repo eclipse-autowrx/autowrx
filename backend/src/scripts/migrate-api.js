@@ -1,11 +1,13 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
 
+// One-off migration script; the driver is provided transitively by mongoose.
+// eslint-disable-next-line import/no-extraneous-dependencies
 const Client = require('mongodb').MongoClient;
 
 const connect = async (url) => {
@@ -15,7 +17,7 @@ const connect = async (url) => {
 };
 
 const main = async () => {
-  db = await connect('mongodb://etas-prod-playground-db:27017/playground-be');
+  const db = await connect('mongodb://etas-prod-playground-db:27017/playground-be');
   const models = await db
     .collection('models')
     .find({
@@ -32,7 +34,7 @@ const main = async () => {
   const promises = [];
 
   models.forEach(async (model) => {
-    const custom_apis = model.custom_apis;
+    const { custom_apis } = model;
     custom_apis.forEach(async (custom_api) => {
       const newData = {
         apiName: custom_api.name,
@@ -42,7 +44,7 @@ const main = async () => {
         type: custom_api.type || 'branch',
         datatype: custom_api.datatype || (custom_api.type !== 'branch' ? 'string' : null),
         description: custom_api.description || '',
-        isWishlist: true
+        isWishlist: true,
       };
       promises.push(db.collection('extendedapis').insertOne(newData));
     });

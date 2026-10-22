@@ -7,6 +7,10 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
+const mongoose = require('mongoose');
+const _ = require('lodash');
+const fs = require('fs');
+const path = require('path');
 const { userService } = require('.');
 const prototypeService = require('./prototype.service');
 const extendedApiService = require('./extendedApi.service');
@@ -17,13 +21,9 @@ const { Model, Role, UserRole, Prototype, ModelTemplate, CustomApiSet } = requir
 const ApiError = require('../utils/ApiError');
 const { PERMISSIONS } = require('../config/roles');
 const { publiclyVisibleVisibilities, visibilityTypes } = require('../config/enums');
-const mongoose = require('mongoose');
 const logger = require('../config/logger');
-const _ = require('lodash');
 const config = require('../config/config');
 const customApiSetService = require('./customApiSet.service');
-const fs = require('fs');
-const path = require('path');
 
 /**
  *
@@ -743,6 +743,8 @@ const processApiDataUrl = async (apiDataUrl) => {
         // No standard VSS files available, treat as custom
         logger.debug('vss.json not found, treating uploaded file as custom');
       } else {
+        // Intentional require(): loads and caches the JSON index of standard VSS versions.
+        // eslint-disable-next-line global-require
         const versionList = require('../../data/vss.json');
         if (!versionList || versionList.length === 0) {
           // No versions to check, treat as custom
@@ -775,6 +777,8 @@ const processApiDataUrl = async (apiDataUrl) => {
               }
 
               // Size is similar, do deep comparison
+              // Intentional require(): loads and caches the (large) standard VSS file for comparison.
+              // eslint-disable-next-line global-require, import/no-dynamic-require
               const file = require(`../../data/${version.name}.json`);
               const fileKeys = Object.keys(file);
 
@@ -863,7 +867,7 @@ const addCustomApiSet = async (modelId, setId, userId) => {
   const model = await getModelById(modelId, userId);
 
   // Verify set exists and user has access
-  const set = await customApiSetService.getSetById(setId, userId);
+  await customApiSetService.getSetById(setId, userId);
 
   if (!model.custom_api_sets) {
     model.custom_api_sets = [];

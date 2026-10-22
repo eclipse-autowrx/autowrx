@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -32,7 +32,7 @@ const relationshipSchema = mongoose.Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 const customApiSchemaSchema = mongoose.Schema(
@@ -115,7 +115,7 @@ const customApiSchemaSchema = mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 customApiSchemaSchema.plugin(toJSON);
@@ -130,4 +130,3 @@ customApiSchemaSchema.index({ code: 1, is_active: 1 });
 const CustomApiSchema = mongoose.model('CustomApiSchema', customApiSchemaSchema);
 
 module.exports = CustomApiSchema;
-

@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -105,7 +105,7 @@ const customApiSetSchema = mongoose.Schema(
   {
     timestamps: true,
     strict: false, // Allow dynamic fields in items (name, value, etc. based on CustomApiSchema attributes)
-  }
+  },
 );
 
 customApiSetSchema.plugin(toJSON);
@@ -122,4 +122,3 @@ customApiSetSchema.index({ custom_api_schema: 1 });
 const CustomApiSet = mongoose.model('CustomApiSet', customApiSetSchema);
 
 module.exports = CustomApiSet;
-

@@ -53,8 +53,11 @@ describe('adminUi config', () => {
 
   test('ADMIN_CLEAN_MODE=true applies default hidden sections and categories', () => {
     process.env.ADMIN_CLEAN_MODE = 'true';
-    const { resolveAdminUiConfig, ADMIN_CLEAN_MODE_HIDDEN_SITE_CONFIG_SECTIONS, ADMIN_CLEAN_MODE_VISIBLE_FEATURE_CATEGORIES } =
-      load();
+    const {
+      resolveAdminUiConfig,
+      ADMIN_CLEAN_MODE_HIDDEN_SITE_CONFIG_SECTIONS,
+      ADMIN_CLEAN_MODE_VISIBLE_FEATURE_CATEGORIES,
+    } = load();
 
     expect(resolveAdminUiConfig()).toEqual({
       cleanMode: true,

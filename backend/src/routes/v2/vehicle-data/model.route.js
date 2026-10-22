@@ -13,7 +13,6 @@ const { modelController } = require('../../../controllers');
 const auth = require('../../../middlewares/auth');
 const { checkPermission } = require('../../../middlewares/permission');
 const { PERMISSIONS } = require('../../../config/roles');
-const { model } = require('mongoose');
 
 const router = express.Router();
 

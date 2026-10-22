@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -10,12 +10,12 @@ const { siteConfigService } = require('../services');
 const config = require('../config/config');
 
 // Cache for site configs to avoid repeated database calls
-let configCache = new Map();
+const configCache = new Map();
 let cacheExpiry = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // Auth config cache - separate from general config cache
-let authConfigCache = new Map();
+const authConfigCache = new Map();
 let authCacheExpiry = null;
 const AUTH_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
@@ -56,7 +56,7 @@ const getConfigs = async (keys) => {
  */
 const getPublicConfigs = async (forceRefresh = false) => {
   const now = Date.now();
-  
+
   // Return cached data if still valid and not forcing refresh
   if (!forceRefresh && cacheExpiry && now < cacheExpiry && configCache.has('public')) {
     return configCache.get('public');
@@ -64,11 +64,11 @@ const getPublicConfigs = async (forceRefresh = false) => {
 
   try {
     const configs = await siteConfigService.getPublicSiteConfigs();
-    
+
     // Update cache
     configCache.set('public', configs);
     cacheExpiry = now + CACHE_DURATION;
-    
+
     return configs;
   } catch (error) {
     console.warn('Failed to get public site configs:', error.message);
@@ -83,7 +83,7 @@ const getPublicConfigs = async (forceRefresh = false) => {
  */
 const getAllConfigs = async (forceRefresh = false) => {
   const now = Date.now();
-  
+
   // Return cached data if still valid and not forcing refresh
   if (!forceRefresh && cacheExpiry && now < cacheExpiry && configCache.has('all')) {
     return configCache.get('all');
@@ -91,11 +91,11 @@ const getAllConfigs = async (forceRefresh = false) => {
 
   try {
     const configs = await siteConfigService.getAllSiteConfigs();
-    
+
     // Update cache
     configCache.set('all', configs);
     cacheExpiry = now + CACHE_DURATION;
-    
+
     return configs;
   } catch (error) {
     console.warn('Failed to get all site configs:', error.message);
@@ -134,7 +134,7 @@ const getConfigsSync = (keys) => {
   if (configCache.has('public')) {
     const publicConfigs = configCache.get('public');
     const result = {};
-    keys.forEach(key => {
+    keys.forEach((key) => {
       if (publicConfigs[key] !== undefined) {
         result[key] = publicConfigs[key];
       }
@@ -151,7 +151,7 @@ const getConfigsSync = (keys) => {
  */
 const getAuthConfig = async (key) => {
   const validKeys = ['PUBLIC_VIEWING', 'SELF_REGISTRATION', 'SSO_AUTO_REGISTRATION', 'PASSWORD_MANAGEMENT'];
-  
+
   if (!validKeys.includes(key)) {
     console.warn(`Invalid auth config key: ${key}. Valid keys are: ${validKeys.join(', ')}`);
     return false;
@@ -160,7 +160,7 @@ const getAuthConfig = async (key) => {
   try {
     // Try to get from database with category='auth'
     const dbConfig = await siteConfigService.getSiteConfigByKey(key, 'site', null, false);
-    
+
     if (dbConfig && dbConfig.value !== undefined && dbConfig.value !== null) {
       // Store in cache
       authConfigCache.set(key, dbConfig.value);
@@ -174,7 +174,7 @@ const getAuthConfig = async (key) => {
     // No STRICT_AUTH → default to false (closed mode)
     const strictAuth = config.strictAuth !== undefined ? config.strictAuth : true;
     const fallbackValue = !strictAuth; // Invert: false strict = true open
-    
+
     console.info(`Auth config "${key}" not found in database, using STRICT_AUTH fallback: ${fallbackValue}`);
     return fallbackValue;
   } catch (error) {
@@ -192,7 +192,7 @@ const getAuthConfig = async (key) => {
  */
 const getAuthConfigSync = (key, defaultValue = false) => {
   const validKeys = ['PUBLIC_VIEWING', 'SELF_REGISTRATION', 'SSO_AUTO_REGISTRATION', 'PASSWORD_MANAGEMENT'];
-  
+
   if (!validKeys.includes(key)) {
     console.warn(`Invalid auth config key: ${key}`);
     return defaultValue;
@@ -201,7 +201,7 @@ const getAuthConfigSync = (key, defaultValue = false) => {
   if (authConfigCache.has(key) && authCacheExpiry && Date.now() < authCacheExpiry) {
     return authConfigCache.get(key);
   }
-  
+
   return defaultValue;
 };
 

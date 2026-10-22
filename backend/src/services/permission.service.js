@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -11,7 +11,7 @@ const { isValidObjectId } = require('mongoose');
 const { UserRole, Model, Prototype, Role, Asset } = require('../models');
 const ApiError = require('../utils/ApiError');
 const roleModel = require('../models/role.model');
-const { PERMISSIONS, ROLES } = require('../config/roles');
+const { PERMISSIONS } = require('../config/roles');
 const { visibilityTypes, publiclyVisibleVisibilities } = require('../config/enums');
 const { getRolesClient } = require('../config/rolesV2');
 

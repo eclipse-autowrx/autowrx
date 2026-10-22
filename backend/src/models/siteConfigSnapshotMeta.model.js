@@ -21,14 +21,11 @@ const siteConfigSnapshotMetaSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 siteConfigSnapshotMetaSchema.plugin(toJSON);
 
-const SiteConfigSnapshotMeta = mongoose.model(
-  'SiteConfigSnapshotMeta',
-  siteConfigSnapshotMetaSchema
-);
+const SiteConfigSnapshotMeta = mongoose.model('SiteConfigSnapshotMeta', siteConfigSnapshotMetaSchema);
 
 module.exports = SiteConfigSnapshotMeta;

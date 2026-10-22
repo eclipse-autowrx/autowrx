@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -43,7 +43,8 @@ const errorHandler = (err, req, res, next) => {
   if (req.path.startsWith('/assets/') || req.path.endsWith('.css') || req.path.endsWith('.js')) {
     if (req.path.endsWith('.css')) {
       return res.status(statusCode).type('text/css').send(`/* Error: ${message} */`);
-    } else if (req.path.endsWith('.js')) {
+    }
+    if (req.path.endsWith('.js')) {
       return res.status(statusCode).type('application/javascript').send(`// Error: ${message}`);
     }
     // For other asset types, return plain text

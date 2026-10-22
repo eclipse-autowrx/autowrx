@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -44,12 +44,7 @@ const addSetItem = catchAsync(async (req, res) => {
 });
 
 const updateSetItem = catchAsync(async (req, res) => {
-  const set = await customApiSetService.updateSetItem(
-    req.params.id,
-    req.params.itemId,
-    req.body.item,
-    req.user.id
-  );
+  const set = await customApiSetService.updateSetItem(req.params.id, req.params.itemId, req.body.item, req.user.id);
   res.send(set);
 });
 
@@ -68,4 +63,3 @@ module.exports = {
   updateSetItem,
   removeSetItem,
 };
-

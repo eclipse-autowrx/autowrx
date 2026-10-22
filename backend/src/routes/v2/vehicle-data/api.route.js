@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -25,7 +25,7 @@ router
       optional: (req) => req.authConfig.PUBLIC_VIEWING,
     }),
     validate(apiValidation.getApi),
-    apiController.getApi
+    apiController.getApi,
   )
   .patch(auth(), validate(apiValidation.updateApi), apiController.updateApi)
   .delete(auth(), validate(apiValidation.deleteApi), apiController.deleteApi);

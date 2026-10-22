@@ -16,9 +16,17 @@
     "prettier"
   ],
   "parserOptions": {
-    "ecmaVersion": 2020,
+    "ecmaVersion": 2022,
     "sourceType": "script"
   },
+  "overrides": [
+    {
+      // Bootstrap must load config/models only after Key Vault secrets are in process.env and MongoDB is connected,
+      // so these requires are intentionally inside start().
+      "files": ["src/index.js"],
+      "rules": { "global-require": "off" }
+    }
+  ],
   "rules": {
     // "no-console": "off",
     "func-names": "warn",
@@ -27,6 +35,33 @@
     "jest/expect-expect": "warn",
     "security/detect-object-injection": "warn",
     "camelcase": "warn",
+    // airbnb forbids for...of (regenerator-runtime concern for legacy browsers). This is a Node >= 22 backend and
+    // for...of + await is used throughout; keep the other airbnb restrictions (for...in, labels, with).
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "ForInStatement",
+        "message": "for..in loops iterate over the entire prototype chain. Use Object.{keys,values,entries}, and iterate over the resulting array."
+      },
+      {
+        "selector": "LabeledStatement",
+        "message": "Labels are a form of GOTO; using them makes code confusing and hard to maintain and understand."
+      },
+      {
+        "selector": "WithStatement",
+        "message": "`with` is disallowed in strict mode because it makes code impossible to predict and optimize."
+      }
+    ],
+    // Guard-clause `continue` in loops is the established style here; airbnb's ban pushes deeper nesting.
+    "no-continue": "off",
+    // Express/Mongoose code mutates req/res/socket/document and builder-style filter/body params by design.
+    // Reassigning the parameter binding itself is still an error.
+    "no-param-reassign": ["error", { "props": false }],
+    // `_`-prefixed names mark intentionally unused arguments/variables (e.g. Express `_next`, destructure skips).
+    "no-unused-vars": [
+      "error",
+      { "vars": "all", "args": "after-used", "ignoreRestSiblings": true, "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrors": "none" }
+    ],
     "import/no-unresolved": [
       "error",
       {

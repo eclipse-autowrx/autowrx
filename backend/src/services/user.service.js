@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,12 +7,12 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
+const { isValidObjectId } = require('mongoose');
 const { User } = require('../models');
 const ApiError = require('../utils/ApiError');
 const image = require('../utils/image');
 const fileService = require('./file.service');
 const logger = require('../config/logger');
-const { isValidObjectId } = require('mongoose');
 
 /**
  * Create a user
@@ -39,7 +39,8 @@ const createUser = async (userBody) => {
  * @param {string} [advanced.id] - Whether to filter users by id
  * @returns {Promise<QueryResult>}
  */
-const queryUsers = async (filter, options, advanced) => {
+const queryUsers = async (baseFilter, options, advanced) => {
+  let filter = baseFilter;
   if (advanced.id) {
     const ids = advanced.id.split(',');
     for (const id of ids) {
@@ -72,7 +73,7 @@ const queryUsers = async (filter, options, advanced) => {
   }
 
   const results = await User.paginate(filter, options);
-  results.results = results.results.map((user, index) => ({
+  results.results = results.results.map((user) => ({
     ...user.toJSON(),
     created_at: user.createdAt,
   }));
@@ -132,7 +133,7 @@ const updateUserById = async (userId, updateBody) => {
     updateBody,
     {
       new: true,
-    }
+    },
   );
 };
 

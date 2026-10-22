@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -28,13 +28,13 @@ router
     auth(),
     checkPermission(PERMISSIONS.ADMIN),
     validate(permissionValidation.assignRoleToUser),
-    permissionController.assignRoleToUser
+    permissionController.assignRoleToUser,
   )
   .delete(
     auth(),
     checkPermission(PERMISSIONS.ADMIN),
     validate(permissionValidation.removeRoleFromUser),
-    permissionController.removeRoleFromUser
+    permissionController.removeRoleFromUser,
   );
 
 module.exports = router;

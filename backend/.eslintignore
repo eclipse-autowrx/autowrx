@@ -1,3 +1,6 @@
 node_modules
 bin
 data
+# Vendored/built/uploaded assets served as static files, not backend source (3d-car bundle is several MB and made `eslint .` run for >10 min)
+static
+coverage
