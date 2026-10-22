@@ -84,7 +84,7 @@ const PrototypeLibraryPortfolio = () => {
 
   const fetchFeedbackInfo = async () => {
     if (!prototypes) return
-    let protoData = [] as any[]
+    const protoData = [] as any[]
     try {
       const feedbacksByPrototype = await Promise.all(
         prototypes.map(async (prototype) => {
@@ -94,7 +94,7 @@ const PrototypeLibraryPortfolio = () => {
       )
 
       feedbacksByPrototype.forEach(({ prototype, feedbacks }) => {
-        let retItem = {
+        const retItem = {
           label: prototype.name,
           href: model
             ? `/model/${model.id}/library/prototype/${prototype.id}/view`
@@ -208,8 +208,8 @@ const PrototypeLibraryPortfolio = () => {
         enabled: false,
       },
       datalabels: {
-        anchor: 'end' as 'end',
-        align: 'end' as 'end',
+        anchor: 'end' as const,
+        align: 'end' as const,
         offset: 10,
         padding: {
           top: 4,
@@ -225,9 +225,7 @@ const PrototypeLibraryPortfolio = () => {
         borderRadius: 4,
         borderWidth: 1,
         color: (context) =>
-          context.dataIndex === hoveredIndex
-            ? '#ffffff'
-            : '#374151',
+          context.dataIndex === hoveredIndex ? '#ffffff' : '#374151',
         font: {
           size: 12,
           weight: 'normal',

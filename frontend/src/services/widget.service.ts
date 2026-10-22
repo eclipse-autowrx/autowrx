@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -17,10 +17,10 @@ export const loadMarketWidgets = async () => {
       'DEFAULT_MARKETPLACE_URL',
       'site',
       undefined,
-      'https://store-be.digitalauto.tech'
+      'https://store-be.digitalauto.tech',
     )
-    
-    let res = await axios.get(
+
+    const res = await axios.get(
       `${marketplaceUrl}/package?category=widget&limit=50&page=1`,
     )
     if (
@@ -30,7 +30,7 @@ export const loadMarketWidgets = async () => {
       Array.isArray(res.data.data)
     ) {
       return res.data.data.map((widget: any) => {
-        let parsedWidget = {
+        const parsedWidget = {
           id: widget._id,
           plugin: 'Builtin',
           widget: 'Embedded-Widget',
@@ -46,7 +46,7 @@ export const loadMarketWidgets = async () => {
         }
         if (widget.dashboardConfig) {
           try {
-            let tmpConfig = JSON.parse(widget.dashboardConfig) as any
+            const tmpConfig = JSON.parse(widget.dashboardConfig) as any
             if (tmpConfig && !Array.isArray(tmpConfig)) {
               parsedWidget.options = tmpConfig
               parsedWidget.options.url = parsedWidget.url
@@ -69,15 +69,13 @@ export const searchWidget = async (widgetId: any) => {
       'DEFAULT_MARKETPLACE_URL',
       'site',
       undefined,
-      'https://marketplace.digitalauto.tech'
+      'https://marketplace.digitalauto.tech',
     )
-    
-    let res = await axios.get(
-      `${marketplaceUrl}/package/${widgetId}`,
-    )
+
+    const res = await axios.get(`${marketplaceUrl}/package/${widgetId}`)
     if (res.status === 200 && res.data) {
       // Assuming the API returns the widget details directly
-      let parsedWidget = {
+      const parsedWidget = {
         id: res.data._id,
         plugin: 'Builtin',
         widget: 'Embedded-Widget',
@@ -97,7 +95,7 @@ export const searchWidget = async (widgetId: any) => {
       // Handle dashboardConfig if available
       if (res.data.dashboardConfig) {
         try {
-          let tmpConfig = JSON.parse(res.data.dashboardConfig) as any
+          const tmpConfig = JSON.parse(res.data.dashboardConfig) as any
           if (tmpConfig && !Array.isArray(tmpConfig)) {
             parsedWidget.options = tmpConfig
             parsedWidget.options.url = parsedWidget.url
@@ -119,10 +117,10 @@ export const loadWidgetReviews = async (widgetId: any) => {
       'DEFAULT_MARKETPLACE_URL',
       'site',
       undefined,
-      'https://marketplace.digitalauto.tech'
+      'https://marketplace.digitalauto.tech',
     )
-    
-    let res = await axios.get(
+
+    const res = await axios.get(
       `${marketplaceUrl}/review?packageId=${widgetId}&limit=20&offset=0`,
     )
     if (res.status === 200 && res.data && res.data.data) {
@@ -142,4 +140,3 @@ export const loadWidgetReviews = async (widgetId: any) => {
     return null
   }
 }
-

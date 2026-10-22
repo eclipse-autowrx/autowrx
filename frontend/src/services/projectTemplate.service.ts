@@ -22,13 +22,17 @@ export interface ListProjectTemplatesParams {
   sortBy?: string
 }
 
-export const listProjectTemplates = (params?: ListProjectTemplatesParams): Promise<List<ProjectTemplate>> =>
+export const listProjectTemplates = (
+  params?: ListProjectTemplatesParams,
+): Promise<List<ProjectTemplate>> =>
   serverAxios.get('/system/project-template', { params }).then((r) => r.data)
 
 export const getProjectTemplateById = (id: string): Promise<ProjectTemplate> =>
   serverAxios.get(`/system/project-template/${id}`).then((r) => r.data)
 
-export const createProjectTemplate = (data: Partial<ProjectTemplate>): Promise<ProjectTemplate> =>
+export const createProjectTemplate = (
+  data: Partial<ProjectTemplate>,
+): Promise<ProjectTemplate> =>
   serverAxios.post('/system/project-template', data).then((r) => r.data)
 
 export const updateProjectTemplate = (

@@ -45,7 +45,9 @@ export default function ProjectTemplateEditor({
 }: ProjectTemplateEditorProps) {
   const qc = useQueryClient()
   const isEdit = !!editId
-  const [form, setForm] = useState<ProjectTemplateFormState>(EMPTY_PROJECT_TEMPLATE_FORM)
+  const [form, setForm] = useState<ProjectTemplateFormState>(
+    EMPTY_PROJECT_TEMPLATE_FORM,
+  )
 
   const {
     data: editData,
@@ -105,7 +107,10 @@ export default function ProjectTemplateEditor({
     const padding = 20
     const minHeight = 160
     const maxHeight = 480
-    return Math.min(Math.max(lineCount * lineHeight + padding, minHeight), maxHeight)
+    return Math.min(
+      Math.max(lineCount * lineHeight + padding, minHeight),
+      maxHeight,
+    )
   }, [form.code])
 
   const save = useMutation({
@@ -127,7 +132,9 @@ export default function ProjectTemplateEditor({
     onSuccess: () => {
       toast.success(isEdit ? 'Template updated' : 'Template created')
       if (isEdit && editId) {
-        qc.invalidateQueries({ queryKey: PROJECT_TEMPLATE_QUERY_KEYS.edit(editId) })
+        qc.invalidateQueries({
+          queryKey: PROJECT_TEMPLATE_QUERY_KEYS.edit(editId),
+        })
       }
       invalidateProjectTemplateQueries(qc)
       onOpenChange(false)
@@ -147,7 +154,9 @@ export default function ProjectTemplateEditor({
       }}
       className="w-[95vw] sm:w-[90vw] max-w-[1200px] h-[90vh] max-h-[calc(100dvh-2rem)]"
       contentContainerClassName="min-h-0"
-      dialogTitle={isEdit ? 'Edit Prototype Template' : 'Create Prototype Template'}
+      dialogTitle={
+        isEdit ? 'Edit Prototype Template' : 'Create Prototype Template'
+      }
       footer={
         <>
           <Button variant="outline" onClick={resetAndClose}>
@@ -174,7 +183,10 @@ export default function ProjectTemplateEditor({
       ) : isEditDataError ? (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <p className="text-destructive">
-            {getProjectTemplateErrorMessage(editFetchError, 'Failed to load template')}
+            {getProjectTemplateErrorMessage(
+              editFetchError,
+              'Failed to load template',
+            )}
           </p>
           <Button variant="outline" onClick={() => refetchEditData()}>
             Retry

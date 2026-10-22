@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -10,7 +10,12 @@ import { InvitedUser } from '@/types/user.type.ts'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/atoms/avatar'
 import { TbChevronDown, TbCircle, TbCircleCheckFilled } from 'react-icons/tb'
 import clsx from 'clsx'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../atoms/dropdown-menu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../atoms/dropdown-menu'
 import { Button } from '@/components/atoms/button'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
@@ -48,7 +53,11 @@ const DaUserInviteItem = ({
       <Avatar className="h-10 w-10">
         <AvatarImage src={user.image_file} alt={user.name} />
         <AvatarFallback>
-          <img src="/imgs/profile.png" alt="profile" className="h-full w-full rounded-full object-cover" />
+          <img
+            src="/imgs/profile.png"
+            alt="profile"
+            className="h-full w-full rounded-full object-cover"
+          />
         </AvatarFallback>
       </Avatar>
 
@@ -56,7 +65,7 @@ const DaUserInviteItem = ({
         <span className="block text-foreground">
           {user.name} {self?.id === user.id && '(You)'}
         </span>
-        <span className="block truncate text-muted-foreground" >
+        <span className="block truncate text-muted-foreground">
           {user.email}
         </span>
       </div>

@@ -24,7 +24,11 @@ import PrivacyPolicySection from '../components/organisms/PrivacyPolicySection'
 
 // Keys that should be excluded from the site-config page
 // These keys are managed in their own dedicated pages
-export const EXCLUDED_FROM_SITE_CONFIG_KEYS = ['STAGING_FRAME', 'STANDARD_STAGE', 'EMAIL_CONFIG']
+export const EXCLUDED_FROM_SITE_CONFIG_KEYS = [
+  'STAGING_FRAME',
+  'STANDARD_STAGE',
+  'EMAIL_CONFIG',
+]
 
 export const PREDEFINED_SITE_CONFIGS: any[] = [
   {
@@ -79,7 +83,8 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     value: '',
     secret: false,
     valueType: 'string',
-    description: 'Markdown content for the Privacy Policy page displayed at /privacy-policy.',
+    description:
+      'Markdown content for the Privacy Policy page displayed at /privacy-policy.',
     category: 'privacy',
   },
   {
@@ -102,7 +107,8 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     value: '{}',
     secret: false,
     valueType: 'string',
-    description: 'Custom JSON options passed to the Socket.IO client when connecting to the runtime server. Example: {"transports":["websocket"],"reconnectionAttempts":5}. Leave empty to use default Socket.IO options.',
+    description:
+      'Custom JSON options passed to the Socket.IO client when connecting to the runtime server. Example: {"transports":["websocket"],"reconnectionAttempts":5}. Leave empty to use default Socket.IO options.',
   },
   {
     key: 'ALLOW_ADDING_FILES',
@@ -184,7 +190,8 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     value: ['CLOUD_RUNTIME', 'HARDWARE_KIT', 'GENAI-PYTHON'],
     secret: false,
     valueType: 'array',
-    description: 'Asset types users can create and manage on the My Assets page.',
+    description:
+      'Asset types users can create and manage on the My Assets page.',
     category: 'general',
   },
   {
@@ -259,17 +266,20 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
   },
 ]
 
-export const PREDEFINED_GENAI_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
-  (config) => config.category === 'genai',
-).map((config) => config.key)
+export const PREDEFINED_GENAI_CONFIG_KEYS: string[] =
+  PREDEFINED_SITE_CONFIGS.filter((config) => config.category === 'genai').map(
+    (config) => config.key,
+  )
 
-export const PREDEFINED_PRIVACY_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
-  (config) => config.category === 'privacy',
-).map((config) => config.key)
+export const PREDEFINED_PRIVACY_CONFIG_KEYS: string[] =
+  PREDEFINED_SITE_CONFIGS.filter((config) => config.category === 'privacy').map(
+    (config) => config.key,
+  )
 
-export const PREDEFINED_PROTOTYPE_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
-  (config) => config.category === 'model_prototype',
-).map((config) => config.key)
+export const PREDEFINED_PROTOTYPE_CONFIG_KEYS: string[] =
+  PREDEFINED_SITE_CONFIGS.filter(
+    (config) => config.category === 'model_prototype',
+  ).map((config) => config.key)
 
 export const PREDEFINED_AUTH_CONFIGS: any[] = [
   {
@@ -279,7 +289,8 @@ export const PREDEFINED_AUTH_CONFIGS: any[] = [
     secret: false,
     valueType: 'boolean',
     category: 'auth',
-    description: 'Allow unauthenticated users to view models, prototypes, and other content',
+    description:
+      'Allow unauthenticated users to view models, prototypes, and other content',
   },
   {
     key: 'SELF_REGISTRATION',
@@ -288,7 +299,8 @@ export const PREDEFINED_AUTH_CONFIGS: any[] = [
     secret: false,
     valueType: 'boolean',
     category: 'auth',
-    description: 'Allow users to create their own accounts via the registration page',
+    description:
+      'Allow users to create their own accounts via the registration page',
   },
   {
     key: 'SSO_AUTO_REGISTRATION',
@@ -297,7 +309,8 @@ export const PREDEFINED_AUTH_CONFIGS: any[] = [
     secret: false,
     valueType: 'boolean',
     category: 'auth',
-    description: 'Automatically create accounts for users logging in via SSO (e.g., Microsoft, GitHub)',
+    description:
+      'Automatically create accounts for users logging in via SSO (e.g., Microsoft, GitHub)',
   },
   {
     key: 'PASSWORD_MANAGEMENT',
@@ -377,10 +390,7 @@ const SiteConfigManagementContent: React.FC<{ adminUi: AdminUiConfig }> = ({
   )
 
   const resolveSection = (sectionParam: string | null): SectionTab => {
-    if (
-      sectionParam &&
-      visibleSections.some((s) => s.key === sectionParam)
-    ) {
+    if (sectionParam && visibleSections.some((s) => s.key === sectionParam)) {
       return sectionParam as SectionTab
     }
     return visibleSections[0]?.key || 'public'
@@ -436,10 +446,11 @@ const SiteConfigManagementContent: React.FC<{ adminUi: AdminUiConfig }> = ({
                   <button
                     key={section.key}
                     onClick={() => handleTabChange(section.key)}
-                    className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === section.key
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-muted'
-                      }`}
+                    className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                      activeTab === section.key
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-foreground hover:bg-muted'
+                    }`}
                   >
                     {section.label}
                   </button>

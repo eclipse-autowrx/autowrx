@@ -43,13 +43,18 @@ const fetchAuthConfigs = async (): Promise<AuthConfigs> => {
   try {
     // Fetch all public configs with category='auth'
     const configs = await configManagementService.getPublicConfigs('site')
-    
+
     // Extract auth configs
     const authConfigs: AuthConfigs = {
-      PUBLIC_VIEWING: configs.PUBLIC_VIEWING ?? DEFAULT_AUTH_CONFIGS.PUBLIC_VIEWING,
-      SELF_REGISTRATION: configs.SELF_REGISTRATION ?? DEFAULT_AUTH_CONFIGS.SELF_REGISTRATION,
-      SSO_AUTO_REGISTRATION: configs.SSO_AUTO_REGISTRATION ?? DEFAULT_AUTH_CONFIGS.SSO_AUTO_REGISTRATION,
-      PASSWORD_MANAGEMENT: configs.PASSWORD_MANAGEMENT ?? DEFAULT_AUTH_CONFIGS.PASSWORD_MANAGEMENT,
+      PUBLIC_VIEWING:
+        configs.PUBLIC_VIEWING ?? DEFAULT_AUTH_CONFIGS.PUBLIC_VIEWING,
+      SELF_REGISTRATION:
+        configs.SELF_REGISTRATION ?? DEFAULT_AUTH_CONFIGS.SELF_REGISTRATION,
+      SSO_AUTO_REGISTRATION:
+        configs.SSO_AUTO_REGISTRATION ??
+        DEFAULT_AUTH_CONFIGS.SSO_AUTO_REGISTRATION,
+      PASSWORD_MANAGEMENT:
+        configs.PASSWORD_MANAGEMENT ?? DEFAULT_AUTH_CONFIGS.PASSWORD_MANAGEMENT,
     }
 
     // Update cache
@@ -69,7 +74,9 @@ const fetchAuthConfigs = async (): Promise<AuthConfigs> => {
  * @returns Object with auth configs, loading state, and refetch function
  */
 export const useAuthConfigs = () => {
-  const [configs, setConfigs] = useState<AuthConfigs>(authConfigCache || DEFAULT_AUTH_CONFIGS)
+  const [configs, setConfigs] = useState<AuthConfigs>(
+    authConfigCache || DEFAULT_AUTH_CONFIGS,
+  )
   const [loading, setLoading] = useState(!authConfigCache)
   const [error, setError] = useState<string | null>(null)
 
@@ -80,7 +87,9 @@ export const useAuthConfigs = () => {
       const fetchedConfigs = await fetchAuthConfigs()
       setConfigs(fetchedConfigs)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch auth configs')
+      setError(
+        err instanceof Error ? err.message : 'Failed to fetch auth configs',
+      )
       setConfigs(DEFAULT_AUTH_CONFIGS)
     } finally {
       setLoading(false)
@@ -91,9 +100,9 @@ export const useAuthConfigs = () => {
     loadConfigs()
   }, [])
 
-  return { 
-    authConfigs: configs, 
-    loading, 
+  return {
+    authConfigs: configs,
+    loading,
     error,
     refetch: loadConfigs,
   }
@@ -115,4 +124,3 @@ export const clearAuthConfigCache = (): void => {
 }
 
 export default useAuthConfigs
-

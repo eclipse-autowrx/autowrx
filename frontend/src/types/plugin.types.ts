@@ -67,7 +67,10 @@ export interface PluginAPI {
    *   extend: { pluginSettings: { theme: 'dark' } }
    * })
    */
-  updatePrototype?: (updates: Partial<Prototype>, options?: { silent?: boolean }) => Promise<Prototype>
+  updatePrototype?: (
+    updates: Partial<Prototype>,
+    options?: { silent?: boolean },
+  ) => Promise<Prototype>
 
   // ========================================
   // Vehicle API Operations (Read & Write)
@@ -315,7 +318,9 @@ export interface PluginAPI {
    * @example
    * const assets = await api.listAssets({ type: 'HARDWARE_KIT,CLOUD_RUNTIME' })
    */
-  listAssets?: (params?: Pick<QueryAssetsParams, 'type' | 'name'>) => Promise<Asset[]>
+  listAssets?: (
+    params?: Pick<QueryAssetsParams, 'type' | 'name'>,
+  ) => Promise<Asset[]>
 
   /**
    * Create a new asset
@@ -325,7 +330,11 @@ export interface PluginAPI {
    * @example
    * const asset = await api.createAsset({ name: 'My Kit', type: 'HARDWARE_KIT', data: '' })
    */
-  createAsset?: (payload: { name: string; type: string; data?: string }) => Promise<Asset>
+  createAsset?: (payload: {
+    name: string
+    type: string
+    data?: string
+  }) => Promise<Asset>
 
   /**
    * Update an existing asset by ID
@@ -336,7 +345,10 @@ export interface PluginAPI {
    * @example
    * await api.updateAsset('asset-id-123', { name: 'New Name', type: 'HARDWARE_KIT' })
    */
-  updateAsset?: (assetId: string, payload: { name?: string; type?: string; data?: string }) => Promise<Asset>
+  updateAsset?: (
+    assetId: string,
+    payload: { name?: string; type?: string; data?: string },
+  ) => Promise<Asset>
 
   /**
    * Delete an asset by ID
@@ -353,14 +365,27 @@ export interface PluginAPI {
    * @param email The email to search for
    * @returns Promise resolving to the found user, or null if not found
    */
-  searchUserByEmail?: (email: string) => Promise<{ id: string; name: string; email?: string; image_file?: string } | null>
+  searchUserByEmail?: (email: string) => Promise<{
+    id: string
+    name: string
+    email?: string
+    image_file?: string
+  } | null>
 
   /**
    * Get the list of users who have access to an asset
    * @param assetId The asset ID
    * @returns Promise resolving to an array of users with access
    */
-  getAssetUsers?: (assetId: string) => Promise<Array<{ id: string; name: string; email?: string; image_file?: string; forbid_remove?: boolean }>>
+  getAssetUsers?: (assetId: string) => Promise<
+    Array<{
+      id: string
+      name: string
+      email?: string
+      image_file?: string
+      forbid_remove?: boolean
+    }>
+  >
 
   /**
    * Share an asset with a user (grants read access)

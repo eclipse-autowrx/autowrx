@@ -33,7 +33,10 @@ const modelStatsMemo = new Map<string, ModelStats>()
 // Key idea: each visible card enqueues its `modelId`, then a single debounced
 // request fetches stats for the whole queue (instead of N+1 requests).
 const modelStatsPromises = new Map<string, Promise<ModelStats | undefined>>()
-const modelStatsResolvers = new Map<string, (value: ModelStats | undefined) => void>()
+const modelStatsResolvers = new Map<
+  string,
+  (value: ModelStats | undefined) => void
+>()
 
 const pendingIds = new Set<string>()
 let batchTimer: ReturnType<typeof setTimeout> | undefined
@@ -119,7 +122,9 @@ const DaModelItem = React.memo(({ model, className }: DaModelItemProps) => {
   const modelId = model?.id
   const defaultModelImage = useDefaultModelImage()
 
-  const [lazyStats, setLazyStats] = React.useState<ModelStats | undefined>(model?.stats)
+  const [lazyStats, setLazyStats] = React.useState<ModelStats | undefined>(
+    model?.stats,
+  )
 
   React.useEffect(() => {
     // If the parent already has stats (e.g. prefetch or cache), sync local state.

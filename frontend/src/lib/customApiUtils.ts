@@ -10,7 +10,10 @@ import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 import axios from 'axios'
 import { CustomApiSchema } from '@/services/customApiSchema.service'
-import { CustomApiSet, getCustomApiSetById } from '@/services/customApiSet.service'
+import {
+  CustomApiSet,
+  getCustomApiSetById,
+} from '@/services/customApiSet.service'
 import { getCustomApiSchemaById } from '@/services/customApiSchema.service'
 
 const removeSpecialCharacters = (str: string) => {
@@ -53,9 +56,9 @@ export const exportCustomApiSet = async (set: CustomApiSet) => {
   try {
     // Fetch the schema
     const schema = await getCustomApiSchemaById(set.custom_api_schema)
-    
+
     const zip = new JSZip()
-    
+
     // Add schema file
     const schemaData = {
       name: schema.name,
@@ -71,7 +74,7 @@ export const exportCustomApiSet = async (set: CustomApiSet) => {
       is_active: schema.is_active,
     }
     zip.file('schema.json', JSON.stringify(schemaData, null, 2))
-    
+
     // Add set data file
     const setData = {
       name: set.name,
@@ -82,23 +85,29 @@ export const exportCustomApiSet = async (set: CustomApiSet) => {
       provider_url: set.provider_url,
     }
     zip.file('set.json', JSON.stringify(setData, null, 2))
-    
+
     // Add avatar image if exists
     if (set.avatar) {
       try {
         // Download image as arraybuffer (same pattern as getImgFile in zipUtils)
-        const imageResponse = await axios.get(set.avatar, { responseType: 'arraybuffer' })
-        
+        const imageResponse = await axios.get(set.avatar, {
+          responseType: 'arraybuffer',
+        })
+
         // Detect image format from URL or Content-Type header
         let imageExtension = 'png' // default
         const contentTypeHeader = imageResponse.headers['content-type']
-        const contentType = typeof contentTypeHeader === 'string' ? contentTypeHeader : ''
+        const contentType =
+          typeof contentTypeHeader === 'string' ? contentTypeHeader : ''
         const avatarUrl = set.avatar.toLowerCase()
-        
+
         if (contentType) {
           if (contentType.includes('svg')) {
             imageExtension = 'svg'
-          } else if (contentType.includes('jpeg') || contentType.includes('jpg')) {
+          } else if (
+            contentType.includes('jpeg') ||
+            contentType.includes('jpg')
+          ) {
             imageExtension = 'jpg'
           } else if (contentType.includes('png')) {
             imageExtension = 'png'
@@ -111,7 +120,10 @@ export const exportCustomApiSet = async (set: CustomApiSet) => {
           // Fallback: check URL extension
           if (avatarUrl.includes('.svg')) {
             imageExtension = 'svg'
-          } else if (avatarUrl.includes('.jpg') || avatarUrl.includes('.jpeg')) {
+          } else if (
+            avatarUrl.includes('.jpg') ||
+            avatarUrl.includes('.jpeg')
+          ) {
             imageExtension = 'jpg'
           } else if (avatarUrl.includes('.webp')) {
             imageExtension = 'webp'
@@ -119,13 +131,15 @@ export const exportCustomApiSet = async (set: CustomApiSet) => {
             imageExtension = 'gif'
           }
         }
-        
-        zip.file(`avatar.${imageExtension}`, imageResponse.data, { binary: true })
+
+        zip.file(`avatar.${imageExtension}`, imageResponse.data, {
+          binary: true,
+        })
       } catch (error) {
         // Continue without avatar if download fails
       }
     }
-    
+
     // Generate ZIP file
     const content = await zip.generateAsync({ type: 'blob' })
     const filename = `custom_api_set_${removeSpecialCharacters(set.name)}.zip`
@@ -139,16 +153,20 @@ export const exportCustomApiSet = async (set: CustomApiSet) => {
 /**
  * Import CustomApiSchema from JSON file
  */
-export const importCustomApiSchemaFromJSON = async (file: File): Promise<Partial<CustomApiSchema>> => {
+export const importCustomApiSchemaFromJSON = async (
+  file: File,
+): Promise<Partial<CustomApiSchema>> => {
   try {
     const text = await file.text()
     const data = JSON.parse(text)
-    
+
     // Validate required fields
     if (!data.name || !data.code || !data.type || !data.schema) {
-      throw new Error('Invalid CustomApiSchema file. Missing required fields: name, code, type, or schema')
+      throw new Error(
+        'Invalid CustomApiSchema file. Missing required fields: name, code, type, or schema',
+      )
     }
-    
+
     return {
       name: data.name,
       code: data.code,
@@ -173,7 +191,7 @@ export const importCustomApiSchemaFromJSON = async (file: File): Promise<Partial
  * Returns { schema: Partial<CustomApiSchema>, set: Partial<CustomApiSet>, avatarBlob?: Blob, avatarExtension?: string }
  */
 export const importCustomApiSetFromZIP = async (
-  file: File
+  file: File,
 ): Promise<{
   schema: Partial<CustomApiSchema>
   set: Partial<CustomApiSet>
@@ -183,35 +201,44 @@ export const importCustomApiSetFromZIP = async (
   try {
     const zip = new JSZip()
     const zipFile = await zip.loadAsync(file)
-    
+
     if (!zipFile) {
       throw new Error('Invalid ZIP file')
     }
-    
+
     // Read schema.json
     const schemaStr = await zipFile.file('schema.json')?.async('string')
     if (!schemaStr) {
       throw new Error('ZIP file missing schema.json')
     }
     const schemaData = JSON.parse(schemaStr)
-    
+
     // Validate schema
-    if (!schemaData.name || !schemaData.code || !schemaData.type || !schemaData.schema) {
-      throw new Error('Invalid schema.json. Missing required fields: name, code, type, or schema')
+    if (
+      !schemaData.name ||
+      !schemaData.code ||
+      !schemaData.type ||
+      !schemaData.schema
+    ) {
+      throw new Error(
+        'Invalid schema.json. Missing required fields: name, code, type, or schema',
+      )
     }
-    
+
     // Read set.json (was instance.json)
-    const setStr = await zipFile.file('set.json')?.async('string') || await zipFile.file('instance.json')?.async('string')
+    const setStr =
+      (await zipFile.file('set.json')?.async('string')) ||
+      (await zipFile.file('instance.json')?.async('string'))
     if (!setStr) {
       throw new Error('ZIP file missing set.json or instance.json')
     }
     const setData = JSON.parse(setStr)
-    
+
     // Validate set
     if (!setData.name || !setData.data) {
       throw new Error('Invalid set.json. Missing required fields: name or data')
     }
-    
+
     // Read avatar if exists (check multiple formats)
     let avatarBlob: Blob | undefined
     let avatarExtension: string | undefined
@@ -224,7 +251,7 @@ export const importCustomApiSetFromZIP = async (
         break
       }
     }
-    
+
     return {
       schema: {
         name: schemaData.name,
@@ -237,12 +264,14 @@ export const importCustomApiSetFromZIP = async (
         tree_config: schemaData.tree_config,
         display_mapping: schemaData.display_mapping,
         version: schemaData.version || '1.0.0',
-        is_active: schemaData.is_active !== undefined ? schemaData.is_active : true,
+        is_active:
+          schemaData.is_active !== undefined ? schemaData.is_active : true,
       },
       set: {
         name: setData.name,
         description: setData.description,
-        custom_api_schema_code: setData.custom_api_schema_code || setData.plugin_api_code, // Backward compatibility
+        custom_api_schema_code:
+          setData.custom_api_schema_code || setData.plugin_api_code, // Backward compatibility
         data: setData.data,
         avatar: setData.avatar, // URL will be set after upload
         provider_url: setData.provider_url,

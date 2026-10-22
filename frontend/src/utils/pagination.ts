@@ -53,11 +53,7 @@ export function getVisiblePageItems(
 
   if (showLeftEllipsis && showRightEllipsis) {
     const items: PageItem[] = [1, 'ellipsis']
-    for (
-      let i = current - siblingCount;
-      i <= current + siblingCount;
-      i++
-    ) {
+    for (let i = current - siblingCount; i <= current + siblingCount; i++) {
       items.push(i)
     }
     items.push('ellipsis')

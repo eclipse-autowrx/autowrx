@@ -1,50 +1,54 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
 
-import React from 'react';
+import React from 'react'
 
 interface DatePickerProps {
-  value: string;
-  onChange: (date: string) => void;
-  className?: string;
+  value: string
+  onChange: (date: string) => void
+  className?: string
 }
 
-const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, className = '' }) => {
+const DatePicker: React.FC<DatePickerProps> = ({
+  value,
+  onChange,
+  className = '',
+}) => {
   const formatDateForInput = (dateString: string): string => {
-    if (!dateString) return '';
-    
+    if (!dateString) return ''
+
     try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return '';
-      
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return ''
+
       // Format as YYYY-MM-DDTHH:mm for datetime-local input
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      
-      return `${year}-${month}-${day}T${hours}:${minutes}`;
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+
+      return `${year}-${month}-${day}T${hours}:${minutes}`
     } catch {
-      return '';
+      return ''
     }
-  };
+  }
 
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = event.target.value;
+    const inputValue = event.target.value
     if (inputValue) {
       // Convert to ISO string
-      const date = new Date(inputValue);
-      onChange(date.toISOString());
+      const date = new Date(inputValue)
+      onChange(date.toISOString())
     } else {
-      onChange('');
+      onChange('')
     }
-  };
+  }
 
   return (
     <div className={className}>
@@ -60,7 +64,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, className = ''
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default DatePicker;
+export default DatePicker

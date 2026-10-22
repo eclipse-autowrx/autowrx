@@ -29,7 +29,10 @@ const CustomPrototypeTabs: FC<CustomPrototypeTabsProps> = ({ customTabs }) => {
       {customTabs.map((customTab, index) => (
         <DaTabItem
           key={`${customTab.plugin}-${index}`}
-          active={tab === 'plug' && window.location.search.includes(`plugid=${customTab.plugin}`)}
+          active={
+            tab === 'plug' &&
+            window.location.search.includes(`plugid=${customTab.plugin}`)
+          }
           to={`/model/${model_id}/library/prototype/${prototype_id}/plug?plugid=${customTab.plugin}`}
         >
           {customTab.label}

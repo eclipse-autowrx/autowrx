@@ -35,7 +35,8 @@ function DiffView({ before, after }: { before: string; after: string }) {
     return diff
   }, [before, after])
 
-  if (before === '' && after === '') return <span className="text-muted-foreground">—</span>
+  if (before === '' && after === '')
+    return <span className="text-muted-foreground">—</span>
 
   return (
     <span className="whitespace-pre-wrap break-words font-mono text-xs">
@@ -43,14 +44,20 @@ function DiffView({ before, after }: { before: string; after: string }) {
         if (text === '') return null
         if (op === -1) {
           return (
-            <span key={i} className="bg-red-200/80 text-red-900 dark:bg-red-900/40 dark:text-red-200">
+            <span
+              key={i}
+              className="bg-red-200/80 text-red-900 dark:bg-red-900/40 dark:text-red-200"
+            >
               {text}
             </span>
           )
         }
         if (op === 1) {
           return (
-            <span key={i} className="bg-green-200/80 text-green-900 dark:bg-green-900/40 dark:text-green-200">
+            <span
+              key={i}
+              className="bg-green-200/80 text-green-900 dark:bg-green-900/40 dark:text-green-200"
+            >
               {text}
             </span>
           )
@@ -91,7 +98,8 @@ const SiteConfigEditHistory: React.FC<SiteConfigEditHistoryProps> = ({
       if (detail?.section === section) refresh()
     }
     window.addEventListener('site-config-history-updated', onUpdate)
-    return () => window.removeEventListener('site-config-history-updated', onUpdate)
+    return () =>
+      window.removeEventListener('site-config-history-updated', onUpdate)
   }, [section, refresh])
 
   if (editHistory.length === 0) return null

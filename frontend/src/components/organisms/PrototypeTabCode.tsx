@@ -115,7 +115,7 @@ const PrototypeTabCode: FC = () => {
   }, [])
 
   useEffect(() => {
-    let timer = setInterval(() => {
+    const timer = setInterval(() => {
       setTicker((oldTicker) => oldTicker + 1)
     }, 3000)
     return () => {
@@ -269,7 +269,10 @@ const PrototypeTabCode: FC = () => {
   }
 
   return (
-    <div ref={containerRef} className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100">
+    <div
+      ref={containerRef}
+      className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100"
+    >
       <div className="flex h-full flex-1 min-w-0 flex-col border-r bg-white rounded-md">
         <div className="flex min-h-12 w-full items-center justify-between">
           {editable && showSdvProtoPilotButton ? (
@@ -365,12 +368,11 @@ const PrototypeTabCode: FC = () => {
       <div
         className="flex h-full flex-col bg-white rounded-md shrink-0 transition-all duration-200 ease-in-out"
         style={{
-          width:
-            isApiPanelCollapsed
-              ? '48px'
-              : rightPanelWidth !== null
-                ? `${rightPanelWidth}px`
-                : '40%',
+          width: isApiPanelCollapsed
+            ? '48px'
+            : rightPanelWidth !== null
+              ? `${rightPanelWidth}px`
+              : '40%',
         }}
       >
         {activeTab == 'api' && (

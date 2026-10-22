@@ -238,8 +238,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
     queryKey: ['plugins'],
     queryFn: () => listPlugins({ page: 1, limit: 100 }),
     enabled:
-      open &&
-      (activeDialogTab === 'sidebar' || activeDialogTab === 'actions'),
+      open && (activeDialogTab === 'sidebar' || activeDialogTab === 'actions'),
   })
 
   // Update local tabs when dialog opens or tabs change
@@ -379,7 +378,6 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
 
     setIsSaving(true)
     try {
-
       const sidebarChanged = localSidebarPlugin !== (sidebarPlugin || null)
       const runtimeChanged = localRuntimePlugin !== (runtimePlugin || null)
       const variantChanged = localTabsVariant !== (tabsVariant || 'tab')
@@ -481,8 +479,8 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
       {showInstructionText && (
         <div className="flex items-center justify-between gap-3 mb-2">
           <p className="text-sm text-muted-foreground">
-            Configure which tabs appear in the prototype tab bar, their
-            order, labels, and visibility.
+            Configure which tabs appear in the prototype tab bar, their order,
+            labels, and visibility.
           </p>
           <Button
             variant="outline"
@@ -743,9 +741,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
             <div className="py-4">
               <ModelTabListEditor
                 key={
-                  open
-                    ? 'modeltablisteditor-open'
-                    : 'modeltablisteditor-closed'
+                  open ? 'modeltablisteditor-open' : 'modeltablisteditor-closed'
                 }
                 ref={modelTabListRef}
                 tabs={localTabs}
@@ -755,326 +751,337 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
               />
             </div>
           ) : (
-          <>
-        {/* Internal Tab Switcher */}
-        <div className="flex border-b border-border -mx-6 px-6">
-          <button
-            onClick={() => setActiveDialogTab('tabs')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              activeDialogTab === 'tabs'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <TbPuzzle className="w-4 h-4" />
-            Tab Bar
-          </button>
-          <button
-            onClick={() => setActiveDialogTab('style')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              activeDialogTab === 'style'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <TbEye className="w-4 h-4" />
-            Appearance
-          </button>
-          <button
-            onClick={() => setActiveDialogTab('sidebar')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              activeDialogTab === 'sidebar'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <TbLayoutSidebar className="w-4 h-4" />
-            Side Panels
-          </button>
-          <button
-            onClick={() => setActiveDialogTab('actions')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              activeDialogTab === 'actions'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <TbListCheck className="w-4 h-4" />
-            Action Buttons
-          </button>
-        </div>
+            <>
+              {/* Internal Tab Switcher */}
+              <div className="flex border-b border-border -mx-6 px-6">
+                <button
+                  onClick={() => setActiveDialogTab('tabs')}
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                    activeDialogTab === 'tabs'
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <TbPuzzle className="w-4 h-4" />
+                  Tab Bar
+                </button>
+                <button
+                  onClick={() => setActiveDialogTab('style')}
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                    activeDialogTab === 'style'
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <TbEye className="w-4 h-4" />
+                  Appearance
+                </button>
+                <button
+                  onClick={() => setActiveDialogTab('sidebar')}
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                    activeDialogTab === 'sidebar'
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <TbLayoutSidebar className="w-4 h-4" />
+                  Side Panels
+                </button>
+                <button
+                  onClick={() => setActiveDialogTab('actions')}
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                    activeDialogTab === 'actions'
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <TbListCheck className="w-4 h-4" />
+                  Action Buttons
+                </button>
+              </div>
 
-        <div className="flex flex-col gap-4 py-4 overflow-y-auto flex-1">
-          {/* Sidebar Panel Tab */}
-          {activeDialogTab === 'sidebar' && (
-            <div className="flex flex-col gap-3">
-              <p className="text-sm text-muted-foreground">
-                Select a plugin to display in a collapsible panel on the left
-                side of the prototype view.
-              </p>
+              <div className="flex flex-col gap-4 py-4 overflow-y-auto flex-1">
+                {/* Sidebar Panel Tab */}
+                {activeDialogTab === 'sidebar' && (
+                  <div className="flex flex-col gap-3">
+                    <p className="text-sm text-muted-foreground">
+                      Select a plugin to display in a collapsible panel on the
+                      left side of the prototype view.
+                    </p>
 
-              {localSidebarPlugin && !showSidebarPluginPicker ? (
-                <div className="flex items-center gap-3 p-3 border border-border rounded bg-accent/50">
-                  <TbPuzzle className="w-5 h-5 text-muted-foreground shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {selectedSidebarPluginData?.name || localSidebarPlugin}
+                    {localSidebarPlugin && !showSidebarPluginPicker ? (
+                      <div className="flex items-center gap-3 p-3 border border-border rounded bg-accent/50">
+                        <TbPuzzle className="w-5 h-5 text-muted-foreground shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {selectedSidebarPluginData?.name ||
+                              localSidebarPlugin}
+                          </p>
+                          <p className="text-xs text-muted-foreground font-mono truncate">
+                            plugin: {localSidebarPlugin}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setShowSidebarPluginPicker(true)}
+                          className="h-8 w-8"
+                          title="Change plugin"
+                        >
+                          <TbPencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setLocalSidebarPlugin(null)
+                            setShowSidebarPluginPicker(false)
+                          }}
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          title="Remove sidebar plugin"
+                        >
+                          <TbTrash className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : showSidebarPluginPicker ? (
+                      <div className="flex flex-col gap-2 border border-border rounded p-3">
+                        <div className="relative">
+                          <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            type="text"
+                            placeholder="Search plugins..."
+                            value={sidebarSearchTerm}
+                            onChange={(e) =>
+                              setSidebarSearchTerm(e.target.value)
+                            }
+                            className="pl-10 text-sm"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="flex flex-col max-h-48 overflow-y-auto">
+                          {pluginsLoading ? (
+                            <div className="flex items-center justify-center p-4">
+                              <Spinner size={20} />
+                            </div>
+                          ) : filteredSidebarPlugins.length === 0 ? (
+                            <p className="text-xs text-muted-foreground p-4 text-center">
+                              {sidebarSearchTerm
+                                ? 'No plugins found'
+                                : 'No plugins available'}
+                            </p>
+                          ) : (
+                            filteredSidebarPlugins.map((plugin) => (
+                              <button
+                                key={plugin.id}
+                                onClick={() => {
+                                  setLocalSidebarPlugin(plugin.slug)
+                                  setShowSidebarPluginPicker(false)
+                                  setSidebarSearchTerm('')
+                                }}
+                                className="flex items-center gap-3 p-2 hover:bg-accent rounded transition-colors text-left"
+                              >
+                                {plugin.image ? (
+                                  <img
+                                    src={plugin.image}
+                                    alt={plugin.name}
+                                    className="w-8 h-8 rounded object-cover shrink-0"
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
+                                    <span className="text-xs text-muted-foreground">
+                                      {plugin.name.charAt(0).toUpperCase()}
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-foreground truncate">
+                                    {plugin.name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground font-mono truncate">
+                                    {plugin.slug}
+                                  </p>
+                                </div>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                        <div className="flex justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setShowSidebarPluginPicker(false)
+                              setSidebarSearchTerm('')
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-fit"
+                        onClick={() => setShowSidebarPluginPicker(true)}
+                      >
+                        <TbPuzzle className="w-4 h-4 mr-2" />
+                        Set Sidebar Plugin
+                      </Button>
+                    )}
+
+                    <p className="text-sm text-muted-foreground mt-4">
+                      Select a plugin to replace the built-in Runtime Control
+                      Panel on the right side of the prototype view. Leave empty
+                      to use the built-in panel.
                     </p>
-                    <p className="text-xs text-muted-foreground font-mono truncate">
-                      plugin: {localSidebarPlugin}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowSidebarPluginPicker(true)}
-                    className="h-8 w-8"
-                    title="Change plugin"
-                  >
-                    <TbPencil className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setLocalSidebarPlugin(null)
-                      setShowSidebarPluginPicker(false)
-                    }}
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                    title="Remove sidebar plugin"
-                  >
-                    <TbTrash className="w-4 h-4" />
-                  </Button>
-                </div>
-              ) : showSidebarPluginPicker ? (
-                <div className="flex flex-col gap-2 border border-border rounded p-3">
-                  <div className="relative">
-                    <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      type="text"
-                      placeholder="Search plugins..."
-                      value={sidebarSearchTerm}
-                      onChange={(e) => setSidebarSearchTerm(e.target.value)}
-                      className="pl-10 text-sm"
-                      autoFocus
+                    <PluginSlotPicker
+                      dataId="runtime-plugin-picker"
+                      value={localRuntimePlugin}
+                      onChange={setLocalRuntimePlugin}
+                      plugins={pluginsData?.results}
+                      loading={pluginsLoading}
+                      setLabel="Set Runtime Panel Plugin"
+                      removeTitle="Remove runtime panel plugin"
                     />
                   </div>
-                  <div className="flex flex-col max-h-48 overflow-y-auto">
-                    {pluginsLoading ? (
-                      <div className="flex items-center justify-center p-4">
-                        <Spinner size={20} />
+                )}
+
+                {/* Action Buttons Tab */}
+                {activeDialogTab === 'actions' && (
+                  <ActionButtonsTab
+                    pluginsData={pluginsData}
+                    pluginsLoading={pluginsLoading}
+                    localRightNavPlugins={localRightNavPlugins}
+                    setLocalRightNavPlugins={setLocalRightNavPlugins}
+                  />
+                )}
+
+                {/* Tab Bar Tab */}
+                {activeDialogTab === 'tabs' && renderTabList(true)}
+
+                {/* Appearance Tab */}
+                {activeDialogTab === 'style' && (
+                  <div className="flex flex-col gap-6">
+                    <p className="text-sm text-muted-foreground">
+                      Choose the visual style for all tab bar buttons.
+                    </p>
+                    <div className="gap-y-6 gap-x-4 grid grid-cols-[auto_1fr]">
+                      <Label className="text-xs w-20 shrink-0 text-foreground mt-1">
+                        Style
+                      </Label>
+                      <div className="flex flex-col gap-3 flex-1">
+                        <div className="flex flex-wrap gap-2">
+                          {(
+                            ['tab', 'primary', 'outline', 'ghost'] as const
+                          ).map((v) => (
+                            <button
+                              key={v}
+                              type="button"
+                              onClick={() => setLocalTabsVariant(v)}
+                              className={`px-3 py-1 text-xs rounded border capitalize transition-colors ${
+                                localTabsVariant === v
+                                  ? 'bg-primary text-primary-foreground border-primary'
+                                  : 'bg-background text-foreground border-border hover:bg-accent'
+                              }`}
+                            >
+                              {v}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    ) : filteredSidebarPlugins.length === 0 ? (
-                      <p className="text-xs text-muted-foreground p-4 text-center">
-                        {sidebarSearchTerm
-                          ? 'No plugins found'
-                          : 'No plugins available'}
-                      </p>
-                    ) : (
-                      filteredSidebarPlugins.map((plugin) => (
-                        <button
-                          key={plugin.id}
-                          onClick={() => {
-                            setLocalSidebarPlugin(plugin.slug)
-                            setShowSidebarPluginPicker(false)
-                            setSidebarSearchTerm('')
-                          }}
-                          className="flex items-center gap-3 p-2 hover:bg-accent rounded transition-colors text-left"
-                        >
-                          {plugin.image ? (
-                            <img
-                              src={plugin.image}
-                              alt={plugin.name}
-                              className="w-8 h-8 rounded object-cover shrink-0"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
-                              <span className="text-xs text-muted-foreground">
-                                {plugin.name.charAt(0).toUpperCase()}
+
+                      {/* Border Radius */}
+                      <Label className="text-xs w-20 shrink-0 text-foreground mt-1">
+                        Corners
+                      </Label>
+                      <div className="flex flex-col gap-3 flex-1">
+                        <div className="flex flex-wrap gap-2">
+                          {(
+                            [
+                              { value: 'none', label: 'Square' },
+                              { value: 'round', label: 'Round' },
+                              { value: 'full', label: 'Pill' },
+                            ] as const
+                          ).map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() =>
+                                setLocalTabsBorderRadius(opt.value)
+                              }
+                              className={`px-3 py-1 text-xs rounded border transition-colors ${
+                                localTabsBorderRadius === opt.value
+                                  ? 'bg-primary text-primary-foreground border-primary'
+                                  : 'bg-background text-foreground border-border hover:bg-accent'
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Preview */}
+                      <Label className="text-xs w-20 shrink-0 text-foreground mt-1">
+                        Preview
+                      </Label>
+
+                      <div className="relative flex items-center min-h-12 border-2 border-dashed border-muted-foreground/30 rounded-lg px-4 py-3 bg-muted/50 gap-1">
+                        <span className="absolute -top-2.5 left-3 px-1.5 text-[10px] font-medium text-muted-foreground bg-background rounded">
+                          Preview
+                        </span>
+                        {(['Overview', 'Code', 'Plugin'] as const).map(
+                          (lbl, i) => {
+                            const isActive = i === 0
+                            const base =
+                              'flex items-center text-xs font-semibold px-2.5 py-1 transition-colors pointer-events-none'
+                            const radiusClass =
+                              localTabsBorderRadius === 'none'
+                                ? 'rounded-none'
+                                : localTabsBorderRadius === 'full'
+                                  ? 'rounded-full'
+                                  : 'rounded-md'
+                            let cls = ''
+                            if (localTabsVariant === 'primary') {
+                              cls = isActive
+                                ? `${base} bg-primary text-primary-foreground ${radiusClass}`
+                                : `${base} text-muted-foreground ${radiusClass}`
+                            } else if (localTabsVariant === 'outline') {
+                              cls = isActive
+                                ? `${base} border border-primary text-primary ${radiusClass}`
+                                : `${base} border border-transparent text-muted-foreground ${radiusClass}`
+                            } else if (localTabsVariant === 'ghost') {
+                              cls = isActive
+                                ? `${base} bg-accent text-foreground ${radiusClass}`
+                                : `${base} text-muted-foreground ${radiusClass}`
+                            } else {
+                              cls = isActive
+                                ? `${base} border-b-2 border-primary text-primary h-full`
+                                : `${base} border-b-2 border-transparent text-muted-foreground h-full`
+                            }
+                            return (
+                              <span key={lbl} className={cls}>
+                                {lbl}
                               </span>
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">
-                              {plugin.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground font-mono truncate">
-                              {plugin.slug}
-                            </p>
-                          </div>
-                        </button>
-                      ))
-                    )}
+                            )
+                          },
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-end">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setShowSidebarPluginPicker(false)
-                        setSidebarSearchTerm('')
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-fit"
-                  onClick={() => setShowSidebarPluginPicker(true)}
-                >
-                  <TbPuzzle className="w-4 h-4 mr-2" />
-                  Set Sidebar Plugin
-                </Button>
-              )}
-
-              <p className="text-sm text-muted-foreground mt-4">
-                Select a plugin to replace the built-in Runtime Control Panel on
-                the right side of the prototype view. Leave empty to use the
-                built-in panel.
-              </p>
-              <PluginSlotPicker
-                dataId="runtime-plugin-picker"
-                value={localRuntimePlugin}
-                onChange={setLocalRuntimePlugin}
-                plugins={pluginsData?.results}
-                loading={pluginsLoading}
-                setLabel="Set Runtime Panel Plugin"
-                removeTitle="Remove runtime panel plugin"
-              />
-            </div>
-          )}
-
-          {/* Action Buttons Tab */}
-          {activeDialogTab === 'actions' && (
-            <ActionButtonsTab
-              pluginsData={pluginsData}
-              pluginsLoading={pluginsLoading}
-              localRightNavPlugins={localRightNavPlugins}
-              setLocalRightNavPlugins={setLocalRightNavPlugins}
-            />
-          )}
-
-          {/* Tab Bar Tab */}
-          {activeDialogTab === 'tabs' && renderTabList(true)}
-
-          {/* Appearance Tab */}
-          {activeDialogTab === 'style' && (
-            <div className="flex flex-col gap-6">
-              <p className="text-sm text-muted-foreground">
-                Choose the visual style for all tab bar buttons.
-              </p>
-              <div className="gap-y-6 gap-x-4 grid grid-cols-[auto_1fr]">
-                <Label className="text-xs w-20 shrink-0 text-foreground mt-1">
-                  Style
-                </Label>
-                <div className="flex flex-col gap-3 flex-1">
-                  <div className="flex flex-wrap gap-2">
-                    {(['tab', 'primary', 'outline', 'ghost'] as const).map(
-                      (v) => (
-                        <button
-                          key={v}
-                          type="button"
-                          onClick={() => setLocalTabsVariant(v)}
-                          className={`px-3 py-1 text-xs rounded border capitalize transition-colors ${
-                            localTabsVariant === v
-                              ? 'bg-primary text-primary-foreground border-primary'
-                              : 'bg-background text-foreground border-border hover:bg-accent'
-                          }`}
-                        >
-                          {v}
-                        </button>
-                      ),
-                    )}
-                  </div>
-                </div>
-
-                {/* Border Radius */}
-                <Label className="text-xs w-20 shrink-0 text-foreground mt-1">
-                  Corners
-                </Label>
-                <div className="flex flex-col gap-3 flex-1">
-                  <div className="flex flex-wrap gap-2">
-                    {(
-                      [
-                        { value: 'none', label: 'Square' },
-                        { value: 'round', label: 'Round' },
-                        { value: 'full', label: 'Pill' },
-                      ] as const
-                    ).map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => setLocalTabsBorderRadius(opt.value)}
-                        className={`px-3 py-1 text-xs rounded border transition-colors ${
-                          localTabsBorderRadius === opt.value
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : 'bg-background text-foreground border-border hover:bg-accent'
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Preview */}
-                <Label className="text-xs w-20 shrink-0 text-foreground mt-1">
-                  Preview
-                </Label>
-
-                <div className="relative flex items-center min-h-12 border-2 border-dashed border-muted-foreground/30 rounded-lg px-4 py-3 bg-muted/50 gap-1">
-                  <span className="absolute -top-2.5 left-3 px-1.5 text-[10px] font-medium text-muted-foreground bg-background rounded">
-                    Preview
-                  </span>
-                  {(['Overview', 'Code', 'Plugin'] as const).map((lbl, i) => {
-                    const isActive = i === 0
-                    const base =
-                      'flex items-center text-xs font-semibold px-2.5 py-1 transition-colors pointer-events-none'
-                    const radiusClass =
-                      localTabsBorderRadius === 'none'
-                        ? 'rounded-none'
-                        : localTabsBorderRadius === 'full'
-                          ? 'rounded-full'
-                          : 'rounded-md'
-                    let cls = ''
-                    if (localTabsVariant === 'primary') {
-                      cls = isActive
-                        ? `${base} bg-primary text-primary-foreground ${radiusClass}`
-                        : `${base} text-muted-foreground ${radiusClass}`
-                    } else if (localTabsVariant === 'outline') {
-                      cls = isActive
-                        ? `${base} border border-primary text-primary ${radiusClass}`
-                        : `${base} border border-transparent text-muted-foreground ${radiusClass}`
-                    } else if (localTabsVariant === 'ghost') {
-                      cls = isActive
-                        ? `${base} bg-accent text-foreground ${radiusClass}`
-                        : `${base} text-muted-foreground ${radiusClass}`
-                    } else {
-                      cls = isActive
-                        ? `${base} border-b-2 border-primary text-primary h-full`
-                        : `${base} border-b-2 border-transparent text-muted-foreground h-full`
-                    }
-                    return (
-                      <span key={lbl} className={cls}>
-                        {lbl}
-                      </span>
-                    )
-                  })}
-                </div>
+                )}
               </div>
-            </div>
+            </>
           )}
-        </div>
-          </>
-        )}
 
           {/* Footer Actions */}
           <div className="flex items-center justify-end gap-2 pt-4 border-t border-border">
-            <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isSaving}
+            >
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={isSaving}>

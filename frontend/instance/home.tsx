@@ -31,6 +31,7 @@ const home = [
               href="https://docs.digital.auto/basics/overview/"
               target="_blank"
               className="flex items-center"
+              rel="noreferrer"
             >
               <TbExternalLink className="size-4 mr-1" />
               Graphic
@@ -49,6 +50,7 @@ const home = [
                 href="https://docs.digital.auto/basics/play/"
                 target="_blank"
                 className="flex items-center"
+                rel="noreferrer"
               >
                 <TbExternalLink className="size-4 mr-1" />
                 Documentation
@@ -64,6 +66,7 @@ const home = [
                 href="https://www.youtube.com/@sdvpg"
                 target="_blank"
                 className="flex items-center"
+                rel="noreferrer"
               >
                 <TbExternalLink className="size-4 mr-1" />
                 Video

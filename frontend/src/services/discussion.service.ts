@@ -7,7 +7,12 @@
 // SPDX-License-Identifier: MIT
 
 import { serverAxios } from './base'
-import { Discussion, DiscussionCreate, DiscussionUpdate, DISCUSSION_REF_TYPE } from '@/types/discussion.type'
+import {
+  Discussion,
+  DiscussionCreate,
+  DiscussionUpdate,
+  DISCUSSION_REF_TYPE,
+} from '@/types/discussion.type'
 import { List } from '@/types/common.type'
 
 export const listDiscussionsService = async (

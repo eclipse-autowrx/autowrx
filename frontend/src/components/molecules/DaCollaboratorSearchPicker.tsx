@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -101,7 +101,7 @@ const DaCollaboratorSearchPicker = ({
           </span>
 
           {matchedSelectedUsers.length > 0 && (
-              <div className="w-full px-2">
+            <div className="w-full px-2">
               {matchedSelectedUsers.map((user) => (
                 <DaUserInviteItem
                   key={user.id}
@@ -121,10 +121,7 @@ const DaCollaboratorSearchPicker = ({
             )}
           >
             {!isLoading && matchedSelectedUsers.length === 0 && (
-              <span
-                
-                className="m-auto flex min-h-12 items-center"
-              >
+              <span className="m-auto flex min-h-12 items-center">
                 No users found. Keep typing an email to search & invite user.
               </span>
             )}

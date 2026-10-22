@@ -36,10 +36,13 @@ export interface NavBarAction {
   openTarget?: NavBarActionOpenTarget
 }
 
-export const getNavBarActionPosition = (action: NavBarAction): NavBarActionPosition =>
-  action.position === 'left' ? 'left' : 'right'
+export const getNavBarActionPosition = (
+  action: NavBarAction,
+): NavBarActionPosition => (action.position === 'left' ? 'left' : 'right')
 
-export const getNavBarActionOpenTarget = (action: NavBarAction): NavBarActionOpenTarget =>
+export const getNavBarActionOpenTarget = (
+  action: NavBarAction,
+): NavBarActionOpenTarget =>
   action.openTarget === '_self' ? '_self' : '_blank'
 
 /** Empty/whitespace URL falls back to home so the link does not reload the current page. */
@@ -52,7 +55,9 @@ export const partitionNavBarActions = (
   actions: NavBarAction[],
 ): { left: NavBarAction[]; right: NavBarAction[] } => ({
   left: actions.filter((action) => getNavBarActionPosition(action) === 'left'),
-  right: actions.filter((action) => getNavBarActionPosition(action) === 'right'),
+  right: actions.filter(
+    (action) => getNavBarActionPosition(action) === 'right',
+  ),
 })
 
 export const mergeNavBarActions = (
@@ -63,10 +68,10 @@ export const mergeNavBarActions = (
   ...right.map((action) => ({ ...action, position: 'right' as const })),
 ]
 
-const NavBarActionPreviewItem: React.FC<{ action: NavBarAction; index: number }> = ({
-  action,
-  index,
-}) => {
+const NavBarActionPreviewItem: React.FC<{
+  action: NavBarAction
+  index: number
+}> = ({ action, index }) => {
   const actionType = action.type || 'link'
   const searchTitle = action.placeholder || action.label || 'Search'
 
@@ -81,8 +86,8 @@ const NavBarActionPreviewItem: React.FC<{ action: NavBarAction; index: number }>
           <div
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(action.icon, {
-                USE_PROFILES: { svg: true, svgFilters: true }
-              })
+                USE_PROFILES: { svg: true, svgFilters: true },
+              }),
             }}
             className="w-6 h-6 flex items-center justify-center"
           />
@@ -95,8 +100,8 @@ const NavBarActionPreviewItem: React.FC<{ action: NavBarAction; index: number }>
             <div
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(action.icon, {
-                  USE_PROFILES: { svg: true, svgFilters: true }
-                })
+                  USE_PROFILES: { svg: true, svgFilters: true },
+                }),
               }}
               className="w-6 h-6 flex items-center justify-center"
             />
@@ -113,10 +118,9 @@ interface NavBarActionsCombinedPreviewProps {
   rightActions: NavBarAction[]
 }
 
-const NavBarActionsCombinedPreview: React.FC<NavBarActionsCombinedPreviewProps> = ({
-  leftActions,
-  rightActions,
-}) => {
+const NavBarActionsCombinedPreview: React.FC<
+  NavBarActionsCombinedPreviewProps
+> = ({ leftActions, rightActions }) => {
   if (leftActions.length === 0 && rightActions.length === 0) {
     return null
   }
@@ -127,13 +131,21 @@ const NavBarActionsCombinedPreview: React.FC<NavBarActionsCombinedPreviewProps> 
       <div className="flex items-center gap-2 p-2 bg-muted rounded-md border border-border">
         <div className="flex items-center gap-2 flex-wrap">
           {leftActions.map((action, index) => (
-            <NavBarActionPreviewItem key={`left-${index}`} action={action} index={index} />
+            <NavBarActionPreviewItem
+              key={`left-${index}`}
+              action={action}
+              index={index}
+            />
           ))}
         </div>
         <div className="flex-1 min-w-0" />
         <div className="flex items-center gap-2 flex-wrap justify-end">
           {rightActions.map((action, index) => (
-            <NavBarActionPreviewItem key={`right-${index}`} action={action} index={index} />
+            <NavBarActionPreviewItem
+              key={`right-${index}`}
+              action={action}
+              index={index}
+            />
           ))}
         </div>
       </div>
@@ -191,9 +203,17 @@ const NavBarActionListEditor: React.FC<NavBarActionListEditorProps> = ({
     onChange(updatedActions)
   }
 
-  const handleUpdateAction = (index: number, field: keyof NavBarAction, value: string) => {
+  const handleUpdateAction = (
+    index: number,
+    field: keyof NavBarAction,
+    value: string,
+  ) => {
     const updatedActions = [...actions]
-    updatedActions[index] = { ...updatedActions[index], [field]: value, position }
+    updatedActions[index] = {
+      ...updatedActions[index],
+      [field]: value,
+      position,
+    }
     onChange(updatedActions)
   }
 
@@ -201,7 +221,13 @@ const NavBarActionListEditor: React.FC<NavBarActionListEditorProps> = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <Label className="text-md font-semibold">{title}</Label>
-        <Button type="button" onClick={handleAddAction} size="sm" variant="outline" className="shrink-0">
+        <Button
+          type="button"
+          onClick={handleAddAction}
+          size="sm"
+          variant="outline"
+          className="shrink-0"
+        >
           <Plus className="w-4 h-4 mr-1" />
           Add Items
         </Button>
@@ -209,12 +235,16 @@ const NavBarActionListEditor: React.FC<NavBarActionListEditorProps> = ({
 
       {actions.length === 0 && (
         <div className="text-sm text-muted-foreground py-2">
-          No {title.toLowerCase()} configured. Click &quot;Add Items&quot; to create one.
+          No {title.toLowerCase()} configured. Click &quot;Add Items&quot; to
+          create one.
         </div>
       )}
 
       {actions.map((action, index) => (
-        <div key={index} className="border border-border rounded-md p-4 space-y-3">
+        <div
+          key={index}
+          className="border border-border rounded-md p-4 space-y-3"
+        >
           <div className="flex items-center justify-between mb-2">
             <span className="text-md font-medium">Action {index + 1}</span>
             <div className="flex gap-1">
@@ -248,7 +278,7 @@ const NavBarActionListEditor: React.FC<NavBarActionListEditorProps> = ({
             </div>
           </div>
 
-          <div className='flex items-center gap-2'>
+          <div className="flex items-center gap-2">
             <div className="w-32">
               <Label className="text-sm mb-1">Type</Label>
               <Select
@@ -259,8 +289,12 @@ const NavBarActionListEditor: React.FC<NavBarActionListEditorProps> = ({
                     ...updatedActions[index],
                     type: val as NavBarActionType,
                     position,
-                    ...(val === 'search' ? { url: '', label: '', openTarget: undefined } : {}),
-                    ...(val === 'link' ? { placeholder: '', openTarget: '_blank' as const } : {}),
+                    ...(val === 'search'
+                      ? { url: '', label: '', openTarget: undefined }
+                      : {}),
+                    ...(val === 'link'
+                      ? { placeholder: '', openTarget: '_blank' as const }
+                      : {}),
                   }
                   onChange(updatedActions)
                 }}
@@ -281,7 +315,9 @@ const NavBarActionListEditor: React.FC<NavBarActionListEditorProps> = ({
                 <Input
                   type="text"
                   value={action.label}
-                  onChange={(e) => handleUpdateAction(index, 'label', e.target.value)}
+                  onChange={(e) =>
+                    handleUpdateAction(index, 'label', e.target.value)
+                  }
                 />
               </div>
             )}
@@ -293,7 +329,9 @@ const NavBarActionListEditor: React.FC<NavBarActionListEditorProps> = ({
                   type="text"
                   value={action.placeholder ?? ''}
                   placeholder="Search"
-                  onChange={(e) => handleUpdateAction(index, 'placeholder', e.target.value)}
+                  onChange={(e) =>
+                    handleUpdateAction(index, 'placeholder', e.target.value)
+                  }
                 />
               </div>
             )}
@@ -319,12 +357,14 @@ const NavBarActionListEditor: React.FC<NavBarActionListEditorProps> = ({
             )}
 
             {(action.type || 'link') === 'link' && (
-              <div className='flex-1'>
+              <div className="flex-1">
                 <Label className="text-sm mb-1">URL</Label>
                 <Input
                   type="url"
                   value={action.url}
-                  onChange={(e) => handleUpdateAction(index, 'url', e.target.value)}
+                  onChange={(e) =>
+                    handleUpdateAction(index, 'url', e.target.value)
+                  }
                 />
               </div>
             )}
@@ -333,22 +373,26 @@ const NavBarActionListEditor: React.FC<NavBarActionListEditorProps> = ({
           <div>
             <Label className="text-sm mb-1">
               Icon SVG (paste SVG code)
-            <span className="inline-block align-middle ml-2">
-              {action.icon?.trim() ? (
-                <span
-                  className="w-6 h-6 inline-flex justify-center items-center"
-                  // eslint-disable-next-line react/no-danger
-                  dangerouslySetInnerHTML={{ __html: action.icon }}
-                  aria-label="SVG icon preview"
-                />
-              ) : (
-                <span className="w-6 h-6 inline-flex items-center justify-center text-muted-foreground">—</span>
-              )}
-            </span>
+              <span className="inline-block align-middle ml-2">
+                {action.icon?.trim() ? (
+                  <span
+                    className="w-6 h-6 inline-flex justify-center items-center"
+
+                    dangerouslySetInnerHTML={{ __html: action.icon }}
+                    aria-label="SVG icon preview"
+                  />
+                ) : (
+                  <span className="w-6 h-6 inline-flex items-center justify-center text-muted-foreground">
+                    —
+                  </span>
+                )}
+              </span>
             </Label>
             <Textarea
               value={action.icon}
-              onChange={(e) => handleUpdateAction(index, 'icon', e.target.value)}
+              onChange={(e) =>
+                handleUpdateAction(index, 'icon', e.target.value)
+              }
               placeholder='<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">...</svg>'
               rows={2}
               className="font-mono text-[7px] leading-[1.2] resize-none py-1 px-2 max-h-20"
@@ -365,7 +409,10 @@ interface NavBarActionsEditorProps {
   onChange: (actions: NavBarAction[]) => void
 }
 
-const NavBarActionsEditor: React.FC<NavBarActionsEditorProps> = ({ value, onChange }) => {
+const NavBarActionsEditor: React.FC<NavBarActionsEditorProps> = ({
+  value,
+  onChange,
+}) => {
   const [leftActions, setLeftActions] = useState<NavBarAction[]>([])
   const [rightActions, setRightActions] = useState<NavBarAction[]>([])
 

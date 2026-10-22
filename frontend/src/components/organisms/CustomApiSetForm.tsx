@@ -7,7 +7,13 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/atoms/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/atoms/dialog'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
@@ -20,7 +26,11 @@ import {
   SelectValue,
 } from '@/components/atoms/select'
 import { useQuery } from '@tanstack/react-query'
-import { listCustomApiSchemas, getCustomApiSchemaById, type CustomApiSchema } from '@/services/customApiSchema.service'
+import {
+  listCustomApiSchemas,
+  getCustomApiSchemaById,
+  type CustomApiSchema,
+} from '@/services/customApiSchema.service'
 import { Spinner } from '@/components/atoms/spinner'
 import type { CustomApiSet } from '@/services/customApiSet.service'
 import DaImportFile from '@/components/atoms/DaImportFile'
@@ -44,7 +54,8 @@ const CustomApiSetForm: React.FC<CustomApiSetFormProps> = ({
   const { toast } = useToast()
   const isEditMode = !!initialData
   const [step, setStep] = useState<1 | 2>(isEditMode ? 2 : 1)
-  const [selectedCustomApiSchema, setSelectedCustomApiSchema] = useState<CustomApiSchema | null>(null)
+  const [selectedCustomApiSchema, setSelectedCustomApiSchema] =
+    useState<CustomApiSchema | null>(null)
   const [formData, setFormData] = useState<Partial<CustomApiSet>>({
     name: '',
     description: '',
@@ -61,15 +72,18 @@ const CustomApiSetForm: React.FC<CustomApiSetFormProps> = ({
 
   const { data: customApiSchemas, isLoading: isLoadingSchemas } = useQuery({
     queryKey: ['custom-api-schemas'],
-    queryFn: () => listCustomApiSchemas({ limit: 100, page: 1, is_active: true }),
+    queryFn: () =>
+      listCustomApiSchemas({ limit: 100, page: 1, is_active: true }),
     enabled: open && step === 1,
   })
 
   // Extract custom_api_schema ID - handle both populated object and string ID
-  const customApiSchemaId = initialData?.custom_api_schema 
-    ? (typeof initialData.custom_api_schema === 'string' 
-        ? initialData.custom_api_schema 
-        : (initialData.custom_api_schema as any).id || (initialData.custom_api_schema as any)._id || initialData.custom_api_schema)
+  const customApiSchemaId = initialData?.custom_api_schema
+    ? typeof initialData.custom_api_schema === 'string'
+      ? initialData.custom_api_schema
+      : (initialData.custom_api_schema as any).id ||
+        (initialData.custom_api_schema as any)._id ||
+        initialData.custom_api_schema
     : null
 
   // Load CustomApiSchema data when editing
@@ -208,7 +222,9 @@ const CustomApiSetForm: React.FC<CustomApiSetFormProps> = ({
           {step === 1 && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold mb-2">Step 1: Select CustomApiSchema Schema</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  Step 1: Select CustomApiSchema Schema
+                </h3>
                 <p className="text-sm text-muted-foreground mb-4">
                   Choose the API schema this instance will be based on
                 </p>
@@ -235,7 +251,9 @@ const CustomApiSetForm: React.FC<CustomApiSetFormProps> = ({
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-semibold text-foreground">{schema.name}</h4>
+                          <h4 className="font-semibold text-foreground">
+                            {schema.name}
+                          </h4>
                           <p className="text-xs text-muted-foreground font-mono mt-1">
                             {schema.code}
                           </p>
@@ -251,8 +269,8 @@ const CustomApiSetForm: React.FC<CustomApiSetFormProps> = ({
                               schema.type === 'tree'
                                 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                                 : schema.type === 'list'
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                  : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
                             }`}
                           >
                             {schema.type.toUpperCase()}
@@ -263,14 +281,17 @@ const CustomApiSetForm: React.FC<CustomApiSetFormProps> = ({
                   ))}
                   {!customApiSchemas?.results?.length && (
                     <div className="text-center py-8 text-sm text-muted-foreground">
-                      No active CustomApiSchema schemas available. Please create one first.
+                      No active CustomApiSchema schemas available. Please create
+                      one first.
                     </div>
                   )}
                 </div>
               )}
 
               {errors.custom_api_schema && (
-                <p className="text-sm text-destructive">{errors.custom_api_schema}</p>
+                <p className="text-sm text-destructive">
+                  {errors.custom_api_schema}
+                </p>
               )}
             </div>
           )}
@@ -278,9 +299,21 @@ const CustomApiSetForm: React.FC<CustomApiSetFormProps> = ({
           {step === 2 && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold mb-2">{isEditMode ? 'Instance Details' : 'Step 2: Instance Details'}</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  {isEditMode ? 'Instance Details' : 'Step 2: Instance Details'}
+                </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Based on: <span className="font-semibold">{selectedCustomApiSchema?.name || customApiSchemaData?.name || initialData?.custom_api_schema_code}</span> ({selectedCustomApiSchema?.code || customApiSchemaData?.code || initialData?.custom_api_schema_code})
+                  Based on:{' '}
+                  <span className="font-semibold">
+                    {selectedCustomApiSchema?.name ||
+                      customApiSchemaData?.name ||
+                      initialData?.custom_api_schema_code}
+                  </span>{' '}
+                  (
+                  {selectedCustomApiSchema?.code ||
+                    customApiSchemaData?.code ||
+                    initialData?.custom_api_schema_code}
+                  )
                 </p>
               </div>
 
@@ -306,7 +339,9 @@ const CustomApiSetForm: React.FC<CustomApiSetFormProps> = ({
                   <Textarea
                     id="description"
                     value={formData.description || ''}
-                    onChange={(e) => handleChange('description', e.target.value)}
+                    onChange={(e) =>
+                      handleChange('description', e.target.value)
+                    }
                     placeholder="Optional description"
                     rows={3}
                   />
@@ -322,7 +357,8 @@ const CustomApiSetForm: React.FC<CustomApiSetFormProps> = ({
                           alt="Avatar"
                           className="w-full h-full object-contain p-2"
                           onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).src = '/imgs/plugin.png'
+                            ;(e.currentTarget as HTMLImageElement).src =
+                              '/imgs/plugin.png'
                           }}
                         />
                       ) : (
@@ -343,7 +379,8 @@ const CustomApiSetForm: React.FC<CustomApiSetFormProps> = ({
                           } catch (error: any) {
                             toast({
                               title: 'Upload failed',
-                              description: error?.message || 'Failed to upload image',
+                              description:
+                                error?.message || 'Failed to upload image',
                               variant: 'destructive',
                             })
                           }
@@ -379,11 +416,14 @@ const CustomApiSetForm: React.FC<CustomApiSetFormProps> = ({
                     id="provider_url"
                     type="url"
                     value={formData.provider_url || ''}
-                    onChange={(e) => handleChange('provider_url', e.target.value)}
+                    onChange={(e) =>
+                      handleChange('provider_url', e.target.value)
+                    }
                     placeholder="https://example.com"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Clicking on the API instance image will open this URL in a new tab
+                    Clicking on the API instance image will open this URL in a
+                    new tab
                   </p>
                 </div>
               </div>
@@ -396,12 +436,21 @@ const CustomApiSetForm: React.FC<CustomApiSetFormProps> = ({
             Cancel
           </Button>
           {step === 1 ? (
-            <Button onClick={handleStep1Next} disabled={!selectedCustomApiSchema || isLoadingSchemas}>
+            <Button
+              onClick={handleStep1Next}
+              disabled={!selectedCustomApiSchema || isLoadingSchemas}
+            >
               Next
             </Button>
           ) : (
             <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update' : 'Create')}
+              {isSaving
+                ? isEditMode
+                  ? 'Updating...'
+                  : 'Creating...'
+                : isEditMode
+                  ? 'Update'
+                  : 'Create'}
             </Button>
           )}
         </DialogFooter>
@@ -411,4 +460,3 @@ const CustomApiSetForm: React.FC<CustomApiSetFormProps> = ({
 }
 
 export default CustomApiSetForm
-

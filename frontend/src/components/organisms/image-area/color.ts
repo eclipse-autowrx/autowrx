@@ -216,7 +216,11 @@ export const toState = (data: ColorInput, oldHue = 0): ColorState => {
   } else if (data.hex !== undefined && isValidHex(data.hex)) {
     rgb = hexToRgb(data.hex)
     hex = rgbToHex(rgb.r, rgb.g, rgb.b)
-  } else if (data.r !== undefined || data.g !== undefined || data.b !== undefined) {
+  } else if (
+    data.r !== undefined ||
+    data.g !== undefined ||
+    data.b !== undefined
+  ) {
     rgb = {
       r: Math.round(data.r ?? 0),
       g: Math.round(data.g ?? 0),

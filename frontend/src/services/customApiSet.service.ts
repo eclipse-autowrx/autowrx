@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -58,10 +58,14 @@ export interface ListCustomApiSetParams {
   page?: number
 }
 
-export const listCustomApiSets = (params?: ListCustomApiSetParams): Promise<Paged<CustomApiSet>> =>
+export const listCustomApiSets = (
+  params?: ListCustomApiSetParams,
+): Promise<Paged<CustomApiSet>> =>
   serverAxios.get('/custom-api-sets', { params }).then((r) => r.data)
 
-export const getCustomApiSetById = (id: string | any): Promise<CustomApiSet> => {
+export const getCustomApiSetById = (
+  id: string | any,
+): Promise<CustomApiSet> => {
   // Normalize ID to string (handle MongoDB ObjectIds and other object types)
   let normalizedId: string
   if (typeof id === 'string') {
@@ -71,30 +75,55 @@ export const getCustomApiSetById = (id: string | any): Promise<CustomApiSet> => 
   } else {
     normalizedId = String(id)
   }
-  
-  if (!normalizedId || normalizedId === '[object Object]' || normalizedId === 'undefined' || normalizedId === 'null') {
+
+  if (
+    !normalizedId ||
+    normalizedId === '[object Object]' ||
+    normalizedId === 'undefined' ||
+    normalizedId === 'null'
+  ) {
     throw new Error(`Invalid custom API set ID: ${id}`)
   }
-  
+
   return serverAxios.get(`/custom-api-sets/${normalizedId}`).then((r) => r.data)
 }
 
-export const createCustomApiSet = (data: Partial<CustomApiSet>): Promise<CustomApiSet> =>
+export const createCustomApiSet = (
+  data: Partial<CustomApiSet>,
+): Promise<CustomApiSet> =>
   serverAxios.post('/custom-api-sets', data).then((r) => r.data)
 
-export const updateCustomApiSet = (id: string, data: Partial<CustomApiSet>): Promise<CustomApiSet> =>
+export const updateCustomApiSet = (
+  id: string,
+  data: Partial<CustomApiSet>,
+): Promise<CustomApiSet> =>
   serverAxios.patch(`/custom-api-sets/${id}`, data).then((r) => r.data)
 
 export const deleteCustomApiSet = (id: string): Promise<void> =>
   serverAxios.delete(`/custom-api-sets/${id}`).then(() => {})
 
 // Item-level operations
-export const addSetItem = (setId: string, item: CustomApiSetItem): Promise<CustomApiSet> =>
-  serverAxios.post(`/custom-api-sets/${setId}/items`, { item }).then((r) => r.data)
+export const addSetItem = (
+  setId: string,
+  item: CustomApiSetItem,
+): Promise<CustomApiSet> =>
+  serverAxios
+    .post(`/custom-api-sets/${setId}/items`, { item })
+    .then((r) => r.data)
 
-export const updateSetItem = (setId: string, itemId: string, item: Partial<CustomApiSetItem>): Promise<CustomApiSet> =>
-  serverAxios.patch(`/custom-api-sets/${setId}/items/${itemId}`, { item }).then((r) => r.data)
+export const updateSetItem = (
+  setId: string,
+  itemId: string,
+  item: Partial<CustomApiSetItem>,
+): Promise<CustomApiSet> =>
+  serverAxios
+    .patch(`/custom-api-sets/${setId}/items/${itemId}`, { item })
+    .then((r) => r.data)
 
-export const removeSetItem = (setId: string, itemId: string): Promise<CustomApiSet> =>
-  serverAxios.delete(`/custom-api-sets/${setId}/items/${itemId}`).then((r) => r.data)
-
+export const removeSetItem = (
+  setId: string,
+  itemId: string,
+): Promise<CustomApiSet> =>
+  serverAxios
+    .delete(`/custom-api-sets/${setId}/items/${itemId}`)
+    .then((r) => r.data)

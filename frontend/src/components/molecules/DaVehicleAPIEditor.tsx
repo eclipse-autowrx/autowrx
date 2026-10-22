@@ -249,11 +249,7 @@ const DaVehicleAPIEditor = ({
         <Label className="text-sm font-medium w-[120px] min-w-[120px]">
           Signal *
         </Label>
-        <Input
-          disabled
-          value={data?.apiName}
-          className="flex-1 h-8 text-sm"
-        />
+        <Input disabled value={data?.apiName} className="flex-1 h-8 text-sm" />
       </div>
 
       <div className="flex gap-4 items-center">
@@ -331,14 +327,14 @@ const DaVehicleAPIEditor = ({
         </Label>
         <Checkbox
           checked={data?.isWishlist || false}
-          onCheckedChange={() => setData({ ...data, isWishlist: !data?.isWishlist })}
+          onCheckedChange={() =>
+            setData({ ...data, isWishlist: !data?.isWishlist })
+          }
         />
       </div>
 
       <div className="flex flex-col gap-2 mt-2">
-        <div className="text-sm font-medium">
-          Custom Properties
-        </div>
+        <div className="text-sm font-medium">Custom Properties</div>
         <div className="flex flex-col space-y-2 max-h-[40vh] overflow-auto">
           {Object.values(customProperties).length > 0 ? (
             Object.values(customProperties).map((property, index) => (

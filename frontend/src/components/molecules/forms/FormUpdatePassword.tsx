@@ -49,7 +49,6 @@ const FormUpdatePassword = ({}) => {
       setError('')
       await new Promise(() =>
         setTimeout(() => {
-          // eslint-disable-next-line no-self-assign
           window.location.href = '/'
         }, 3000),
       )
@@ -65,10 +64,7 @@ const FormUpdatePassword = ({}) => {
   }
 
   return (
-    <form
-      onSubmit={resetPassword}
-      className="flex flex-col bg-background"
-    >
+    <form onSubmit={resetPassword} className="flex flex-col bg-background">
       {changed ? (
         <>
           <p className="text-base mt-4">

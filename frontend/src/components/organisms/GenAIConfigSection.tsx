@@ -17,7 +17,10 @@ import { useToast } from '@/components/molecules/toaster/use-toast'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import ConfigList from '@/components/molecules/ConfigList'
 import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
-import { PREDEFINED_SITE_CONFIGS, isSupportedSiteConfigKey } from '@/pages/SiteConfigManagement'
+import {
+  PREDEFINED_SITE_CONFIGS,
+  isSupportedSiteConfigKey,
+} from '@/pages/SiteConfigManagement'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
 
@@ -78,9 +81,15 @@ const GenAIConfigSection: React.FC = () => {
           limit: 100,
         })
 
-        setConfigs((updatedRes.results || []).filter((c) => isSupportedSiteConfigKey(c.key)))
+        setConfigs(
+          (updatedRes.results || []).filter((c) =>
+            isSupportedSiteConfigKey(c.key),
+          ),
+        )
       } else {
-        setConfigs(existingConfigs.filter((c) => isSupportedSiteConfigKey(c.key)))
+        setConfigs(
+          existingConfigs.filter((c) => isSupportedSiteConfigKey(c.key)),
+        )
       }
     } catch (err) {
       toast({
@@ -240,4 +249,3 @@ const GenAIConfigSection: React.FC = () => {
 }
 
 export default GenAIConfigSection
-

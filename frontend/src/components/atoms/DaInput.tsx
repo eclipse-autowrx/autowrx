@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -12,8 +12,7 @@ import { IconType } from 'react-icons'
 import { cn } from '@/lib/utils'
 import { DaText } from './DaText'
 
-export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
   inputClassName?: string
   wrapperClassName?: string

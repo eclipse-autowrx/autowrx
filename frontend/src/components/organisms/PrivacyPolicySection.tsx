@@ -39,7 +39,8 @@ const PrivacyPolicySection: React.FC = () => {
   const loadContent = async () => {
     try {
       setIsLoading(true)
-      const res = await configManagementService.getConfigByKey(PRIVACY_POLICY_KEY)
+      const res =
+        await configManagementService.getConfigByKey(PRIVACY_POLICY_KEY)
       const value = typeof res?.value === 'string' ? res.value : ''
       setContent(value)
       lastSavedRef.current = value
@@ -67,11 +68,17 @@ const PrivacyPolicySection: React.FC = () => {
         section: 'privacy',
       })
       lastSavedRef.current = content
-      toast({ title: 'Saved', description: 'Privacy policy content updated successfully.' })
+      toast({
+        title: 'Saved',
+        description: 'Privacy policy content updated successfully.',
+      })
     } catch (err) {
       toast({
         title: 'Save failed',
-        description: err instanceof Error ? err.message : 'Failed to save privacy policy content',
+        description:
+          err instanceof Error
+            ? err.message
+            : 'Failed to save privacy policy content',
         variant: 'destructive',
       })
     } finally {
@@ -85,10 +92,14 @@ const PrivacyPolicySection: React.FC = () => {
     <>
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
         <div className="flex flex-col">
-          <h2 className="text-lg font-semibold text-foreground">Privacy Policy</h2>
+          <h2 className="text-lg font-semibold text-foreground">
+            Privacy Policy
+          </h2>
           <p className="text-sm text-muted-foreground mt-1">
             Paste markdown text to display as the Privacy Policy page at{' '}
-            <code className="text-xs bg-muted px-1 py-0.5 rounded">/privacy-policy</code>
+            <code className="text-xs bg-muted px-1 py-0.5 rounded">
+              /privacy-policy
+            </code>
           </p>
         </div>
         {hasChanges && (
@@ -143,9 +154,17 @@ const PrivacyPolicySection: React.FC = () => {
         ) : (
           <div className="border border-border rounded-md px-10 py-8 bg-background min-h-[200px]">
             {content ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={privacyMarkdownComponents}>{content}</ReactMarkdown>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={privacyMarkdownComponents}
+              >
+                {content}
+              </ReactMarkdown>
             ) : (
-              <p className="text-muted-foreground italic">No content yet. Switch to the Edit tab to add privacy policy content.</p>
+              <p className="text-muted-foreground italic">
+                No content yet. Switch to the Edit tab to add privacy policy
+                content.
+              </p>
             )}
           </div>
         )}

@@ -7,10 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { Button } from '@/components/atoms/button'
-import {
-  Dialog,
-  DialogContent,
-} from '@/components/atoms/dialog'
+import { Dialog, DialogContent } from '@/components/atoms/dialog'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import AddonSelect from '@/components/molecules/AddonSelect'
@@ -59,9 +56,7 @@ export function getModelTabExcludedSlugs(
   return tabs
     .filter(
       (tab, i) =>
-        i !== changingPluginIndex &&
-        tab.type === 'custom' &&
-        !!tab.plugin,
+        i !== changingPluginIndex && tab.type === 'custom' && !!tab.plugin,
     )
     .map((tab) => tab.plugin as string)
 }
@@ -90,10 +85,7 @@ export function applyModelTabAddonSelect(
     return updatedTabs
   }
 
-  return [
-    ...tabs,
-    { type: 'custom' as const, label, plugin: plugin.slug },
-  ]
+  return [...tabs, { type: 'custom' as const, label, plugin: plugin.slug }]
 }
 
 export interface ModelTabAddonSelectDialogProps {

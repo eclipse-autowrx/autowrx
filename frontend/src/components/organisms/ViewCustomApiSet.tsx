@@ -9,7 +9,10 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { getCustomApiSetById, type CustomApiSetItem } from '@/services/customApiSet.service'
+import {
+  getCustomApiSetById,
+  type CustomApiSetItem,
+} from '@/services/customApiSet.service'
 import { getCustomApiSchemaById } from '@/services/customApiSchema.service'
 import CustomAPIList from '@/components/organisms/CustomAPIList'
 import CustomAPIView from '@/components/organisms/CustomAPIView'
@@ -24,14 +27,19 @@ const ViewCustomApiSet: React.FC<ViewCustomApiSetProps> = ({ instanceId }) => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
 
   // Normalize instanceId to string (should be string from route params, but safeguard)
-  const normalizedSetId = typeof instanceId === 'string' 
-    ? instanceId 
-    : (instanceId && typeof instanceId === 'object' && 'toString' in instanceId)
-    ? (instanceId as any).toString()
-    : String(instanceId)
+  const normalizedSetId =
+    typeof instanceId === 'string'
+      ? instanceId
+      : instanceId && typeof instanceId === 'object' && 'toString' in instanceId
+        ? (instanceId as any).toString()
+        : String(instanceId)
 
   // Fetch set data
-  const { data: set, isLoading: isLoadingSet, refetch: refetchSet } = useQuery({
+  const {
+    data: set,
+    isLoading: isLoadingSet,
+    refetch: refetchSet,
+  } = useQuery({
     queryKey: ['custom-api-set', normalizedSetId],
     queryFn: () => getCustomApiSetById(normalizedSetId),
     enabled: !!normalizedSetId && normalizedSetId !== '[object Object]',
@@ -42,11 +50,17 @@ const ViewCustomApiSet: React.FC<ViewCustomApiSetProps> = ({ instanceId }) => {
   const customApiSchemaId = set?.custom_api_schema
     ? typeof set.custom_api_schema === 'string'
       ? set.custom_api_schema
-      : (set.custom_api_schema as any).id || (set.custom_api_schema as any)._id || set.custom_api_schema
+      : (set.custom_api_schema as any).id ||
+        (set.custom_api_schema as any)._id ||
+        set.custom_api_schema
     : null
 
   // Fetch CustomApiSchema schema
-  const { data: customApiSchema, isLoading: isLoadingSchema, refetch: refetchSchema } = useQuery({
+  const {
+    data: customApiSchema,
+    isLoading: isLoadingSchema,
+    refetch: refetchSchema,
+  } = useQuery({
     queryKey: ['custom-api-schema', customApiSchemaId],
     queryFn: () => getCustomApiSchemaById(customApiSchemaId!),
     enabled: !!customApiSchemaId,
@@ -54,7 +68,9 @@ const ViewCustomApiSet: React.FC<ViewCustomApiSetProps> = ({ instanceId }) => {
   })
 
   const items = set?.data?.items || []
-  const selectedItem = selectedItemId ? items.find((item) => item.id === selectedItemId) : null
+  const selectedItem = selectedItemId
+    ? items.find((item) => item.id === selectedItemId)
+    : null
 
   // Reset selection when switching to a different set (instanceId changes)
   useEffect(() => {
@@ -83,7 +99,7 @@ const ViewCustomApiSet: React.FC<ViewCustomApiSetProps> = ({ instanceId }) => {
     }
 
     const apiParam = searchParams.get('api')
-    
+
     if (apiParam) {
       // Check if the API param matches an existing item ID
       const itemExists = items.some((item) => item.id === apiParam)
@@ -119,17 +135,19 @@ const ViewCustomApiSet: React.FC<ViewCustomApiSetProps> = ({ instanceId }) => {
   const getMethodOptions = (): string[] => {
     if (!customApiSchema?.schema) return []
     try {
-      const schemaObj = typeof customApiSchema.schema === 'string' 
-        ? JSON.parse(customApiSchema.schema) 
-        : customApiSchema.schema
-      
-      const itemSchema = schemaObj.type === 'array' ? schemaObj.items : schemaObj
+      const schemaObj =
+        typeof customApiSchema.schema === 'string'
+          ? JSON.parse(customApiSchema.schema)
+          : customApiSchema.schema
+
+      const itemSchema =
+        schemaObj.type === 'array' ? schemaObj.items : schemaObj
       const methodProperty = itemSchema?.properties?.method
-      
+
       if (methodProperty?.enum) {
         return methodProperty.enum
       }
-      
+
       return []
     } catch {
       return []
@@ -140,7 +158,9 @@ const ViewCustomApiSet: React.FC<ViewCustomApiSetProps> = ({ instanceId }) => {
     return (
       <div className="flex items-center justify-center h-full">
         <Spinner className="mr-2" />
-        <span className="text-sm font-medium text-muted-foreground">Loading API set...</span>
+        <span className="text-sm font-medium text-muted-foreground">
+          Loading API set...
+        </span>
       </div>
     )
   }
@@ -194,4 +214,3 @@ const ViewCustomApiSet: React.FC<ViewCustomApiSetProps> = ({ instanceId }) => {
 }
 
 export default ViewCustomApiSet
-

@@ -7,12 +7,20 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState, useEffect } from 'react'
-import { configManagementService, Config } from '@/services/configManagement.service'
+import {
+  configManagementService,
+  Config,
+} from '@/services/configManagement.service'
 import ConfigForm from '@/components/molecules/ConfigForm'
 import ConfigList from '@/components/molecules/ConfigList'
 import { Button } from '@/components/atoms/button'
 import { useToast } from '@/components/molecules/toaster/use-toast'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/atoms/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/atoms/dialog'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { EXCLUDED_FROM_SITE_CONFIG_KEYS } from '@/pages/SiteConfigManagement'
@@ -39,13 +47,14 @@ const SecretConfigSection: React.FC = () => {
       const res = await configManagementService.getConfigs({ secret: true })
       // Filter out keys that should be excluded from site-config page
       const filteredConfigs = (res.results || []).filter(
-        config => !EXCLUDED_FROM_SITE_CONFIG_KEYS.includes(config.key)
+        (config) => !EXCLUDED_FROM_SITE_CONFIG_KEYS.includes(config.key),
       )
       setConfigs(filteredConfigs)
     } catch (err) {
       toast({
         title: 'Load failed',
-        description: err instanceof Error ? err.message : 'Failed to load secret configs',
+        description:
+          err instanceof Error ? err.message : 'Failed to load secret configs',
         variant: 'destructive',
       })
     } finally {
@@ -65,7 +74,10 @@ const SecretConfigSection: React.FC = () => {
       setIsLoading(true)
       if (config.id) {
         await configManagementService.deleteConfigById(config.id)
-        toast({ title: 'Deleted', description: `Config "${config.key}" deleted. Reloading page...` })
+        toast({
+          title: 'Deleted',
+          description: `Config "${config.key}" deleted. Reloading page...`,
+        })
 
         // Reload page to show changes immediately
         setTimeout(() => {
@@ -75,7 +87,8 @@ const SecretConfigSection: React.FC = () => {
     } catch (err) {
       toast({
         title: 'Delete failed',
-        description: err instanceof Error ? err.message : 'Failed to delete config',
+        description:
+          err instanceof Error ? err.message : 'Failed to delete config',
         variant: 'destructive',
       })
       setIsLoading(false)
@@ -94,10 +107,16 @@ const SecretConfigSection: React.FC = () => {
           valueType: config.valueType,
           section: 'secrets',
         })
-        toast({ title: 'Updated', description: `Config "${config.key}" updated. Reloading page...` })
+        toast({
+          title: 'Updated',
+          description: `Config "${config.key}" updated. Reloading page...`,
+        })
       } else {
         await configManagementService.createConfig({ ...config, secret: true })
-        toast({ title: 'Created', description: `Config "${config.key}" created. Reloading page...` })
+        toast({
+          title: 'Created',
+          description: `Config "${config.key}" created. Reloading page...`,
+        })
       }
 
       // Reload page to show changes immediately
@@ -107,7 +126,8 @@ const SecretConfigSection: React.FC = () => {
     } catch (err) {
       toast({
         title: 'Save failed',
-        description: err instanceof Error ? err.message : 'Failed to save config',
+        description:
+          err instanceof Error ? err.message : 'Failed to save config',
         variant: 'destructive',
       })
       setIsLoading(false)
@@ -120,20 +140,30 @@ const SecretConfigSection: React.FC = () => {
   }
 
   const handleFactoryReset = async () => {
-    if (!window.confirm('Restore all secret configs to the deployment snapshot? This will overwrite your current secret values.')) return
+    if (
+      !window.confirm(
+        'Restore all secret configs to the deployment snapshot? This will overwrite your current secret values.',
+      )
+    )
+      return
 
     try {
       setIsLoading(true)
 
       await restoreConfigsFromSnapshot({ secret: true })
 
-      toast({ title: 'Restored', description: 'Secret configs restored from deployment snapshot. Reloading page...' })
+      toast({
+        title: 'Restored',
+        description:
+          'Secret configs restored from deployment snapshot. Reloading page...',
+      })
 
       reloadSoon()
     } catch (err) {
       toast({
         title: 'Reset failed',
-        description: err instanceof Error ? err.message : 'Failed to reset configs',
+        description:
+          err instanceof Error ? err.message : 'Failed to reset configs',
         variant: 'destructive',
       })
       setIsLoading(false)
@@ -154,7 +184,11 @@ const SecretConfigSection: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button onClick={() => setIsFormOpen(true)} size="sm" disabled={isLoading}>
+            <Button
+              onClick={() => setIsFormOpen(true)}
+              size="sm"
+              disabled={isLoading}
+            >
               + Add Secret
             </Button>
             <Button
@@ -190,7 +224,9 @@ const SecretConfigSection: React.FC = () => {
         <DialogContent className="max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
-              {editingConfig ? 'Edit Secret Configuration' : 'Create Secret Configuration'}
+              {editingConfig
+                ? 'Edit Secret Configuration'
+                : 'Create Secret Configuration'}
             </DialogTitle>
           </DialogHeader>
 

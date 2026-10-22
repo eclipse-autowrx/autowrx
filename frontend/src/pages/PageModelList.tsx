@@ -205,9 +205,7 @@ const PageModelList = () => {
           overrideName?.trim() ||
           importedModel.model.name ||
           'New Imported Model'
-        const apiVersion = normalizeApiVersion(
-          importedModel.model.api_version,
-        )
+        const apiVersion = normalizeApiVersion(importedModel.model.api_version)
         const newModel: ModelCreate = {
           main_api: importedModel.model.main_api || 'Vehicle',
           model_home_image_file: modelHomeImageUrl,
@@ -285,7 +283,8 @@ const PageModelList = () => {
             overrideName?.trim() ||
               importedModel.model?.name ||
               'New Imported Model',
-            err.response.data?.message || 'A model with this name already exists',
+            err.response.data?.message ||
+              'A model with this name already exists',
           )
           return
         }
@@ -299,11 +298,23 @@ const PageModelList = () => {
         setIsImporting(false)
       }
     },
-    [user, refetch, navigate, queryClient, toast, openImportNameDialog, resetImportNameDialog],
+    [
+      user,
+      refetch,
+      navigate,
+      queryClient,
+      toast,
+      openImportNameDialog,
+      resetImportNameDialog,
+    ],
   )
 
   const handleConfirmImportName = useCallback(async () => {
-    if (!pendingImport || !importModelName.trim() || isDuplicateImportModelName) {
+    if (
+      !pendingImport ||
+      !importModelName.trim() ||
+      isDuplicateImportModelName
+    ) {
       return
     }
     setImportNameError('')
@@ -325,7 +336,9 @@ const PageModelList = () => {
           (name) => name.toLowerCase() === proposedName.toLowerCase(),
         )
         if (duplicate) {
-          const existing = new Set(ownedModelNames.map((name) => name.toLowerCase()))
+          const existing = new Set(
+            ownedModelNames.map((name) => name.toLowerCase()),
+          )
           let suggestedName = proposedName
           if (existing.has(proposedName.toLowerCase())) {
             const match = proposedName.match(/^(.*?)_(\d+)$/)
@@ -442,7 +455,12 @@ const PageModelList = () => {
   // instead of the model list and offer a button to open the global login dialog.
   // We wait for `authBootstrapped` so we don't flash this gate while the
   // initial token refresh is still in flight.
-  if (authBootstrapped && !isUserLoading && !user && !authConfigs.PUBLIC_VIEWING) {
+  if (
+    authBootstrapped &&
+    !isUserLoading &&
+    !user &&
+    !authConfigs.PUBLIC_VIEWING
+  ) {
     return (
       <div className="flex flex-col items-center justify-center w-full min-h-[60vh] px-6 text-center">
         <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
@@ -452,8 +470,8 @@ const PageModelList = () => {
           Sign in required
         </h2>
         <p className="mt-2 max-w-md text-sm text-muted-foreground">
-          You need to be signed in to browse and manage Vehicle Models.
-          Please sign in to continue.
+          You need to be signed in to browse and manage Vehicle Models. Please
+          sign in to continue.
         </p>
         <div className="flex gap-3 mt-6">
           <Button
@@ -481,18 +499,20 @@ const PageModelList = () => {
             ))}
           </div>
         ) : (
-          tabItems.filter((tab) => tab.count > 0 || isLoading).map((tab) => (
-            <DaTabItem
-              key={tab.value}
-              active={activeSection === tab.value}
-              onClick={() => handleTabClick(tab.value as ModelTab)}
-            >
-              {tab.title}
-              <div className="flex min-w-5 px-1.5 py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
-                {tab.count}
-              </div>
-            </DaTabItem>
-          ))
+          tabItems
+            .filter((tab) => tab.count > 0 || isLoading)
+            .map((tab) => (
+              <DaTabItem
+                key={tab.value}
+                active={activeSection === tab.value}
+                onClick={() => handleTabClick(tab.value as ModelTab)}
+              >
+                {tab.title}
+                <div className="flex min-w-5 px-1.5 py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
+                  {tab.count}
+                </div>
+              </DaTabItem>
+            ))
         )}
       </div>
 
@@ -604,7 +624,8 @@ const PageModelList = () => {
                               setImportNameError('')
                             }}
                             onKeyDown={(e) =>
-                              e.key === 'Enter' && void handleConfirmImportName()
+                              e.key === 'Enter' &&
+                              void handleConfirmImportName()
                             }
                             placeholder="Model name"
                             disabled={isImporting}
@@ -628,49 +649,52 @@ const PageModelList = () => {
                     </div>
                   )}
                 </div>
-                {user && (filterModels(ownedModels).length > 0 || isLoading) && (
-                  <ModelSection
-                    title="My Models"
-                    models={filterModels(ownedModels)}
-                    isLoading={isLoading && ownedModels.length === 0}
-                    emptyText=""
-                    sectionRef={myModelsRef}
-                  />
-                )}
+                {user &&
+                  (filterModels(ownedModels).length > 0 || isLoading) && (
+                    <ModelSection
+                      title="My Models"
+                      models={filterModels(ownedModels)}
+                      isLoading={isLoading && ownedModels.length === 0}
+                      emptyText=""
+                      sectionRef={myModelsRef}
+                    />
+                  )}
 
-                {user && (filterModels(contributedModels).length > 0 || isLoading) && (
-                  <ModelSection
-                    title="My Contributions"
-                    models={filterModels(contributedModels)}
-                    isLoading={isLoading && contributedModels.length === 0}
-                    emptyText=""
-                    sectionRef={myContribRef}
-                  />
-                )}
+                {user &&
+                  (filterModels(contributedModels).length > 0 || isLoading) && (
+                    <ModelSection
+                      title="My Contributions"
+                      models={filterModels(contributedModels)}
+                      isLoading={isLoading && contributedModels.length === 0}
+                      emptyText=""
+                      sectionRef={myContribRef}
+                    />
+                  )}
 
-                {(filterModels(publicReleasedModels).length > 0 || isLoading) && (
-                <ModelSection
-                  title="Public"
-                  models={filterModels(publicReleasedModels)}
-                  isLoading={isLoading && publicReleasedModels.length === 0}
-                  emptyText=""
-                  headerExtras={
-                    !user ? (
-                      <div className="relative w-full max-w-sm">
-                        <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type="text"
-                          placeholder="Search models..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="pl-9"
-                          data-id="model-search-input"
-                        />
-                      </div>
-                    ) : undefined
-                  }
-                  sectionRef={publicRef}
-                />
+                {(filterModels(publicReleasedModels).length > 0 ||
+                  isLoading) && (
+                  <ModelSection
+                    title="Public"
+                    models={filterModels(publicReleasedModels)}
+                    isLoading={isLoading && publicReleasedModels.length === 0}
+                    emptyText=""
+                    headerExtras={
+                      !user ? (
+                        <div className="relative w-full max-w-sm">
+                          <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="text"
+                            placeholder="Search models..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9"
+                            data-id="model-search-input"
+                          />
+                        </div>
+                      ) : undefined
+                    }
+                    sectionRef={publicRef}
+                  />
                 )}
               </>
             )}

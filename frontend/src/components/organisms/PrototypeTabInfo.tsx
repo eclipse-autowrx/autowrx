@@ -33,7 +33,10 @@ import {
   TbStarFilled,
   TbTrashX,
 } from 'react-icons/tb'
-import { updatePrototypeService, deletePrototypeService } from '@/services/prototype.service'
+import {
+  updatePrototypeService,
+  deletePrototypeService,
+} from '@/services/prototype.service'
 import { uploadFileService } from '@/services/upload.service'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { useNavigate } from 'react-router-dom'
@@ -62,9 +65,7 @@ interface PrototypeTabInfoProps {
 const complexityLevels = ['Lowest', 'Low', 'Medium', 'High', 'Highest']
 const statusOptions = ['development', 'Released']
 
-const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
-  prototype,
-}) => {
+const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({ prototype }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [localPrototype, setLocalPrototype] = useState(prototype)
   const defaultPrototypeImage = useDefaultPrototypeImage()
@@ -73,12 +74,17 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
   const { data: modelPrototypes } = useListModelPrototypes(model?.id || '')
 
   const existingPrototypeNames = useMemo(
-    () => modelPrototypes?.filter((p: Prototype) => p.id !== prototype.id).map((p: Prototype) => p.name) ?? [],
+    () =>
+      modelPrototypes
+        ?.filter((p: Prototype) => p.id !== prototype.id)
+        .map((p: Prototype) => p.name) ?? [],
     [modelPrototypes, prototype.id],
   )
 
-  const { isDuplicate: isDuplicatePrototypeName, suggestedName: suggestedPrototypeName } =
-    useDuplicateNameCheck(localPrototype.name, existingPrototypeNames)
+  const {
+    isDuplicate: isDuplicatePrototypeName,
+    suggestedName: suggestedPrototypeName,
+  } = useDuplicateNameCheck(localPrototype.name, existingPrototypeNames)
   const { refetch: refetchCurrentPrototype } = useCurrentPrototype()
   const navigate = useNavigate()
   const editable = useCanEditPrototype(prototype)
@@ -251,7 +257,11 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                   <Button variant="outline" onClick={handleCancel} size="sm">
                     Cancel
                   </Button>
-                  <Button onClick={handleSave} size="sm" disabled={isSaving || isDuplicatePrototypeName}>
+                  <Button
+                    onClick={handleSave}
+                    size="sm"
+                    disabled={isSaving || isDuplicatePrototypeName}
+                  >
                     {isSaving ? 'Saving...' : 'Save'}
                   </Button>
                 </div>
@@ -400,7 +410,9 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                         className="mt-2"
                       />
                     )}
-                    {error && !isDuplicatePrototypeName && <p className="mt-2 text-sm text-secondary">{error}</p>}
+                    {error && !isDuplicatePrototypeName && (
+                      <p className="mt-2 text-sm text-secondary">{error}</p>
+                    )}
                   </div>
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="problem">Problem</Label>
@@ -466,7 +478,10 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                       value={localPrototype.state || 'development'}
                       onValueChange={(value) => handleChange('state', value)}
                     >
-                      <SelectTrigger className="w-full" data-id="prototype-status-select">
+                      <SelectTrigger
+                        className="w-full"
+                        data-id="prototype-status-select"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

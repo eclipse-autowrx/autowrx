@@ -6,8 +6,8 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { Loader2 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Loader2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface SpinnerProps {
   className?: string
@@ -17,7 +17,7 @@ interface SpinnerProps {
 function Spinner({ className, size }: SpinnerProps) {
   return (
     <Loader2
-      className={cn("animate-spin text-primary", className)}
+      className={cn('animate-spin text-primary', className)}
       size={size}
     />
   )

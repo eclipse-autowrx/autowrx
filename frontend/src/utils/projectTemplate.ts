@@ -68,7 +68,9 @@ export function deserializeProjectTemplate(
     widget_config:
       (parsed.widget_config as string) || getDefaultDashboardCfg(language),
     customer_journey:
-      typeof parsed.customer_journey === 'string' ? parsed.customer_journey : '',
+      typeof parsed.customer_journey === 'string'
+        ? parsed.customer_journey
+        : '',
   }
 }
 

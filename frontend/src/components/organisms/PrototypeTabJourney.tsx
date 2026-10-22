@@ -9,10 +9,7 @@
 import React, { useState } from 'react'
 import { Prototype } from '@/types/model.type'
 import { updatePrototypeService } from '@/services/prototype.service'
-import {
-  TbEdit,
-  TbLoader,
-} from 'react-icons/tb'
+import { TbEdit, TbLoader } from 'react-icons/tb'
 import DaTableEditor from '../molecules/DaCustomerJourneyTable'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
@@ -104,7 +101,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 </h2>
                 <div className="flex space-x-2">
                   <Button
-                    data-id='prototype-cancel-button'
+                    data-id="prototype-cancel-button"
                     variant="outline"
                     onClick={handleCancel}
                     size="sm"
@@ -132,7 +129,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                       onClick={() => setIsEditing(true)}
                       variant="outline"
                       size="sm"
-                      data-id='prototype-edit-button'
+                      data-id="prototype-edit-button"
                     >
                       {isSaving ? (
                         <>

@@ -96,9 +96,9 @@ const normalizeTemplateFormFields = (source: {
   visibility?: string
   is_default?: boolean
 }) => ({
-  visibility: (
-    source.visibility === 'default' ? 'public' : source.visibility || 'public'
-  ) as TemplateVisibility,
+  visibility: (source.visibility === 'default'
+    ? 'public'
+    : source.visibility || 'public') as TemplateVisibility,
   is_default: source.is_default ?? source.visibility === 'default',
 })
 
@@ -287,7 +287,8 @@ export default function TemplateForm({
         : []
 
       // Pre-populate with initial data, preserving entire config structure
-      const { visibility, is_default } = normalizeTemplateFormFields(initialData)
+      const { visibility, is_default } =
+        normalizeTemplateFormFields(initialData)
       setForm({
         name: initialData.name || '',
         description: initialData.description || '',
@@ -492,8 +493,7 @@ export default function TemplateForm({
   }
 
   const handleAddonSelect = (plugin: Plugin, label: string) => {
-    const targetTabs =
-      addonSelectTarget === 'model' ? modelTabs : prototypeTabs
+    const targetTabs = addonSelectTarget === 'model' ? modelTabs : prototypeTabs
     const result = applyModelTabAddonSelect(
       targetTabs,
       plugin,
@@ -519,666 +519,678 @@ export default function TemplateForm({
 
   return (
     <>
-    <div className="flex flex-col w-full h-full overflow-auto">
-      <div className="flex border-b border-input">
-        <DaTabItem
-          small
-          active={activeTab === 'meta'}
-          onClick={() => setActiveTab('meta')}
-        >
-          Meta
-        </DaTabItem>
-        <DaTabItem
-          small
-          active={activeTab === 'model'}
-          onClick={() => setActiveTab('model')}
-        >
-          Model Config
-        </DaTabItem>
-        <DaTabItem
-          small
-          active={activeTab === 'prototype'}
-          onClick={() => setActiveTab('prototype')}
-        >
-          Prototype Config
-        </DaTabItem>
-      </div>
+      <div className="flex flex-col w-full h-full overflow-auto">
+        <div className="flex border-b border-input">
+          <DaTabItem
+            small
+            active={activeTab === 'meta'}
+            onClick={() => setActiveTab('meta')}
+          >
+            Meta
+          </DaTabItem>
+          <DaTabItem
+            small
+            active={activeTab === 'model'}
+            onClick={() => setActiveTab('model')}
+          >
+            Model Config
+          </DaTabItem>
+          <DaTabItem
+            small
+            active={activeTab === 'prototype'}
+            onClick={() => setActiveTab('prototype')}
+          >
+            Prototype Config
+          </DaTabItem>
+        </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto p-6">
-        {isFetching && !isCreate ? (
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        ) : (
-          <>
-            {activeTab === 'meta' && (
-              <div className="flex gap-6">
-                <div className="flex-1 space-y-3">
-                  <div className="flex flex-col gap-1.5">
-                    <Label>Name *</Label>
-                    <Input
-                      required
-                      value={form.name || ''}
-                      onChange={(e) => onChange('name', e.target.value)}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label>Description</Label>
-                    <Textarea
-                      rows={3}
-                      value={form.description || ''}
-                      onChange={(e) => onChange('description', e.target.value)}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label>Visibility</Label>
-                    <DaSelect
-                      value={form.visibility || 'public'}
-                      onValueChange={(v) => onChange('visibility', v)}
-                      className="h-9 text-sm"
-                    >
-                      <DaSelectItem value="editable">editable</DaSelectItem>
-                      <DaSelectItem value="public">public</DaSelectItem>
-                      <DaSelectItem value="private">private</DaSelectItem>
-                    </DaSelect>
-                    {form.visibility === 'editable' && (
-                      <p className="text-xs text-muted-foreground">
-                        Models created from this template can allow non-owners to add
-                        prototypes.
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <input
-                      type="checkbox"
-                      id="is-default-template"
-                      checked={!!form.is_default}
-                      onChange={(e) => onChange('is_default', e.target.checked)}
-                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                    <Label
-                      htmlFor="is-default-template"
-                      className="cursor-pointer text-sm"
-                    >
-                      Set as default template
-                    </Label>
-                    <span className="text-xs text-muted-foreground">
-                      (auto-selected when creating new models)
-                    </span>
-                  </div>
-                </div>
-                <div className="w-44 shrink-0">
-                  <div className="relative aspect-square w-full border border-input rounded-md overflow-hidden bg-white">
-                    <img
-                      src={form.image || '/imgs/plugin.png'}
-                      alt="Template Image"
-                      className="absolute inset-0 w-full h-full object-contain"
-                    />
-                    <DaImportFile
-                      onFileChange={async (file) => {
-                        try {
-                          const { url } = await uploadFileService(file)
-                          onChange('image', url)
-                          toast.success('Image uploaded')
-                        } catch {
-                          toast.error('Image upload failed')
-                        }
-                      }}
-                      accept="image/*"
-                      className="absolute top-1 right-1"
-                    >
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        className="rounded-full bg-white shadow-sm"
-                      >
-                        <TbPhotoEdit className="w-4 h-4" />
-                      </Button>
-                    </DaImportFile>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'model' && (
-              <ModelTabListEditor
-                key={open ? 'modeltablisteditor-open' : 'modeltablisteditor-closed'}
-                ref={modelTabListRef}
-                tabs={modelTabs}
-                onTabsChange={setModelTabs}
-                onRequestAddonSelect={handleRequestAddonSelect}
-              />
-            )}
-
-            {activeTab === 'prototype' && (
-              <div className="flex flex-col gap-4">
-                {/* Sub-tab navigation */}
-                <div className="flex border-b border-border gap-1">
-                  <button
-                    onClick={() => setActivePrototypeTab('tabs')}
-                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                      activePrototypeTab === 'tabs'
-                        ? 'border-primary text-primary'
-                        : 'border-transparent text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <TbPuzzle className="w-4 h-4" />
-                    Tab Bar
-                  </button>
-                  <button
-                    onClick={() => setActivePrototypeTab('style')}
-                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                      activePrototypeTab === 'style'
-                        ? 'border-primary text-primary'
-                        : 'border-transparent text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <TbEye className="w-4 h-4" />
-                    Appearance
-                  </button>
-                  <button
-                    onClick={() => setActivePrototypeTab('sidebar')}
-                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                      activePrototypeTab === 'sidebar'
-                        ? 'border-primary text-primary'
-                        : 'border-transparent text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <TbLayoutSidebar className="w-4 h-4" />
-                    Side Panels
-                  </button>
-                  <button
-                    onClick={() => setActivePrototypeTab('actions')}
-                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                      activePrototypeTab === 'actions'
-                        ? 'border-primary text-primary'
-                        : 'border-transparent text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <TbListCheck className="w-4 h-4" />
-                    Action Buttons
-                  </button>
-                </div>
-
-                {/* Tab Bar Sub-tab */}
-                {activePrototypeTab === 'tabs' && (
-                  <>
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm text-muted-foreground">
-                        Configure which tabs appear in the prototype tab bar,
-                        their order, labels, and visibility.
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0 gap-1.5"
-                        onClick={() => handleRequestPrototypeAddonSelect(null)}
-                      >
-                        <TbPlus className="w-4 h-4" />
-                        Add-ons
-                      </Button>
+        <div className="flex-1 min-h-0 overflow-y-auto p-6">
+          {isFetching && !isCreate ? (
+            <p className="text-sm text-muted-foreground">Loading...</p>
+          ) : (
+            <>
+              {activeTab === 'meta' && (
+                <div className="flex gap-6">
+                  <div className="flex-1 space-y-3">
+                    <div className="flex flex-col gap-1.5">
+                      <Label>Name *</Label>
+                      <Input
+                        required
+                        value={form.name || ''}
+                        onChange={(e) => onChange('name', e.target.value)}
+                      />
                     </div>
-                    {prototypeTabs.length > 0 ? (
-                      <DragDropContext onDragEnd={handleDragEnd}>
-                        <Droppable droppableId="prototype-tabs">
-                          {(provided, snapshot) => (
-                            <div
-                              {...provided.droppableProps}
-                              ref={provided.innerRef}
-                              className="flex flex-col gap-2"
-                            >
-                              {prototypeTabs.map((tab, index) => {
-                                const draggableId =
-                                  tab.type === 'builtin'
-                                    ? `builtin-${tab.key}`
-                                    : `custom-${tab.plugin}`
-                                return (
-                                  <Draggable
-                                    key={draggableId}
-                                    draggableId={draggableId}
-                                    index={index}
-                                  >
-                                    {(provided, snapshot) => (
-                                      <div
-                                        ref={provided.innerRef}
-                                        {...provided.draggableProps}
-                                        className={`flex items-center gap-3 p-4 border border-border rounded bg-background ${
-                                          snapshot.isDragging
-                                            ? 'opacity-40'
-                                            : ''
-                                        } ${tab.hidden ? 'opacity-60' : ''}`}
-                                      >
-                                        {/* Drag Handle */}
+                    <div className="flex flex-col gap-1.5">
+                      <Label>Description</Label>
+                      <Textarea
+                        rows={3}
+                        value={form.description || ''}
+                        onChange={(e) =>
+                          onChange('description', e.target.value)
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <Label>Visibility</Label>
+                      <DaSelect
+                        value={form.visibility || 'public'}
+                        onValueChange={(v) => onChange('visibility', v)}
+                        className="h-9 text-sm"
+                      >
+                        <DaSelectItem value="editable">editable</DaSelectItem>
+                        <DaSelectItem value="public">public</DaSelectItem>
+                        <DaSelectItem value="private">private</DaSelectItem>
+                      </DaSelect>
+                      {form.visibility === 'editable' && (
+                        <p className="text-xs text-muted-foreground">
+                          Models created from this template can allow non-owners
+                          to add prototypes.
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <input
+                        type="checkbox"
+                        id="is-default-template"
+                        checked={!!form.is_default}
+                        onChange={(e) =>
+                          onChange('is_default', e.target.checked)
+                        }
+                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      <Label
+                        htmlFor="is-default-template"
+                        className="cursor-pointer text-sm"
+                      >
+                        Set as default template
+                      </Label>
+                      <span className="text-xs text-muted-foreground">
+                        (auto-selected when creating new models)
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-44 shrink-0">
+                    <div className="relative aspect-square w-full border border-input rounded-md overflow-hidden bg-white">
+                      <img
+                        src={form.image || '/imgs/plugin.png'}
+                        alt="Template Image"
+                        className="absolute inset-0 w-full h-full object-contain"
+                      />
+                      <DaImportFile
+                        onFileChange={async (file) => {
+                          try {
+                            const { url } = await uploadFileService(file)
+                            onChange('image', url)
+                            toast.success('Image uploaded')
+                          } catch {
+                            toast.error('Image upload failed')
+                          }
+                        }}
+                        accept="image/*"
+                        className="absolute top-1 right-1"
+                      >
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="rounded-full bg-white shadow-sm"
+                        >
+                          <TbPhotoEdit className="w-4 h-4" />
+                        </Button>
+                      </DaImportFile>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'model' && (
+                <ModelTabListEditor
+                  key={
+                    open
+                      ? 'modeltablisteditor-open'
+                      : 'modeltablisteditor-closed'
+                  }
+                  ref={modelTabListRef}
+                  tabs={modelTabs}
+                  onTabsChange={setModelTabs}
+                  onRequestAddonSelect={handleRequestAddonSelect}
+                />
+              )}
+
+              {activeTab === 'prototype' && (
+                <div className="flex flex-col gap-4">
+                  {/* Sub-tab navigation */}
+                  <div className="flex border-b border-border gap-1">
+                    <button
+                      onClick={() => setActivePrototypeTab('tabs')}
+                      className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                        activePrototypeTab === 'tabs'
+                          ? 'border-primary text-primary'
+                          : 'border-transparent text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <TbPuzzle className="w-4 h-4" />
+                      Tab Bar
+                    </button>
+                    <button
+                      onClick={() => setActivePrototypeTab('style')}
+                      className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                        activePrototypeTab === 'style'
+                          ? 'border-primary text-primary'
+                          : 'border-transparent text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <TbEye className="w-4 h-4" />
+                      Appearance
+                    </button>
+                    <button
+                      onClick={() => setActivePrototypeTab('sidebar')}
+                      className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                        activePrototypeTab === 'sidebar'
+                          ? 'border-primary text-primary'
+                          : 'border-transparent text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <TbLayoutSidebar className="w-4 h-4" />
+                      Side Panels
+                    </button>
+                    <button
+                      onClick={() => setActivePrototypeTab('actions')}
+                      className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                        activePrototypeTab === 'actions'
+                          ? 'border-primary text-primary'
+                          : 'border-transparent text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <TbListCheck className="w-4 h-4" />
+                      Action Buttons
+                    </button>
+                  </div>
+
+                  {/* Tab Bar Sub-tab */}
+                  {activePrototypeTab === 'tabs' && (
+                    <>
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm text-muted-foreground">
+                          Configure which tabs appear in the prototype tab bar,
+                          their order, labels, and visibility.
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="shrink-0 gap-1.5"
+                          onClick={() =>
+                            handleRequestPrototypeAddonSelect(null)
+                          }
+                        >
+                          <TbPlus className="w-4 h-4" />
+                          Add-ons
+                        </Button>
+                      </div>
+                      {prototypeTabs.length > 0 ? (
+                        <DragDropContext onDragEnd={handleDragEnd}>
+                          <Droppable droppableId="prototype-tabs">
+                            {(provided, snapshot) => (
+                              <div
+                                {...provided.droppableProps}
+                                ref={provided.innerRef}
+                                className="flex flex-col gap-2"
+                              >
+                                {prototypeTabs.map((tab, index) => {
+                                  const draggableId =
+                                    tab.type === 'builtin'
+                                      ? `builtin-${tab.key}`
+                                      : `custom-${tab.plugin}`
+                                  return (
+                                    <Draggable
+                                      key={draggableId}
+                                      draggableId={draggableId}
+                                      index={index}
+                                    >
+                                      {(provided, snapshot) => (
                                         <div
-                                          {...provided.dragHandleProps}
-                                          className="flex items-center justify-center text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
+                                          ref={provided.innerRef}
+                                          {...provided.draggableProps}
+                                          className={`flex items-center gap-3 p-4 border border-border rounded bg-background ${
+                                            snapshot.isDragging
+                                              ? 'opacity-40'
+                                              : ''
+                                          } ${tab.hidden ? 'opacity-60' : ''}`}
                                         >
-                                          <TbGripVertical className="w-5 h-5" />
-                                        </div>
+                                          {/* Drag Handle */}
+                                          <div
+                                            {...provided.dragHandleProps}
+                                            className="flex items-center justify-center text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
+                                          >
+                                            <TbGripVertical className="w-5 h-5" />
+                                          </div>
 
-                                        {/* Icon */}
-                                        {tab.iconSvg ? (
-                                          <span
-                                            className="inline-flex size-5 [&>svg]:w-full [&>svg]:h-full"
-                                            dangerouslySetInnerHTML={{
-                                              __html: DOMPurify.sanitize(
-                                                tab.iconSvg,
-                                                {
-                                                  USE_PROFILES: {
-                                                    svg: true,
-                                                    svgFilters: true,
+                                          {/* Icon */}
+                                          {tab.iconSvg ? (
+                                            <span
+                                              className="inline-flex size-5 [&>svg]:w-full [&>svg]:h-full"
+                                              dangerouslySetInnerHTML={{
+                                                __html: DOMPurify.sanitize(
+                                                  tab.iconSvg,
+                                                  {
+                                                    USE_PROFILES: {
+                                                      svg: true,
+                                                      svgFilters: true,
+                                                    },
                                                   },
-                                                },
-                                              ),
-                                            }}
-                                          />
-                                        ) : (
-                                          tab.type === 'builtin' && (
-                                            <div className="text-muted-foreground">
-                                              {getBuiltinIcon(tab.key)}
-                                            </div>
-                                          )
-                                        )}
-
-                                        {/* Content */}
-                                        <div className="flex-1 flex flex-col gap-1 min-w-0">
-                                          {editingTabIndex === index ? (
-                                            <div className="flex flex-col gap-2">
-                                              <Label
-                                                htmlFor={`edit-label-${index}`}
-                                                className="text-xs"
-                                              >
-                                                Tab Label
-                                              </Label>
-                                              <Input
-                                                id={`edit-label-${index}`}
-                                                value={editingTabLabel}
-                                                onChange={(e) =>
-                                                  setEditingTabLabel(
-                                                    e.target.value,
-                                                  )
-                                                }
-                                                onKeyDown={(e) => {
-                                                  if (e.key === 'Enter')
-                                                    handleSaveEdit()
-                                                  if (e.key === 'Escape')
-                                                    handleCancelEdit()
-                                                }}
-                                                className="text-sm"
-                                                autoFocus
-                                              />
-                                              <Label
-                                                htmlFor={`edit-svg-${index}`}
-                                                className="text-xs mt-1"
-                                              >
-                                                Custom Icon (SVG)
-                                              </Label>
-                                              <textarea
-                                                id={`edit-svg-${index}`}
-                                                value={editingTabIconSvg}
-                                                onChange={(e) =>
-                                                  setEditingTabIconSvg(
-                                                    e.target.value,
-                                                  )
-                                                }
-                                                placeholder='<svg xmlns="...">...</svg>'
-                                                className="text-xs font-mono flex-1 min-h-15 resize-y rounded border border-input bg-background px-2 py-1.5 outline-none focus:ring-1 focus:ring-ring"
-                                                spellCheck={false}
-                                              />
-                                            </div>
+                                                ),
+                                              }}
+                                            />
                                           ) : (
-                                            <>
-                                              <div className="flex items-center gap-2">
-                                                <p className="text-sm font-medium text-foreground truncate">
-                                                  {tab.label}
-                                                </p>
-                                                {tab.type === 'builtin' && (
-                                                  <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded">
-                                                    Built-in
-                                                  </span>
-                                                )}
+                                            tab.type === 'builtin' && (
+                                              <div className="text-muted-foreground">
+                                                {getBuiltinIcon(tab.key)}
                                               </div>
-                                              <p className="text-xs text-muted-foreground font-mono truncate">
-                                                {tab.type === 'builtin'
-                                                  ? `builtin: ${tab.key}`
-                                                  : `plugin: ${tab.plugin}`}
-                                              </p>
-                                            </>
+                                            )
                                           )}
-                                        </div>
 
-                                        {/* Visibility Toggle */}
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() =>
-                                            handleToggleHidden(index)
-                                          }
-                                          className="h-8 w-8"
-                                          title={
-                                            tab.hidden ? 'Show tab' : 'Hide tab'
-                                          }
-                                        >
-                                          {tab.hidden ? (
-                                            <TbEyeOff className="w-4 h-4 text-muted-foreground" />
-                                          ) : (
-                                            <TbEye className="w-4 h-4" />
-                                          )}
-                                        </Button>
+                                          {/* Content */}
+                                          <div className="flex-1 flex flex-col gap-1 min-w-0">
+                                            {editingTabIndex === index ? (
+                                              <div className="flex flex-col gap-2">
+                                                <Label
+                                                  htmlFor={`edit-label-${index}`}
+                                                  className="text-xs"
+                                                >
+                                                  Tab Label
+                                                </Label>
+                                                <Input
+                                                  id={`edit-label-${index}`}
+                                                  value={editingTabLabel}
+                                                  onChange={(e) =>
+                                                    setEditingTabLabel(
+                                                      e.target.value,
+                                                    )
+                                                  }
+                                                  onKeyDown={(e) => {
+                                                    if (e.key === 'Enter')
+                                                      handleSaveEdit()
+                                                    if (e.key === 'Escape')
+                                                      handleCancelEdit()
+                                                  }}
+                                                  className="text-sm"
+                                                  autoFocus
+                                                />
+                                                <Label
+                                                  htmlFor={`edit-svg-${index}`}
+                                                  className="text-xs mt-1"
+                                                >
+                                                  Custom Icon (SVG)
+                                                </Label>
+                                                <textarea
+                                                  id={`edit-svg-${index}`}
+                                                  value={editingTabIconSvg}
+                                                  onChange={(e) =>
+                                                    setEditingTabIconSvg(
+                                                      e.target.value,
+                                                    )
+                                                  }
+                                                  placeholder='<svg xmlns="...">...</svg>'
+                                                  className="text-xs font-mono flex-1 min-h-15 resize-y rounded border border-input bg-background px-2 py-1.5 outline-none focus:ring-1 focus:ring-ring"
+                                                  spellCheck={false}
+                                                />
+                                              </div>
+                                            ) : (
+                                              <>
+                                                <div className="flex items-center gap-2">
+                                                  <p className="text-sm font-medium text-foreground truncate">
+                                                    {tab.label}
+                                                  </p>
+                                                  {tab.type === 'builtin' && (
+                                                    <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded">
+                                                      Built-in
+                                                    </span>
+                                                  )}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground font-mono truncate">
+                                                  {tab.type === 'builtin'
+                                                    ? `builtin: ${tab.key}`
+                                                    : `plugin: ${tab.plugin}`}
+                                                </p>
+                                              </>
+                                            )}
+                                          </div>
 
-                                        {/* Actions */}
-                                        <div className="flex items-center gap-2">
-                                          {editingTabIndex === index ? (
-                                            <>
-                                              <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={handleSaveEdit}
-                                                className="h-8 w-8"
-                                              >
-                                                <TbCheck className="w-4 h-4 text-green-600" />
-                                              </Button>
-                                              <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={handleCancelEdit}
-                                                className="h-8 w-8"
-                                              >
-                                                <TbX className="w-4 h-4 text-muted-foreground" />
-                                              </Button>
-                                            </>
-                                          ) : (
-                                            <>
-                                              <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() =>
-                                                  handleStartEdit(index)
-                                                }
-                                                className="h-8 w-8"
-                                              >
-                                                <TbPencil className="w-4 h-4" />
-                                              </Button>
-                                              {tab.type === 'custom' && (
+                                          {/* Visibility Toggle */}
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() =>
+                                              handleToggleHidden(index)
+                                            }
+                                            className="h-8 w-8"
+                                            title={
+                                              tab.hidden
+                                                ? 'Show tab'
+                                                : 'Hide tab'
+                                            }
+                                          >
+                                            {tab.hidden ? (
+                                              <TbEyeOff className="w-4 h-4 text-muted-foreground" />
+                                            ) : (
+                                              <TbEye className="w-4 h-4" />
+                                            )}
+                                          </Button>
+
+                                          {/* Actions */}
+                                          <div className="flex items-center gap-2">
+                                            {editingTabIndex === index ? (
+                                              <>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="icon"
+                                                  onClick={handleSaveEdit}
+                                                  className="h-8 w-8"
+                                                >
+                                                  <TbCheck className="w-4 h-4 text-green-600" />
+                                                </Button>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="icon"
+                                                  onClick={handleCancelEdit}
+                                                  className="h-8 w-8"
+                                                >
+                                                  <TbX className="w-4 h-4 text-muted-foreground" />
+                                                </Button>
+                                              </>
+                                            ) : (
+                                              <>
                                                 <Button
                                                   variant="ghost"
                                                   size="icon"
                                                   onClick={() =>
-                                                    handleRemoveTab(index)
+                                                    handleStartEdit(index)
                                                   }
-                                                  className="h-8 w-8 text-destructive hover:text-destructive"
+                                                  className="h-8 w-8"
                                                 >
-                                                  <TbTrash className="w-4 h-4" />
+                                                  <TbPencil className="w-4 h-4" />
                                                 </Button>
-                                              )}
-                                            </>
-                                          )}
+                                                {tab.type === 'custom' && (
+                                                  <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() =>
+                                                      handleRemoveTab(index)
+                                                    }
+                                                    className="h-8 w-8 text-destructive hover:text-destructive"
+                                                  >
+                                                    <TbTrash className="w-4 h-4" />
+                                                  </Button>
+                                                )}
+                                              </>
+                                            )}
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
-                                  </Draggable>
-                                )
-                              })}
-                              {provided.placeholder}
-                            </div>
-                          )}
-                        </Droppable>
-                      </DragDropContext>
-                    ) : (
-                      <div className="flex items-center justify-center p-8 border border-dashed border-border rounded">
-                        <p className="text-sm text-muted-foreground">
-                          No tabs configured
-                        </p>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* Appearance Sub-tab */}
-                {activePrototypeTab === 'style' && (
-                  <div className="flex flex-col gap-5">
-                    <p className="text-sm text-muted-foreground">
-                      Choose the visual style for all tab bar buttons.
-                    </p>
-                    <div className="gap-3 grid grid-cols-[auto_1fr]">
-                      <Label className="text-xs w-20 shrink-0 text-foreground mt-1">
-                        Style
-                      </Label>
-                      <div className="flex flex-col gap-3 flex-1">
-                        <div className="flex flex-wrap gap-2">
-                          {(
-                            ['tab', 'primary', 'outline', 'ghost'] as const
-                          ).map((v) => (
-                            <button
-                              key={v}
-                              type="button"
-                              onClick={() => setPrototypeTabsVariant(v)}
-                              className={`px-3 py-1 text-xs rounded border capitalize transition-colors ${
-                                prototypeTabsVariant === v
-                                  ? 'bg-primary text-primary-foreground border-primary'
-                                  : 'bg-background text-foreground border-border hover:bg-accent'
-                              }`}
-                            >
-                              {v}
-                            </button>
-                          ))}
+                                      )}
+                                    </Draggable>
+                                  )
+                                })}
+                                {provided.placeholder}
+                              </div>
+                            )}
+                          </Droppable>
+                        </DragDropContext>
+                      ) : (
+                        <div className="flex items-center justify-center p-8 border border-dashed border-border rounded">
+                          <p className="text-sm text-muted-foreground">
+                            No tabs configured
+                          </p>
                         </div>
-                      </div>
+                      )}
+                    </>
+                  )}
 
-                      <Label className="text-xs w-20 shrink-0 text-foreground mt-1">
-                        Corners
-                      </Label>
-                      <div className="flex flex-col gap-3 flex-1">
-                        <div className="flex flex-wrap gap-2">
-                          {(
-                            [
-                              { value: 'none', label: 'Square' },
-                              { value: 'round', label: 'Round' },
-                              { value: 'full', label: 'Pill' },
-                            ] as const
-                          ).map((opt) => (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              onClick={() =>
-                                setPrototypeTabsBorderRadius(opt.value)
-                              }
-                              className={`px-3 py-1 text-xs rounded border transition-colors ${
-                                prototypeTabsBorderRadius === opt.value
-                                  ? 'bg-primary text-primary-foreground border-primary'
-                                  : 'bg-background text-foreground border-border hover:bg-accent'
-                              }`}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
+                  {/* Appearance Sub-tab */}
+                  {activePrototypeTab === 'style' && (
+                    <div className="flex flex-col gap-5">
+                      <p className="text-sm text-muted-foreground">
+                        Choose the visual style for all tab bar buttons.
+                      </p>
+                      <div className="gap-3 grid grid-cols-[auto_1fr]">
+                        <Label className="text-xs w-20 shrink-0 text-foreground mt-1">
+                          Style
+                        </Label>
+                        <div className="flex flex-col gap-3 flex-1">
+                          <div className="flex flex-wrap gap-2">
+                            {(
+                              ['tab', 'primary', 'outline', 'ghost'] as const
+                            ).map((v) => (
+                              <button
+                                key={v}
+                                type="button"
+                                onClick={() => setPrototypeTabsVariant(v)}
+                                className={`px-3 py-1 text-xs rounded border capitalize transition-colors ${
+                                  prototypeTabsVariant === v
+                                    ? 'bg-primary text-primary-foreground border-primary'
+                                    : 'bg-background text-foreground border-border hover:bg-accent'
+                                }`}
+                              >
+                                {v}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <Label className="text-xs w-20 shrink-0 text-foreground mt-1">
+                          Corners
+                        </Label>
+                        <div className="flex flex-col gap-3 flex-1">
+                          <div className="flex flex-wrap gap-2">
+                            {(
+                              [
+                                { value: 'none', label: 'Square' },
+                                { value: 'round', label: 'Round' },
+                                { value: 'full', label: 'Pill' },
+                              ] as const
+                            ).map((opt) => (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() =>
+                                  setPrototypeTabsBorderRadius(opt.value)
+                                }
+                                className={`px-3 py-1 text-xs rounded border transition-colors ${
+                                  prototypeTabsBorderRadius === opt.value
+                                    ? 'bg-primary text-primary-foreground border-primary'
+                                    : 'bg-background text-foreground border-border hover:bg-accent'
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Sidebar Panel Sub-tab */}
-                {activePrototypeTab === 'sidebar' && (
-                  <div className="flex flex-col gap-3">
-                    <p className="text-sm text-muted-foreground">
-                      Select a plugin to display in a collapsible panel on the
-                      left side of the prototype view.
-                    </p>
+                  {/* Sidebar Panel Sub-tab */}
+                  {activePrototypeTab === 'sidebar' && (
+                    <div className="flex flex-col gap-3">
+                      <p className="text-sm text-muted-foreground">
+                        Select a plugin to display in a collapsible panel on the
+                        left side of the prototype view.
+                      </p>
 
-                    {localSidebarPlugin && !showSidebarPluginPicker ? (
-                      <div className="flex items-center gap-3 p-3 border border-border rounded bg-accent/50">
-                        <TbPuzzle className="w-5 h-5 text-muted-foreground shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {selectedSidebarPluginData?.name ||
-                              localSidebarPlugin}
-                          </p>
-                          <p className="text-xs text-muted-foreground font-mono truncate">
-                            plugin: {localSidebarPlugin}
-                          </p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setShowSidebarPluginPicker(true)}
-                          className="h-8 w-8"
-                          title="Change plugin"
-                        >
-                          <TbPencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setLocalSidebarPlugin(null)
-                            setShowSidebarPluginPicker(false)
-                          }}
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          title="Remove sidebar plugin"
-                        >
-                          <TbTrash className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ) : showSidebarPluginPicker ? (
-                      <div className="flex flex-col gap-2 border border-border rounded p-3">
-                        <div className="relative">
-                          <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            type="text"
-                            placeholder="Search plugins..."
-                            value={sidebarSearchTerm}
-                            onChange={(e) =>
-                              setSidebarSearchTerm(e.target.value)
-                            }
-                            className="pl-10 text-sm"
-                            autoFocus
-                          />
-                        </div>
-                        <div className="flex flex-col max-h-48 overflow-y-auto">
-                          {pluginsLoading ? (
-                            <div className="flex items-center justify-center p-4">
-                              <Spinner size={20} />
-                            </div>
-                          ) : filteredSidebarPlugins.length === 0 ? (
-                            <p className="text-xs text-muted-foreground p-4 text-center">
-                              {sidebarSearchTerm
-                                ? 'No plugins found'
-                                : 'No plugins available'}
+                      {localSidebarPlugin && !showSidebarPluginPicker ? (
+                        <div className="flex items-center gap-3 p-3 border border-border rounded bg-accent/50">
+                          <TbPuzzle className="w-5 h-5 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {selectedSidebarPluginData?.name ||
+                                localSidebarPlugin}
                             </p>
-                          ) : (
-                            filteredSidebarPlugins.map((plugin) => (
-                              <button
-                                key={plugin.id}
-                                onClick={() => {
-                                  setLocalSidebarPlugin(plugin.slug)
-                                  setShowSidebarPluginPicker(false)
-                                  setSidebarSearchTerm('')
-                                }}
-                                className="flex items-center gap-3 p-2 hover:bg-accent rounded transition-colors text-left"
-                              >
-                                {plugin.image ? (
-                                  <img
-                                    src={plugin.image}
-                                    alt={plugin.name}
-                                    className="w-8 h-8 rounded object-cover shrink-0"
-                                  />
-                                ) : (
-                                  <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
-                                    <span className="text-xs text-muted-foreground">
-                                      {plugin.name.charAt(0).toUpperCase()}
-                                    </span>
-                                  </div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-foreground truncate">
-                                    {plugin.name}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground font-mono truncate">
-                                    {plugin.slug}
-                                  </p>
-                                </div>
-                              </button>
-                            ))
-                          )}
-                        </div>
-                        <div className="flex justify-end">
+                            <p className="text-xs text-muted-foreground font-mono truncate">
+                              plugin: {localSidebarPlugin}
+                            </p>
+                          </div>
                           <Button
                             variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setShowSidebarPluginPicker(false)
-                              setSidebarSearchTerm('')
-                            }}
+                            size="icon"
+                            onClick={() => setShowSidebarPluginPicker(true)}
+                            className="h-8 w-8"
+                            title="Change plugin"
                           >
-                            Cancel
+                            <TbPencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setLocalSidebarPlugin(null)
+                              setShowSidebarPluginPicker(false)
+                            }}
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            title="Remove sidebar plugin"
+                          >
+                            <TbTrash className="w-4 h-4" />
                           </Button>
                         </div>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-fit"
-                        onClick={() => setShowSidebarPluginPicker(true)}
-                      >
-                        <TbPuzzle className="w-4 h-4 mr-2" />
-                        Set Sidebar Plugin
-                      </Button>
-                    )}
+                      ) : showSidebarPluginPicker ? (
+                        <div className="flex flex-col gap-2 border border-border rounded p-3">
+                          <div className="relative">
+                            <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input
+                              type="text"
+                              placeholder="Search plugins..."
+                              value={sidebarSearchTerm}
+                              onChange={(e) =>
+                                setSidebarSearchTerm(e.target.value)
+                              }
+                              className="pl-10 text-sm"
+                              autoFocus
+                            />
+                          </div>
+                          <div className="flex flex-col max-h-48 overflow-y-auto">
+                            {pluginsLoading ? (
+                              <div className="flex items-center justify-center p-4">
+                                <Spinner size={20} />
+                              </div>
+                            ) : filteredSidebarPlugins.length === 0 ? (
+                              <p className="text-xs text-muted-foreground p-4 text-center">
+                                {sidebarSearchTerm
+                                  ? 'No plugins found'
+                                  : 'No plugins available'}
+                              </p>
+                            ) : (
+                              filteredSidebarPlugins.map((plugin) => (
+                                <button
+                                  key={plugin.id}
+                                  onClick={() => {
+                                    setLocalSidebarPlugin(plugin.slug)
+                                    setShowSidebarPluginPicker(false)
+                                    setSidebarSearchTerm('')
+                                  }}
+                                  className="flex items-center gap-3 p-2 hover:bg-accent rounded transition-colors text-left"
+                                >
+                                  {plugin.image ? (
+                                    <img
+                                      src={plugin.image}
+                                      alt={plugin.name}
+                                      className="w-8 h-8 rounded object-cover shrink-0"
+                                    />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
+                                      <span className="text-xs text-muted-foreground">
+                                        {plugin.name.charAt(0).toUpperCase()}
+                                      </span>
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-foreground truncate">
+                                      {plugin.name}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground font-mono truncate">
+                                      {plugin.slug}
+                                    </p>
+                                  </div>
+                                </button>
+                              ))
+                            )}
+                          </div>
+                          <div className="flex justify-end">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setShowSidebarPluginPicker(false)
+                                setSidebarSearchTerm('')
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-fit"
+                          onClick={() => setShowSidebarPluginPicker(true)}
+                        >
+                          <TbPuzzle className="w-4 h-4 mr-2" />
+                          Set Sidebar Plugin
+                        </Button>
+                      )}
 
-                    <p className="text-sm text-muted-foreground mt-4">
-                      Select a plugin to replace the built-in Runtime Control
-                      Panel on the right side of the prototype view. Leave
-                      empty to use the built-in panel.
-                    </p>
-                    <PluginSlotPicker
-                      dataId="runtime-plugin-picker"
-                      value={localRuntimePlugin}
-                      onChange={setLocalRuntimePlugin}
-                      plugins={pluginsData?.results}
-                      loading={pluginsLoading}
-                      setLabel="Set Runtime Panel Plugin"
-                      removeTitle="Remove runtime panel plugin"
+                      <p className="text-sm text-muted-foreground mt-4">
+                        Select a plugin to replace the built-in Runtime Control
+                        Panel on the right side of the prototype view. Leave
+                        empty to use the built-in panel.
+                      </p>
+                      <PluginSlotPicker
+                        dataId="runtime-plugin-picker"
+                        value={localRuntimePlugin}
+                        onChange={setLocalRuntimePlugin}
+                        plugins={pluginsData?.results}
+                        loading={pluginsLoading}
+                        setLabel="Set Runtime Panel Plugin"
+                        removeTitle="Remove runtime panel plugin"
+                      />
+                    </div>
+                  )}
+
+                  {/* Action Buttons Sub-tab */}
+                  {activePrototypeTab === 'actions' && (
+                    <ActionButtonsTab
+                      pluginsData={pluginsData}
+                      pluginsLoading={pluginsLoading}
+                      localRightNavPlugins={prototypeRightNavButtons}
+                      setLocalRightNavPlugins={setPrototypeRightNavButtons}
                     />
-                  </div>
-                )}
+                  )}
+                </div>
+              )}
 
-                {/* Action Buttons Sub-tab */}
-                {activePrototypeTab === 'actions' && (
-                  <ActionButtonsTab
-                    pluginsData={pluginsData}
-                    pluginsLoading={pluginsLoading}
-                    localRightNavPlugins={prototypeRightNavButtons}
-                    setLocalRightNavPlugins={setPrototypeRightNavButtons}
-                  />
-                )}
+              <div className="flex justify-end gap-2 mt-6">
+                <Button variant="outline" onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => save.mutate()}
+                  disabled={!form.name || save.isPending}
+                >
+                  {save.isPending ? 'Saving...' : 'Save'}
+                </Button>
               </div>
-            )}
-
-            <div className="flex justify-end gap-2 mt-6">
-              <Button variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button
-                onClick={() => save.mutate()}
-                disabled={!form.name || save.isPending}
-              >
-                {save.isPending ? 'Saving...' : 'Save'}
-              </Button>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
-    <ModelTabAddonSelectDialog
-      open={addonSelectOpen}
-      onOpenChange={(nextOpen) => {
-        setAddonSelectOpen(nextOpen)
-        if (!nextOpen) setChangingPluginIndex(null)
-      }}
-      tabs={addonSelectTarget === 'model' ? modelTabs : prototypeTabs}
-      changingPluginIndex={changingPluginIndex}
-      onSelect={handleAddonSelect}
-    />
+      <ModelTabAddonSelectDialog
+        open={addonSelectOpen}
+        onOpenChange={(nextOpen) => {
+          setAddonSelectOpen(nextOpen)
+          if (!nextOpen) setChangingPluginIndex(null)
+        }}
+        tabs={addonSelectTarget === 'model' ? modelTabs : prototypeTabs}
+        changingPluginIndex={changingPluginIndex}
+        onSelect={handleAddonSelect}
+      />
     </>
   )
 }

@@ -52,7 +52,9 @@ const parseVehicleApis = (code: string) => {
 
       // Capitalize the first letter, in case the signal started with a
       // lowercase 'vehicle' — model API names are always capitalized.
-      return reconstructedApi.charAt(0).toUpperCase() + reconstructedApi.slice(1)
+      return (
+        reconstructedApi.charAt(0).toUpperCase() + reconstructedApi.slice(1)
+      )
     })
     .filter((api) => api !== null)
 

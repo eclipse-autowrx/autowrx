@@ -55,7 +55,9 @@ const SiteStyleColorPreview: React.FC<{ css: string }> = ({ css }) => {
   if (!scopedCss) return null
   return (
     <div className="rounded-lg border border-border bg-muted/20 p-4">
-      <p className="text-sm font-medium text-foreground mb-3">Live color preview</p>
+      <p className="text-sm font-medium text-foreground mb-3">
+        Live color preview
+      </p>
       <style dangerouslySetInnerHTML={{ __html: scopedCss }} />
       <div className="site-style-preview space-y-4">
         <div className="flex flex-wrap gap-3">
@@ -66,26 +68,41 @@ const SiteStyleColorPreview: React.FC<{ css: string }> = ({ css }) => {
                 style={{ background: `var(--${key})` }}
                 title={label}
               />
-              <span className="text-xs text-muted-foreground max-w-18 truncate" title={label}>
+              <span
+                className="text-xs text-muted-foreground max-w-18 truncate"
+                title={label}
+              >
                 {label}
               </span>
             </div>
           ))}
         </div>
-        <div className="rounded-md border border-[var(--border)] p-4" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+        <div
+          className="rounded-md border border-[var(--border)] p-4"
+          style={{
+            background: 'var(--background)',
+            color: 'var(--foreground)',
+          }}
+        >
           <p className="text-sm font-medium mb-2">Sample UI</p>
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <button
               type="button"
               className="px-3 py-1.5 rounded-md text-sm font-medium"
-              style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
+              style={{
+                background: 'var(--primary)',
+                color: 'var(--primary-foreground)',
+              }}
             >
               Primary button
             </button>
             <button
               type="button"
               className="px-3 py-1.5 rounded-md text-sm font-medium border"
-              style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+              style={{
+                borderColor: 'var(--border)',
+                color: 'var(--foreground)',
+              }}
             >
               Outline
             </button>
@@ -98,7 +115,10 @@ const SiteStyleColorPreview: React.FC<{ css: string }> = ({ css }) => {
             readOnly
             placeholder="Input style"
             className="mt-2 w-full max-w-xs rounded-md border px-2 py-1.5 text-sm"
-            style={{ borderColor: 'var(--input)', background: 'var(--background)' }}
+            style={{
+              borderColor: 'var(--input)',
+              background: 'var(--background)',
+            }}
           />
         </div>
       </div>
@@ -156,8 +176,11 @@ const SiteStyleSection: React.FC = () => {
         section: 'style',
       })
       lastSavedCssRef.current = globalCss
-      toast({ title: 'Saved', description: 'Site style updated. Reloading page...' })
-      
+      toast({
+        title: 'Saved',
+        description: 'Site style updated. Reloading page...',
+      })
+
       // Reload page to apply new CSS immediately
       setTimeout(() => {
         window.location.href = window.location.href
@@ -174,14 +197,22 @@ const SiteStyleSection: React.FC = () => {
   }
 
   const handleRestoreDefault = async () => {
-    if (!window.confirm('Restore default CSS? This will overwrite your current changes.')) return
+    if (
+      !window.confirm(
+        'Restore default CSS? This will overwrite your current changes.',
+      )
+    )
+      return
 
     try {
       setRestoringDefault(true)
       const res = await configManagementService.restoreDefaultGlobalCss()
       setGlobalCss(res?.content || '')
-      toast({ title: 'Restored', description: 'Site style restored to default. Reloading page...' })
-      
+      toast({
+        title: 'Restored',
+        description: 'Site style restored to default. Reloading page...',
+      })
+
       // Reload page to apply default CSS immediately
       setTimeout(() => {
         window.location.href = window.location.href
@@ -190,7 +221,9 @@ const SiteStyleSection: React.FC = () => {
       toast({
         title: 'Restore failed',
         description:
-          err instanceof Error ? err.message : 'Failed to restore default style',
+          err instanceof Error
+            ? err.message
+            : 'Failed to restore default style',
         variant: 'destructive',
       })
       setRestoringDefault(false)
@@ -219,7 +252,8 @@ const SiteStyleSection: React.FC = () => {
       setGlobalCss(css)
       toast({
         title: 'Restored',
-        description: 'Site style restored to selected snapshot. Reloading page...',
+        description:
+          'Site style restored to selected snapshot. Reloading page...',
       })
       setTimeout(() => {
         window.location.href = window.location.href
@@ -228,7 +262,9 @@ const SiteStyleSection: React.FC = () => {
       toast({
         title: 'Restore failed',
         description:
-          err instanceof Error ? err.message : 'Failed to restore style snapshot',
+          err instanceof Error
+            ? err.message
+            : 'Failed to restore style snapshot',
         variant: 'destructive',
       })
       setSavingStyle(false)
@@ -263,7 +299,11 @@ const SiteStyleSection: React.FC = () => {
           >
             {restoringDefault ? 'Restoring...' : 'Restore Default'}
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={savingStyle || isLoading}>
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={savingStyle || isLoading}
+          >
             {savingStyle ? 'Saving...' : 'Save Style'}
           </Button>
         </div>
@@ -328,7 +368,10 @@ const SiteStyleSection: React.FC = () => {
           </div>
         ) : subTab === 'history' ? (
           <div className="px-0">
-            <SiteConfigEditHistory section="style" onRestoreEntry={handleRestoreHistoryEntry} />
+            <SiteConfigEditHistory
+              section="style"
+              onRestoreEntry={handleRestoreHistoryEntry}
+            />
           </div>
         ) : (
           <div className="flex flex-col gap-4">

@@ -10,7 +10,12 @@ import { useEffect, useRef } from 'react'
 import { VehicleApi } from '@/types/model.type'
 import { getApiTypeClasses } from '@/lib/utils'
 import { DaCopy } from '../atoms/DaCopy'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/atoms/tooltip'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/atoms/tooltip'
 import { useState } from 'react'
 import { TbPlaylistAdd, TbPlus } from 'react-icons/tb'
 import { Dialog, DialogContent } from '@/components/atoms/dialog'
@@ -81,7 +86,10 @@ const DaApiListItem = ({
                 <Tooltip delayDuration={300}>
                   <TooltipTrigger asChild>
                     <div>
-                      <DaCopy textToCopy={api.name} className="w-fit signal-list-item-btn-copy" />
+                      <DaCopy
+                        textToCopy={api.name}
+                        className="w-fit signal-list-item-btn-copy"
+                      />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>Copy Signal Name</TooltipContent>
@@ -101,7 +109,9 @@ const DaApiListItem = ({
                         <TbPlus className="ml-1 size-4 text-muted-foreground hover:text-fuchsia-500" />
                       </span>
                     </TooltipTrigger>
-                    <TooltipContent>Add wishlist signal from this branch</TooltipContent>
+                    <TooltipContent>
+                      Add wishlist signal from this branch
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               )}
@@ -109,13 +119,20 @@ const DaApiListItem = ({
           )}{' '}
         </div>
         <div className="flex w-fit justify-end cursor-pointer pl-4">
-          <div className={textClass + ' uppercase text-sm font-medium cursor-pointer'}>
+          <div
+            className={
+              textClass + ' uppercase text-sm font-medium cursor-pointer'
+            }
+          >
             {api.type}
           </div>
         </div>
       </div>
       {isAuthorized && (
-        <Dialog open={isOpenWishlistPopup} onOpenChange={setIsOpenWishlistPopup}>
+        <Dialog
+          open={isOpenWishlistPopup}
+          onOpenChange={setIsOpenWishlistPopup}
+        >
           <DialogContent>
             {model_id && model && (
               <FormCreateWishlistApi

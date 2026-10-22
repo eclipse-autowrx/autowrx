@@ -1,12 +1,16 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
 
-import { LogLevel, PublicClientApplication, Configuration } from '@azure/msal-browser'
+import {
+  LogLevel,
+  PublicClientApplication,
+  Configuration,
+} from '@azure/msal-browser'
 import { serverAxios } from './base'
 import config from '@/configs/config'
 
@@ -26,7 +30,9 @@ export interface SSOProvider {
  */
 export const getPublicSSOProviders = async (): Promise<SSOProvider[]> => {
   try {
-    const response = await serverAxios.get('/system/site-management/sso/providers')
+    const response = await serverAxios.get(
+      '/system/site-management/sso/providers',
+    )
     return response.data || []
   } catch (error) {
     console.error('Failed to fetch SSO providers:', error)
@@ -90,7 +96,9 @@ export const createMSALConfig = (provider: SSOProvider): Configuration => {
 /**
  * Create MSAL PublicClientApplication instance for a provider
  */
-export const createMSALInstance = (provider: SSOProvider): PublicClientApplication => {
+export const createMSALInstance = (
+  provider: SSOProvider,
+): PublicClientApplication => {
   const config = createMSALConfig(provider)
   return new PublicClientApplication(config)
 }

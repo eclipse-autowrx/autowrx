@@ -15,13 +15,15 @@ let ssoCacheExpiry: number | null = null
 const SSO_CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
 export const useSSOProviders = () => {
-  const [providers, setProviders] = useState<SSOProvider[]>(ssoProvidersCache || [])
+  const [providers, setProviders] = useState<SSOProvider[]>(
+    ssoProvidersCache || [],
+  )
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const fetchProviders = useCallback(async () => {
     const now = Date.now()
-    
+
     // Return cached data if still valid
     if (ssoProvidersCache && ssoCacheExpiry && now < ssoCacheExpiry) {
       setProviders(ssoProvidersCache)
@@ -31,17 +33,19 @@ export const useSSOProviders = () => {
 
     setLoading(true)
     setError(null)
-    
+
     try {
       const fetchedProviders = await getPublicSSOProviders()
       setProviders(fetchedProviders)
-      
+
       // Update cache
       ssoProvidersCache = fetchedProviders
       ssoCacheExpiry = now + SSO_CACHE_DURATION
     } catch (err) {
       console.error('Failed to fetch SSO providers:', err)
-      setError(err instanceof Error ? err.message : 'Failed to fetch SSO providers')
+      setError(
+        err instanceof Error ? err.message : 'Failed to fetch SSO providers',
+      )
       setProviders([])
     } finally {
       setLoading(false)
@@ -56,4 +60,3 @@ export const useSSOProviders = () => {
 }
 
 export default useSSOProviders
-

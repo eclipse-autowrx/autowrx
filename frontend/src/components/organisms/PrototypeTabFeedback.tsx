@@ -97,11 +97,7 @@ const PrototypeTabFeedback = () => {
                 open={isOpenPopup}
                 onOpenChange={setIsOpenPopup}
                 dialogTitle="Add Feedback"
-                trigger={
-                  <Button size="sm">
-                    + Add Feedback
-                  </Button>
-                }
+                trigger={<Button size="sm">+ Add Feedback</Button>}
               >
                 <FeedbackForm
                   onClose={() => {
@@ -233,7 +229,7 @@ const PrototypeTabFeedback = () => {
           </DaLoadingWrapper>
         </div>
       </div>
-    </div >
+    </div>
   )
 }
 

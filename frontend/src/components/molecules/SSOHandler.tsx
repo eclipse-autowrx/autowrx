@@ -8,7 +8,12 @@
 
 import { ReactNode, useState, useEffect } from 'react'
 import { PublicClientApplication } from '@azure/msal-browser'
-import { createMSALInstance, getLoginRequest, getGithubSsoStartUrl, SSOProvider } from '@/services/sso.service'
+import {
+  createMSALInstance,
+  getLoginRequest,
+  getGithubSsoStartUrl,
+  SSOProvider,
+} from '@/services/sso.service'
 import { ssoService } from '@/services/auth.service'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 
@@ -19,7 +24,8 @@ interface SSOHandlerProps {
 }
 
 const SSOHandler = ({ provider, setSSOLoading, children }: SSOHandlerProps) => {
-  const [msalInstance, setMsalInstance] = useState<PublicClientApplication | null>(null)
+  const [msalInstance, setMsalInstance] =
+    useState<PublicClientApplication | null>(null)
   const [isInitializing, setIsInitializing] = useState(false)
   const { toast } = useToast()
 
@@ -35,7 +41,8 @@ const SSOHandler = ({ provider, setSSOLoading, children }: SSOHandlerProps) => {
           console.error('Failed to initialize MSAL instance:', error)
           toast({
             title: 'SSO Configuration Error',
-            description: 'Failed to initialize SSO. Please contact your administrator.',
+            description:
+              'Failed to initialize SSO. Please contact your administrator.',
             variant: 'destructive',
           })
         } finally {
@@ -114,7 +121,10 @@ const SSOHandler = ({ provider, setSSOLoading, children }: SSOHandlerProps) => {
         } else {
           toast({
             title: 'Login Failed',
-            description: error.response?.data?.message || error.message || 'Failed to authenticate with SSO.',
+            description:
+              error.response?.data?.message ||
+              error.message ||
+              'Failed to authenticate with SSO.',
             variant: 'destructive',
           })
         }

@@ -167,16 +167,20 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
 
       {ssoProviders.map((provider) => (
         <div key={provider.id} className="mt-2">
-          <SSOHandler 
+          <SSOHandler
             provider={provider}
-            setSSOLoading={(isLoading) => setSSOLoading(isLoading ? provider.id : null)}
+            setSSOLoading={(isLoading) =>
+              setSSOLoading(isLoading ? provider.id : null)
+            }
           >
             <Button
               variant="outline"
               className="w-full"
               disabled={loading || ssoLoading !== null}
             >
-              {ssoLoading === provider.id && <Spinner className="mr-2" size={16} />}
+              {ssoLoading === provider.id && (
+                <Spinner className="mr-2" size={16} />
+              )}
               Sign in with {provider.name}
             </Button>
           </SSOHandler>

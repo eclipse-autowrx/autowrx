@@ -7,7 +7,12 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from '@hello-pangea/dnd'
 import { configManagementService } from '@/services/configManagement.service'
 import { Button } from '@/components/atoms/button'
 import { useToast } from '@/components/molecules/toaster/use-toast'
@@ -23,11 +28,11 @@ import { TbGripVertical, TbPencil, TbX, TbCheck, TbTrash } from 'react-icons/tb'
 
 type HomeSubTab = 'raw' | 'edit' | 'preview' | 'history'
 
-const ScaledBlock: React.FC<{ scale: number; pageWidth: number; children: React.ReactNode }> = ({
-  scale,
-  pageWidth,
-  children,
-}) => {
+const ScaledBlock: React.FC<{
+  scale: number
+  pageWidth: number
+  children: React.ReactNode
+}> = ({ scale, pageWidth, children }) => {
   const innerRef = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState(0)
 
@@ -41,8 +46,18 @@ const ScaledBlock: React.FC<{ scale: number; pageWidth: number; children: React.
   }, [])
 
   return (
-    <div className="bg-background overflow-hidden" style={{ height: height > 0 ? height * scale : undefined }}>
-      <div ref={innerRef} style={{ width: pageWidth, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+    <div
+      className="bg-background overflow-hidden"
+      style={{ height: height > 0 ? height * scale : undefined }}
+    >
+      <div
+        ref={innerRef}
+        style={{
+          width: pageWidth,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+        }}
+      >
         {children}
       </div>
     </div>
@@ -63,7 +78,9 @@ const HomeConfigSection: React.FC = () => {
   const [previewContentHeight, setPreviewContentHeight] = useState(0)
   const [previewEditOrder, setPreviewEditOrder] = useState<any[]>([])
   const [editScale, setEditScale] = useState(1)
-  const [editingBlockIndex, setEditingBlockIndex] = useState<number | null>(null)
+  const [editingBlockIndex, setEditingBlockIndex] = useState<number | null>(
+    null,
+  )
   const [editingBlockJson, setEditingBlockJson] = useState<string>('')
   const blockJsonEditorRef = useRef<CodeEditorHandle>(null)
 
@@ -187,13 +204,17 @@ const HomeConfigSection: React.FC = () => {
       await restoreConfigsFromSnapshot({ keys: ['CFG_HOME_CONTENT'] })
       toast({
         title: 'Restored',
-        description: 'Home configuration restored from deployment snapshot. Reloading page...',
+        description:
+          'Home configuration restored from deployment snapshot. Reloading page...',
       })
       reloadSoon()
     } catch (err) {
       toast({
         title: 'Reset failed',
-        description: err instanceof Error ? err.message : 'Failed to reset home configuration',
+        description:
+          err instanceof Error
+            ? err.message
+            : 'Failed to reset home configuration',
         variant: 'destructive',
       })
       setIsLoading(false)
@@ -239,7 +260,11 @@ const HomeConfigSection: React.FC = () => {
       })
       setEditingBlockIndex(null)
     } catch {
-      toast({ title: 'Invalid JSON', description: 'Please fix the JSON before saving.', variant: 'destructive' })
+      toast({
+        title: 'Invalid JSON',
+        description: 'Please fix the JSON before saving.',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -314,7 +339,10 @@ const HomeConfigSection: React.FC = () => {
         valueType: 'array',
         section: 'home',
       })
-      toast({ title: 'Saved', description: 'Home configuration updated. Reloading page...' })
+      toast({
+        title: 'Saved',
+        description: 'Home configuration updated. Reloading page...',
+      })
 
       // Reload page to show changes immediately
       setTimeout(() => {
@@ -376,7 +404,9 @@ const HomeConfigSection: React.FC = () => {
           </Button>
           <Button
             size="sm"
-            onClick={() => (homeSubTab === 'edit' ? handlePreviewEditSave() : handleSave())}
+            onClick={() =>
+              homeSubTab === 'edit' ? handlePreviewEditSave() : handleSave()
+            }
             disabled={savingHome}
           >
             {savingHome ? 'Saving...' : 'Save'}
@@ -443,7 +473,10 @@ const HomeConfigSection: React.FC = () => {
           </div>
         ) : homeSubTab === 'history' ? (
           <div className="px-0">
-            <SiteConfigEditHistory section="home" onRestoreEntry={handleRestoreHistoryEntry} />
+            <SiteConfigEditHistory
+              section="home"
+              onRestoreEntry={handleRestoreHistoryEntry}
+            />
           </div>
         ) : homeSubTab === 'raw' ? (
           <div className="h-[70vh] flex flex-col">
@@ -464,7 +497,8 @@ const HomeConfigSection: React.FC = () => {
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground text-sm">
                   <p>No content to edit.</p>
                   <p className="mt-1">
-                    Switch to Raw and add a valid JSON array of home sections (e.g. hero, feature-list, news).
+                    Switch to Raw and add a valid JSON array of home sections
+                    (e.g. hero, feature-list, news).
                   </p>
                 </div>
               ) : (
@@ -473,7 +507,9 @@ const HomeConfigSection: React.FC = () => {
                   className="w-full rounded-sm border border-border bg-zinc-50 dark:bg-zinc-900 overflow-hidden mb-2"
                 >
                   <div className="px-2 py-1">
-                    <span className="text-[12px] text-foreground">Drag blocks to reorder</span>
+                    <span className="text-[12px] text-foreground">
+                      Drag blocks to reorder
+                    </span>
                   </div>
                   {/* DragDropContext outside the scale transform — fixes drag offset bug */}
                   <DragDropContext onDragEnd={handlePreviewDragEnd}>
@@ -484,82 +520,109 @@ const HomeConfigSection: React.FC = () => {
                           {...provided.droppableProps}
                           className="flex flex-col gap-3 p-3"
                         >
-                          {previewEditOrder.map((element: any, index: number) => {
-                            const Component = getHomeComponent(element?.type)
-                            if (!Component) return null
-                            const blockId = `block-${index}-${element?.type ?? 'unknown'}`
-                            const isPlaceholderBlock = element?.type === 'recent' || element?.type === 'popular' || element?.type === 'prototype-list' || element?.type === 'model-list'
-                            return (
-                              <Draggable key={blockId} draggableId={blockId} index={index}>
-                                {(provided, snapshot) => (
-                                  <div
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    className={`rounded-lg border border-border overflow-hidden transition-shadow ${
-                                      snapshot.isDragging
-                                        ? 'shadow-xl ring-2 ring-primary opacity-95'
-                                        : 'shadow-md hover:shadow-lg'
-                                    }`}
-                                  >
-                                    {/* Block title bar — unscaled, in normal flow */}
-                                    <div className="flex items-center gap-2 h-9 px-2 bg-zinc-200 dark:bg-zinc-700 border-b border-border">
-                                      <div
-                                        {...provided.dragHandleProps}
-                                        className="flex items-center justify-center w-6 h-6 rounded cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
-                                      >
-                                        <TbGripVertical className="w-4 h-4" />
-                                      </div>
-                                      <span className="flex-1 text-xs font-semibold text-foreground truncate">
-                                        {getBlockTypeLabel(element?.type ?? '')}
-                                      </span>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleOpenBlockEditor(index)}
-                                        className="cursor-pointer inline-flex items-center justify-center w-6 h-6 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                                        title="Edit block config"
-                                      >
-                                        <TbPencil className="w-4 h-4" />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handlePreviewDeleteBlock(index)}
-                                        className="cursor-pointer inline-flex items-center justify-center w-6 h-6 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                                      >
-                                        <TbTrash className="w-4 h-4" />
-                                      </button>
-                                    </div>
-                                    {/* Block content — scaled to fit width */}
-                                    {isPlaceholderBlock ? (
-                                      <div className="bg-background px-4 py-3">
-                                        <div className="grid grid-cols-4 gap-3">
-                                          {[...Array(4)].map((_, i) => (
-                                            <div key={i} className="rounded-md border border-border bg-muted/20 flex flex-col overflow-hidden">
-                                              {/* Image skeleton with mountain/landscape icon */}
-                                              <div className="h-28 bg-muted/50 flex items-center justify-center relative overflow-hidden">
-                                                <svg className="w-10 h-10 text-muted-foreground/20" viewBox="0 0 24 24" fill="currentColor">
-                                                  <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
-                                                </svg>
-                                              </div>
-                                              <div className="px-2 py-2">
-                                                <div className="h-2 w-3/4 rounded bg-muted-foreground/15" />
-                                              </div>
-                                            </div>
-                                          ))}
+                          {previewEditOrder.map(
+                            (element: any, index: number) => {
+                              const Component = getHomeComponent(element?.type)
+                              if (!Component) return null
+                              const blockId = `block-${index}-${element?.type ?? 'unknown'}`
+                              const isPlaceholderBlock =
+                                element?.type === 'recent' ||
+                                element?.type === 'popular' ||
+                                element?.type === 'prototype-list' ||
+                                element?.type === 'model-list'
+                              return (
+                                <Draggable
+                                  key={blockId}
+                                  draggableId={blockId}
+                                  index={index}
+                                >
+                                  {(provided, snapshot) => (
+                                    <div
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      className={`rounded-lg border border-border overflow-hidden transition-shadow ${
+                                        snapshot.isDragging
+                                          ? 'shadow-xl ring-2 ring-primary opacity-95'
+                                          : 'shadow-md hover:shadow-lg'
+                                      }`}
+                                    >
+                                      {/* Block title bar — unscaled, in normal flow */}
+                                      <div className="flex items-center gap-2 h-9 px-2 bg-zinc-200 dark:bg-zinc-700 border-b border-border">
+                                        <div
+                                          {...provided.dragHandleProps}
+                                          className="flex items-center justify-center w-6 h-6 rounded cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+                                        >
+                                          <TbGripVertical className="w-4 h-4" />
                                         </div>
-                                        <p className="mt-2 text-[11px] text-muted-foreground/40 italic text-center">
-                                          Content loaded dynamically at runtime
-                                        </p>
+                                        <span className="flex-1 text-xs font-semibold text-foreground truncate">
+                                          {getBlockTypeLabel(
+                                            element?.type ?? '',
+                                          )}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleOpenBlockEditor(index)
+                                          }
+                                          className="cursor-pointer inline-flex items-center justify-center w-6 h-6 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                                          title="Edit block config"
+                                        >
+                                          <TbPencil className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handlePreviewDeleteBlock(index)
+                                          }
+                                          className="cursor-pointer inline-flex items-center justify-center w-6 h-6 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                        >
+                                          <TbTrash className="w-4 h-4" />
+                                        </button>
                                       </div>
-                                    ) : (
-                                      <ScaledBlock scale={editScale} pageWidth={PREVIEW_PAGE_WIDTH}>
-                                        <Component {...element} />
-                                      </ScaledBlock>
-                                    )}
-                                  </div>
-                                )}
-                              </Draggable>
-                            )
-                          })}
+                                      {/* Block content — scaled to fit width */}
+                                      {isPlaceholderBlock ? (
+                                        <div className="bg-background px-4 py-3">
+                                          <div className="grid grid-cols-4 gap-3">
+                                            {[...Array(4)].map((_, i) => (
+                                              <div
+                                                key={i}
+                                                className="rounded-md border border-border bg-muted/20 flex flex-col overflow-hidden"
+                                              >
+                                                {/* Image skeleton with mountain/landscape icon */}
+                                                <div className="h-28 bg-muted/50 flex items-center justify-center relative overflow-hidden">
+                                                  <svg
+                                                    className="w-10 h-10 text-muted-foreground/20"
+                                                    viewBox="0 0 24 24"
+                                                    fill="currentColor"
+                                                  >
+                                                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+                                                  </svg>
+                                                </div>
+                                                <div className="px-2 py-2">
+                                                  <div className="h-2 w-3/4 rounded bg-muted-foreground/15" />
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                          <p className="mt-2 text-[11px] text-muted-foreground/40 italic text-center">
+                                            Content loaded dynamically at
+                                            runtime
+                                          </p>
+                                        </div>
+                                      ) : (
+                                        <ScaledBlock
+                                          scale={editScale}
+                                          pageWidth={PREVIEW_PAGE_WIDTH}
+                                        >
+                                          <Component {...element} />
+                                        </ScaledBlock>
+                                      )}
+                                    </div>
+                                  )}
+                                </Draggable>
+                              )
+                            },
+                          )}
                           {provided.placeholder}
                         </div>
                       )}
@@ -575,7 +638,10 @@ const HomeConfigSection: React.FC = () => {
                 <div className="bg-background rounded-xl border border-border shadow-2xl w-[600px] max-w-[90vw] flex flex-col overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                     <span className="text-sm font-semibold text-foreground">
-                      Edit block config — {getBlockTypeLabel(previewEditOrder[editingBlockIndex]?.type ?? '')}
+                      Edit block config —{' '}
+                      {getBlockTypeLabel(
+                        previewEditOrder[editingBlockIndex]?.type ?? '',
+                      )}
                     </span>
                     <button
                       type="button"
@@ -597,7 +663,11 @@ const HomeConfigSection: React.FC = () => {
                     />
                   </div>
                   <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-border">
-                    <Button variant="outline" size="sm" onClick={() => setEditingBlockIndex(null)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingBlockIndex(null)}
+                    >
                       Cancel
                     </Button>
                     <Button size="sm" onClick={handleSaveBlockJson}>
@@ -615,42 +685,51 @@ const HomeConfigSection: React.FC = () => {
               ref={previewWrapRef}
               className="min-h-[70vh] rounded-md border border-border bg-background overflow-auto flex justify-center"
             >
-            {previewElements.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground text-sm">
-                <p>No content to preview.</p>
-                <p className="mt-1">Switch to Raw and add a valid JSON array of home sections (e.g. hero, feature-list, news).</p>
-              </div>
-            ) : (
-              <div
-                style={{
-                  width: PREVIEW_PAGE_WIDTH * previewScale,
-                  height: previewContentHeight > 0 ? previewContentHeight * previewScale : undefined,
-                  minHeight: previewContentHeight > 0 ? undefined : 400,
-                  overflow: 'hidden',
-                }}
-              >
+              {previewElements.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-muted-foreground text-sm">
+                  <p>No content to preview.</p>
+                  <p className="mt-1">
+                    Switch to Raw and add a valid JSON array of home sections
+                    (e.g. hero, feature-list, news).
+                  </p>
+                </div>
+              ) : (
                 <div
                   style={{
-                    width: PREVIEW_PAGE_WIDTH,
-                    height: previewContentHeight > 0 ? previewContentHeight : undefined,
-                    transform: `scale(${previewScale})`,
-                    transformOrigin: 'top left',
+                    width: PREVIEW_PAGE_WIDTH * previewScale,
+                    height:
+                      previewContentHeight > 0
+                        ? previewContentHeight * previewScale
+                        : undefined,
+                    minHeight: previewContentHeight > 0 ? undefined : 400,
+                    overflow: 'hidden',
                   }}
                 >
                   <div
-                    ref={previewContentRef}
-                    className="space-y-12 p-6 bg-background"
+                    style={{
+                      width: PREVIEW_PAGE_WIDTH,
+                      height:
+                        previewContentHeight > 0
+                          ? previewContentHeight
+                          : undefined,
+                      transform: `scale(${previewScale})`,
+                      transformOrigin: 'top left',
+                    }}
                   >
-                    {previewElements.map((element: any, index: number) => {
-                      const Component = getHomeComponent(element?.type)
-                      if (!Component) return null
-                      return <Component key={index} {...element} />
-                    })}
+                    <div
+                      ref={previewContentRef}
+                      className="space-y-12 p-6 bg-background"
+                    >
+                      {previewElements.map((element: any, index: number) => {
+                        const Component = getHomeComponent(element?.type)
+                        if (!Component) return null
+                        return <Component key={index} {...element} />
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
           </>
         )}
       </div>

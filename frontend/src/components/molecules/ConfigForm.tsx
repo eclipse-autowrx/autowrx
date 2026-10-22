@@ -1,29 +1,39 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState, useEffect } from 'react';
-import { Config, CreateConfigRequest, UpdateConfigRequest } from '../../services/configManagement.service';
-import ColorPicker from '../atoms/ColorPicker';
-import ImageUrlInput from '../atoms/ImageUrlInput';
-import DatePicker from '../atoms/DatePicker';
-import JsonEditor from '../atoms/JsonEditor';
-import { Button } from '../atoms/button';
-import { Input } from '../atoms/input';
-import { Textarea } from '../atoms/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../atoms/select';
-import { Checkbox } from '../atoms/checkbox';
-import { Label } from '../atoms/label';
+import React, { useState, useEffect } from 'react'
+import {
+  Config,
+  CreateConfigRequest,
+  UpdateConfigRequest,
+} from '../../services/configManagement.service'
+import ColorPicker from '../atoms/ColorPicker'
+import ImageUrlInput from '../atoms/ImageUrlInput'
+import DatePicker from '../atoms/DatePicker'
+import JsonEditor from '../atoms/JsonEditor'
+import { Button } from '../atoms/button'
+import { Input } from '../atoms/input'
+import { Textarea } from '../atoms/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../atoms/select'
+import { Checkbox } from '../atoms/checkbox'
+import { Label } from '../atoms/label'
 
 interface ConfigFormProps {
-  config?: Config;
-  onSave: (config: CreateConfigRequest | UpdateConfigRequest) => Promise<void>;
-  onCancel: () => void;
-  isLoading?: boolean;
+  config?: Config
+  onSave: (config: CreateConfigRequest | UpdateConfigRequest) => Promise<void>
+  onCancel: () => void
+  isLoading?: boolean
 }
 
 const ConfigForm: React.FC<ConfigFormProps> = ({
@@ -40,10 +50,19 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
     secret: config?.secret || false,
     description: config?.description || '',
     category: config?.category || 'general',
-  });
+  })
 
-  const [valueType, setValueType] = useState<'string' | 'number' | 'boolean' | 'object' | 'array' | 'date' | 'color' | 'image_url'>('string');
-  const [valueError, setValueError] = useState<string>('');
+  const [valueType, setValueType] = useState<
+    | 'string'
+    | 'number'
+    | 'boolean'
+    | 'object'
+    | 'array'
+    | 'date'
+    | 'color'
+    | 'image_url'
+  >('string')
+  const [valueError, setValueError] = useState<string>('')
 
   useEffect(() => {
     if (config) {
@@ -55,79 +74,85 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
         secret: config.secret,
         description: config.description || '',
         category: config.category || 'general',
-      });
-      setValueType(config.valueType);
+      })
+      setValueType(config.valueType)
     }
-  }, [config]);
+  }, [config])
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
+    const { name, value, type } = e.target
 
     if (type === 'checkbox') {
-      const checked = (e.target as HTMLInputElement).checked;
-      setFormData(prev => ({ ...prev, [name]: checked }));
+      const checked = (e.target as HTMLInputElement).checked
+      setFormData((prev) => ({ ...prev, [name]: checked }))
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }))
     }
-  };
+  }
 
   const handleValueTypeChange = (value: string) => {
-    const newType = value as typeof valueType;
-    setValueType(newType);
+    const newType = value as typeof valueType
+    setValueType(newType)
 
     // Reset value when type changes
-    setFormData(prev => ({ ...prev, value: '' }));
-  };
+    setFormData((prev) => ({ ...prev, value: '' }))
+  }
 
   const handleValueChange = (newValue: any) => {
-    setFormData(prev => ({ ...prev, value: newValue }));
-    setValueError('');
-  };
+    setFormData((prev) => ({ ...prev, value: newValue }))
+    setValueError('')
+  }
 
   const parseValue = (value: any, type: string): any => {
     try {
       switch (type) {
         case 'number':
-          return parseFloat(value);
+          return parseFloat(value)
         case 'boolean':
-          if (typeof value === 'boolean') return value;
-          return String(value).toLowerCase() === 'true';
+          if (typeof value === 'boolean') return value
+          return String(value).toLowerCase() === 'true'
         case 'object':
         case 'array':
           // JsonEditor already passes parsed objects — only parse if it's a string
-          if (value !== null && typeof value === 'object') return value;
-          return JSON.parse(value);
+          if (value !== null && typeof value === 'object') return value
+          return JSON.parse(value)
         case 'date':
-          return new Date(value).toISOString();
+          return new Date(value).toISOString()
         default:
-          return value;
+          return value
       }
     } catch (error) {
-      throw new Error(`Invalid ${type} value: ${error}`);
+      throw new Error(`Invalid ${type} value: ${error}`)
     }
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     try {
-      const parsedValue = parseValue(formData.value, valueType);
-      
+      const parsedValue = parseValue(formData.value, valueType)
+
       const configData: any = {
         ...formData,
         value: parsedValue,
-      };
+      }
 
       // Strip target_id when empty — backend forbids it for site scope
       if (!configData.target_id) {
-        delete configData.target_id;
+        delete configData.target_id
       }
 
-      await onSave(configData);
+      await onSave(configData)
     } catch (error) {
-      setValueError(error instanceof Error ? error.message : 'Invalid value format');
+      setValueError(
+        error instanceof Error ? error.message : 'Invalid value format',
+      )
     }
-  };
+  }
 
   const renderValueInput = () => {
     switch (valueType) {
@@ -142,7 +167,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
               <Label className="text-sm font-medium">True</Label>
             </div>
           </div>
-        );
+        )
       case 'object':
       case 'array':
         return (
@@ -151,28 +176,19 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
             onChange={handleValueChange}
             valueType={valueType}
           />
-        );
+        )
       case 'date':
         return (
-          <DatePicker
-            value={formData.value}
-            onChange={handleValueChange}
-          />
-        );
+          <DatePicker value={formData.value} onChange={handleValueChange} />
+        )
       case 'color':
         return (
-          <ColorPicker
-            value={formData.value}
-            onChange={handleValueChange}
-          />
-        );
+          <ColorPicker value={formData.value} onChange={handleValueChange} />
+        )
       case 'image_url':
         return (
-          <ImageUrlInput
-            value={formData.value}
-            onChange={handleValueChange}
-          />
-        );
+          <ImageUrlInput value={formData.value} onChange={handleValueChange} />
+        )
       case 'number':
         return (
           <Input
@@ -182,7 +198,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
             onChange={(e) => handleValueChange(e.target.value)}
             step="any"
           />
-        );
+        )
       default: // string
         // Secret fields use a password input — values are write-only
         if (formData.secret) {
@@ -193,12 +209,16 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
                 name="value"
                 value={formData.value}
                 onChange={(e) => handleValueChange(e.target.value)}
-                placeholder={config ? 'Enter new value (leave empty to keep current)' : 'Enter secret value'}
+                placeholder={
+                  config
+                    ? 'Enter new value (leave empty to keep current)'
+                    : 'Enter secret value'
+                }
                 className="pr-9"
                 autoComplete="new-password"
               />
             </div>
-          );
+          )
         }
         return (
           <Textarea
@@ -207,9 +227,9 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
             onChange={(e) => handleValueChange(e.target.value)}
             rows={3}
           />
-        );
+        )
     }
-  };
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -258,7 +278,15 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
       <div className="flex items-center space-x-2">
         <Checkbox
           checked={formData.secret}
-          onCheckedChange={(checked) => handleInputChange({ target: { name: 'secret', type: 'checkbox', checked: checked as boolean } } as React.ChangeEvent<HTMLInputElement>)}
+          onCheckedChange={(checked) =>
+            handleInputChange({
+              target: {
+                name: 'secret',
+                type: 'checkbox',
+                checked: checked as boolean,
+              },
+            } as React.ChangeEvent<HTMLInputElement>)
+          }
         />
         <Label>Secret (admin only)</Label>
       </div>
@@ -284,22 +312,15 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
       </div>
 
       <div className="flex justify-end space-x-3 pt-4">
-        <Button
-          type="button"
-          onClick={onCancel}
-          variant="outline"
-        >
+        <Button type="button" onClick={onCancel} variant="outline">
           Cancel
         </Button>
-        <Button
-          type="submit"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Saving...' : (config ? 'Update' : 'Create')}
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Saving...' : config ? 'Update' : 'Create'}
         </Button>
       </div>
     </form>
-  );
-};
+  )
+}
 
-export default ConfigForm;
+export default ConfigForm

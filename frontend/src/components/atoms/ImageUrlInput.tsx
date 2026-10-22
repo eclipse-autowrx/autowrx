@@ -1,74 +1,80 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react'
 
 interface ImageUrlInputProps {
-  value: string;
-  onChange: (url: string) => void;
-  className?: string;
+  value: string
+  onChange: (url: string) => void
+  className?: string
 }
 
-const ImageUrlInput: React.FC<ImageUrlInputProps> = ({ value, onChange, className = '' }) => {
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+const ImageUrlInput: React.FC<ImageUrlInputProps> = ({
+  value,
+  onChange,
+  className = '',
+}) => {
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const isValidImageUrl = (url: string): boolean => {
     try {
-      const urlObj = new URL(url);
-      const pathname = urlObj.pathname.toLowerCase();
-      return /\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(pathname);
+      const urlObj = new URL(url)
+      const pathname = urlObj.pathname.toLowerCase()
+      return /\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(pathname)
     } catch {
-      return false;
+      return false
     }
-  };
+  }
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0]
+    if (!file) return
 
     // Check if it's an image
     if (!file.type.startsWith('image/')) {
-      setUploadError('Please select an image file');
-      return;
+      setUploadError('Please select an image file')
+      return
     }
 
-    setIsUploading(true);
-    setUploadError(null);
+    setIsUploading(true)
+    setUploadError(null)
 
     try {
       // Convert file to base64 data URL
-      const reader = new FileReader();
+      const reader = new FileReader()
       reader.onload = (e) => {
-        const dataUrl = e.target?.result as string;
-        onChange(dataUrl);
-        setIsUploading(false);
-      };
+        const dataUrl = e.target?.result as string
+        onChange(dataUrl)
+        setIsUploading(false)
+      }
       reader.onerror = () => {
-        setUploadError('Failed to read file');
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
+        setUploadError('Failed to read file')
+        setIsUploading(false)
+      }
+      reader.readAsDataURL(file)
     } catch (error) {
-      setUploadError('Failed to process file');
-      setIsUploading(false);
+      setUploadError('Failed to process file')
+      setIsUploading(false)
     }
-  };
+  }
 
   const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
+    fileInputRef.current?.click()
+  }
 
   const handleUrlChange = (url: string) => {
-    onChange(url);
-    setUploadError(null);
-  };
+    onChange(url)
+    setUploadError(null)
+  }
 
   return (
     <div className={`space-y-3 ${className}`}>
@@ -104,9 +110,7 @@ const ImageUrlInput: React.FC<ImageUrlInputProps> = ({ value, onChange, classNam
       </div>
 
       {/* Error Message */}
-      {uploadError && (
-        <div className="text-sm text-red-600">{uploadError}</div>
-      )}
+      {uploadError && <div className="text-sm text-red-600">{uploadError}</div>}
 
       {/* Image Preview */}
       {value && (
@@ -122,11 +126,12 @@ const ImageUrlInput: React.FC<ImageUrlInputProps> = ({ value, onChange, classNam
                   alt="Preview"
                   className="max-w-full max-h-48 object-contain rounded-md"
                   onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const parent = target.parentElement;
+                    const target = e.target as HTMLImageElement
+                    target.style.display = 'none'
+                    const parent = target.parentElement
                     if (parent) {
-                      parent.innerHTML = '<div class="text-red-500 text-sm">Failed to load image</div>';
+                      parent.innerHTML =
+                        '<div class="text-red-500 text-sm">Failed to load image</div>'
                     }
                   }}
                 />
@@ -140,7 +145,7 @@ const ImageUrlInput: React.FC<ImageUrlInputProps> = ({ value, onChange, classNam
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default ImageUrlInput;
+export default ImageUrlInput

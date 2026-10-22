@@ -42,9 +42,7 @@ export function parseReadFileReply(payload: any): ReadFileReply | null {
   const hasError = Boolean(payload.has_error)
   const content = hasError
     ? ''
-    : normalizeKitFileContent(
-        payload.result ?? payload.data?.content ?? '',
-      )
+    : normalizeKitFileContent(payload.result ?? payload.data?.content ?? '')
 
   return {
     filePath,

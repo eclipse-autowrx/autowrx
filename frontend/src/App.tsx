@@ -42,9 +42,9 @@ function App() {
       userId = currentUser.id
       userName = currentUser.name
     }
-    let lastAnonymousView = localStorage.getItem(`lastview-${userId}`)
-    let lastVisitTime = new Date(Number(lastAnonymousView || 0))
-    let now = new Date()
+    const lastAnonymousView = localStorage.getItem(`lastview-${userId}`)
+    const lastVisitTime = new Date(Number(lastAnonymousView || 0))
+    const now = new Date()
     if (now.getTime() - lastVisitTime.getTime() > 60000 * 60) {
       localStorage.setItem(`lastview-${userId}`, now.getTime().toString())
       addLog({

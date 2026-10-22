@@ -66,9 +66,13 @@ type HomeHeroSectionProps = {
    * Default: "center"
    */
   imageAlign?:
-    | 'left' | 'center' | 'right'
-    | 'top-left' | 'top-right'
-    | 'bottom-left' | 'bottom-right'
+    | 'left'
+    | 'center'
+    | 'right'
+    | 'top-left'
+    | 'top-right'
+    | 'bottom-left'
+    | 'bottom-right'
   /** CSS max-width of the image column in grouped layout. Example: "684px" */
   imageMaxWidth?: string
   /** CSS max-width of the centered content row. Example: "1368px" */
@@ -89,10 +93,10 @@ type HomeHeroSectionProps = {
 }
 
 const GRADIENT_DIRECTION_MAP: Record<string, string> = {
-  'to-r':  'to right',
-  'to-l':  'to left',
-  'to-b':  'to bottom',
-  'to-t':  'to top',
+  'to-r': 'to right',
+  'to-l': 'to left',
+  'to-b': 'to bottom',
+  'to-t': 'to top',
   'to-br': 'to bottom right',
   'to-bl': 'to bottom left',
   'to-tr': 'to top right',
@@ -106,13 +110,13 @@ function withOpacity(color: string, opacity: number): string {
 }
 
 const IMAGE_ALIGN_STYLE: Record<string, React.CSSProperties> = {
-  'center':        { top: '50%', left: '50%',  transform: 'translate(-50%, -50%)' },
-  'left':          { top: '50%', left: 0,      transform: 'translateY(-50%)' },
-  'right':         { top: '50%', right: 0,     transform: 'translateY(-50%)' },
-  'top-left':      { top: 0,      left: 0 },
-  'top-right':     { top: 0,      right: 0 },
-  'bottom-left':   { bottom: 0,   left: 0 },
-  'bottom-right':  { bottom: 0,   right: 0 },
+  center: { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
+  left: { top: '50%', left: 0, transform: 'translateY(-50%)' },
+  right: { top: '50%', right: 0, transform: 'translateY(-50%)' },
+  'top-left': { top: 0, left: 0 },
+  'top-right': { top: 0, right: 0 },
+  'bottom-left': { bottom: 0, left: 0 },
+  'bottom-right': { bottom: 0, right: 0 },
 }
 
 function getImageWrapperStyle(
@@ -132,9 +136,17 @@ function getImageWrapperStyle(
     style.bottom = 0
     style.height = '100%'
 
-    if (imageAlign === 'left' || imageAlign === 'top-left' || imageAlign === 'bottom-left') {
+    if (
+      imageAlign === 'left' ||
+      imageAlign === 'top-left' ||
+      imageAlign === 'bottom-left'
+    ) {
       style.left = 0
-    } else if (imageAlign === 'right' || imageAlign === 'top-right' || imageAlign === 'bottom-right') {
+    } else if (
+      imageAlign === 'right' ||
+      imageAlign === 'top-right' ||
+      imageAlign === 'bottom-right'
+    ) {
       style.right = 0
     } else {
       style.left = '50%'
@@ -142,7 +154,10 @@ function getImageWrapperStyle(
     }
   } else {
     style.height = imageHeight
-    Object.assign(style, IMAGE_ALIGN_STYLE[imageAlign] ?? IMAGE_ALIGN_STYLE['center'])
+    Object.assign(
+      style,
+      IMAGE_ALIGN_STYLE[imageAlign] ?? IMAGE_ALIGN_STYLE['center'],
+    )
   }
 
   return style
@@ -173,12 +188,12 @@ const HomeHeroSection = ({
   const adminImage = useSiteConfig('HOME_HERO_IMAGE', '')
   const effectiveImage = adminImage || image
 
-  const overlayEnabled  = overlay?.enabled  ?? true
-  const direction       = overlay?.direction ?? 'to-r'
-  const fromColor       = overlay?.fromColor  ?? 'var(--primary)'
-  const fromOpacity     = overlay?.fromOpacity ?? 70
-  const toColor         = overlay?.toColor    ?? 'var(--secondary)'
-  const toOpacity       = overlay?.toOpacity  ?? 90
+  const overlayEnabled = overlay?.enabled ?? true
+  const direction = overlay?.direction ?? 'to-r'
+  const fromColor = overlay?.fromColor ?? 'var(--primary)'
+  const fromOpacity = overlay?.fromOpacity ?? 70
+  const toColor = overlay?.toColor ?? 'var(--secondary)'
+  const toOpacity = overlay?.toOpacity ?? 90
 
   const cssDirection = GRADIENT_DIRECTION_MAP[direction] ?? 'to right'
   const gradientStyle = overlayEnabled
@@ -188,56 +203,67 @@ const HomeHeroSection = ({
     : {}
 
   const textJustify =
-    textPosition === 'left'   ? 'justify-start' :
-    textPosition === 'center' ? 'justify-center' :
-                                'justify-end'
+    textPosition === 'left'
+      ? 'justify-start'
+      : textPosition === 'center'
+        ? 'justify-center'
+        : 'justify-end'
 
   const isFullBleed = imageWidth === '100%' && imageHeight === '100%'
   const useGroupedLayout = !isFullBleed && !!effectiveImage
   const overlayIsTint = fromOpacity < 100 || toOpacity < 100
   const imageZIndex = isFullBleed && overlayIsTint ? 0 : 20
-  const imageWrapperStyle = getImageWrapperStyle(imageWidth, imageHeight, imageAlign)
+  const imageWrapperStyle = getImageWrapperStyle(
+    imageWidth,
+    imageHeight,
+    imageAlign,
+  )
 
-  const textContent = (title || description) ? (
-    <div className="flex flex-col sm:text-xs">
-      {title && (
-        <div
-          className="text-2xl lg:text-4xl font-semibold"
-          style={{ color: textColor }}
-          dangerouslySetInnerHTML={{ __html: title }}
-        />
-      )}
-      {description && (
-        <div
-          className="pt-2 text-base lg:text-normal"
-          style={{ color: textColor }}
-          dangerouslySetInnerHTML={{ __html: description }}
-        />
-      )}
-    </div>
-  ) : null
+  const textContent =
+    title || description ? (
+      <div className="flex flex-col sm:text-xs">
+        {title && (
+          <div
+            className="text-2xl lg:text-4xl font-semibold"
+            style={{ color: textColor }}
+            dangerouslySetInnerHTML={{ __html: title }}
+          />
+        )}
+        {description && (
+          <div
+            className="pt-2 text-base lg:text-normal"
+            style={{ color: textColor }}
+            dangerouslySetInnerHTML={{ __html: description }}
+          />
+        )}
+      </div>
+    ) : null
 
-  const groupedTextColumn = (title || description) ? (
-    <div
-      className={`min-w-0 z-30 ${textMaxWidth ? 'w-full' : 'flex-1'} ${textPosition === 'center' ? 'mx-auto text-center' : ''}`}
-      style={textMaxWidth ? { maxWidth: textMaxWidth } : undefined}
-    >
-      {textContent}
-      {children}
-    </div>
-  ) : null
-
-  const fullBleedTextColumn = (title || description) ? (
-    <div className={`px-4 absolute flex h-full items-center ${textJustify} w-full`}>
+  const groupedTextColumn =
+    title || description ? (
       <div
-        className={`xl:px-24 lg:px-12 z-30 ${textMaxWidth ? 'w-full' : 'lg:w-[50%]'}`}
+        className={`min-w-0 z-30 ${textMaxWidth ? 'w-full' : 'flex-1'} ${textPosition === 'center' ? 'mx-auto text-center' : ''}`}
         style={textMaxWidth ? { maxWidth: textMaxWidth } : undefined}
       >
         {textContent}
         {children}
       </div>
-    </div>
-  ) : null
+    ) : null
+
+  const fullBleedTextColumn =
+    title || description ? (
+      <div
+        className={`px-4 absolute flex h-full items-center ${textJustify} w-full`}
+      >
+        <div
+          className={`xl:px-24 lg:px-12 z-30 ${textMaxWidth ? 'w-full' : 'lg:w-[50%]'}`}
+          style={textMaxWidth ? { maxWidth: textMaxWidth } : undefined}
+        >
+          {textContent}
+          {children}
+        </div>
+      </div>
+    ) : null
 
   return (
     <>
@@ -257,7 +283,9 @@ const HomeHeroSection = ({
           <div className="absolute inset-0 z-20 flex items-center justify-center px-4">
             <div
               className="flex items-center h-full w-full"
-              style={contentMaxWidth ? { maxWidth: contentMaxWidth } : undefined}
+              style={
+                contentMaxWidth ? { maxWidth: contentMaxWidth } : undefined
+              }
             >
               {textPosition === 'left' && groupedTextColumn}
               <div
@@ -270,7 +298,10 @@ const HomeHeroSection = ({
               >
                 <img
                   className="w-full h-full"
-                  style={{ objectFit: imageObjectFit, objectPosition: imagePosition }}
+                  style={{
+                    objectFit: imageObjectFit,
+                    objectPosition: imagePosition,
+                  }}
                   src={effectiveImage}
                   alt="home-cover"
                 />
@@ -287,7 +318,10 @@ const HomeHeroSection = ({
               >
                 <img
                   className="w-full h-full"
-                  style={{ objectFit: imageObjectFit, objectPosition: imagePosition }}
+                  style={{
+                    objectFit: imageObjectFit,
+                    objectPosition: imagePosition,
+                  }}
                   src={effectiveImage}
                   alt="home-cover"
                 />

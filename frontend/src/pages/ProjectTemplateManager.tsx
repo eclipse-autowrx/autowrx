@@ -46,9 +46,14 @@ export default function ProjectTemplateManager() {
 
   useEffect(() => {
     if (!isError) return
-    const err = error as { response?: { data?: { message?: string } }; message?: string }
+    const err = error as {
+      response?: { data?: { message?: string } }
+      message?: string
+    }
     toast.error(
-      err?.response?.data?.message || err?.message || 'Failed to load templates',
+      err?.response?.data?.message ||
+        err?.message ||
+        'Failed to load templates',
     )
   }, [isError, error])
 
@@ -85,80 +90,80 @@ export default function ProjectTemplateManager() {
           Failed to load templates
         </div>
       ) : (
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {data?.results?.map((t: ProjectTemplate) => {
-          const language = getProjectTemplateLanguage(t)
-          return (
-            <div
-              key={t.id}
-              className="rounded-md border border-input bg-background p-3 shadow-sm flex flex-col cursor-pointer hover:shadow-md transition"
-              onClick={() => {
-                setEditId(t.id)
-                setOpenForm(true)
-              }}
-            >
-              <div className="relative aspect-video w-full rounded overflow-hidden bg-muted flex items-center justify-center">
-                <LanguageIcon language={language} />
-              </div>
-              <div className="flex items-center gap-2 mt-3">
-                <h3 className="text-base font-semibold text-foreground truncate">
-                  {t.name}
-                </h3>
-              </div>
-              {t.description && (
-                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                  {t.description}
-                </p>
-              )}
-              <div className="mt-2 flex items-center justify-between">
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    t.visibility === 'public'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-600'
-                  }`}
-                >
-                  {t.visibility}
-                </span>
-                <div className="flex gap-1">
-                  <Button
-                    title="Edit"
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setEditId(t.id)
-                      setOpenForm(true)
-                    }}
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {data?.results?.map((t: ProjectTemplate) => {
+            const language = getProjectTemplateLanguage(t)
+            return (
+              <div
+                key={t.id}
+                className="rounded-md border border-input bg-background p-3 shadow-sm flex flex-col cursor-pointer hover:shadow-md transition"
+                onClick={() => {
+                  setEditId(t.id)
+                  setOpenForm(true)
+                }}
+              >
+                <div className="relative aspect-video w-full rounded overflow-hidden bg-muted flex items-center justify-center">
+                  <LanguageIcon language={language} />
+                </div>
+                <div className="flex items-center gap-2 mt-3">
+                  <h3 className="text-base font-semibold text-foreground truncate">
+                    {t.name}
+                  </h3>
+                </div>
+                {t.description && (
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                    {t.description}
+                  </p>
+                )}
+                <div className="mt-2 flex items-center justify-between">
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      t.visibility === 'public'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}
                   >
-                    <TbPencil className="text-base" />
-                  </Button>
-                  <Button
-                    title="Delete"
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setDeleteId(t.id)
-                      setOpenConfirm(true)
-                    }}
-                  >
-                    <TbTrash className="text-base" />
-                  </Button>
+                    {t.visibility}
+                  </span>
+                  <div className="flex gap-1">
+                    <Button
+                      title="Edit"
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setEditId(t.id)
+                        setOpenForm(true)
+                      }}
+                    >
+                      <TbPencil className="text-base" />
+                    </Button>
+                    <Button
+                      title="Delete"
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setDeleteId(t.id)
+                        setOpenConfirm(true)
+                      }}
+                    >
+                      <TbTrash className="text-base" />
+                    </Button>
+                  </div>
                 </div>
               </div>
+            )
+          })}
+          {!data?.results?.length && (
+            <div className="col-span-full text-center py-12">
+              <TbFileCode className="size-12 mx-auto text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground">
+                No prototype templates yet
+              </p>
             </div>
-          )
-        })}
-        {!data?.results?.length && (
-          <div className="col-span-full text-center py-12">
-            <TbFileCode className="size-12 mx-auto text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">
-              No prototype templates yet
-            </p>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
       )}
 
       <ProjectTemplateEditor

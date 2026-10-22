@@ -82,7 +82,10 @@ export default function ProjectTemplateMetadataFields({
     <div className="space-y-4">
       {nameField}
       {descriptionField}
-      {showVisibility && visibility != null && onVisibilityChange && visibilityField}
+      {showVisibility &&
+        visibility != null &&
+        onVisibilityChange &&
+        visibilityField}
     </div>
   )
 }

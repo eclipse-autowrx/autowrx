@@ -21,7 +21,8 @@ const useDuplicateNameCheck = (
   const isDuplicate = useMemo(() => {
     const trimmed = name.trim()
     if (!trimmed) return false
-    if (skipName && trimmed.toLowerCase() === skipName.toLowerCase()) return false
+    if (skipName && trimmed.toLowerCase() === skipName.toLowerCase())
+      return false
     return existingNames.some((n) => n.toLowerCase() === trimmed.toLowerCase())
   }, [name, existingNames, skipName])
 

@@ -31,8 +31,7 @@ const DEFAULT_V2C = [
     path: '/driver/hvac/preferences',
     method: 'GET',
     summary: 'Get Driver HVAC Preferences',
-    description:
-      `Retrieves the driver's HVAC preferences based on the COVESA VSS standard.`,
+    description: `Retrieves the driver's HVAC preferences based on the COVESA VSS standard.`,
     parameters: [
       {
         name: 'driverProfileId',
@@ -109,8 +108,7 @@ const DEFAULT_V2C = [
     path: '/driver/mirror/preferences',
     method: 'GET',
     summary: 'Get Driver Mirror Preferences',
-    description:
-      `Retrieves the driver's mirror preferences based on the COVESA VSS standard.`,
+    description: `Retrieves the driver's mirror preferences based on the COVESA VSS standard.`,
     parameters: [
       {
         name: 'driverProfileId',
@@ -257,8 +255,7 @@ const DEFAULT_V2C = [
     path: '/driver/seating/preferences',
     method: 'GET',
     summary: 'Get Driver Seating Preferences',
-    description:
-      `Retrieves the driver's seating preferences based on the COVESA VSS standard.`,
+    description: `Retrieves the driver's seating preferences based on the COVESA VSS standard.`,
     parameters: [
       {
         name: 'driverProfileId',
@@ -658,9 +655,15 @@ const PageVehicleApi = () => {
     : undefined
 
   const { data: model, refetch: refetchModel } = useCurrentModel()
-  const [hasWritePermission] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
-  const [refreshModel, activeModelApis] = useModelStore((state) => [state.refreshModel, state.activeModelApis])
-  
+  const [hasWritePermission] = usePermissionHook([
+    PERMISSIONS.WRITE_MODEL,
+    model_id,
+  ])
+  const [refreshModel, activeModelApis] = useModelStore((state) => [
+    state.refreshModel,
+    state.activeModelApis,
+  ])
+
   // Get COVESA API count
   const covesaApiCount = activeModelApis?.length || 0
 
@@ -682,15 +685,17 @@ const PageVehicleApi = () => {
   }, [customApiSetsEnabled, instance_id, model_id, navigate])
 
   // Get custom_api_sets from model and normalize to strings
-  const customApiSetIds = (model?.custom_api_sets || []).map((id: any) => {
-    if (typeof id === 'string') return id
-    if (id && typeof id === 'object' && 'toString' in id) return id.toString()
-    return String(id)
-  }).filter((id: any): id is string => !!id && typeof id === 'string')
-  
+  const customApiSetIds = (model?.custom_api_sets || [])
+    .map((id: any) => {
+      if (typeof id === 'string') return id
+      if (id && typeof id === 'object' && 'toString' in id) return id.toString()
+      return String(id)
+    })
+    .filter((id: any): id is string => !!id && typeof id === 'string')
+
   // Filter out 'covesa' from set IDs if it somehow got added
   const validSetIds = customApiSetsEnabled
-    ? customApiSetIds.filter(id => id !== 'covesa')
+    ? customApiSetIds.filter((id) => id !== 'covesa')
     : []
 
   const handleAddInstance = async (instanceId: string) => {
@@ -709,13 +714,21 @@ const PageVehicleApi = () => {
       }
 
       // Ensure all IDs are strings before saving
-      const updatedSets = [...currentSets, instanceId].map((id: any) => {
-        if (typeof id === 'string') return id
-        // Check if id has toString method (handling potential object types)
-        if (id && typeof id === 'object' && 'toString' in id && typeof id.toString === 'function') return id.toString()
-        return String(id)
-      }).filter((id): id is string => !!id && typeof id === 'string')
-      
+      const updatedSets = [...currentSets, instanceId]
+        .map((id: any) => {
+          if (typeof id === 'string') return id
+          // Check if id has toString method (handling potential object types)
+          if (
+            id &&
+            typeof id === 'object' &&
+            'toString' in id &&
+            typeof id.toString === 'function'
+          )
+            return id.toString()
+          return String(id)
+        })
+        .filter((id): id is string => !!id && typeof id === 'string')
+
       await updateModelService(model.id, {
         custom_api_sets: updatedSets,
       })
@@ -734,7 +747,10 @@ const PageVehicleApi = () => {
     } catch (error: any) {
       toast({
         title: 'Add failed',
-        description: error?.response?.data?.message || error?.message || 'Failed to add instance',
+        description:
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to add instance',
         variant: 'destructive',
       })
     }

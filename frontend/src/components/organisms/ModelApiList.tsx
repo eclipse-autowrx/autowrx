@@ -44,9 +44,12 @@ const ModelApiList = ({
     (state) => [state.activeModelApis, state.model],
     shallow,
   )
-  const activeModelApis = (storeApis && storeApis.length > 0) ? storeApis : (fallbackApis ?? [])
+  const activeModelApis =
+    storeApis && storeApis.length > 0 ? storeApis : (fallbackApis ?? [])
   const [searchTerm, setSearchTerm] = useState('')
-  const [filteredApiList, setFilteredApiList] = useState<VehicleApi[] | undefined>(undefined)
+  const [filteredApiList, setFilteredApiList] = useState<
+    VehicleApi[] | undefined
+  >(undefined)
   const [selectedFilters, setSelectedFilters] = useState<string[]>([
     'default',
     'wishlist',
@@ -64,9 +67,10 @@ const ModelApiList = ({
 
   // Check if data is ready: both model and APIs should be loaded
   // In readOnly mode or when fallbackApis are provided, we only need the API list
-  const isDataReady = (readOnly || !!fallbackApis)
-    ? (activeModelApis && activeModelApis.length > 0)
-    : (currentModel && activeModelApis && activeModelApis.length > 0)
+  const isDataReady =
+    readOnly || !!fallbackApis
+      ? activeModelApis && activeModelApis.length > 0
+      : currentModel && activeModelApis && activeModelApis.length > 0
 
   useEffect(() => {
     const querys = new URLSearchParams(location.search) // set search term from query params
@@ -156,7 +160,7 @@ const ModelApiList = ({
           <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search Signal"
-            data-id='search-signal-input'
+            data-id="search-signal-input"
             className="pl-9 w-full"
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
@@ -176,7 +180,11 @@ const ModelApiList = ({
       <div className="py-1">
         {isAuthorized && (
           <Dialog open={isOpenPopup} onOpenChange={setIsOpenPopup}>
-            <Button variant="ghost" size="sm" onClick={() => setIsOpenPopup(true)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsOpenPopup(true)}
+            >
               <TbPlus className="mr-1 h-4 w-4" /> Add Wishlist Signal
             </Button>
             <DialogContent>
@@ -200,7 +208,9 @@ const ModelApiList = ({
         {!isDataReady ? (
           <div className="flex items-center justify-center h-[200px]">
             <Spinner className="mr-2" />
-            <span className="text-sm font-medium text-muted-foreground">Loading API List...</span>
+            <span className="text-sm font-medium text-muted-foreground">
+              Loading API List...
+            </span>
           </div>
         ) : filteredApiList && filteredApiList.length > 0 ? (
           <DaApiList

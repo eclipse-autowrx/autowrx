@@ -57,12 +57,7 @@ import { getLastViewedMap } from '@/utils/modelLastViewed'
 import { cn } from '@/lib/utils'
 
 type SortOption =
-  | 'last-viewed'
-  | 'first-viewed'
-  | 'newest'
-  | 'oldest'
-  | 'name-az'
-  | 'name-za'
+  'last-viewed' | 'first-viewed' | 'newest' | 'oldest' | 'name-az' | 'name-za'
 type ModelCategory = 'all' | 'myModel' | 'myContribution' | 'public'
 
 const MODEL_CATEGORIES: readonly ModelCategory[] = [

@@ -33,8 +33,7 @@ interface AddonSelectProps {
   excludedSlugs?: string[]
 }
 
-const DEFAULT_DESCRIPTION =
-  'Choose an addon to add to your prototype tabs'
+const DEFAULT_DESCRIPTION = 'Choose an addon to add to your prototype tabs'
 
 const AddonSelect: FC<AddonSelectProps> = ({
   onSelect,
@@ -51,7 +50,9 @@ const AddonSelect: FC<AddonSelectProps> = ({
   const [selectedPlugin, setSelectedPlugin] = useState<Plugin | null>(null)
   const [labelName, setLabelName] = useState('')
   const [openPluginForm, setOpenPluginForm] = useState(false)
-  const [editPluginId, setEditPluginId] = useState<string | undefined>(undefined)
+  const [editPluginId, setEditPluginId] = useState<string | undefined>(
+    undefined,
+  )
   const [pluginToDelete, setPluginToDelete] = useState<Plugin | null>(null)
 
   const systemQuery = useQuery({
@@ -69,11 +70,11 @@ const AddonSelect: FC<AddonSelectProps> = ({
   useEffect(() => {
     const results = activeQuery.data?.results || []
     const filtered = results.filter(
-        (plugin) =>
-          plugin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          plugin.slug?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          plugin.description?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      (plugin) =>
+        plugin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        plugin.slug?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        plugin.description?.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
     setFilteredPlugins(filtered)
   }, [activeQuery.data, searchTerm, activeTab])
 
@@ -201,10 +202,7 @@ const AddonSelect: FC<AddonSelectProps> = ({
           <Button variant="outline" onClick={handleBack}>
             Back
           </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={!labelName.trim()}
-          >
+          <Button onClick={handleConfirm} disabled={!labelName.trim()}>
             {confirmLabel}
           </Button>
         </div>
@@ -216,7 +214,9 @@ const AddonSelect: FC<AddonSelectProps> = ({
     <div className="flex flex-col w-full max-w-2xl">
       {/* Header */}
       <div className="flex flex-col gap-0.5 px-6 py-4 border-b border-border">
-        <h2 className="text-base font-semibold text-primary">Select an Addon</h2>
+        <h2 className="text-base font-semibold text-primary">
+          Select an Addon
+        </h2>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
 
@@ -283,107 +283,108 @@ const AddonSelect: FC<AddonSelectProps> = ({
 
       {/* List */}
       <div className="flex flex-col max-h-96 overflow-y-auto">
-        {activeTab === 'mine' && (mineQuery.error as any)?.response?.status === 401 ? (
+        {activeTab === 'mine' &&
+        (mineQuery.error as any)?.response?.status === 401 ? (
           <div className="flex items-center justify-center p-8">
             <p className="text-sm text-muted-foreground">
               Please sign in to view your plugins.
             </p>
           </div>
-        ) : (
-        filteredPlugins.length === 0 ? (
+        ) : filteredPlugins.length === 0 ? (
           <div className="flex items-center justify-center p-8">
             <p className="text-sm text-muted-foreground">
-              {searchTerm ? 'No addons found matching your search' : 'No addons available'}
+              {searchTerm
+                ? 'No addons found matching your search'
+                : 'No addons available'}
             </p>
           </div>
         ) : (
           filteredPlugins.map((plugin) => {
             const alreadyAdded = isExcluded(plugin)
             return (
-            <div
-              key={plugin.id}
-              className={`flex items-start gap-4 p-4 border-b border-border ${
-                alreadyAdded ? 'opacity-50' : ''
-              }`}
-            >
-              <button
-                type="button"
-                onClick={() => handlePluginClick(plugin)}
-                disabled={alreadyAdded}
-                className="flex items-start gap-4 flex-1 min-w-0 text-left cursor-pointer disabled:cursor-not-allowed"
+              <div
+                key={plugin.id}
+                className={`flex items-start gap-4 p-4 border-b border-border ${
+                  alreadyAdded ? 'opacity-50' : ''
+                }`}
               >
-                {/* Plugin Image */}
-                {plugin.image ? (
-                  <img
-                    src={plugin.image}
-                    alt={plugin.name}
-                    className="w-12 h-12 rounded object-cover flex-shrink-0"
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                    <span className="text-lg text-muted-foreground">
-                      {plugin.name.charAt(0).toUpperCase()}
-                    </span>
+                <button
+                  type="button"
+                  onClick={() => handlePluginClick(plugin)}
+                  disabled={alreadyAdded}
+                  className="flex items-start gap-4 flex-1 min-w-0 text-left cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {/* Plugin Image */}
+                  {plugin.image ? (
+                    <img
+                      src={plugin.image}
+                      alt={plugin.name}
+                      className="w-12 h-12 rounded object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                      <span className="text-lg text-muted-foreground">
+                        {plugin.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Plugin Info */}
+                  <div className="flex flex-col gap-1 flex-1 min-w-0">
+                    <h3 className="text-sm font-medium text-foreground truncate">
+                      {plugin.name}
+                      {alreadyAdded && (
+                        <span className="ml-2 text-xs text-muted-foreground font-normal">
+                          (added)
+                        </span>
+                      )}
+                    </h3>
+                    {plugin.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {plugin.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="px-2 py-0.5 bg-muted rounded">
+                        {plugin.is_internal ? 'Internal' : 'External'}
+                      </span>
+                      {plugin.slug && (
+                        <span className="font-mono">{plugin.slug}</span>
+                      )}
+                    </div>
+                  </div>
+                </button>
+                {activeTab === 'mine' && (
+                  <div className="flex gap-1 flex-shrink-0">
+                    <Button
+                      title="Edit"
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setEditPluginId(plugin.id)
+                        setOpenPluginForm(true)
+                      }}
+                    >
+                      <TbPencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      title="Delete"
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setPluginToDelete(plugin)
+                      }}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <TbTrash className="w-4 h-4" />
+                    </Button>
                   </div>
                 )}
-
-                {/* Plugin Info */}
-                <div className="flex flex-col gap-1 flex-1 min-w-0">
-                  <h3 className="text-sm font-medium text-foreground truncate">
-                    {plugin.name}
-                    {alreadyAdded && (
-                      <span className="ml-2 text-xs text-muted-foreground font-normal">
-                        (added)
-                      </span>
-                    )}
-                  </h3>
-                  {plugin.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {plugin.description}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="px-2 py-0.5 bg-muted rounded">
-                      {plugin.is_internal ? 'Internal' : 'External'}
-                    </span>
-                    {plugin.slug && (
-                      <span className="font-mono">{plugin.slug}</span>
-                    )}
-                  </div>
-                </div>
-              </button>
-              {activeTab === 'mine' && (
-                <div className="flex gap-1 flex-shrink-0">
-                  <Button
-                    title="Edit"
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setEditPluginId(plugin.id)
-                      setOpenPluginForm(true)
-                    }}
-                  >
-                    <TbPencil className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    title="Delete"
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setPluginToDelete(plugin)
-                    }}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <TbTrash className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
+              </div>
             )
           })
-        )
         )}
       </div>
 
@@ -425,7 +426,7 @@ const AddonSelect: FC<AddonSelectProps> = ({
             setPluginToDelete(null)
           } catch (e: any) {
             // Optional: surface error via global toast if available
-            // eslint-disable-next-line no-console
+
             console.error(e)
           }
         }}

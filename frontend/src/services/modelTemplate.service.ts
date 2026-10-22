@@ -1,3 +1,11 @@
+// Copyright (c) 2026 Eclipse Foundation.
+//
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { serverAxios } from '@/services/base'
 
 export interface ModelTemplate {
@@ -20,19 +28,24 @@ export interface Paged<T> {
   totalResults: number
 }
 
-export const listModelTemplates = (params?: any): Promise<Paged<ModelTemplate>> =>
-  serverAxios.get('/system/model-template', { params }).then(r => r.data)
+export const listModelTemplates = (
+  params?: any,
+): Promise<Paged<ModelTemplate>> =>
+  serverAxios.get('/system/model-template', { params }).then((r) => r.data)
 
 export const getModelTemplateById = (id: string): Promise<ModelTemplate> =>
-  serverAxios.get(`/system/model-template/${id}`).then(r => r.data)
+  serverAxios.get(`/system/model-template/${id}`).then((r) => r.data)
 
-export const createModelTemplate = (data: Partial<ModelTemplate>): Promise<ModelTemplate> =>
-  serverAxios.post('/system/model-template', data).then(r => r.data)
+export const createModelTemplate = (
+  data: Partial<ModelTemplate>,
+): Promise<ModelTemplate> =>
+  serverAxios.post('/system/model-template', data).then((r) => r.data)
 
-export const updateModelTemplate = (id: string, data: Partial<ModelTemplate>): Promise<ModelTemplate> =>
-  serverAxios.put(`/system/model-template/${id}`, data).then(r => r.data)
+export const updateModelTemplate = (
+  id: string,
+  data: Partial<ModelTemplate>,
+): Promise<ModelTemplate> =>
+  serverAxios.put(`/system/model-template/${id}`, data).then((r) => r.data)
 
 export const deleteModelTemplate = (id: string): Promise<void> =>
-  serverAxios.delete(`/system/model-template/${id}`).then(r => r.data)
-
-
+  serverAxios.delete(`/system/model-template/${id}`).then((r) => r.data)

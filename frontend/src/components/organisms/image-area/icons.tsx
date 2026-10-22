@@ -90,7 +90,8 @@ export const encodeSvg = (name: string, fill?: string) => {
       if (resolvedFill !== undefined) attrs.push(`fill="${resolvedFill}"`)
       if (path.stroke !== undefined) {
         const resolvedStroke = path.stroke === null ? fill : path.stroke
-        if (resolvedStroke !== undefined) attrs.push(`stroke="${resolvedStroke}"`)
+        if (resolvedStroke !== undefined)
+          attrs.push(`stroke="${resolvedStroke}"`)
       }
       if (path.strokeWidth !== undefined) {
         attrs.push(`stroke-width="${path.strokeWidth}"`)
@@ -101,8 +102,10 @@ export const encodeSvg = (name: string, fill?: string) => {
       if (path.strokeLinejoin !== undefined) {
         attrs.push(`stroke-linejoin="${path.strokeLinejoin}"`)
       }
-      if (path.fillRule !== undefined) attrs.push(`fill-rule="${path.fillRule}"`)
-      if (path.transform !== undefined) attrs.push(`transform="${path.transform}"`)
+      if (path.fillRule !== undefined)
+        attrs.push(`fill-rule="${path.fillRule}"`)
+      if (path.transform !== undefined)
+        attrs.push(`transform="${path.transform}"`)
       if (path.d !== undefined) attrs.push(`d="${path.d}"`)
       return `<path ${attrs.join(' ')}/>`
     })

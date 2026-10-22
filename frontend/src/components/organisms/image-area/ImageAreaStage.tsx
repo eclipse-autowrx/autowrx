@@ -159,7 +159,12 @@ const ShapeTooltip = ({
   )
 }
 
-const StageRectangle = ({ shape, index, isFocus, callbacks }: StageShapeProps) => {
+const StageRectangle = ({
+  shape,
+  index,
+  isFocus,
+  callbacks,
+}: StageShapeProps) => {
   const {
     viewOnly,
     onHoverShape,
@@ -195,7 +200,11 @@ const StageRectangle = ({ shape, index, isFocus, callbacks }: StageShapeProps) =
         onDragStart={onShapeActionStart}
         onDragEnd={(e) => {
           const { x, y } = e.target.attrs
-          onShapeActionEnd(index, { type: SHAPE.RECTANGLE, x: x / sx, y: y / sy })
+          onShapeActionEnd(index, {
+            type: SHAPE.RECTANGLE,
+            x: x / sx,
+            y: y / sy,
+          })
         }}
         onTransformStart={onShapeActionStart}
         onTransformEnd={() => {
@@ -224,7 +233,12 @@ const StageRectangle = ({ shape, index, isFocus, callbacks }: StageShapeProps) =
   )
 }
 
-const StageEllipse = ({ shape, index, isFocus, callbacks }: StageShapeProps) => {
+const StageEllipse = ({
+  shape,
+  index,
+  isFocus,
+  callbacks,
+}: StageShapeProps) => {
   const {
     viewOnly,
     onHoverShape,
@@ -297,7 +311,13 @@ const StageEllipse = ({ shape, index, isFocus, callbacks }: StageShapeProps) => 
 
 // Konva-only text node. The editing textarea is a DOM overlay owned by the
 // parent (textEdit state), so this component renders nothing while editing.
-const StageText = ({ shape, index, isFocus, editing, callbacks }: StageShapeProps) => {
+const StageText = ({
+  shape,
+  index,
+  isFocus,
+  editing,
+  callbacks,
+}: StageShapeProps) => {
   const {
     viewOnly,
     onHoverShape,
@@ -321,7 +341,9 @@ const StageText = ({ shape, index, isFocus, editing, callbacks }: StageShapeProp
   if (editing) return null
   return (
     <>
-      {isFocus && !viewOnly && <Transformer ref={trRef} rotateEnabled={false} />}
+      {isFocus && !viewOnly && (
+        <Transformer ref={trRef} rotateEnabled={false} />
+      )}
       <KonvaText
         fill={shape.fill}
         fontSize={shape.fontSize}
@@ -394,7 +416,9 @@ const StageIcon = ({ shape, index, isFocus, callbacks }: StageShapeProps) => {
   } = callbacks
   const sx = shape.scaleX ?? 1
   const sy = shape.scaleY ?? 1
-  const iconKey = shape.name ? shape.name.toUpperCase().replace('-', '_') : 'LOCATION'
+  const iconKey = shape.name
+    ? shape.name.toUpperCase().replace('-', '_')
+    : 'LOCATION'
   const image = useShapeImage(iconKey, shape.fill)
   const trRef = useRef<Konva.Transformer | null>(null)
   const shapeRef = useRef<Konva.Image | null>(null)
@@ -406,7 +430,9 @@ const StageIcon = ({ shape, index, isFocus, callbacks }: StageShapeProps) => {
   }, [isFocus])
   return (
     <>
-      {isFocus && !viewOnly && <Transformer ref={trRef} rotateEnabled={false} />}
+      {isFocus && !viewOnly && (
+        <Transformer ref={trRef} rotateEnabled={false} />
+      )}
       <KonvaImage
         {...(viewOnly
           ? {}
@@ -417,7 +443,11 @@ const StageIcon = ({ shape, index, isFocus, callbacks }: StageShapeProps) => {
               onDragStart: onShapeActionStart,
               onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) => {
                 const { x, y } = e.target.attrs
-                onShapeActionEnd(index, { type: shape.type, x: x / sx, y: y / sy })
+                onShapeActionEnd(index, {
+                  type: shape.type,
+                  x: x / sx,
+                  y: y / sy,
+                })
               },
               onTransformStart: onShapeActionStart,
               onTransformEnd: () => {
@@ -482,7 +512,9 @@ const ImageAreaStage = ({
   // every id-less shape as focused at once.
   const isShapeFocused = (shape: ImageAreaShape) =>
     selectedId != null && selectedId === shape.id
-  const [displayBgImage, setDisplayBgImage] = useState<string | undefined>(undefined)
+  const [displayBgImage, setDisplayBgImage] = useState<string | undefined>(
+    undefined,
+  )
   const [metrics, setMetrics] = useState<StageMetrics>({
     width: 0,
     height: 0,
@@ -553,9 +585,7 @@ const ImageAreaStage = ({
   const textEditState: TextEditState | null = useMemo(() => {
     if (!textEdit) return null
     const s = shapes[textEdit.index]
-    return s && s.id === textEdit.id
-      ? { ...textEdit, shape: s }
-      : null
+    return s && s.id === textEdit.id ? { ...textEdit, shape: s } : null
   }, [textEdit, shapes])
 
   useEffect(() => {
@@ -625,7 +655,13 @@ const ImageAreaStage = ({
       }
     }
     if (PALETTE_ICONS.includes(shapeType)) {
-      return { type: shapeType, x: px - 17.5, y: py - 30, width: 35, height: 40 }
+      return {
+        type: shapeType,
+        x: px - 17.5,
+        y: py - 30,
+        width: 35,
+        height: 40,
+      }
     }
     return null
   }
@@ -668,7 +704,13 @@ const ImageAreaStage = ({
     const maxHeight = maxTextHeights.current[cur.id]
     const height = (s.height ?? 0) > maxHeight ? s.height : maxHeight
     const next = [...shapes]
-    next[cur.index] = { ...s, type: SHAPE.TEXT, text: cur.text, height, edit: false }
+    next[cur.index] = {
+      ...s,
+      type: SHAPE.TEXT,
+      text: cur.text,
+      height,
+      edit: false,
+    }
     onChangeShapes(next)
   }
 
@@ -814,12 +856,23 @@ const ImageAreaStage = ({
                   case SHAPE.ELLIPSE:
                     if (viewOnly) return null
                     return shape.type === SHAPE.RECTANGLE ? (
-                      <StageRectangle key={shape.id ?? `draft-${index}`} {...props} />
+                      <StageRectangle
+                        key={shape.id ?? `draft-${index}`}
+                        {...props}
+                      />
                     ) : (
-                      <StageEllipse key={shape.id ?? `draft-${index}`} {...props} />
+                      <StageEllipse
+                        key={shape.id ?? `draft-${index}`}
+                        {...props}
+                      />
                     )
                   case SHAPE.TEXT:
-                    return <StageText key={shape.id ?? `draft-${index}`} {...props} />
+                    return (
+                      <StageText
+                        key={shape.id ?? `draft-${index}`}
+                        {...props}
+                      />
+                    )
                   case SHAPE.CLOSE:
                   case SHAPE.PIN:
                   case SHAPE.LIKE:
@@ -830,7 +883,12 @@ const ImageAreaStage = ({
                   case SHAPE.THREE:
                   case SHAPE.FOUR:
                   case SHAPE.FIVE:
-                    return <StageIcon key={shape.id ?? `draft-${index}`} {...props} />
+                    return (
+                      <StageIcon
+                        key={shape.id ?? `draft-${index}`}
+                        {...props}
+                      />
+                    )
                   default:
                     return null
                 }
@@ -921,7 +979,11 @@ const ImageAreaStage = ({
           <ShapeTooltip
             text={hoverShape.hoverMessage}
             kind={tooltipKind(hoverShape.type)}
-            shape={{ ...hoverShape, scaleX: metrics.scaleX, scaleY: metrics.scaleY }}
+            shape={{
+              ...hoverShape,
+              scaleX: metrics.scaleX,
+              scaleY: metrics.scaleY,
+            }}
           />
         )}
         {loaded && textEditState && (

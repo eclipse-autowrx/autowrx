@@ -37,7 +37,7 @@ import { getConfig } from '@/utils/siteConfig'
 import { visibilityFromModelTemplate } from '@/utils/modelVisibility'
 
 const getCreatedById = (createdBy: any): string =>
-  typeof createdBy === 'object' ? createdBy?.id ?? '' : createdBy ?? ''
+  typeof createdBy === 'object' ? (createdBy?.id ?? '') : (createdBy ?? '')
 
 type ModelData = {
   cvi: string
@@ -61,7 +61,9 @@ const FormCreateModel = () => {
 
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
+    null,
+  )
   const { refetch: refetchModelLite, data: modelList } = useListModelLite()
   const { data: versions } = useListVSSVersions()
   const { toast } = useToast()
@@ -82,7 +84,10 @@ const FormCreateModel = () => {
     return () => clearTimeout(timer)
   }, [data.name])
 
-  const { isDuplicate: isDuplicateName, suggestedName } = useDuplicateNameCheck(debouncedName, ownedModelNames)
+  const { isDuplicate: isDuplicateName, suggestedName } = useDuplicateNameCheck(
+    debouncedName,
+    ownedModelNames,
+  )
 
   // Fetch templates
   const { data: templatesData } = useQuery({
@@ -271,7 +276,9 @@ const FormCreateModel = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <span className="text-xs text-muted-foreground self-center shrink-0">or</span>
+              <span className="text-xs text-muted-foreground self-center shrink-0">
+                or
+              </span>
             </>
           )}
           <div className="flex flex-col gap-1 flex-1 w-full">
@@ -302,7 +309,9 @@ const FormCreateModel = () => {
         </Label>
         <Select
           value={selectedTemplateId ?? '__scratch__'}
-          onValueChange={(v) => setSelectedTemplateId(v === '__scratch__' ? null : v)}
+          onValueChange={(v) =>
+            setSelectedTemplateId(v === '__scratch__' ? null : v)
+          }
         >
           <SelectTrigger className="mt-1 w-full text-sm">
             <SelectValue placeholder="Select a template" />

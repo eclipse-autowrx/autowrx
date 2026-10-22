@@ -35,7 +35,8 @@ const StagingConfigSection: React.FC = () => {
     try {
       setIsLoading(true)
       try {
-        const config = await configManagementService.getConfigByKey(STANDARD_STAGE_KEY)
+        const config =
+          await configManagementService.getConfigByKey(STANDARD_STAGE_KEY)
         // If value is object/array, stringify it for the editor
         const content =
           typeof config.value === 'string'
@@ -128,7 +129,11 @@ const StagingConfigSection: React.FC = () => {
       })
       lastSavedStagingRef.current = stagingConfig
 
-      toast({ title: 'Saved', description: 'Standard staging frame configuration updated successfully' })
+      toast({
+        title: 'Saved',
+        description:
+          'Standard staging frame configuration updated successfully',
+      })
     } catch (err: any) {
       console.error('Save staging config error:', err)
       toast({

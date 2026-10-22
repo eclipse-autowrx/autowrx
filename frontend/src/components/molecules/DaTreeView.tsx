@@ -28,16 +28,18 @@ const buildTreeNode = (name: string, path: string, node: Branch): TreeNode => {
   const children = node.children
     ? Object.entries(node.children)
         // Include branches, sensors, and actuators (exclude attributes)
-        .filter(([sub_node_name, node]) => ['branch', 'sensor', 'actuator'].includes(node.type))
+        .filter(([sub_node_name, node]) =>
+          ['branch', 'sensor', 'actuator'].includes(node.type),
+        )
         // Sort: branches first, then sensors/actuators, both alphabetically within their group
         .sort(([nameA, nodeA], [nameB, nodeB]) => {
           const typeA = nodeA.type || 'branch'
           const typeB = nodeB.type || 'branch'
-          
+
           // Branches come first
           if (typeA === 'branch' && typeB !== 'branch') return -1
           if (typeA !== 'branch' && typeB === 'branch') return 1
-          
+
           // Within same type group, sort alphabetically
           return nameA.localeCompare(nameB)
         })
@@ -49,7 +51,7 @@ const buildTreeNode = (name: string, path: string, node: Branch): TreeNode => {
           ),
         )
     : []
-  
+
   return {
     name,
     type: node.type || 'branch',
@@ -84,7 +86,7 @@ const RenderRectSvgNode = (
   const hasChildren = node.children && node.children.length > 0
   const indicatorWidth = node.type === 'branch' && hasChildren ? 15 : 0
   const nodeWidth = nameWidth + indicatorWidth + 45
-  
+
   return (
     <g>
       <g
@@ -106,7 +108,14 @@ const RenderRectSvgNode = (
               x={-50}
               rx={10}
               strokeWidth="0"
-              style={{ fill: collapsed && node.type !== 'branch' ? COLORS[node.type] : collapsed ? 'white' : COLORS[node.type] }}
+              style={{
+                fill:
+                  collapsed && node.type !== 'branch'
+                    ? COLORS[node.type]
+                    : collapsed
+                      ? 'white'
+                      : COLORS[node.type],
+              }}
             />
             <foreignObject width={nodeWidth} height={40} y={-20} x={-50}>
               <div
@@ -116,11 +125,19 @@ const RenderRectSvgNode = (
                   justifyContent: 'center',
                   height: '100%',
                   width: '100%',
-                  color: collapsed && node.type !== 'branch' ? 'white' : collapsed ? 'rgb(131 148 154)' : 'white',
+                  color:
+                    collapsed && node.type !== 'branch'
+                      ? 'white'
+                      : collapsed
+                        ? 'rgb(131 148 154)'
+                        : 'white',
                 }}
               >
                 {node.name}
-                {node.type === 'branch' && node.children && node.children.length > 0 && ' >'}
+                {node.type === 'branch' &&
+                  node.children &&
+                  node.children.length > 0 &&
+                  ' >'}
               </div>
             </foreignObject>
           </>
@@ -137,9 +154,7 @@ const RenderRectSvgNode = (
           onClick={() => {
             // Use correct path with /api/covesa/ prefix
             const apiPath =
-              node.path === ''
-                ? node.name
-                : `${node.path}.${node.name}`
+              node.path === '' ? node.name : `${node.path}.${node.name}`
             const fullLink =
               prototype_id === ''
                 ? `/model/${model.id}/api/covesa/${apiPath}`
@@ -208,7 +223,11 @@ const DaTreeView = ({ onNodeClick }: DaTreeViewProps) => {
   const { data: cvi } = useCurrentModelApi()
 
   if (!model) {
-    return <div className="text-sm font-medium text-muted-foreground">Model is not available</div>
+    return (
+      <div className="text-sm font-medium text-muted-foreground">
+        Model is not available
+      </div>
+    )
   }
 
   console.log('cvi', cvi)
@@ -217,7 +236,11 @@ const DaTreeView = ({ onNodeClick }: DaTreeViewProps) => {
     ? buildTreeNode(model.main_api, '', cvi[model.main_api])
     : null
   if (!orgChart) {
-    return <div className="text-sm font-medium text-muted-foreground">Tree view is not available</div>
+    return (
+      <div className="text-sm font-medium text-muted-foreground">
+        Tree view is not available
+      </div>
+    )
   }
 
   return (

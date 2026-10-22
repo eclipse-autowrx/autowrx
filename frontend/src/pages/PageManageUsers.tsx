@@ -17,4 +17,3 @@ const PageManageUsers = () => {
 }
 
 export default PageManageUsers
-

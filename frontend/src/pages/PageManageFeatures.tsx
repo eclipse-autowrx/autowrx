@@ -245,4 +245,3 @@ const PageManageFeatures = () => {
 }
 
 export default PageManageFeatures
-

@@ -10,7 +10,12 @@ import React, { useRef, useEffect, useState } from 'react'
 import Editor from '@monaco-editor/react'
 import { File } from './types'
 import Introduction from './Introduction'
-import { VscSave, VscSaveAll, VscChevronLeft, VscChevronRight } from 'react-icons/vsc'
+import {
+  VscSave,
+  VscSaveAll,
+  VscChevronLeft,
+  VscChevronRight,
+} from 'react-icons/vsc'
 import { TbX } from 'react-icons/tb'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -510,9 +515,10 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
                   onClick={() => onSelectFile(openFile)}
                   className={`
                     flex items-center justify-between px-2 py-2 text-sm cursor-pointer border-r border-gray-200 max-w-[200px] shrink-0
-                    ${isActive
-                      ? 'bg-white text-gray-900 border-b-2 border-b-blue-500'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ${
+                      isActive
+                        ? 'bg-white text-gray-900 border-b-2 border-b-blue-500'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }
                   `}
                   title={openFilePath}

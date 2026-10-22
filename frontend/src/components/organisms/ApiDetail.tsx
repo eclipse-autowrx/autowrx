@@ -20,12 +20,7 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import DaApiArchitecture from '../molecules/DaApiArchitecture'
 import DaDiscussions from '../molecules/DaDiscussions'
-import {
-  TbChevronDown,
-  TbEdit,
-  TbLoader,
-  TbTrash,
-} from 'react-icons/tb'
+import { TbChevronDown, TbEdit, TbLoader, TbTrash } from 'react-icons/tb'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -233,7 +228,10 @@ const ApiDetail = ({
                 (api) => api?.name === apiDetails?.name,
               )) &&
             isAuthorized && (
-              <DropdownMenu open={actionMenuOpen} onOpenChange={setActionMenuOpen}>
+              <DropdownMenu
+                open={actionMenuOpen}
+                onOpenChange={setActionMenuOpen}
+              >
                 <DropdownMenuTrigger asChild>
                   <Button variant="default" size="sm">
                     <div className="text-sm font-medium">Signal Action</div>
@@ -271,10 +269,7 @@ const ApiDetail = ({
             <></>
           </DaConfirmPopup>
           <div
-            className={cn(
-              'h-8 items-center rounded-md px-2 xl:flex',
-              bgClass,
-            )}
+            className={cn('h-8 items-center rounded-md px-2 xl:flex', bgClass)}
           >
             <div className="text-sm font-medium uppercase text-white">
               {apiDetails.type}

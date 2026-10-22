@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -81,9 +81,7 @@ const DaTablePropertyItem = ({
       )}
     >
       <div className="flex w-[120px] min-w-[120px]">
-        <p className="text-sm font-semibold text-foreground">
-          {property}
-        </p>
+        <p className="text-sm font-semibold text-foreground">{property}</p>
       </div>
       <div
         className={clsx(
@@ -108,9 +106,7 @@ const DaTablePropertyItem = ({
             ))}
           </div>
         ) : (
-          <p className="text-sm break-words">
-            {value}
-          </p>
+          <p className="text-sm break-words">{value}</p>
         )}
       </div>
     </div>

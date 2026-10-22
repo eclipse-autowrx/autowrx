@@ -16,11 +16,21 @@ import {
   type CustomApiSchema,
 } from '@/services/customApiSchema.service'
 import { Button } from '@/components/atoms/button'
-import { TbPencil, TbTrash, TbPlus, TbDownload, TbUpload, TbDotsVertical } from 'react-icons/tb'
+import {
+  TbPencil,
+  TbTrash,
+  TbPlus,
+  TbDownload,
+  TbUpload,
+  TbDotsVertical,
+} from 'react-icons/tb'
 import { Spinner } from '@/components/atoms/spinner'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import CustomApiSchemaForm from '@/components/organisms/CustomApiSchemaForm'
-import { exportCustomApiSchema, importCustomApiSchemaFromJSON } from '@/lib/customApiUtils'
+import {
+  exportCustomApiSchema,
+  importCustomApiSchemaFromJSON,
+} from '@/lib/customApiUtils'
 import DaDialog from '@/components/molecules/DaDialog'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
@@ -74,7 +84,10 @@ const CustomApiSchemaSection: React.FC = () => {
     } catch (err) {
       toast({
         title: 'Delete failed',
-        description: err instanceof Error ? err.message : 'Failed to delete CustomApiSchema',
+        description:
+          err instanceof Error
+            ? err.message
+            : 'Failed to delete CustomApiSchema',
         variant: 'destructive',
       })
     } finally {
@@ -106,7 +119,10 @@ const CustomApiSchemaSection: React.FC = () => {
     onError: (error: any) => {
       toast({
         title: 'Save failed',
-        description: error?.response?.data?.message || error?.message || 'Failed to save API Definition',
+        description:
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to save API Definition',
         variant: 'destructive',
       })
     },
@@ -182,9 +198,12 @@ const CustomApiSchemaSection: React.FC = () => {
     try {
       setIsImporting(true)
       const importedData = await importCustomApiSchemaFromJSON(importFile)
-      
+
       // Check if code already exists
-      const existing = await listCustomApiSchemas({ code: importCode, limit: 1 })
+      const existing = await listCustomApiSchemas({
+        code: importCode,
+        limit: 1,
+      })
       if (existing.results.length > 0) {
         toast({
           title: 'Import failed',
@@ -214,7 +233,10 @@ const CustomApiSchemaSection: React.FC = () => {
     } catch (error: any) {
       toast({
         title: 'Import failed',
-        description: error?.response?.data?.message || error?.message || 'Failed to import API Schema',
+        description:
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to import API Schema',
         variant: 'destructive',
       })
     } finally {
@@ -235,7 +257,11 @@ const CustomApiSchemaSection: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => setIsImportOpen(true)} size="sm" variant="outline">
+            <Button
+              onClick={() => setIsImportOpen(true)}
+              size="sm"
+              variant="outline"
+            >
               <TbUpload className="mr-2 h-4 w-4" />
               Import
             </Button>
@@ -270,8 +296,8 @@ const CustomApiSchemaSection: React.FC = () => {
                           api.type === 'tree'
                             ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                             : api.type === 'list'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                            : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                              : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
                         }`}
                       >
                         {api.type.toUpperCase()}
@@ -299,7 +325,9 @@ const CustomApiSchemaSection: React.FC = () => {
                   <div className="flex ml-4">
                     <DropdownMenu
                       open={openMenuId === api.id}
-                      onOpenChange={(open) => setOpenMenuId(open ? api.id : null)}
+                      onOpenChange={(open) =>
+                        setOpenMenuId(open ? api.id : null)
+                      }
                     >
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -355,8 +383,14 @@ const CustomApiSchemaSection: React.FC = () => {
             ))}
             {!data?.results?.length && (
               <div className="col-span-full text-center py-12">
-                <p className="text-sm text-muted-foreground">No API schemas yet</p>
-                <Button onClick={handleCreate} className="mt-4" variant="outline">
+                <p className="text-sm text-muted-foreground">
+                  No API schemas yet
+                </p>
+                <Button
+                  onClick={handleCreate}
+                  className="mt-4"
+                  variant="outline"
+                >
                   <TbPlus className="mr-2 h-4 w-4" />
                   Create First API Definition
                 </Button>
@@ -413,7 +447,11 @@ const CustomApiSchemaSection: React.FC = () => {
                 <Input
                   id="import-code"
                   value={importCode}
-                  onChange={(e) => setImportCode(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
+                  onChange={(e) =>
+                    setImportCode(
+                      e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''),
+                    )
+                  }
                   placeholder="Auto-generated from name (editable)"
                   className="mt-2"
                 />
@@ -438,7 +476,12 @@ const CustomApiSchemaSection: React.FC = () => {
             </Button>
             <Button
               onClick={handleImport}
-              disabled={!importFile || !importName.trim() || !importCode.trim() || isImporting}
+              disabled={
+                !importFile ||
+                !importName.trim() ||
+                !importCode.trim() ||
+                isImporting
+              }
             >
               {isImporting ? (
                 <>
@@ -457,4 +500,3 @@ const CustomApiSchemaSection: React.FC = () => {
 }
 
 export default CustomApiSchemaSection
-

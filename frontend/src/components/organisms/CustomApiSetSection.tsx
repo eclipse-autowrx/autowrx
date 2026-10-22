@@ -15,9 +15,22 @@ import {
   updateCustomApiSet,
   type CustomApiSet,
 } from '@/services/customApiSet.service'
-import { listCustomApiSchemas, getCustomApiSchemaById, createCustomApiSchema, updateCustomApiSchema, type CustomApiSchema } from '@/services/customApiSchema.service'
+import {
+  listCustomApiSchemas,
+  getCustomApiSchemaById,
+  createCustomApiSchema,
+  updateCustomApiSchema,
+  type CustomApiSchema,
+} from '@/services/customApiSchema.service'
 import { Button } from '@/components/atoms/button'
-import { TbPencil, TbTrash, TbPlus, TbDotsVertical, TbDownload, TbUpload } from 'react-icons/tb'
+import {
+  TbPencil,
+  TbTrash,
+  TbPlus,
+  TbDotsVertical,
+  TbDownload,
+  TbUpload,
+} from 'react-icons/tb'
 import { Spinner } from '@/components/atoms/spinner'
 import {
   DropdownMenu,
@@ -37,7 +50,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/atoms/table'
-import { exportCustomApiSet, importCustomApiSetFromZIP } from '@/lib/customApiUtils'
+import {
+  exportCustomApiSet,
+  importCustomApiSetFromZIP,
+} from '@/lib/customApiUtils'
 import DaDialog from '@/components/molecules/DaDialog'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
@@ -50,9 +66,13 @@ const CustomApiSetSection: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingSet, setEditingSet] = useState<CustomApiSet | null>(null)
-  const [editingItemsInstanceId, setEditingItemsInstanceId] = useState<string | null>(null)
+  const [editingItemsInstanceId, setEditingItemsInstanceId] = useState<
+    string | null
+  >(null)
   const [isSchemaFormOpen, setIsSchemaFormOpen] = useState(false)
-  const [editingSchema, setEditingSchema] = useState<CustomApiSchema | undefined>()
+  const [editingSchema, setEditingSchema] = useState<
+    CustomApiSchema | undefined
+  >()
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [importFile, setImportFile] = useState<File | null>(null)
@@ -80,7 +100,8 @@ const CustomApiSetSection: React.FC = () => {
     } catch (err) {
       toast({
         title: 'Delete failed',
-        description: err instanceof Error ? err.message : 'Failed to delete CustomApiSet',
+        description:
+          err instanceof Error ? err.message : 'Failed to delete CustomApiSet',
         variant: 'destructive',
       })
     } finally {
@@ -145,7 +166,12 @@ const CustomApiSetSection: React.FC = () => {
   }
 
   const handleImport = async () => {
-    if (!importFile || !importInstanceName.trim() || !importSchemaName.trim() || !importSchemaCode.trim()) {
+    if (
+      !importFile ||
+      !importInstanceName.trim() ||
+      !importSchemaName.trim() ||
+      !importSchemaCode.trim()
+    ) {
       toast({
         title: 'Import failed',
         description: 'Please provide set name, schema name, and schema code',
@@ -157,24 +183,32 @@ const CustomApiSetSection: React.FC = () => {
     try {
       setIsImporting(true)
       const importedData = await importCustomApiSetFromZIP(importFile)
-      
+
       // Normalize schema code
-      const normalizedSchemaCode = importSchemaCode.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '')
-      
+      const normalizedSchemaCode = importSchemaCode
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, '')
+
       // Check if schema already exists by code (since we don't export IDs)
-      const existingSchemas = await listCustomApiSchemas({ code: normalizedSchemaCode, limit: 1 })
+      const existingSchemas = await listCustomApiSchemas({
+        code: normalizedSchemaCode,
+        limit: 1,
+      })
       let schemaId: string
-      
+
       if (existingSchemas.results.length > 0) {
         // Schema exists (matched by code), compare the schema field
         const existingSchema = existingSchemas.results[0]
-        const importedSchemaStr = typeof importedData.schema.schema === 'string' 
-          ? importedData.schema.schema 
-          : JSON.stringify(importedData.schema.schema)
-        const existingSchemaStr = typeof existingSchema.schema === 'string'
-          ? existingSchema.schema
-          : JSON.stringify(existingSchema.schema)
-        
+        const importedSchemaStr =
+          typeof importedData.schema.schema === 'string'
+            ? importedData.schema.schema
+            : JSON.stringify(importedData.schema.schema)
+        const existingSchemaStr =
+          typeof existingSchema.schema === 'string'
+            ? existingSchema.schema
+            : JSON.stringify(existingSchema.schema)
+
         // Normalize JSON strings for comparison (remove whitespace differences)
         const normalizeJson = (str: string) => {
           try {
@@ -183,10 +217,10 @@ const CustomApiSetSection: React.FC = () => {
             return str.trim()
           }
         }
-        
+
         const normalizedImported = normalizeJson(importedSchemaStr)
         const normalizedExisting = normalizeJson(existingSchemaStr)
-        
+
         if (normalizedImported !== normalizedExisting) {
           // Same code but different schema - suggest using different name
           toast({
@@ -197,7 +231,7 @@ const CustomApiSetSection: React.FC = () => {
           setIsImporting(false)
           return
         }
-        
+
         // Schema matches, use existing schema ID
         schemaId = existingSchema.id
         toast({
@@ -233,14 +267,19 @@ const CustomApiSetSection: React.FC = () => {
             gif: 'image/gif',
           }
           const mimeType = mimeTypes[extension] || 'image/png'
-          const avatarFile = new File([importedData.avatarBlob], `avatar.${extension}`, { type: mimeType })
-          
+          const avatarFile = new File(
+            [importedData.avatarBlob],
+            `avatar.${extension}`,
+            { type: mimeType },
+          )
+
           const uploadResult = await uploadFileService(avatarFile)
           avatarUrl = uploadResult.url
         } catch (error) {
           toast({
             title: 'Avatar upload failed',
-            description: 'The set was imported but the avatar image could not be uploaded. You can update it manually.',
+            description:
+              'The set was imported but the avatar image could not be uploaded. You can update it manually.',
             variant: 'destructive',
           })
         }
@@ -270,7 +309,10 @@ const CustomApiSetSection: React.FC = () => {
     } catch (error: any) {
       toast({
         title: 'Import failed',
-        description: error?.response?.data?.message || error?.message || 'Failed to import API Set',
+        description:
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to import API Set',
         variant: 'destructive',
       })
     } finally {
@@ -291,14 +333,21 @@ const CustomApiSetSection: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => setIsImportOpen(true)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsImportOpen(true)}
+            >
               <TbUpload className="mr-2 h-4 w-4" />
               Import
             </Button>
-            <Button size="sm" onClick={() => {
-              setEditingSet(null)
-              setIsFormOpen(true)
-            }}>
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditingSet(null)
+                setIsFormOpen(true)
+              }}
+            >
               <TbPlus className="mr-2 h-4 w-4" />
               New API Set
             </Button>
@@ -333,7 +382,8 @@ const CustomApiSetSection: React.FC = () => {
                           alt={set.name}
                           className="w-full h-full object-contain p-1"
                           onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).src = '/imgs/plugin.png'
+                            ;(e.currentTarget as HTMLImageElement).src =
+                              '/imgs/plugin.png'
                           }}
                         />
                       ) : (
@@ -345,7 +395,7 @@ const CustomApiSetSection: React.FC = () => {
                   </TableCell>
                   <TableCell className="font-medium">
                     <div>
-                      <div 
+                      <div
                         className="cursor-pointer hover:text-primary transition-colors"
                         onClick={() => {
                           setEditingSet(set)
@@ -362,12 +412,15 @@ const CustomApiSetSection: React.FC = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span 
+                    <span
                       className="font-mono text-sm cursor-pointer hover:text-primary hover:underline transition-colors"
                       onClick={async () => {
                         try {
                           // Find schema by code
-                          const schemas = await listCustomApiSchemas({ code: set.custom_api_schema_code, limit: 1 })
+                          const schemas = await listCustomApiSchemas({
+                            code: set.custom_api_schema_code,
+                            limit: 1,
+                          })
                           if (schemas.results && schemas.results.length > 0) {
                             setEditingSchema(schemas.results[0])
                             setIsSchemaFormOpen(true)
@@ -381,7 +434,8 @@ const CustomApiSetSection: React.FC = () => {
                         } catch (error: any) {
                           toast({
                             title: 'Error',
-                            description: error?.message || 'Failed to load schema',
+                            description:
+                              error?.message || 'Failed to load schema',
                             variant: 'destructive',
                           })
                         }
@@ -391,7 +445,7 @@ const CustomApiSetSection: React.FC = () => {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <span 
+                    <span
                       className="cursor-pointer hover:text-primary hover:underline transition-colors"
                       onClick={() => setEditingItemsInstanceId(set.id)}
                     >
@@ -401,7 +455,9 @@ const CustomApiSetSection: React.FC = () => {
                   <TableCell className="text-right">
                     <DropdownMenu
                       open={openMenuId === set.id}
-                      onOpenChange={(open) => setOpenMenuId(open ? set.id : null)}
+                      onOpenChange={(open) =>
+                        setOpenMenuId(open ? set.id : null)
+                      }
                     >
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -470,10 +526,14 @@ const CustomApiSetSection: React.FC = () => {
         ) : (
           <div className="text-center py-12">
             <p className="text-sm text-muted-foreground">No API sets yet</p>
-            <Button className="mt-4" variant="outline" onClick={() => {
-              setEditingSet(null)
-              setIsFormOpen(true)
-            }}>
+            <Button
+              className="mt-4"
+              variant="outline"
+              onClick={() => {
+                setEditingSet(null)
+                setIsFormOpen(true)
+              }}
+            >
               <TbPlus className="mr-2 h-4 w-4" />
               Create First API Set
             </Button>
@@ -492,7 +552,12 @@ const CustomApiSetSection: React.FC = () => {
           try {
             if (editingSet) {
               // Filter out fields that shouldn't be updated
-              const { custom_api_schema, custom_api_schema_code, scope, ...updateData } = formData
+              const {
+                custom_api_schema,
+                custom_api_schema_code,
+                scope,
+                ...updateData
+              } = formData
               await updateCustomApiSet(editingSet.id, updateData)
               toast({
                 title: 'Updated',
@@ -515,7 +580,10 @@ const CustomApiSetSection: React.FC = () => {
           } catch (error: any) {
             toast({
               title: editingSet ? 'Update failed' : 'Create failed',
-              description: error?.response?.data?.message || error?.message || `Failed to ${editingSet ? 'update' : 'create'} API Set`,
+              description:
+                error?.response?.data?.message ||
+                error?.message ||
+                `Failed to ${editingSet ? 'update' : 'create'} API Set`,
               variant: 'destructive',
             })
             throw error
@@ -581,12 +649,17 @@ const CustomApiSetSection: React.FC = () => {
                 <Input
                   id="import-schema-code"
                   value={importSchemaCode}
-                  onChange={(e) => setImportSchemaCode(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
+                  onChange={(e) =>
+                    setImportSchemaCode(
+                      e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''),
+                    )
+                  }
                   placeholder="Auto-generated from schema name (editable)"
                   className="mt-2"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Schema will be created if it doesn't exist. Code is auto-generated from name.
+                  Schema will be created if it doesn't exist. Code is
+                  auto-generated from name.
                 </p>
               </div>
             </>
@@ -607,7 +680,13 @@ const CustomApiSetSection: React.FC = () => {
             </Button>
             <Button
               onClick={handleImport}
-              disabled={!importFile || !importInstanceName.trim() || !importSchemaName.trim() || !importSchemaCode.trim() || isImporting}
+              disabled={
+                !importFile ||
+                !importInstanceName.trim() ||
+                !importSchemaName.trim() ||
+                !importSchemaCode.trim() ||
+                isImporting
+              }
             >
               {isImporting ? (
                 <>
@@ -652,7 +731,10 @@ const CustomApiSetSection: React.FC = () => {
           } catch (error: any) {
             toast({
               title: editingSchema ? 'Update failed' : 'Create failed',
-              description: error?.response?.data?.message || error?.message || `Failed to ${editingSchema ? 'update' : 'create'} API Schema`,
+              description:
+                error?.response?.data?.message ||
+                error?.message ||
+                `Failed to ${editingSchema ? 'update' : 'create'} API Schema`,
               variant: 'destructive',
             })
             throw error
@@ -664,4 +746,3 @@ const CustomApiSetSection: React.FC = () => {
 }
 
 export default CustomApiSetSection
-

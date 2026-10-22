@@ -28,7 +28,13 @@ import BUILT_IN_WIDGETS, {
   BUILT_IN_EMBEDDED_WIDGETS,
 } from '@/data/builtinWidgets'
 import DaTooltip from '@/components/molecules/DaTooltip'
-import { isContinuousRectangle, doesOverlap, calculateSpans, parseWidgetConfig, parseCvi } from '@/lib/utils'
+import {
+  isContinuousRectangle,
+  doesOverlap,
+  calculateSpans,
+  parseWidgetConfig,
+  parseCvi,
+} from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { WidgetConfig } from '@/types/widget.type'
 import { VehicleApi } from '@/types/model.type'
@@ -45,7 +51,11 @@ import DaWidgetList from '@/components/molecules/widgets/DaWidgetList'
 import useListMarketplaceWidgets from '@/hooks/useListMarketplaceWidgets'
 import { Input } from '@/components/atoms/input'
 import ModelApiList from '@/components/organisms/ModelApiList'
-import { getUsedVehicleApiNames, getUsedVehicleApis, applySyncWithCodeToOptions } from '@/hooks/useUsedVehicleApisFromCode'
+import {
+  getUsedVehicleApiNames,
+  getUsedVehicleApis,
+  applySyncWithCodeToOptions,
+} from '@/hooks/useUsedVehicleApisFromCode'
 
 // Parse CVI once at module level — used as fallback API list when no model is loaded (e.g. template manager)
 let _defaultApis: VehicleApi[] | null = null
@@ -55,7 +65,11 @@ const getDefaultApis = (): VehicleApi[] => {
       const parsed = parseCvi(JSON.parse(CVI_v4_1))
       _defaultApis = parsed.map((item: any) => {
         const parts = item.name.split('.')
-        return { ...item, shortName: parts.length > 1 ? '.' + parts.slice(1).join('.') : item.name }
+        return {
+          ...item,
+          shortName:
+            parts.length > 1 ? '.' + parts.slice(1).join('.') : item.name,
+        }
       })
     } catch {
       _defaultApis = []
@@ -160,7 +174,7 @@ const DaDashboardWidgetEditor = ({
     if (selectedWidget) {
       let options = {} as any
       try {
-        let widget = JSON.parse(selectedWidget)
+        const widget = JSON.parse(selectedWidget)
         setBoxes(JSON.stringify(widget.boxes, null, 4))
         options = widget.options
         setWidgetIcon(options.iconURL)
@@ -172,7 +186,7 @@ const DaDashboardWidgetEditor = ({
         )
         delete options.iconURL
         delete options.url
-      } catch (e) { }
+      } catch (e) {}
       const usedApiNames = getUsedVehicleApiNames(
         localPrototype.code,
         activeModelApis,
@@ -294,7 +308,7 @@ const DaDashboardWidgetEditor = ({
                 setCode={(e) => {
                   setOptionStr(e)
                 }}
-                onBlur={() => { }}
+                onBlur={() => {}}
               />
             </div>
 
@@ -343,12 +357,12 @@ const DaDashboardWidgetEditor = ({
               let newOption = {} as any
               try {
                 newOption = JSON.parse(optionStr)
-              } catch (err) { }
+              } catch (err) {}
 
               let widget = {} as any
               try {
                 widget = JSON.parse(selectedWidget)
-              } catch (err) { }
+              } catch (err) {}
 
               // Check if this is a built-in widget (has a non-empty path)
               const isBuiltInWidget = widget.path && widget.path.trim() !== ''
@@ -365,7 +379,7 @@ const DaDashboardWidgetEditor = ({
               widget.options = newOption
               try {
                 widget.boxes = JSON.parse(boxes)
-              } catch (err) { }
+              } catch (err) {}
               handleUpdateWidget(JSON.stringify(widget, null, 4))
               codeEditorPopup[1](false)
             }}
@@ -443,7 +457,9 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
       } catch (e) {
         console.error('Error parsing options:', e)
         // Fallback to activeWidget.options or empty object
-        options = activeWidget.options ? JSON.parse(JSON.stringify(activeWidget.options)) : {}
+        options = activeWidget.options
+          ? JSON.parse(JSON.stringify(activeWidget.options))
+          : {}
       }
 
       const usedApiNames = getUsedVehicleApiNames(
@@ -493,7 +509,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
     }
     setActiveWidget(null)
 
-    let curWidgetConfigs = parseWidgetConfig(entireWidgetConfig)
+    const curWidgetConfigs = parseWidgetConfig(entireWidgetConfig)
     curWidgetConfigs.push(newWidgetConfig)
     await updateDashboardCfg(JSON.stringify(curWidgetConfigs, null, 4))
     setOpen(false)
@@ -515,7 +531,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
       // For built-in widgets, use the buildinWidgets data
       widgets = JSON.parse(JSON.stringify(buildinWidgets))
       widgets.forEach((w: any) => {
-        let match = PIN_WIDGETS.find((p) => p.name == w.label)
+        const match = PIN_WIDGETS.find((p) => p.name == w.label)
         if (match) {
           w.weight = match.weight
         } else {
@@ -532,7 +548,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
       try {
         widgets = JSON.parse(JSON.stringify(marketWidgets || []))
         widgets.forEach((w: any) => {
-          let match = PIN_WIDGETS.find((p) => p.name == w.label)
+          const match = PIN_WIDGETS.find((p) => p.name == w.label)
           if (match) {
             w.weight = match.weight
           } else {
@@ -544,7 +560,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
           if (a.weight > b.weight) return 1
           return 0
         })
-      } catch (e) { }
+      } catch (e) {}
     }
 
     setRenderWidgets(widgets)
@@ -737,7 +753,7 @@ const DaDashboardEditor = ({
   }, [entireWidgetConfig])
 
   const handleDeleteWidget = (widgetIndex: number) => {
-    let result = confirm('Are you sure you want to delete this widget?')
+    const result = confirm('Are you sure you want to delete this widget?')
     if (result === true) {
       const updatedWidgets = widgetConfigs.filter(
         (_, index) => index !== widgetIndex,
@@ -762,7 +778,7 @@ const DaDashboardEditor = ({
   }
 
   const handleSelectCell = (cell: number) => {
-    let updatedSelectedCells = selectedCells.includes(cell)
+    const updatedSelectedCells = selectedCells.includes(cell)
       ? selectedCells.filter((c) => c !== cell)
       : [...selectedCells, cell].sort((a, b) => a - b)
 
@@ -852,7 +868,7 @@ const DaDashboardEditor = ({
           'group relative flex cursor-pointer select-none border border-gray-300 text-gray-700 text-sm',
           `col-span-${colSpan} row-span-${rowSpan}`,
           selectedWidgetIndex === index &&
-          '!border-primary !bg-gray-100 !text-primary',
+            '!border-primary !bg-gray-100 !text-primary',
           'bg-gray-100 hover:bg-gray-100',
         )}
         key={`${index}-${cell}`}
@@ -894,8 +910,8 @@ const DaDashboardEditor = ({
                   widgetConfig.options && widgetConfig.options.iconURL
                     ? widgetConfig.options.iconURL
                     : buildinWidgets.find(
-                      (widget) => widget.widget === widgetConfig?.widget,
-                    )?.icon
+                        (widget) => widget.widget === widgetConfig?.widget,
+                      )?.icon
                 if (imageUrl) {
                   return (
                     <img
@@ -913,11 +929,11 @@ const DaDashboardEditor = ({
             </div>
             <div className="w-full pt-2 text-center !text-xs font-semibold">
               {widgetConfig.options?.url &&
-                widgetConfig.options.url.includes('/store-be/')
+              widgetConfig.options.url.includes('/store-be/')
                 ? widgetConfig.options.url
-                  .split('/store-be/')[1]
-                  .split('/')[0]
-                  .replace(/%20/g, ' ')
+                    .split('/store-be/')[1]
+                    .split('/')[0]
+                    .replace(/%20/g, ' ')
                 : widgetConfig.widget}
             </div>
           </div>
@@ -1077,4 +1093,3 @@ const DaDashboardEditor = ({
 }
 
 export default DaDashboardEditor
-

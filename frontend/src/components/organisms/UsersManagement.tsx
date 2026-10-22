@@ -129,7 +129,10 @@ const UsersManagement = () => {
       {/* List */}
       <div className="flex-1 min-h-0 overflow-y-auto space-y-2">
         {users.map((user) => (
-          <div key={user.id} className="flex p-4 border border-border rounded-lg">
+          <div
+            key={user.id}
+            className="flex p-4 border border-border rounded-lg"
+          >
             <DaUserListItem user={user} key={user.id} />
 
             <span className="ml-auto mr-2 items-center flex text-sm text-muted-foreground">
@@ -170,4 +173,3 @@ const UsersManagement = () => {
 }
 
 export default UsersManagement
-

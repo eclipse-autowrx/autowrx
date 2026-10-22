@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -11,92 +11,134 @@ import useRuntimeStore from '@/stores/runtimeStore'
 import { shallow } from 'zustand/shallow'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
-import { MdDeleteOutline } from "react-icons/md";
+import { MdDeleteOutline } from 'react-icons/md'
 
 interface iDaMockManager {
-    mockSignals: any[]
-    sendMockSignalsToRt?: (signals: any[]) => void
-    loadMockSignalsFromRt?: () => void
+  mockSignals: any[]
+  sendMockSignalsToRt?: (signals: any[]) => void
+  loadMockSignalsFromRt?: () => void
 }
 
-const DaMockManager: FC<iDaMockManager> = ({mockSignals, sendMockSignalsToRt, loadMockSignalsFromRt}) => {
+const DaMockManager: FC<iDaMockManager> = ({
+  mockSignals,
+  sendMockSignalsToRt,
+  loadMockSignalsFromRt,
+}) => {
+  const [signals, setSignals] = useState<any[]>([])
+  const [editSignal, setEditSignal] = useState<any>(null)
 
-    const [signals, setSignals] = useState<any[]>([])
-    const [editSignal, setEditSignal] = useState<any>(null)
+  useEffect(() => {
+    setSignals(mockSignals || [])
+  }, [mockSignals])
 
-    useEffect(() => {
-        setSignals(mockSignals || [])
-    }, [mockSignals])
+  return (
+    <div className="w-full mt-2">
+      <div className="flex items-center mb-4 px-2">
+        <div className="mr-4 da-label-regular">Mock Signal</div>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            setEditSignal({ signal: 'Signal name', value: '0' })
+          }}
+        >
+          <div className="text-da-secondary-300">Add Signal</div>
+        </Button>
+        <div className="grow"></div>
+        <Button
+          size="sm"
+          onClick={() => {
+            if (!sendMockSignalsToRt) return
+            sendMockSignalsToRt(signals)
+          }}
+        >
+          Send to Runtime
+        </Button>
+        <Button
+          className="ml-2"
+          size="sm"
+          onClick={() => {
+            if (!loadMockSignalsFromRt) return
+            loadMockSignalsFromRt()
+          }}
+        >
+          Load from Runtime
+        </Button>
+      </div>
 
-    return <div className="w-full mt-2">
-
-        <div className='flex items-center mb-4 px-2'>
-            <div className='mr-4 da-label-regular'>Mock Signal</div>
-            <Button size="sm" variant="ghost" onClick={() => {
-                setEditSignal({signal: 'Signal name', value: '0'})
-            }}><div className="text-da-secondary-300">Add Signal</div></Button>
-            <div className='grow'></div>
-            <Button size="sm" onClick={() => {
-                if(!sendMockSignalsToRt) return
-                sendMockSignalsToRt(signals)
-            }}>Send to Runtime</Button>
-            <Button className='ml-2' size="sm" onClick={() => {
-                if(!loadMockSignalsFromRt) return
-                loadMockSignalsFromRt()
-            }}>Load from Runtime</Button>
+      {editSignal && (
+        <div className="flex mb-2">
+          <Input
+            value={editSignal.signal}
+            onChange={(e: any) => {
+              const s = { signal: e.target.value, value: editSignal.value }
+              setEditSignal(s)
+            }}
+            className="grow text-sm"
+          />
+          <Input
+            value={editSignal.value}
+            onChange={(e: any) => {
+              const s = { signal: editSignal.signal, value: e.target.value }
+              setEditSignal(s)
+            }}
+            className="flex w-20 ml-2 text-sm text-right"
+          />
+          <Button
+            className="ml-2"
+            disabled={!editSignal.signal || !editSignal.value}
+            onClick={() => {
+              const tmpSignals = JSON.parse(JSON.stringify(signals))
+              tmpSignals.push(JSON.parse(JSON.stringify(editSignal)))
+              setSignals(tmpSignals)
+              setEditSignal(null)
+            }}
+          >
+            Add
+          </Button>
+          <Button
+            className="ml-2"
+            onClick={() => {
+              setEditSignal(null)
+            }}
+          >
+            Cancel
+          </Button>
         </div>
+      )}
 
-        { editSignal && <div className='flex mb-2'>
-            <Input
-                value={editSignal.signal}
-                onChange={(e: any) =>
-                    {
-                        let s = {signal: e.target.value, value: editSignal.value}
-                        setEditSignal(s)
-                    }
-                }
-                className="grow text-sm"
-            />
-             <Input
-                value={editSignal.value}
-                onChange={(e: any) =>  {
-                    let s = {signal: editSignal.signal, value: e.target.value}
-                    setEditSignal(s)
-                }}
-                className="flex w-20 ml-2 text-sm text-right"
-            />
-            <Button className='ml-2' disabled={!editSignal.signal || !editSignal.value}
-                onClick={() => {
-                    let tmpSignals = JSON.parse(JSON.stringify(signals))
-                    tmpSignals.push(JSON.parse(JSON.stringify(editSignal)))
-                    setSignals(tmpSignals)
-                    setEditSignal(null)
-                }}>Add</Button>
-            <Button className='ml-2'
-                onClick={() => {
-                    setEditSignal(null)
-                }}>Cancel</Button>
-        </div>
-        }
-
-         <div className={`px-1 flex items-center border-da-gray-medium 
-            text-da-white da-label-tiny mb-1 border-b`}>
-            <div className='grow px-1'>Signal</div>
-            <div className='w-20 px-1 py-0.5 text-right'>Init value</div>
-            <div className='w-10 px-1 py-0.5 text-right'></div>
-        </div>
-        { signals && signals.map((signal, sIndex) => <div key={sIndex} className={`px-1 flex items-center border-da-gray-medium 
-            text-da-white da-label-tiny mb-1`}>
-            <div className='grow px-1'>{signal.signal}</div>
-            <div className='w-20 px-1 py-0.5 text-right border border-da-gray-medium rounded'>{signal.value || ''}</div>
-            <MdDeleteOutline onClick={() => {
-                let tmpSignals = JSON.parse(JSON.stringify(signals))
-                tmpSignals.splice(sIndex, 1);
+      <div
+        className={`px-1 flex items-center border-da-gray-medium 
+            text-da-white da-label-tiny mb-1 border-b`}
+      >
+        <div className="grow px-1">Signal</div>
+        <div className="w-20 px-1 py-0.5 text-right">Init value</div>
+        <div className="w-10 px-1 py-0.5 text-right"></div>
+      </div>
+      {signals &&
+        signals.map((signal, sIndex) => (
+          <div
+            key={sIndex}
+            className={`px-1 flex items-center border-da-gray-medium 
+            text-da-white da-label-tiny mb-1`}
+          >
+            <div className="grow px-1">{signal.signal}</div>
+            <div className="w-20 px-1 py-0.5 text-right border border-da-gray-medium rounded">
+              {signal.value || ''}
+            </div>
+            <MdDeleteOutline
+              onClick={() => {
+                const tmpSignals = JSON.parse(JSON.stringify(signals))
+                tmpSignals.splice(sIndex, 1)
                 setSignals(tmpSignals)
-            }} size={18} className='ml-2 text-da-white cursor-pointer'/>
-        </div>)
-        }
+              }}
+              size={18}
+              className="ml-2 text-da-white cursor-pointer"
+            />
+          </div>
+        ))}
     </div>
+  )
 }
 
 export default DaMockManager

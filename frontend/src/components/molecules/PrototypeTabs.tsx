@@ -16,7 +16,10 @@ import {
   TbMessagePlus,
   TbRoute,
 } from 'react-icons/tb'
-import { TabConfig, TabsBorderRadius } from '@/components/organisms/CustomTabEditor'
+import {
+  TabConfig,
+  TabsBorderRadius,
+} from '@/components/organisms/CustomTabEditor'
 import { renderTabIcon, tabItemClasses } from '@/lib/tabUtils'
 import { cn } from '@/lib/utils'
 
@@ -44,7 +47,6 @@ const NotificationBadge: FC<{ visible: boolean }> = ({ visible }) => (
   />
 )
 
-
 // Default builtin tabs
 const DEFAULT_BUILTIN_TABS: TabConfig[] = [
   { type: 'builtin', key: 'overview', label: 'Overview' },
@@ -55,7 +57,9 @@ const DEFAULT_BUILTIN_TABS: TabConfig[] = [
 ]
 
 // Migration helper: convert old format to new format
-export const migrateTabConfig = (oldTabs?: Array<{ label: string; plugin: string }>): TabConfig[] => {
+export const migrateTabConfig = (
+  oldTabs?: Array<{ label: string; plugin: string }>,
+): TabConfig[] => {
   if (!oldTabs || oldTabs.length === 0) {
     return DEFAULT_BUILTIN_TABS
   }
@@ -71,8 +75,8 @@ export const migrateTabConfig = (oldTabs?: Array<{ label: string; plugin: string
   // was lost during serialization (e.g. saved by an older version of TemplateForm that stripped
   // TabConfig fields). They carry no actionable info, so we skip them to avoid ghost custom tabs.
   const customTabs: TabConfig[] = oldTabs
-    .filter(tab => !!tab.plugin)
-    .map(tab => ({
+    .filter((tab) => !!tab.plugin)
+    .map((tab) => ({
       type: 'custom',
       label: tab.label,
       plugin: tab.plugin,
@@ -86,7 +90,12 @@ export const getTabConfig = (tabs?: any[]): TabConfig[] => {
   return migrateTabConfig(tabs)
 }
 
-const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRadius, tabNotifications }) => {
+const PrototypeTabs: FC<PrototypeTabsProps> = ({
+  tabs,
+  tabsVariant,
+  tabsBorderRadius,
+  tabNotifications,
+}) => {
   const { model_id, prototype_id, tab } = useParams()
   const [searchParams] = useSearchParams()
   const variant = tabsVariant || 'tab'
@@ -96,7 +105,7 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRa
   const tabConfigs = getTabConfig(tabs)
 
   // Filter out hidden tabs
-  const visibleTabs = tabConfigs.filter(t => !t.hidden)
+  const visibleTabs = tabConfigs.filter((t) => !t.hidden)
 
   // The first visible tab is the default when no tab is in the URL
   const firstVisibleTab = visibleTabs[0]
@@ -140,8 +149,10 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRa
           }
 
           const isActive =
-            ((!tab || tab === 'view') && firstVisibleTab?.type === 'builtin' && firstVisibleTab?.key === key) ||
-            (tab === key)
+            ((!tab || tab === 'view') &&
+              firstVisibleTab?.type === 'builtin' &&
+              firstVisibleTab?.key === key) ||
+            tab === key
 
           const icon = renderTabIcon(tabConfig, defaultIcon)
           const hasNotification = !!tabNotifications?.[key || '']
@@ -157,7 +168,9 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRa
                   'da-prototype-tab',
                 )}
               >
-                {icon}{label}<NotificationBadge visible={hasNotification} />
+                {icon}
+                {label}
+                <NotificationBadge visible={hasNotification} />
               </Link>
             )
           }
@@ -170,12 +183,15 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRa
               dataId={dataId}
               className="da-prototype-tab"
             >
-              {icon}{label}<NotificationBadge visible={hasNotification} />
+              {icon}
+              {label}
+              <NotificationBadge visible={hasNotification} />
             </DaTabItem>
           )
         } else {
           const { label, plugin } = tabConfig
-          const isActive = tab === 'plug' && searchParams.get('plugid') === plugin
+          const isActive =
+            tab === 'plug' && searchParams.get('plugid') === plugin
           const icon = renderTabIcon(tabConfig, null)
           const to = `/model/${model_id}/library/prototype/${prototype_id}/plug?plugid=${plugin}`
           const hasNotification = !!tabNotifications?.[`plug:${plugin}`]
@@ -190,7 +206,9 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRa
                   'da-prototype-tab',
                 )}
               >
-                {icon}{label}<NotificationBadge visible={hasNotification} />
+                {icon}
+                {label}
+                <NotificationBadge visible={hasNotification} />
               </Link>
             )
           }
@@ -202,7 +220,9 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRa
               to={to}
               className="da-prototype-tab"
             >
-              {icon}{label}<NotificationBadge visible={hasNotification} />
+              {icon}
+              {label}
+              <NotificationBadge visible={hasNotification} />
             </DaTabItem>
           )
         }

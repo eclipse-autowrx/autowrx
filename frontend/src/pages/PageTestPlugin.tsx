@@ -35,22 +35,27 @@ export default function PageTestPlugin() {
         const ReactMod = await import('react')
         const ReactDOMMod = await import('react-dom/client')
         const JSXRuntime = await import('react/jsx-runtime')
-        
-        const requireShim = function(id: string) {
+
+        const requireShim = function (id: string) {
           log('require() called for:', id)
           if (id === 'react') return ReactMod
           if (id === 'react-dom/client') return ReactDOMMod
           if (id === 'react/jsx-runtime') return JSXRuntime
           throw new Error(`Module ${id} not found`)
         }
-        
+
         ;(window as any).require = requireShim
         ;(globalThis as any).require = requireShim
         log('ensureGlobals: require() shim added to window and globalThis')
       }
     }
 
-    const waitFor = (predicate: () => any, label: string, maxMs = 6000, interval = 50) => {
+    const waitFor = (
+      predicate: () => any,
+      label: string,
+      maxMs = 6000,
+      interval = 50,
+    ) => {
       const start = Date.now()
       return new Promise<void>((resolve, reject) => {
         const check = () => {
@@ -74,7 +79,9 @@ export default function PageTestPlugin() {
     const loadAndMount = async () => {
       try {
         await ensureGlobals()
-        let script: HTMLScriptElement | null = document.querySelector(`script[data-aw-plugin="${PLUGIN_URL}"]`)
+        let script: HTMLScriptElement | null = document.querySelector(
+          `script[data-aw-plugin="${PLUGIN_URL}"]`,
+        )
         if (!script) {
           log('injecting script', PLUGIN_URL)
           script = document.createElement('script')
@@ -84,14 +91,23 @@ export default function PageTestPlugin() {
           script.crossOrigin = 'anonymous'
           script.dataset.awPlugin = PLUGIN_URL
           await new Promise<void>((resolve, reject) => {
-            script!.onload = () => { log('script loaded'); resolve() }
-            script!.onerror = () => { log('script error'); reject(new Error('Failed to load plugin script')) }
+            script!.onload = () => {
+              log('script loaded')
+              resolve()
+            }
+            script!.onerror = () => {
+              log('script error')
+              reject(new Error('Failed to load plugin script'))
+            }
             document.body.appendChild(script!)
           })
         } else {
           log('script already present, reusing')
         }
-        await waitFor(() => !!(window as any).DAPlugins?.['sample-tsx'], 'DAPlugins.sample-tsx ready')
+        await waitFor(
+          () => !!(window as any).DAPlugins?.['sample-tsx'],
+          'DAPlugins.sample-tsx ready',
+        )
         pluginReadyRef.current = Promise.resolve()
         await waitFor(() => !!containerRef.current, 'containerRef')
         if (cancelled) return
@@ -122,29 +138,41 @@ export default function PageTestPlugin() {
   // Typing for the remote component
   type RemotePageProps = { data?: any; config?: any }
 
-  const RemotePage = useMemo(() =>
-    React.lazy(async (): Promise<{ default: React.ComponentType<RemotePageProps> }> => {
-      // wait until ensure/load completes
-      if (pluginReadyRef.current) {
-        try { await pluginReadyRef.current } catch {}
-      }
-      // @ts-ignore
-      const comp = (window as any).DAPlugins?.['sample-tsx']?.components?.Page
-      if (!comp) throw new Error('Remote Page component missing')
-      return { default: comp as React.ComponentType<RemotePageProps> }
-    }),
-  [])
+  const RemotePage = useMemo(
+    () =>
+      React.lazy(
+        async (): Promise<{
+          default: React.ComponentType<RemotePageProps>
+        }> => {
+          // wait until ensure/load completes
+          if (pluginReadyRef.current) {
+            try {
+              await pluginReadyRef.current
+            } catch {}
+          }
+          // @ts-ignore
+          const comp = (window as any).DAPlugins?.['sample-tsx']?.components
+            ?.Page
+          if (!comp) throw new Error('Remote Page component missing')
+          return { default: comp as React.ComponentType<RemotePageProps> }
+        },
+      ),
+    [],
+  )
 
   return (
     <div className="min-h-screen w-full" ref={containerRef}>
       {error && <div className="p-3 text-red-600">{error}</div>}
       {loaded && (
-        <Suspense fallback={<div className="p-4">Loading remote component…</div>}>
-          <RemotePage data={{ count: 0 }} config={{ title: 'External Plugin (TSX)' }} />
+        <Suspense
+          fallback={<div className="p-4">Loading remote component…</div>}
+        >
+          <RemotePage
+            data={{ count: 0 }}
+            config={{ title: 'External Plugin (TSX)' }}
+          />
         </Suspense>
       )}
     </div>
   )
 }
-
-

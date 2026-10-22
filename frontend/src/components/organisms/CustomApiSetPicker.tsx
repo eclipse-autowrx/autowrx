@@ -7,11 +7,19 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/atoms/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/atoms/dialog'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { useQuery } from '@tanstack/react-query'
-import { listCustomApiSets, type CustomApiSet } from '@/services/customApiSet.service'
+import {
+  listCustomApiSets,
+  type CustomApiSet,
+} from '@/services/customApiSet.service'
 import { Spinner } from '@/components/atoms/spinner'
 import { DaImage } from '@/components/atoms/DaImage'
 import { cn } from '@/lib/utils'
@@ -74,11 +82,15 @@ const CustomApiSetPicker: React.FC<CustomApiSetPickerProps> = ({
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Spinner className="mr-2" />
-                <span className="text-sm text-muted-foreground">Loading sets...</span>
+                <span className="text-sm text-muted-foreground">
+                  Loading sets...
+                </span>
               </div>
             ) : availableSets.length === 0 ? (
               <div className="text-center py-8 text-sm text-muted-foreground">
-                {searchQuery ? 'No sets match your search.' : 'No available sets.'}
+                {searchQuery
+                  ? 'No sets match your search.'
+                  : 'No available sets.'}
               </div>
             ) : (
               <div className="space-y-2">
@@ -124,4 +136,3 @@ const CustomApiSetPicker: React.FC<CustomApiSetPickerProps> = ({
 }
 
 export default CustomApiSetPicker
-
