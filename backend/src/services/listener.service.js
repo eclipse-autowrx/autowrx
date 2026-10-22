@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -12,7 +12,7 @@ const findSocketByUser = (userId) => {
   const io = getIO();
   let socket = null;
   io.sockets.sockets.forEach((value) => {
-    const user = value.user;
+    const { user } = value;
     if (!user) {
       return;
     }

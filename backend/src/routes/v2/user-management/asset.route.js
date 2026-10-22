@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -31,19 +31,19 @@ router
     auth(),
     validate(assetValidation.getAsset),
     checkPermission(PERMISSIONS.READ_ASSET, RESOURCES.ASSET),
-    assetController.getAsset
+    assetController.getAsset,
   )
   .patch(
     auth(),
     validate(assetValidation.updateAsset),
     checkPermission(PERMISSIONS.WRITE_ASSET, RESOURCES.ASSET),
-    assetController.updateAsset
+    assetController.updateAsset,
   )
   .delete(
     auth(),
     validate(assetValidation.deleteAsset),
     checkPermission(PERMISSIONS.WRITE_ASSET, RESOURCES.ASSET),
-    assetController.deleteAsset
+    assetController.deleteAsset,
   );
 
 router
@@ -52,7 +52,7 @@ router
     auth(),
     validate(assetValidation.generateToken),
     checkPermission(PERMISSIONS.READ_ASSET, RESOURCES.ASSET),
-    assetController.generateToken
+    assetController.generateToken,
   );
 
 router
@@ -61,13 +61,13 @@ router
     auth(),
     validate(assetValidation.addAuthorizedUser),
     checkPermission(PERMISSIONS.WRITE_ASSET, RESOURCES.ASSET),
-    assetController.addAuthorizedUser
+    assetController.addAuthorizedUser,
   )
   .delete(
     auth(),
     validate(assetValidation.deleteAuthorizedUser),
     checkPermission(PERMISSIONS.WRITE_ASSET, RESOURCES.ASSET),
-    assetController.deleteAuthorizedUser
+    assetController.deleteAuthorizedUser,
   );
 
 module.exports = router;

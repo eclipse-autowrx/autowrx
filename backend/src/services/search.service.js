@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -18,7 +18,7 @@ const search = async (query, options, userId) => {
     { $or: [{ name: new RegExp(query, 'i') }, { description: new RegExp(query, 'i') }] },
     {},
     {},
-    userId
+    userId,
   );
   const prototypes = await Prototype.paginate(
     {
@@ -35,7 +35,7 @@ const search = async (query, options, userId) => {
       sortBy: options?.sortBy
         ? ['editors_choice:desc,createdAt:asc', options.sortBy].join(',')
         : 'editors_choice:desc,createdAt:asc',
-    }
+    },
   );
 
   return {

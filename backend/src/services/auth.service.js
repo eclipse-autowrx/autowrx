@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -31,7 +31,7 @@ const githubCallback = async (code, userId) => {
         headers: {
           Accept: 'application/json',
         },
-      }
+      },
     );
     const { access_token: accessToken, expires_in: expiresIn } = data;
     const socket = listenerService.findSocketByUser(userId);
@@ -170,7 +170,7 @@ const verifyEmail = async (verifyEmailToken) => {
 const callMsGraph = async (accessToken, providerId = null) => {
   // If providerId provided, fetch provider config for validation
   // For now, we'll use the default endpoint but this allows for future tenant-specific validation
-  const msGraphMeEndpoint = config.sso.msGraphMeEndpoint;
+  const { msGraphMeEndpoint } = config.sso;
 
   logger.debug(`Fetching user data from: ${msGraphMeEndpoint}${providerId ? ` (Provider: ${providerId})` : ''}`);
 
@@ -218,43 +218,52 @@ const exchangeGithubSSOCode = async (code, provider) => {
   if (!clientId || !clientSecret) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'GitHub SSO provider is missing clientId or clientSecret');
   }
-  const { data: tokenData } = await axios.post(
-    'https://github.com/login/oauth/access_token',
-    {
-      client_id: clientId,
-      client_secret: clientSecret,
-      code,
-    },
-    {
-      headers: { Accept: 'application/json' },
-    }
-  ).catch((err) => {
-    logger.error(`GitHub token exchange failed: ${err.response?.data?.error_description || err.message}`);
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'Failed to authenticate with GitHub');
-  });
+  const { data: tokenData } = await axios
+    .post(
+      'https://github.com/login/oauth/access_token',
+      {
+        client_id: clientId,
+        client_secret: clientSecret,
+        code,
+      },
+      {
+        headers: { Accept: 'application/json' },
+      },
+    )
+    .catch((err) => {
+      logger.error(`GitHub token exchange failed: ${err.response?.data?.error_description || err.message}`);
+      throw new ApiError(httpStatus.UNAUTHORIZED, 'Failed to authenticate with GitHub');
+    });
 
   const accessToken = tokenData.access_token;
   if (!accessToken) {
     throw new ApiError(httpStatus.UNAUTHORIZED, tokenData.error_description || 'No access token from GitHub');
   }
 
-  const { data: userData } = await axios.get('https://api.github.com/user', {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  }).catch((err) => {
-    logger.error(`GitHub user fetch failed: ${err.message}`);
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'Failed to fetch GitHub user');
-  });
+  const { data: userData } = await axios
+    .get('https://api.github.com/user', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    .catch((err) => {
+      logger.error(`GitHub user fetch failed: ${err.message}`);
+      throw new ApiError(httpStatus.UNAUTHORIZED, 'Failed to fetch GitHub user');
+    });
 
   let mail = userData.email;
   if (!mail) {
-    const { data: emails } = await axios.get('https://api.github.com/user/emails', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }).catch(() => ({ data: [] }));
+    const { data: emails } = await axios
+      .get('https://api.github.com/user/emails', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      .catch(() => ({ data: [] }));
     const primary = Array.isArray(emails) ? emails.find((e) => e.primary) : null;
     mail = primary ? primary.email : null;
   }
   if (!mail) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'GitHub account has no public or primary email. Please add an email in GitHub settings.');
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      'GitHub account has no public or primary email. Please add an email in GitHub settings.',
+    );
   }
 
   return {

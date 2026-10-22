@@ -7,13 +7,13 @@
 // SPDX-License-Identifier: MIT
 
 const express = require('express');
+const { model } = require('mongoose');
 const validate = require('../../../middlewares/validate');
 const modelValidation = require('../../../validations/model.validation');
 const { modelController } = require('../../../controllers');
 const auth = require('../../../middlewares/auth');
 const { checkPermission } = require('../../../middlewares/permission');
 const { PERMISSIONS } = require('../../../config/roles');
-const { model } = require('mongoose');
 
 const router = express.Router();
 

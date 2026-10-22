@@ -6,10 +6,10 @@
 //
 // SPDX-License-Identifier: MIT
 
+const httpStatus = require('http-status');
 const { SiteConfig } = require('../models');
 const { encrypt, decrypt } = require('../utils/encryption');
 const ApiError = require('../utils/ApiError');
-const httpStatus = require('http-status');
 
 const SSO_PROVIDERS_KEY = 'SSO_PROVIDERS';
 
@@ -21,27 +21,27 @@ const SSO_PROVIDERS_KEY = 'SSO_PROVIDERS';
 const getSSOProviders = async (includeSecrets = false) => {
   try {
     // Query database directly to avoid circular dependency with siteConfigService
-    const config = await SiteConfig.findOne({ 
-      key: SSO_PROVIDERS_KEY, 
-      scope: 'site' 
+    const config = await SiteConfig.findOne({
+      key: SSO_PROVIDERS_KEY,
+      scope: 'site',
     });
-    
+
     console.log('SSO Config retrieved:', config ? `Found with ${config.value?.length || 0} providers` : 'Not found');
-    
+
     if (!config || !config.value) {
       console.log('No SSO providers config found in database');
       return [];
     }
-    
+
     const providers = Array.isArray(config.value) ? config.value : [];
-    console.log(`Total providers: ${providers.length}, Enabled: ${providers.filter(p => p.enabled).length}`);
-    
+    console.log(`Total providers: ${providers.length}, Enabled: ${providers.filter((p) => p.enabled).length}`);
+
     if (includeSecrets) {
       return decryptProviderSecrets(providers);
     }
-    
+
     // Remove secrets for public consumption
-    return providers.map(provider => {
+    return providers.map((provider) => {
       const { clientSecret, ...publicProvider } = provider;
       return publicProvider;
     });
@@ -57,7 +57,7 @@ const getSSOProviders = async (includeSecrets = false) => {
  */
 const getEnabledSSOProviders = async () => {
   const providers = await getSSOProviders(false);
-  return providers.filter(provider => provider.enabled === true);
+  return providers.filter((provider) => provider.enabled === true);
 };
 
 /**
@@ -68,16 +68,16 @@ const getEnabledSSOProviders = async () => {
  */
 const getSSOProviderById = async (id, includeSecrets = false) => {
   const providers = await getSSOProviders(includeSecrets);
-  const provider = providers.find(p => p.id === id);
-  
+  const provider = providers.find((p) => p.id === id);
+
   if (!provider) {
     throw new ApiError(httpStatus.NOT_FOUND, 'SSO provider not found');
   }
-  
+
   if (!provider.enabled) {
     throw new ApiError(httpStatus.FORBIDDEN, 'SSO provider is disabled');
   }
-  
+
   return provider;
 };
 
@@ -90,8 +90,8 @@ const encryptProviderSecrets = (providers) => {
   if (!Array.isArray(providers)) {
     return providers;
   }
-  
-  return providers.map(provider => {
+
+  return providers.map((provider) => {
     if (provider.clientSecret && !provider.clientSecret.includes(':')) {
       // Only encrypt if not already encrypted (no colon separator)
       return {
@@ -112,8 +112,8 @@ const decryptProviderSecrets = (providers) => {
   if (!Array.isArray(providers)) {
     return providers;
   }
-  
-  return providers.map(provider => {
+
+  return providers.map((provider) => {
     if (provider.clientSecret && provider.clientSecret.includes(':')) {
       // Only decrypt if encrypted (has colon separator)
       try {
@@ -137,4 +137,3 @@ module.exports = {
   encryptProviderSecrets,
   decryptProviderSecrets,
 };
-

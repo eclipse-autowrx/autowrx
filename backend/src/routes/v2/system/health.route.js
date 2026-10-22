@@ -66,7 +66,7 @@ router.get('/', auth(), checkPermission(PERMISSIONS.ADMIN), async (req, res) => 
     res.status(500).json({
       status: 'error',
       checkedAt: new Date().toISOString(),
-      message: 'Health check crashed: ' + err.message,
+      message: `Health check crashed: ${err.message}`,
     });
   }
 });

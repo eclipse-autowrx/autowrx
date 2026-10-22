@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -12,7 +12,7 @@ const config = require('../config/config');
 const ChangeLog = require('../models/changeLog.model');
 
 async function setLogsCap() {
-  const db = mongoose.connection.db;
+  const { db } = mongoose.connection;
   const name = 'changelogs';
   const max = config.logsMaxSize * 1024 * 1024; // 100MB capped
 

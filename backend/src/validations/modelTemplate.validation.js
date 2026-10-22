@@ -47,5 +47,3 @@ const remove = {
 };
 
 module.exports = { list, get, create, update, remove };
-
-

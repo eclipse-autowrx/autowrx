@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -73,10 +73,7 @@ const querySets = async (filter, options, userId) => {
       filter.owner = userId;
     } else {
       // No scope filter specified: show system-scoped OR user-scoped (owned by current user)
-      filter.$or = [
-        { scope: 'system' },
-        { scope: 'user', owner: userId },
-      ];
+      filter.$or = [{ scope: 'system' }, { scope: 'user', owner: userId }];
       // Remove scope from filter since we're using $or
       delete filter.scope;
     }
@@ -140,7 +137,7 @@ const updateSetById = async (id, updateBody, userId) => {
 
   Object.assign(set, updateBody);
   set.updated_by = userId;
-  
+
   // Mark data field as modified if it was updated
   if (updateBody.data) {
     set.markModified('data');
@@ -148,7 +145,7 @@ const updateSetById = async (id, updateBody, userId) => {
       set.markModified('data.items');
     }
   }
-  
+
   await set.save();
   return set;
 };
@@ -187,7 +184,7 @@ const addSetItem = async (id, item, userId) => {
 
   // Validate item
   const customApiSchema = await customApiSchemaService.getCustomApiSchemaById(set.custom_api_schema);
-  
+
   // Check if item id already exists
   if (set.data.items.some((existingItem) => existingItem.id === item.id)) {
     throw new ApiError(httpStatus.BAD_REQUEST, `Item with id '${item.id}' already exists`);
@@ -231,16 +228,16 @@ const updateSetItem = async (id, itemId, itemUpdate, userId) => {
   if (!updateData || Object.keys(updateData).length === 0) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Update data cannot be empty');
   }
-  
+
   // Update the item directly in the array - convert to plain objects first
   const itemsArray = set.data.items.map((item) => (item.toObject ? item.toObject() : { ...item }));
   Object.assign(itemsArray[itemIndex], updateData);
   set.data.items = itemsArray;
-  
+
   set.updated_by = userId;
   set.markModified('data.items'); // Mark array as modified for Mongoose
   await set.save();
-  
+
   // Reload to get fresh data
   return await getSetById(id, userId);
 };
@@ -296,4 +293,3 @@ module.exports = {
   removeSetItem,
   getSetsByModel,
 };
-

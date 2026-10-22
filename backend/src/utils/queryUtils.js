@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -45,13 +45,13 @@ const buildMongoSearchFilter = (originalFilter, searchTerm, searchFields) => {
 
   if (andConditions.length === 0) {
     return {};
-  } else if (andConditions.length === 1) {
-    return andConditions[0];
-  } else {
-    return {
-      $and: andConditions,
-    };
   }
+  if (andConditions.length === 1) {
+    return andConditions[0];
+  }
+  return {
+    $and: andConditions,
+  };
 };
 
 module.exports.buildMongoSearchFilter = buildMongoSearchFilter;

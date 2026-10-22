@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -16,11 +16,13 @@ const relationshipSchema = Joi.object().keys({
   description: Joi.string().trim().allow(''),
 });
 
-const displayMappingSchema = Joi.object().keys({
-  title: Joi.string().trim().allow('', null),
-  description: Joi.string().trim().allow('', null),
-  type: Joi.string().trim().allow('', null),
-}).allow(null);
+const displayMappingSchema = Joi.object()
+  .keys({
+    title: Joi.string().trim().allow('', null),
+    description: Joi.string().trim().allow('', null),
+    type: Joi.string().trim().allow('', null),
+  })
+  .allow(null);
 
 const createCustomApiSchema = {
   body: Joi.object().keys({
@@ -91,4 +93,3 @@ module.exports = {
   deleteCustomApiSchema,
   listCustomApiSchemas,
 };
-

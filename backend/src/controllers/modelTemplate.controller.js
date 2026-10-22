@@ -1,9 +1,9 @@
 // Copyright (c) 2025 Eclipse Foundation.
 // SPDX-License-Identifier: MIT
 
+const httpStatus = require('http-status');
 const pick = require('../utils/pick');
 const catchAsync = require('../utils/catchAsync');
-const httpStatus = require('http-status');
 const { modelTemplateService } = require('../services');
 
 const list = catchAsync(async (req, res) => {
@@ -44,5 +44,3 @@ const remove = catchAsync(async (req, res) => {
 });
 
 module.exports = { list, getById, create, update, remove };
-
-

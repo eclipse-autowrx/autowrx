@@ -22,7 +22,7 @@ const maskEmail = (email) => {
   }
 
   const visibleChars = Math.min(3, Math.floor(username.length / 3));
-  const maskedUsername = username.substring(0, visibleChars) + '***';
+  const maskedUsername = `${username.substring(0, visibleChars)}***`;
 
   return `${maskedUsername}@${domain}`;
 };

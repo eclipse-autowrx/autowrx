@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -36,7 +36,7 @@ const updateVSS = async (releases) => {
     fs.writeFileSync(path.join(__dirname, '../../data/vss.json'), JSON.stringify(releases, null, 2));
     logger.info('Updated VSS version list');
     logger.info(`Downloading VSS versions data for ${releases.length} versions`);
-    
+
     // Download files with individual error handling so one failure doesn't stop others
     const downloadPromises = releases.map(async (release) => {
       const filePath = path.join(__dirname, `../../data/${release.name}.json`);
@@ -53,7 +53,7 @@ const updateVSS = async (releases) => {
         // Continue with other downloads even if this one fails
       }
     });
-    
+
     await Promise.allSettled(downloadPromises);
     logger.info('Completed VSS versions data download (some may have failed)');
   } catch (error) {

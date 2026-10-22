@@ -7,6 +7,10 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
+const mongoose = require('mongoose');
+const _ = require('lodash');
+const fs = require('fs');
+const path = require('path');
 const { userService } = require('.');
 const prototypeService = require('./prototype.service');
 const extendedApiService = require('./extendedApi.service');
@@ -17,13 +21,9 @@ const { Model, Role, UserRole, Prototype, ModelTemplate, CustomApiSet } = requir
 const ApiError = require('../utils/ApiError');
 const { PERMISSIONS } = require('../config/roles');
 const { publiclyVisibleVisibilities, visibilityTypes } = require('../config/enums');
-const mongoose = require('mongoose');
 const logger = require('../config/logger');
-const _ = require('lodash');
 const config = require('../config/config');
 const customApiSetService = require('./customApiSet.service');
-const fs = require('fs');
-const path = require('path');
 
 /**
  *

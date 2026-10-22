@@ -1,19 +1,19 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
 
+const httpStatus = require('http-status');
+const { isValidObjectId } = require('mongoose');
 const permissionService = require('./permission.service');
 const { PERMISSIONS, RESOURCES } = require('../config/roles');
 const { Role } = require('../models');
 const Asset = require('../models/asset.model');
 const ApiError = require('../utils/ApiError');
-const httpStatus = require('http-status');
 const logger = require('../config/logger');
-const { isValidObjectId } = require('mongoose');
 
 /**
  *
@@ -56,7 +56,7 @@ const queryAssets = async (filter, options, userId) => {
   }
 
   if (userId) {
-    let accessibleIds = [];
+    const accessibleIds = [];
     try {
       const roles = permissionService.getMappedRoles(await permissionService.getUserRoles(userId));
       roles?.forEach?.((value, key) => {
@@ -111,7 +111,7 @@ const updateAsset = (assetId, assetBody) => {
     {
       _id: assetId,
     },
-    assetBody
+    assetBody,
   );
 };
 

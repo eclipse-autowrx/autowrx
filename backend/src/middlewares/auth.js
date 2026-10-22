@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,10 +7,10 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
-const ApiError = require('../utils/ApiError');
-const config = require('../config/config');
 const { default: axios, isAxiosError } = require('axios');
 const passport = require('passport');
+const ApiError = require('../utils/ApiError');
+const config = require('../config/config');
 const logger = require('../config/logger');
 const platformAuthService = require('../services/platformAuth.service');
 
@@ -51,8 +51,8 @@ const auth =
         delete forwardHeaders['keep-alive'];
         delete forwardHeaders['proxy-connection'];
         delete forwardHeaders['transfer-encoding'];
-        delete forwardHeaders['upgrade'];
-        delete forwardHeaders['trailer'];
+        delete forwardHeaders.upgrade;
+        delete forwardHeaders.trailer;
         const response = await axios.post(config.services.auth.url, req.body, {
           headers: forwardHeaders,
         });

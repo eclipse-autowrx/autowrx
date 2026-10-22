@@ -9,22 +9,18 @@ const { PERMISSIONS } = require('../../../config/roles');
 const router = express.Router();
 
 // Public read endpoints
-router.route('/')
-  .get(validate(modelTemplateValidation.list), modelTemplateController.list);
+router.route('/').get(validate(modelTemplateValidation.list), modelTemplateController.list);
 
-router.route('/:id')
-  .get(validate(modelTemplateValidation.get), modelTemplateController.getById);
+router.route('/:id').get(validate(modelTemplateValidation.get), modelTemplateController.getById);
 
 // Admin-only write endpoints
 router.use(auth(), checkPermission(PERMISSIONS.ADMIN));
 
-router.route('/')
-  .post(validate(modelTemplateValidation.create), modelTemplateController.create);
+router.route('/').post(validate(modelTemplateValidation.create), modelTemplateController.create);
 
-router.route('/:id')
+router
+  .route('/:id')
   .put(validate(modelTemplateValidation.update), modelTemplateController.update)
   .delete(validate(modelTemplateValidation.remove), modelTemplateController.remove);
 
 module.exports = router;
-
-

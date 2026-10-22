@@ -17,7 +17,9 @@ const envVarsSchema = Joi.object()
     NODE_ENV: Joi.string().valid('production', 'development', 'test').required(),
     PORT: Joi.number().default(3200),
     MONGODB_URL: Joi.string().default('mongodb://localhost:27017/autowrx').required().description('Mongo DB url'),
-    CORS_ORIGINS: Joi.string().default('localhost:\\d+,127\\.0\\.0\\.1:\\d+').description('Allowed CORS origins (comma-separated regex patterns)'),
+    CORS_ORIGINS: Joi.string()
+      .default('localhost:\\d+,127\\.0\\.0\\.1:\\d+')
+      .description('Allowed CORS origins (comma-separated regex patterns)'),
     // JWT
     JWT_SECRET: Joi.string().description('JWT secret key'),
     JWT_ACCESS_EXPIRATION_MINUTES: Joi.number().default(30).description('minutes after which access tokens expire'),
@@ -73,7 +75,9 @@ const envVarsSchema = Joi.object()
     EXTERNAL_SYNC_MODEL_URL: Joi.string().uri().description('Base URL for external model/data sync API'),
     EXTERNAL_SYNC_USE_PROXY: Joi.boolean()
       .default(false)
-      .description('When true, outbound sync uses HTTP_PROXY/HTTPS_PROXY; default false for docker-internal targets like genai'),
+      .description(
+        'When true, outbound sync uses HTTP_PROXY/HTTPS_PROXY; default false for docker-internal targets like genai',
+      ),
     // Kit server
     KIT_SERVER_URL: Joi.string().description('Kit server url'),
     // Admin emails
@@ -112,7 +116,7 @@ if (envVars.AUTH_PLATFORM_HEADERS) {
 
 if (envVars.AUTH_PROVIDER === 'platform' && !platformHeaders.email) {
   throw new Error(
-    'Config validation error: AUTH_PLATFORM_HEADERS must include an "email" key when AUTH_PROVIDER is platform'
+    'Config validation error: AUTH_PLATFORM_HEADERS must include an "email" key when AUTH_PROVIDER is platform',
   );
 }
 

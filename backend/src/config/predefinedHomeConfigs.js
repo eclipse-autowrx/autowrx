@@ -9,9 +9,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const homeContent = JSON.parse(
-  fs.readFileSync(path.join(__dirname, '..', '..', 'default', 'home_content.json'), 'utf8')
-);
+const homeContent = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'default', 'home_content.json'), 'utf8'));
 
 /**
  * Predefined home configs used as restore defaults when no deployment snapshot exists.

@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -44,7 +44,7 @@ const bodyValidation = Joi.object().keys({
     Joi.object().keys({
       title: Joi.string().required(),
       description: Joi.string().allow(''),
-    })
+    }),
   ),
   widget_config: Joi.string().custom(jsonString),
   autorun: Joi.boolean(),
@@ -119,7 +119,7 @@ const updatePrototype = {
       Joi.object().keys({
         title: Joi.string().required(),
         description: Joi.string().allow(''),
-      })
+      }),
     ),
     widget_config: Joi.string().custom(jsonString),
     autorun: Joi.boolean(),

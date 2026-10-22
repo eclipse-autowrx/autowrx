@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -32,7 +32,7 @@ const main = async () => {
   const promises = [];
 
   models.forEach(async (model) => {
-    const custom_apis = model.custom_apis;
+    const { custom_apis } = model;
     custom_apis.forEach(async (custom_api) => {
       const newData = {
         apiName: custom_api.name,
@@ -42,7 +42,7 @@ const main = async () => {
         type: custom_api.type || 'branch',
         datatype: custom_api.datatype || (custom_api.type !== 'branch' ? 'string' : null),
         description: custom_api.description || '',
-        isWishlist: true
+        isWishlist: true,
       };
       promises.push(db.collection('extendedapis').insertOne(newData));
     });

@@ -53,7 +53,7 @@ const siteConfigSnapshotSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 siteConfigSnapshotSchema.index({ key: 1, scope: 1 }, { unique: true });

@@ -17,14 +17,7 @@
  * and do not change API permissions.
  */
 
-const ADMIN_CLEAN_MODE_HIDDEN_SITE_CONFIG_SECTIONS = [
-  'auth',
-  'genai',
-  'sso',
-  'email',
-  'secrets',
-  'staging',
-];
+const ADMIN_CLEAN_MODE_HIDDEN_SITE_CONFIG_SECTIONS = ['auth', 'genai', 'sso', 'email', 'secrets', 'staging'];
 
 const ADMIN_CLEAN_MODE_VISIBLE_FEATURE_CATEGORIES = ['Unlimited model', 'Admin'];
 
@@ -47,7 +40,10 @@ const parseCsvEnv = (raw) => {
     .filter(Boolean);
 };
 
-const isTruthyTrue = (raw) => String(raw || '').trim().toLowerCase() === 'true';
+const isTruthyTrue = (raw) =>
+  String(raw || '')
+    .trim()
+    .toLowerCase() === 'true';
 
 /**
  * Resolve Admin UI visibility from the current process environment.

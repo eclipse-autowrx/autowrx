@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -35,7 +35,7 @@ const authorize = catchAsync(async (req, res) => {
   if (bodyData.permissions) {
     const permissionQueries = bodyData.permissions.split(',').map((permission) => permission.split(':'));
     const results = await Promise.all(
-      permissionQueries.map((query) => permissionService.hasPermission(req.user.id ?? bodyData.userId, query[0], query[1]))
+      permissionQueries.map((query) => permissionService.hasPermission(req.user.id ?? bodyData.userId, query[0], query[1])),
     );
 
     if (!results.every(Boolean)) {
@@ -133,7 +133,7 @@ const forgotPassword = catchAsync(async (req, res) => {
           origin: req.get('origin'),
           referer: req.get('referer'),
         },
-      }
+      },
     );
   } catch (error) {
     logger.warn(`Failed to create log - forgot password log: ${error}`);
@@ -171,7 +171,7 @@ const resetPassword = catchAsync(async (req, res) => {
           origin: req.get('origin'),
           referer: req.get('referer'),
         },
-      }
+      },
     );
   } catch (error) {
     logger.warn(`Failed to create log: ${error}`);
@@ -262,15 +262,16 @@ const githubSsoStart = catchAsync(async (req, res) => {
   }
   const baseUrl = `${req.protocol}://${req.get('host')}`;
   const pathWithoutQuery = (req.originalUrl || '').split('?')[0];
-  const callbackPath = pathWithoutQuery.replace(/\/github-sso\/start\/?$/, '') + '/github-sso/callback';
+  const callbackPath = `${pathWithoutQuery.replace(/\/github-sso\/start\/?$/, '')}/github-sso/callback`;
   const redirectUri = baseUrl + callbackPath;
   const returnOrigin = resolveRedirectOrigin(origin);
   const state = encodeURIComponent(JSON.stringify({ providerId, origin: returnOrigin }));
-  const scope = (Array.isArray(provider.scopes) && provider.scopes.length)
-    ? provider.scopes.join(' ')
-    : (typeof provider.scopes === 'string' && provider.scopes.trim())
-      ? provider.scopes.trim()
-      : 'user:email';
+  const scope =
+    Array.isArray(provider.scopes) && provider.scopes.length
+      ? provider.scopes.join(' ')
+      : typeof provider.scopes === 'string' && provider.scopes.trim()
+        ? provider.scopes.trim()
+        : 'user:email';
   const params = new URLSearchParams({
     client_id: provider.clientId,
     redirect_uri: redirectUri,
@@ -317,7 +318,9 @@ const githubSsoCallback = catchAsync(async (req, res) => {
   let user = await userService.getUserByEmail(graphData.mail);
   if (!user) {
     if (!req.authConfig.SSO_AUTO_REGISTRATION) {
-      return res.redirect(`${origin}?error=${encodeURIComponent('User not registered. Contact admin to register your account.')}`);
+      return res.redirect(
+        `${origin}?error=${encodeURIComponent('User not registered. Contact admin to register your account.')}`,
+      );
     }
     user = await userService.createSSOUser(graphData);
   } else {

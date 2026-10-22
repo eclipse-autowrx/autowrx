@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -37,34 +37,27 @@ router.use(auth(), checkPermission(PERMISSIONS.ADMIN));
 // CRUD operations for site configs
 router
   .route('/')
-  .post(
-    validate(siteConfigValidation.createSiteConfig),
-    siteConfigController.createSiteConfig
-  )
-  .get(
-    validate(siteConfigValidation.getSiteConfigs),
-    siteConfigController.getSiteConfigs
-  );
+  .post(validate(siteConfigValidation.createSiteConfig), siteConfigController.createSiteConfig)
+  .get(validate(siteConfigValidation.getSiteConfigs), siteConfigController.getSiteConfigs);
 
 // Get all site configs (including secret ones) - admin only
 router.get('/all', siteConfigController.getAllSiteConfigs);
 
 // Get multiple configs by keys
-router.post('/by-keys', 
-  validate(siteConfigValidation.getSiteConfigsByKeys),
-  siteConfigController.getSiteConfigsByKeys
-);
+router.post('/by-keys', validate(siteConfigValidation.getSiteConfigsByKeys), siteConfigController.getSiteConfigsByKeys);
 
 // Bulk upsert configs
-router.post('/bulk-upsert',
+router.post(
+  '/bulk-upsert',
   validate(siteConfigValidation.bulkUpsertSiteConfigs),
-  siteConfigController.bulkUpsertSiteConfigs
+  siteConfigController.bulkUpsertSiteConfigs,
 );
 
 // Restore configs from deployment snapshot
-router.post('/restore-snapshot',
+router.post(
+  '/restore-snapshot',
   validate(siteConfigValidation.restoreSiteConfigSnapshot),
-  siteConfigController.restoreSiteConfigSnapshot
+  siteConfigController.restoreSiteConfigSnapshot,
 );
 
 // Global CSS admin endpoints
@@ -78,18 +71,9 @@ router.post('/email/test', siteConfigController.sendTestEmail);
 // Individual config operations by key (MUST come before /:scope/:target_id to avoid route conflict)
 router
   .route('/key/:key')
-  .get(
-    validate(siteConfigValidation.getSiteConfigByKey),
-    siteConfigController.getSiteConfigByKey
-  )
-  .patch(
-    validate(siteConfigValidation.updateSiteConfigByKey),
-    siteConfigController.updateSiteConfigByKey
-  )
-  .delete(
-    validate(siteConfigValidation.deleteSiteConfigByKey),
-    siteConfigController.deleteSiteConfigByKey
-  );
+  .get(validate(siteConfigValidation.getSiteConfigByKey), siteConfigController.getSiteConfigByKey)
+  .patch(validate(siteConfigValidation.updateSiteConfigByKey), siteConfigController.updateSiteConfigByKey)
+  .delete(validate(siteConfigValidation.deleteSiteConfigByKey), siteConfigController.deleteSiteConfigByKey);
 
 // Scoped admin routes (MUST come after /key/:key to avoid route conflict)
 router.get('/:scope/:target_id', siteConfigController.getConfigsByScope);
@@ -98,17 +82,8 @@ router.get('/:scope/:target_id/all', siteConfigController.getAllConfigsByScope);
 // Individual config operations by ID (MUST come after /key/:key and /:scope/:target_id)
 router
   .route('/:siteConfigId')
-  .get(
-    validate(siteConfigValidation.getSiteConfig),
-    siteConfigController.getSiteConfig
-  )
-  .patch(
-    validate(siteConfigValidation.updateSiteConfig),
-    siteConfigController.updateSiteConfig
-  )
-  .delete(
-    validate(siteConfigValidation.deleteSiteConfig),
-    siteConfigController.deleteSiteConfig
-  );
+  .get(validate(siteConfigValidation.getSiteConfig), siteConfigController.getSiteConfig)
+  .patch(validate(siteConfigValidation.updateSiteConfig), siteConfigController.updateSiteConfig)
+  .delete(validate(siteConfigValidation.deleteSiteConfig), siteConfigController.deleteSiteConfig);
 
 module.exports = router;

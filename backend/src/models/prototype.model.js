@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -19,7 +19,7 @@ const apiSchema = mongoose.Schema(
       type: [String],
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const descriptionSchema = mongoose.Schema(
@@ -46,7 +46,7 @@ const descriptionSchema = mongoose.Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 const portfolioSchema = mongoose.Schema(
@@ -57,7 +57,7 @@ const portfolioSchema = mongoose.Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 const tagSchema = mongoose.Schema(
@@ -74,7 +74,7 @@ const tagSchema = mongoose.Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 const ratingSchema = mongoose.Schema({
@@ -218,7 +218,7 @@ const prototypeSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // add plugin that converts mongoose to json

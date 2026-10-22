@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,12 +7,12 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
+const { isValidObjectId } = require('mongoose');
 const { User } = require('../models');
 const ApiError = require('../utils/ApiError');
 const image = require('../utils/image');
 const fileService = require('./file.service');
 const logger = require('../config/logger');
-const { isValidObjectId } = require('mongoose');
 
 /**
  * Create a user
@@ -132,7 +132,7 @@ const updateUserById = async (userId, updateBody) => {
     updateBody,
     {
       new: true,
-    }
+    },
   );
 };
 

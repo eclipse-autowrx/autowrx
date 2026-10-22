@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -22,7 +22,7 @@ const modelTemplateSchema = mongoose.Schema(
     created_by: { type: mongoose.SchemaTypes.ObjectId, ref: 'User', required: true },
     updated_by: { type: mongoose.SchemaTypes.ObjectId, ref: 'User', required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 modelTemplateSchema.plugin(toJSON);
@@ -31,5 +31,3 @@ modelTemplateSchema.plugin(paginate);
 const ModelTemplate = mongoose.model('ModelTemplate', modelTemplateSchema);
 
 module.exports = ModelTemplate;
-
-

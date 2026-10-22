@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -8,11 +8,11 @@
 
 /* eslint-disable no-console, no-await-in-loop */
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 const config = require('../config/config');
 const logger = require('../config/logger');
 const { User, CustomApiSchema, CustomApiSet, Model } = require('../models');
 const { customApiSchemaService, customApiSetService, modelService } = require('../services');
-const bcrypt = require('bcryptjs');
 
 // Color codes for terminal output
 const colors = {
@@ -25,8 +25,8 @@ const colors = {
 
 let testAdminId = null;
 let testUserId = null;
-let testCustomApiSchemaIds = {};
-let testCustomApiSetIds = {};
+const testCustomApiSchemaIds = {};
+const testCustomApiSetIds = {};
 let testModelId = null;
 let keepData = false;
 
@@ -132,7 +132,7 @@ const createTestCustomApiSchemas = async () => {
         }),
         tree_config: { separator: '.', max_depth: 10 },
       },
-      testAdminId
+      testAdminId,
     );
     testCustomApiSchemaIds.tree = treeSchema._id;
     logTest('Create Tree API schema', true);
@@ -158,7 +158,7 @@ const createTestCustomApiSchemas = async () => {
           },
         }),
       },
-      testAdminId
+      testAdminId,
     );
     testCustomApiSchemaIds.list = listSchema._id;
     logTest('Create List API schema', true);
@@ -190,7 +190,7 @@ const createTestCustomApiSchemas = async () => {
           },
         ],
       },
-      testAdminId
+      testAdminId,
     );
     testCustomApiSchemaIds.graph = graphSchema._id;
     logTest('Create Graph API schema', true);
@@ -204,7 +204,7 @@ const createTestCustomApiSchemas = async () => {
           type: 'tree',
           schema: JSON.stringify({ type: 'array', items: { type: 'object' } }),
         },
-        testAdminId
+        testAdminId,
       );
       logTest('Reject duplicate code', false);
     } catch (error) {
@@ -238,7 +238,7 @@ const createTestCustomApiSets = async () => {
           metadata: {},
         },
       },
-      testAdminId
+      testAdminId,
     );
     testCustomApiSetIds.treeSystem = treeSet._id;
     logTest('Create system-scoped tree instance', true);
@@ -271,7 +271,7 @@ const createTestCustomApiSets = async () => {
           metadata: {},
         },
       },
-      testUserId
+      testUserId,
     );
     testCustomApiSetIds.listUser = listSet._id;
     logTest('Create user-scoped list instance', true);
@@ -298,7 +298,7 @@ const createTestCustomApiSets = async () => {
           metadata: {},
         },
       },
-      testAdminId
+      testAdminId,
     );
     testCustomApiSetIds.graphSystem = graphSet._id;
     logTest('Create graph instance', true);
@@ -316,7 +316,7 @@ const testCRUDOperations = async () => {
     const updatedSchema = await customApiSchemaService.updateCustomApiSchemaById(
       testCustomApiSchemaIds.tree,
       { description: 'Updated description' },
-      testAdminId
+      testAdminId,
     );
     logTest('Update CustomApiSchema', updatedSchema.description === 'Updated description');
 
@@ -332,15 +332,12 @@ const testCRUDOperations = async () => {
     const updatedSet = await customApiSetService.updateCustomApiSetById(
       testCustomApiSetIds.treeSystem,
       { name: 'Updated Instance Name' },
-      testAdminId
+      testAdminId,
     );
     logTest('Update CustomApiSet', updatedSet.name === 'Updated Instance Name');
 
     // Test instance get
-    const retrievedSet = await customApiSetService.getCustomApiSetById(
-      testCustomApiSetIds.treeSystem,
-      testAdminId
-    );
+    const retrievedSet = await customApiSetService.getCustomApiSetById(testCustomApiSetIds.treeSystem, testAdminId);
     logTest('Get CustomApiSet by ID', retrievedSet._id.toString() === testCustomApiSetIds.treeSystem.toString());
   } catch (error) {
     logTest('CRUD operations', false);
@@ -362,7 +359,7 @@ const testItemOperations = async () => {
         name: 'NEW',
         value: 'new item',
       },
-      testAdminId
+      testAdminId,
     );
     const hasNewItem = setWithNewItem.data.items.some((item) => item.id === 'ABC.NEW');
     logTest('Add item to instance', hasNewItem);
@@ -372,14 +369,11 @@ const testItemOperations = async () => {
       testCustomApiSetIds.treeSystem,
       'ABC.NEW',
       { value: 'updated value' },
-      testAdminId
+      testAdminId,
     );
     // Wait a bit for save to complete
     await new Promise((resolve) => setTimeout(resolve, 100));
-    const updatedSet = await customApiSetService.getCustomApiSetById(
-      testCustomApiSetIds.treeSystem,
-      testAdminId
-    );
+    const updatedSet = await customApiSetService.getCustomApiSetById(testCustomApiSetIds.treeSystem, testAdminId);
     const updatedItem = updatedSet.data.items.find((item) => item.id === 'ABC.NEW');
     const itemValue = updatedItem?.value || updatedItem?.get?.('value') || updatedItem?.toObject?.()?.value;
     const testPassed = updatedItem && itemValue === 'updated value';
@@ -390,10 +384,7 @@ const testItemOperations = async () => {
 
     // Remove item
     await customApiSetService.removeCustomApiSetItem(testCustomApiSetIds.treeSystem, 'ABC.NEW', testAdminId);
-    const setAfterRemove = await customApiSetService.getCustomApiSetById(
-      testCustomApiSetIds.treeSystem,
-      testAdminId
-    );
+    const setAfterRemove = await customApiSetService.getCustomApiSetById(testCustomApiSetIds.treeSystem, testAdminId);
     const itemRemoved = !setAfterRemove.data.items.some((item) => item.id === 'ABC.NEW');
     logTest('Remove item from instance', itemRemoved);
   } catch (error) {
@@ -415,19 +406,12 @@ const testScopePermissions = async () => {
     }
 
     // Test user can access system-scoped instance
-    const systemSet = await customApiSetService.getCustomApiSetById(
-      testCustomApiSetIds.treeSystem,
-      testUserId
-    );
+    const systemSet = await customApiSetService.getCustomApiSetById(testCustomApiSetIds.treeSystem, testUserId);
     logTest('User can access system-scoped instance', systemSet.scope === 'system');
 
     // Test user cannot update another user's instance
     try {
-      await customApiSetService.updateCustomApiSetById(
-        testCustomApiSetIds.listUser,
-        { name: 'Hacked' },
-        testAdminId
-      );
+      await customApiSetService.updateCustomApiSetById(testCustomApiSetIds.listUser, { name: 'Hacked' }, testAdminId);
       logTest('User cannot update another user instance', false);
     } catch (error) {
       logTest('User cannot update another user instance', error.statusCode === 403);
@@ -452,11 +436,7 @@ const testModelIntegration = async () => {
     testModelId = model;
 
     // Link custom_api_sets
-    await modelService.updateModelById(
-      testModelId,
-      { custom_api_sets: [testCustomApiSetIds.treeSystem] },
-      testUserId
-    );
+    await modelService.updateModelById(testModelId, { custom_api_sets: [testCustomApiSetIds.treeSystem] }, testUserId);
     const modelWithSets = await modelService.getModelById(testModelId, testUserId);
     logTest('Link custom_api_sets to model', modelWithSets.custom_api_sets.length === 1);
 
@@ -478,14 +458,10 @@ const testModelIntegration = async () => {
             metadata: {},
           },
         },
-        testAdminId
+        testAdminId,
       );
       // Now testUserId tries to link admin's user-scoped instance (should fail)
-      await modelService.updateModelById(
-        testModelId,
-        { custom_api_sets: [adminOwnedSet._id] },
-        testUserId
-      );
+      await modelService.updateModelById(testModelId, { custom_api_sets: [adminOwnedSet._id] }, testUserId);
       logTest('Reject inaccessible instance linking', false);
       // Cleanup
       await customApiSetService.deleteCustomApiSetById(adminOwnedSet._id, testAdminId);
@@ -515,7 +491,7 @@ const testValidation = async () => {
             metadata: {},
           },
         },
-        testAdminId
+        testAdminId,
       );
       logTest('Reject invalid tree structure', false);
     } catch (error) {
@@ -532,7 +508,7 @@ const testValidation = async () => {
           method: 'GET',
           // Missing required 'name' attribute
         },
-        testUserId
+        testUserId,
       );
       logTest('Reject missing required attribute', false);
     } catch (error) {
@@ -581,7 +557,9 @@ if (args.includes('--clean')) {
     .then(async () => {
       await User.deleteMany({ email: { $in: ['test-admin@plugin-api.test', 'test-user@plugin-api.test'] } });
       await CustomApiSchema.deleteMany({ code: { $in: ['test_tree_api', 'test_list_api', 'test_graph_api'] } });
-      await CustomApiSet.deleteMany({ custom_api_schema_code: { $in: ['test_tree_api', 'test_list_api', 'test_graph_api'] } });
+      await CustomApiSet.deleteMany({
+        custom_api_schema_code: { $in: ['test_tree_api', 'test_list_api', 'test_graph_api'] },
+      });
       await Model.deleteMany({ name: 'Test Model' });
       log('Cleanup completed', 'green');
       await mongoose.disconnect();
@@ -604,4 +582,3 @@ if (args.includes('--clean')) {
       process.exit(1);
     });
 }
-

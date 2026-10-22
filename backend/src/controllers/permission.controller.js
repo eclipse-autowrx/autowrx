@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -15,7 +15,7 @@ const hasPermission = catchAsync(async (req, res) => {
   filter.permissions = filter.permissions || '';
   const permissionQueries = filter.permissions.split(',').map((permission) => permission.split(':'));
   const results = await Promise.all(
-    permissionQueries.map((query) => permissionService.hasPermission(req.user.id, query[0], query[1]))
+    permissionQueries.map((query) => permissionService.hasPermission(req.user.id, query[0], query[1])),
   );
   res.json(results);
 });

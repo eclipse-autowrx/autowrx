@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,14 +7,14 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
+const fs = require('fs');
+const fsp = require('fs/promises');
+const path = require('path');
 const catchAsync = require('../utils/catchAsync');
 const { siteConfigService, ssoService, emailService } = require('../services');
 const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 const { resolveAdminUiConfig } = require('../config/adminUi');
-const fs = require('fs');
-const fsp = require('fs/promises');
-const path = require('path');
 
 // Public, env-backed Admin UI visibility (Site Config / Manage Features filters).
 const getAdminUiConfig = catchAsync(async (req, res) => {
@@ -92,13 +92,13 @@ const getConfigsByScope = catchAsync(async (req, res) => {
   const { scope, target_id } = req.params;
   const filter = pick(req.query, ['secret', 'category', 'key']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
-  
+
   // Add scope and target_id to filter
   filter.scope = scope;
   if (target_id) {
     filter.target_id = target_id;
   }
-  
+
   const result = await siteConfigService.querySiteConfigs(filter, options);
   res.send(result);
 });

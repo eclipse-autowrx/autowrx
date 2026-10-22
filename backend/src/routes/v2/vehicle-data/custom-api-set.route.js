@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -24,7 +24,7 @@ router
   .get(
     auth({ optional: (req) => req.authConfig.PUBLIC_VIEWING }),
     validate(customApiSetValidation.listCustomApiSets),
-    customApiSetController.getCustomApiSets
+    customApiSetController.getCustomApiSets,
   );
 
 router
@@ -32,14 +32,12 @@ router
   .get(
     auth({ optional: (req) => req.authConfig.PUBLIC_VIEWING }),
     validate(customApiSetValidation.getCustomApiSet),
-    customApiSetController.getCustomApiSet
+    customApiSetController.getCustomApiSet,
   )
   .patch(auth(), validate(customApiSetValidation.updateCustomApiSet), customApiSetController.updateCustomApiSet)
   .delete(auth(), validate(customApiSetValidation.deleteCustomApiSet), customApiSetController.deleteCustomApiSet);
 
-router
-  .route('/:id/items')
-  .post(auth(), validate(customApiSetValidation.addSetItem), customApiSetController.addSetItem);
+router.route('/:id/items').post(auth(), validate(customApiSetValidation.addSetItem), customApiSetController.addSetItem);
 
 router
   .route('/:id/items/:itemId')
@@ -47,4 +45,3 @@ router
   .delete(auth(), validate(customApiSetValidation.removeSetItem), customApiSetController.removeSetItem);
 
 module.exports = router;
-

@@ -123,6 +123,7 @@ app.options(
 // and /v2/health/ready must bypass them (the only DB touch is the readiness
 // ping itself) to answer fast while the container is unhealthy.
 const { probeRouter } = require('./routes/v2/system/health.route');
+
 app.use('/v2/health', probeRouter);
 
 // jwt authentication
@@ -135,6 +136,7 @@ const loadAuthConfigs = require('./middlewares/authConfig');
 app.use(loadAuthConfigs);
 
 const dataSync = require('./sync');
+
 app.use('/v2', dataSync.middleware);
 
 app.use('/v2', routesV2);

@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,15 +7,15 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
+const { default: axios, isAxiosError } = require('axios');
+const _ = require('lodash');
 const { Prototype } = require('../models');
 const ApiError = require('../utils/ApiError');
 const permissionService = require('./permission.service');
 const { PERMISSIONS } = require('../config/roles');
-const { default: axios, isAxiosError } = require('axios');
 const config = require('../config/config');
 const logger = require('../config/logger');
 const modelService = require('./model.service');
-const _ = require('lodash');
 const { publiclyVisibleVisibilities } = require('../config/enums');
 
 /**
@@ -29,7 +29,7 @@ const stripTrailingNumber = (name) => {
 };
 
 /**
- * Generate up to 1 available prototype name suggestion for a model.  
+ * Generate up to 1 available prototype name suggestion for a model.
  * @param {string} modelId
  * @param {string} baseName
  * @returns {Promise<string[]>}
@@ -60,7 +60,7 @@ const throwDuplicateNameError = async (modelId, prototypeName, userId) => {
   const suggestions = await getSuggestedNames(modelId, baseName);
   throw new ApiError(
     httpStatus.BAD_REQUEST,
-    `The prototype name '${prototypeName}' is already in use for model '${model.name}'. Please choose another name like: ${suggestions.join(', ')}.`
+    `The prototype name '${prototypeName}' is already in use for model '${model.name}'. Please choose another name like: ${suggestions.join(', ')}.`,
   );
 };
 
@@ -117,7 +117,7 @@ const bulkCreatePrototypes = async (userId, prototypes) => {
     prototypes.map((prototype) => ({
       ...prototype,
       created_by: userId,
-    }))
+    })),
   );
   return data.map((item) => item._id);
 };
@@ -144,11 +144,7 @@ const queryPrototypes = async (filter, options) => {
   const nameSort = requestedParts.find((part) => part.startsWith('name:'));
 
   const resolvedSort = nameSort
-    ? [
-        nameSort,
-        ...defaultSort.split(','),
-        ...requestedParts.filter((part) => part !== nameSort),
-      ].join(',')
+    ? [nameSort, ...defaultSort.split(','), ...requestedParts.filter((part) => part !== nameSort)].join(',')
     : requestedSort
       ? [defaultSort, requestedSort].join(',')
       : defaultSort;
@@ -350,7 +346,7 @@ const deleteMany = async (filter, actionOwner) => {
     prototypes.map(async (prototype) => {
       prototype.action_owner = actionOwner;
       await prototype.deleteOne();
-    })
+    }),
   );
 };
 

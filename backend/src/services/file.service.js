@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,11 +7,11 @@
 // SPDX-License-Identifier: MIT
 
 const axios = require('axios');
-const ApiError = require('../utils/ApiError');
 const httpStatus = require('http-status');
+const fs = require('fs');
+const ApiError = require('../utils/ApiError');
 const logger = require('../config/logger');
 const config = require('../config/config');
-const fs = require('fs');
 
 /**
  *

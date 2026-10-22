@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,15 +7,15 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
+const fs = require('fs');
+const path = require('path');
+const _ = require('lodash');
+const crypto = require('crypto');
 const { userService } = require('.');
 const { Api, Model, ExtendedApi } = require('../models');
 const ApiError = require('../utils/ApiError');
-const fs = require('fs');
-const path = require('path');
 const logger = require('../config/logger');
 const { sortObject } = require('../utils/sort');
-const _ = require('lodash');
-const crypto = require('crypto');
 
 /**
  *
@@ -146,9 +146,9 @@ const parseCvi = (cvi) => {
 
   ret.forEach((item) => {
     if (item.type == 'branch') return;
-    let arName = item.name.split('.');
+    const arName = item.name.split('.');
     if (arName.length > 1) {
-      item.shortName = '.' + arName.slice(1).join('.');
+      item.shortName = `.${arName.slice(1).join('.')}`;
     } else {
       item.shortName = item.name; // Ensure root elements have their name as shortName
     }
@@ -178,7 +178,7 @@ const parseCvi = (cvi) => {
  */
 const getUsedApis = (code, apiList) => {
   try {
-    let apis = [];
+    const apis = [];
     apiList.forEach((item) => {
       if (item.shortName) {
         if (code.includes(item.shortName)) {
@@ -326,7 +326,7 @@ const computeVSSApi = async (modelId) => {
         node.datatype = 'string';
       }
     },
-    mainApi
+    mainApi,
   );
 
   return ret;
@@ -345,7 +345,7 @@ const getApiDetail = async (modelId, apiName) => {
         ret = api;
       }
     },
-    mainApi
+    mainApi,
   );
 
   return ret;

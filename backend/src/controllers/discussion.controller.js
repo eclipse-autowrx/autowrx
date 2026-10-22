@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -31,7 +31,7 @@ const listDiscussions = catchAsync(async (req, res) => {
     {
       ...options,
       populate: ['created_by', 'name image_file'],
-    }
+    },
   );
   // TODO: Optimize the code below
   const promises = [];
@@ -43,7 +43,7 @@ const listDiscussions = catchAsync(async (req, res) => {
         const list = await discussionService.listDiscussions({ parent: discussion.id });
         // eslint-disable-next-line no-param-reassign
         discussion.replies = list;
-      })()
+      })(),
     );
   }
   await Promise.all(promises);

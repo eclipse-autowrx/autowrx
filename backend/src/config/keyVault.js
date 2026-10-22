@@ -66,7 +66,7 @@ const loadKeyVaultSecrets = async () => {
   const keyVaultName = process.env.AZURE_KEY_VAULT_NAME;
   const allowEnvironmentFallback = process.env.AZURE_KEY_VAULT_ALLOW_ENV_FALLBACK === 'true';
   const environmentSecrets = Object.fromEntries(
-    Object.values(secretMappings).map((environmentVariable) => [environmentVariable, process.env[environmentVariable]])
+    Object.values(secretMappings).map((environmentVariable) => [environmentVariable, process.env[environmentVariable]]),
   );
 
   try {
@@ -82,29 +82,31 @@ const loadKeyVaultSecrets = async () => {
     const vaultUrl = `https://${keyVaultName}.vault.azure.net`;
     const client = new SecretClient(vaultUrl, new DefaultAzureCredential());
 
-    await Promise.all(Object.entries(secretMappings).map(async ([secretName, environmentVariable]) => {
-      try {
-        const secret = await client.getSecret(secretName);
-        if (secret.value !== undefined && secret.value !== '') {
-          process.env[environmentVariable] = secret.value;
-        } else if (requiredSecretNames.has(secretName)) {
-          throw new Error(`Required secret '${secretName}' is empty in Azure Key Vault`);
-        } else {
-          console.warn(`Optional secret '${secretName}' is empty in Azure Key Vault; skipping`);
-        }
-      } catch (error) {
-        if (requiredSecretNames.has(secretName)) {
-          const status = error.statusCode ? ` status=${error.statusCode}` : '';
-          const code = error.code ? ` code=${error.code}` : '';
-          const message = error.message ? ` ${error.message}` : '';
-          throw new Error(
-            `Unable to load required secret '${secretName}' from Azure Key Vault.${status}${code}${message}`
-          );
-        }
+    await Promise.all(
+      Object.entries(secretMappings).map(async ([secretName, environmentVariable]) => {
+        try {
+          const secret = await client.getSecret(secretName);
+          if (secret.value !== undefined && secret.value !== '') {
+            process.env[environmentVariable] = secret.value;
+          } else if (requiredSecretNames.has(secretName)) {
+            throw new Error(`Required secret '${secretName}' is empty in Azure Key Vault`);
+          } else {
+            console.warn(`Optional secret '${secretName}' is empty in Azure Key Vault; skipping`);
+          }
+        } catch (error) {
+          if (requiredSecretNames.has(secretName)) {
+            const status = error.statusCode ? ` status=${error.statusCode}` : '';
+            const code = error.code ? ` code=${error.code}` : '';
+            const message = error.message ? ` ${error.message}` : '';
+            throw new Error(
+              `Unable to load required secret '${secretName}' from Azure Key Vault.${status}${code}${message}`,
+            );
+          }
 
-        console.warn(`Optional secret '${secretName}' could not be loaded from Azure Key Vault; skipping`);
-      }
-    }));
+          console.warn(`Optional secret '${secretName}' could not be loaded from Azure Key Vault; skipping`);
+        }
+      }),
+    );
   } catch (error) {
     if (!allowEnvironmentFallback) {
       throw error;
