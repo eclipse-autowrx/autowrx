@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --port 3210 --host 0.0.0.0",
     "build": "tsc && vite build && vite build --config vite.sandbox.config.ts",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "pretty": "prettier --write \"./**/*.{js,jsx,mjs,ts,tsx,json}\"",
     "tsc": "tsc",
@@ -81,6 +81,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@tailwindcss/postcss": "^4.3.2",
     "@tanstack/eslint-plugin-query": "^5.101.2",
     "@tanstack/react-query-devtools": "^5.97.0",
@@ -103,6 +104,7 @@
     "eslint-plugin-react": "^7.34.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^15.15.0",
     "husky": "^9.1.1",
     "postcss": "^8.5.19",
     "prettier": "^3.9.5",
