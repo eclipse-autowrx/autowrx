@@ -10,10 +10,18 @@ import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import { Spinner } from '@/components/atoms/spinner'
-import { sendResetPasswordEmailService, resetPasswordWithCodeService } from '@/services/auth.service'
+import {
+  sendResetPasswordEmailService,
+  resetPasswordWithCodeService,
+} from '@/services/auth.service'
 import { isAxiosError } from 'axios'
 import { useState, useRef } from 'react'
-import { TbCircleCheckFilled, TbAt, TbLock, TbShieldCheck } from 'react-icons/tb'
+import {
+  TbCircleCheckFilled,
+  TbAt,
+  TbLock,
+  TbShieldCheck,
+} from 'react-icons/tb'
 
 interface FormForgotPasswordProps {
   setAuthType: (type: 'sign-in' | 'register' | 'forgot') => void
@@ -66,7 +74,10 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
     }
   }
 
-  const handleCodeKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleCodeKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
     if (e.key === 'Backspace' && !code[index] && index > 0) {
       codeInputRefs.current[index - 1]?.focus()
     }
@@ -74,7 +85,10 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
 
   const handleCodePaste = (e: React.ClipboardEvent) => {
     e.preventDefault()
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
+    const pasted = e.clipboardData
+      .getData('text')
+      .replace(/\D/g, '')
+      .slice(0, 6)
     if (pasted.length > 0) {
       const newCode = [...code]
       for (let i = 0; i < pasted.length && i < 6; i++) {
@@ -147,27 +161,44 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
       <form onSubmit={handleSendCode} className="flex flex-col bg-background">
         <h2 className="text-lg font-semibold text-primary">Forgot Password</h2>
         <p className="text-base mt-4">
-          Enter the email associated with your account. We'll send you a 6-digit code to reset your password.
+          Enter the email associated with your account. We'll send you a 6-digit
+          code to reset your password.
         </p>
 
         <div className="mt-4 flex flex-col gap-1.5">
           <Label>Email</Label>
           <div className="relative">
             <TbAt className="absolute left-3 top-1/2 -translate-y-1/2 size-[18px] text-muted-foreground" />
-            <Input name="email" type="email" placeholder="Email" className="pl-10" required />
+            <Input
+              name="email"
+              type="email"
+              placeholder="Email"
+              className="pl-10"
+              required
+            />
           </div>
         </div>
 
         {error && <p className="text-sm mt-2 text-destructive">{error}</p>}
 
-        <Button disabled={loading} type="submit" variant="default" className="w-full mt-6">
+        <Button
+          disabled={loading}
+          type="submit"
+          variant="default"
+          className="w-full mt-6"
+        >
           {loading && <Spinner className="mr-2" size={16} />}
           Send Reset Code
         </Button>
 
         <div className="mt-4 flex items-center">
           <p className="text-sm text-foreground">Remember password?</p>
-          <Button type="button" onClick={() => setAuthType('sign-in')} variant="link" className="text-primary">
+          <Button
+            type="button"
+            onClick={() => setAuthType('sign-in')}
+            variant="link"
+            className="text-primary"
+          >
             Sign In
           </Button>
         </div>
@@ -178,10 +209,14 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
   // Step 2: Enter code + new password
   if (step === 'code') {
     return (
-      <form onSubmit={handleResetPassword} className="flex flex-col bg-background">
+      <form
+        onSubmit={handleResetPassword}
+        className="flex flex-col bg-background"
+      >
         <h2 className="text-lg font-semibold text-primary">Enter Reset Code</h2>
         <p className="text-sm mt-2 text-muted-foreground">
-          We sent a 6-digit code to <strong className="text-foreground">{email}</strong>
+          We sent a 6-digit code to{' '}
+          <strong className="text-foreground">{email}</strong>
         </p>
 
         {/* Code input */}
@@ -194,7 +229,9 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
             {code.map((digit, i) => (
               <input
                 key={i}
-                ref={(el) => { codeInputRefs.current[i] = el }}
+                ref={(el) => {
+                  codeInputRefs.current[i] = el
+                }}
                 type="text"
                 inputMode="numeric"
                 maxLength={1}
@@ -250,7 +287,12 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
 
         {error && <p className="text-sm mt-2 text-destructive">{error}</p>}
 
-        <Button disabled={loading} type="submit" variant="default" className="w-full mt-6">
+        <Button
+          disabled={loading}
+          type="submit"
+          variant="default"
+          className="w-full mt-6"
+        >
           {loading && <Spinner className="mr-2" size={16} />}
           Reset Password
         </Button>

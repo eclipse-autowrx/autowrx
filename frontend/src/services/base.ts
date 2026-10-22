@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -44,7 +44,7 @@ const processQueue = (error: any, token: string | null = null) => {
       serverAxios(prom.config).then(prom.resolve).catch(prom.reject)
     }
   })
-  
+
   failedQueue = []
 }
 
@@ -66,12 +66,16 @@ serverAxios.interceptors.response.use(
   (response) => {
     const syncWarning = response.headers['x-sync-warning']
     if (syncWarning && isMutatingRequest(response.config.method)) {
-      showSyncWarningToast(typeof syncWarning === 'string' ? syncWarning : String(syncWarning))
+      showSyncWarningToast(
+        typeof syncWarning === 'string' ? syncWarning : String(syncWarning),
+      )
     }
     return response
   },
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean
+    }
 
     // If error is 401 and we haven't already tried to refresh
     // Skip refresh for auth endpoints to avoid infinite loops
@@ -102,10 +106,9 @@ serverAxios.interceptors.response.use(
         })
 
         // Attempt to refresh the token
-        const response = await refreshAxios.post<{ access: { token: string; expires: string } }>(
-          '/auth/refresh-tokens',
-          {}
-        )
+        const response = await refreshAxios.post<{
+          access: { token: string; expires: string }
+        }>('/auth/refresh-tokens', {})
 
         const newToken = response.data.access.token
         // Update the auth store with the new token
@@ -133,10 +136,12 @@ serverAxios.interceptors.response.use(
     }
 
     return Promise.reject(error)
-  }
+  },
 )
 
-export const logAxios = config.logBaseUrl ? axios.create({
-  baseURL: config.logBaseUrl,
-  withCredentials: true,
-}) : null
+export const logAxios = config.logBaseUrl
+  ? axios.create({
+      baseURL: config.logBaseUrl,
+      withCredentials: true,
+    })
+  : null

@@ -16,7 +16,8 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { useSiteConfig } from '@/utils/siteConfig'
 
-type PluginSection = 'prototype' | 'vehicle-api-schema' | 'vehicle-api' | 'deploy'
+type PluginSection =
+  'prototype' | 'vehicle-api-schema' | 'vehicle-api' | 'deploy'
 
 const PluginManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -26,7 +27,12 @@ const PluginManagement: React.FC = () => {
   // Get initial section from URL or default to 'prototype'
   const getSectionFromUrl = (): PluginSection => {
     const section = searchParams.get('section')
-    if (section === 'prototype' || section === 'vehicle-api-schema' || section === 'vehicle-api' || section === 'deploy') {
+    if (
+      section === 'prototype' ||
+      section === 'vehicle-api-schema' ||
+      section === 'vehicle-api' ||
+      section === 'deploy'
+    ) {
       // Redirect away from custom API set sections when the feature is disabled
       if (
         !customApiSetsEnabled &&
@@ -64,7 +70,9 @@ const PluginManagement: React.FC = () => {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-semibold text-foreground">Access denied</h1>
+          <h1 className="text-2xl font-semibold text-foreground">
+            Access denied
+          </h1>
           <p className="mt-2 text-base text-muted-foreground">
             You do not have permission to manage plugins.
           </p>
@@ -166,4 +174,3 @@ const PluginManagement: React.FC = () => {
 }
 
 export default PluginManagement
-

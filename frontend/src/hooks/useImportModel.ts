@@ -94,8 +94,9 @@ const useImportModel = (options?: UseImportModelOptions) => {
         }
 
         if (importedModel.model.custom_template) {
-          ;(newModel as ModelCreate & { custom_template?: unknown }).custom_template =
-            importedModel.model.custom_template
+          ;(
+            newModel as ModelCreate & { custom_template?: unknown }
+          ).custom_template = importedModel.model.custom_template
         } else {
           try {
             const templatesData = await listModelTemplates({
@@ -165,7 +166,7 @@ const useImportModel = (options?: UseImportModelOptions) => {
           return
         }
         const description = isAxiosError(err)
-          ? err.response?.data?.message ?? 'Something went wrong'
+          ? (err.response?.data?.message ?? 'Something went wrong')
           : err instanceof Error
             ? err.message
             : 'Something went wrong'

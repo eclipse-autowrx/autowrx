@@ -98,10 +98,13 @@ const FormCreatePrototype = ({
 
   const { data: currentUser } = useSelfProfileQuery()
 
-  const { data: remoteTemplatesData, isLoading: isLoadingTemplates } = useQuery({
-    queryKey: ['project-templates-list'],
-    queryFn: () => listProjectTemplates({ limit: 100, page: 1, visibility: 'public' }),
-  })
+  const { data: remoteTemplatesData, isLoading: isLoadingTemplates } = useQuery(
+    {
+      queryKey: ['project-templates-list'],
+      queryFn: () =>
+        listProjectTemplates({ limit: 100, page: 1, visibility: 'public' }),
+    },
+  )
 
   const templateOptions = useMemo(
     () => parseProjectTemplates(remoteTemplatesData?.results ?? []),
@@ -114,23 +117,33 @@ const FormCreatePrototype = ({
     if (templateOptions.length && !selectedTemplateId) {
       const first = templateOptions[0]
       setSelectedTemplateId(first.id)
-      setData((prev) => ({ ...prev, code: first.code, language: first.language }))
+      setData((prev) => ({
+        ...prev,
+        code: first.code,
+        language: first.language,
+      }))
     }
   }, [templateOptions, selectedTemplateId])
 
   const [debouncedPrototypeName, setDebouncedPrototypeName] = useState('')
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedPrototypeName(data.prototypeName), 300)
+    const timer = setTimeout(
+      () => setDebouncedPrototypeName(data.prototypeName),
+      300,
+    )
     return () => clearTimeout(timer)
   }, [data.prototypeName])
 
   const existingPrototypeNames = useMemo(
-    () => (localModel ? existingPrototypes?.map((p: any) => p.name) ?? [] : []),
+    () =>
+      localModel ? (existingPrototypes?.map((p: any) => p.name) ?? []) : [],
     [existingPrototypes, localModel],
   )
 
-  const { isDuplicate: isDuplicatePrototypeName, suggestedName: suggestedPrototypeName } =
-    useDuplicateNameCheck(debouncedPrototypeName, existingPrototypeNames)
+  const {
+    isDuplicate: isDuplicatePrototypeName,
+    suggestedName: suggestedPrototypeName,
+  } = useDuplicateNameCheck(debouncedPrototypeName, existingPrototypeNames)
 
   const { data: ownedModelsData } = useQuery({
     queryKey: ['listModelLiteOwned', currentUser?.id],
@@ -149,8 +162,10 @@ const FormCreatePrototype = ({
     return () => clearTimeout(timer)
   }, [data.modelName])
 
-  const { isDuplicate: isDuplicateModelName, suggestedName: suggestedModelName } =
-    useDuplicateNameCheck(debouncedModelName, ownedModelNames)
+  const {
+    isDuplicate: isDuplicateModelName,
+    suggestedName: suggestedModelName,
+  } = useDuplicateNameCheck(debouncedModelName, ownedModelNames)
 
   const handleChange = (name: keyof typeof data, value: string | number) => {
     setData((prev) => ({ ...prev, [name]: value }))
@@ -160,7 +175,11 @@ const FormCreatePrototype = ({
   const onTemplateChange = (templateId: string) => {
     const template = templateOptions.find((t) => t.id === templateId)
     if (template) {
-      setData((prev) => ({ ...prev, code: template.code, language: template.language }))
+      setData((prev) => ({
+        ...prev,
+        code: template.code,
+        language: template.language,
+      }))
       setSelectedTemplateId(templateId)
     }
   }
@@ -199,7 +218,9 @@ const FormCreatePrototype = ({
         '/imgs/default_prototype_cover.jpg',
       )
 
-      const selectedTemplate = templateOptions.find((t) => t.id === selectedTemplateId)
+      const selectedTemplate = templateOptions.find(
+        (t) => t.id === selectedTemplateId,
+      )
       const language = data.language || selectedTemplate?.language || 'python'
 
       const body = {
@@ -219,11 +240,15 @@ const FormCreatePrototype = ({
           solution: '',
           status: '',
         },
-        image_file: defaultPrototypeImage || '/imgs/default_prototype_cover.jpg',
+        image_file:
+          defaultPrototypeImage || '/imgs/default_prototype_cover.jpg',
         skeleton: '{}',
         tags: [],
         widget_config:
-          widget_config || selectedTemplate?.widget_config || getDefaultDashboardCfg(language) || '[]',
+          widget_config ||
+          selectedTemplate?.widget_config ||
+          getDefaultDashboardCfg(language) ||
+          '[]',
         autorun: true,
       }
 
@@ -335,10 +360,7 @@ const FormCreatePrototype = ({
   ])
 
   return (
-    <form
-      onSubmit={createNewPrototype}
-      className="flex flex-col bg-background"
-    >
+    <form onSubmit={createNewPrototype} className="flex flex-col bg-background">
       {!currentModel &&
         (contributionModels && !isFetchingModelContribution && localModel ? (
           <div className="flex flex-col mt-4">
@@ -429,7 +451,10 @@ const FormCreatePrototype = ({
                 onTemplateChange(v)
               }}
             >
-              <SelectTrigger data-id="project-template-select" className="w-full">
+              <SelectTrigger
+                data-id="project-template-select"
+                className="w-full"
+              >
                 <SelectValue placeholder="Select a template" />
               </SelectTrigger>
               <SelectContent>
@@ -448,7 +473,10 @@ const FormCreatePrototype = ({
         disabled={disabled}
         type="submit"
         data-id="btn-create-prototype"
-        className={cn('mt-8 w-full da-form-create-prototype-submit', hideCreateButton && 'hidden')}
+        className={cn(
+          'mt-8 w-full da-form-create-prototype-submit',
+          hideCreateButton && 'hidden',
+        )}
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
         {buttonText ?? 'Create Prototype'}

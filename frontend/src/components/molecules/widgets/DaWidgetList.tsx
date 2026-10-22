@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -16,7 +16,10 @@ import { searchWidget, loadWidgetReviews } from '@/services/widget.service'
 import { DaImage } from '@/components/atoms/DaImage'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
-import { getUsedVehicleApiNames, applySyncWithCodeToOptions } from '@/hooks/useUsedVehicleApisFromCode'
+import {
+  getUsedVehicleApiNames,
+  applySyncWithCodeToOptions,
+} from '@/hooks/useUsedVehicleApisFromCode'
 
 interface DaWidgetListProps {
   renderWidgets: any[]
@@ -69,13 +72,13 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
   useEffect(() => {
     const lineHeight = 20
     const lines = optionsStr.split('\n').length // Count the number of new lines
-    let calculatedHeight = lines * lineHeight + 15 // 15px for padding at the bottom
+    const calculatedHeight = lines * lineHeight + 15 // 15px for padding at the bottom
     setEditorHeight(`${calculatedHeight}px`)
   }, [optionsStr])
 
   useEffect(() => {
     if (activeWidget && activeWidget.options) {
-      let options = JSON.parse(JSON.stringify(activeWidget.options))
+      const options = JSON.parse(JSON.stringify(activeWidget.options))
       delete options.url
       const usedApiNames = getUsedVehicleApiNames(
         prototype?.code,
@@ -115,12 +118,13 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
                     onClick={() => {
                       fetchWidgetDetails(widget)
                     }}
-                    className={`flex h-[120px] rounded px-1 py-1 mr-2 cursor-pointer border hover:border-gray-400 ${activeWidget &&
-                        activeWidget.plugin === widget.plugin &&
-                        activeWidget.id === widget.id
+                    className={`flex h-[120px] rounded px-1 py-1 mr-2 cursor-pointer border hover:border-gray-400 ${
+                      activeWidget &&
+                      activeWidget.plugin === widget.plugin &&
+                      activeWidget.id === widget.id
                         ? 'border-primary'
                         : ''
-                      }`}
+                    }`}
                   >
                     <div className="aspect-square grid place-items-center min-w-[100px]">
                       {!widget.icon && (
@@ -193,7 +197,7 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
                   editable={true}
                   setCode={setOptionStr}
                   language="json"
-                  onBlur={() => { }}
+                  onBlur={() => {}}
                 />
               </div>
               {activeTab === 'market' &&
@@ -257,7 +261,9 @@ const DaMarketWidgetDetail: FC<any> = ({ activeWidget }) => {
               <div className="flex w-full space-x-2 items-center justify-end text-xs text-muted-foreground">
                 <div className="flex items-center justify-center px-2 py-0.5 bg-muted rounded">
                   <TbHeart className="flex w-3 h-3 text-rose-500 mr-1" />
-                  {activeWidget.likes?.length > 0 ? activeWidget.likes.length : 0}
+                  {activeWidget.likes?.length > 0
+                    ? activeWidget.likes.length
+                    : 0}
                 </div>
                 <div className="flex items-center justify-center px-2 py-0.5 bg-muted rounded">
                   <TbDownload className="flex w-3 h-3 text-primary mr-1" />
@@ -299,7 +305,10 @@ const DaWidgetReview: FC<{ reviews: Review[] }> = ({ reviews }) => {
     return new Date(dateString).toLocaleDateString('en-GB', options)
   }
 
-  const Rating: FC<{ rating: number; outOf?: number }> = ({ rating, outOf = 5 }) => {
+  const Rating: FC<{ rating: number; outOf?: number }> = ({
+    rating,
+    outOf = 5,
+  }) => {
     return (
       <div className="flex">
         {[...Array(outOf)].map((_, index) => (
@@ -341,7 +350,10 @@ const DaWidgetReview: FC<{ reviews: Review[] }> = ({ reviews }) => {
         </div>
       ))}
       {visibleReviewsCount < reviews.length && (
-        <Button variant="ghost" onClick={() => setVisibleReviewsCount((prevCount) => prevCount + 5)}>
+        <Button
+          variant="ghost"
+          onClick={() => setVisibleReviewsCount((prevCount) => prevCount + 5)}
+        >
           See all reviews
         </Button>
       )}
@@ -350,4 +362,3 @@ const DaWidgetReview: FC<{ reviews: Review[] }> = ({ reviews }) => {
 }
 
 export default DaWidgetList
-

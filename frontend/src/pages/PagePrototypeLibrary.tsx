@@ -10,12 +10,7 @@ import { useEffect, useMemo, useState } from 'react'
 import PrototypeLibraryList from '@/components/organisms/PrototypeLibraryList'
 import PrototypeLibraryPortfolio from '@/components/organisms/PrototypeLibraryPortfolio'
 import { useParams } from 'react-router-dom'
-import {
-  TbChartScatter,
-  TbListDetails,
-  TbPlus,
-  TbSearch,
-} from 'react-icons/tb'
+import { TbChartScatter, TbListDetails, TbPlus, TbSearch } from 'react-icons/tb'
 import { Button } from '@/components/atoms/button'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
@@ -41,14 +36,20 @@ const PagePrototypeLibrary = () => {
   const isResolvingAuth =
     !authBootstrapped || (!user && (isLoading || isFetching))
   const { data: model } = useCurrentModel()
-  const [hasWritePermission] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
+  const [hasWritePermission] = usePermissionHook([
+    PERMISSIONS.WRITE_MODEL,
+    model_id,
+  ])
   const canCreatePrototype = useMemo(
     () => canCreatePrototypeOnModel(model, user?.id, hasWritePermission),
     [model, user?.id, hasWritePermission],
   )
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
-  const enableNewPrototypePage = useSiteConfig('ENABLE_NEW_PROTOTYPE_PAGE', false)
+  const enableNewPrototypePage = useSiteConfig(
+    'ENABLE_NEW_PROTOTYPE_PAGE',
+    false,
+  )
   const [selectedFilters, setSelectedFilters] = useState<string[]>(() =>
     JSON.parse(
       localStorage.getItem('prototypeLibrary-selectedFilter') || '["Newest"]',
@@ -143,7 +144,9 @@ const PagePrototypeLibrary = () => {
                   className="w-fit mr-0 h-8 shadow px-2 text-sm"
                   singleSelect={true}
                   defaultValue={selectedFilters}
-                  label={selectedFilters.length > 0 ? selectedFilters[0] : 'Newest'}
+                  label={
+                    selectedFilters.length > 0 ? selectedFilters[0] : 'Newest'
+                  }
                 />
                 <div
                   className={cn(

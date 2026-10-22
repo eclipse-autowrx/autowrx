@@ -31,7 +31,10 @@ const PageHome = () => {
       try {
         setIsLoading(true)
         // Use public endpoint - no authentication required
-        const res = await configManagementService.getPublicConfig('CFG_HOME_CONTENT', 'site')
+        const res = await configManagementService.getPublicConfig(
+          'CFG_HOME_CONTENT',
+          'site',
+        )
 
         // Backend returns { key: string, value: any }
         if (res.value && Array.isArray(res.value)) {

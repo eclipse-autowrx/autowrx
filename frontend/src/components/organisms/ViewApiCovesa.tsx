@@ -29,7 +29,12 @@ import VssComparator from '@/components/organisms/VssComparator'
 import { getComputedAPIs, replaceAPIsService } from '@/services/model.service'
 import { isAxiosError } from 'axios'
 import { toast } from 'react-toastify'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/atoms/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/atoms/dialog'
 import DaFileUpload from '@/components/atoms/DaFileUpload'
 import { Button } from '@/components/atoms/button'
 import usePermissionHook from '@/hooks/usePermissionHook'
@@ -39,7 +44,10 @@ import PluginPageRender from '@/components/organisms/PluginPageRender'
 import { useConfiguredPlugins } from '@/hooks/useConfiguredPlugins'
 
 const ViewApiCovesa = () => {
-  const { model_id, api: apiParam } = useParams<{ model_id: string; api?: string }>()
+  const { model_id, api: apiParam } = useParams<{
+    model_id: string
+    api?: string
+  }>()
   const navigate = useNavigate()
   const [selectedApi, setSelectedApi] = useState<VehicleApi | null>(null)
   const [activeTab, setActiveTab] = useState<
@@ -74,7 +82,10 @@ const ViewApiCovesa = () => {
     }
     // If no route param or not found, use previous selection or first API
     setSelectedApi(
-      (prev) => activeModelApis?.find((api) => api.name === prev?.name) || activeModelApis?.[0] || null,
+      (prev) =>
+        activeModelApis?.find((api) => api.name === prev?.name) ||
+        activeModelApis?.[0] ||
+        null,
     )
   }, [activeModelApis, apiParam])
 
@@ -234,9 +245,11 @@ const ViewApiCovesa = () => {
             />
           </div>
           <div className="flex-1 flex w-full h-full overflow-auto">
-            {selectedApi ? <>
-              <ApiDetail apiDetails={selectedApi} />
-            </> : (
+            {selectedApi ? (
+              <>
+                <ApiDetail apiDetails={selectedApi} />
+              </>
+            ) : (
               <div className="flex justify-center w-full h-full">
                 <DaImage
                   src="/ref/E-Car_Full_Vehicle.png"

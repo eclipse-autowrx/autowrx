@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -17,7 +17,7 @@ const fetchMarketAddOns = async (type: string): Promise<AddOn[]> => {
       'GENAI_MARKETPLACE_URL',
       'site',
       undefined,
-      'https://store-be.digitalauto.tech'
+      'https://store-be.digitalauto.tech',
     )
 
     // If marketplace URL is empty, return empty array (marketplace is hidden)

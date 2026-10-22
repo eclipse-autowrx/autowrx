@@ -23,9 +23,7 @@ import TemplateManager from '@/pages/TemplateManager.tsx'
 import DashboardTemplateManager from '@/pages/DashboardTemplateManager.tsx'
 import ProjectTemplateManager from '@/pages/ProjectTemplateManager.tsx'
 import PageTestPlugin from '@/pages/PageTestPlugin.tsx'
-const PageModelList = lazy(() =>
-  retry(() => import('@/pages/PageModelList')),
-)
+const PageModelList = lazy(() => retry(() => import('@/pages/PageModelList')))
 import ModelDetailLayout from '@/layouts/ModelDetailLayout.tsx'
 import NewPrototypeLayout from '@/layouts/NewPrototypeLayout.tsx'
 import PageModelDetail from '@/pages/PageModelDetail.tsx'

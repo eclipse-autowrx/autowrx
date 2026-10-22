@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -20,7 +20,8 @@ const usePermissionHook = (...params: [string, string?][]) => {
   const { data } = useQuery({
     queryKey: ['permissions', params],
     queryFn: () => checkPermissionService(params),
-    enabled: authBootstrapped && (!!accessToken || !!storeUser) && params.length > 0,
+    enabled:
+      authBootstrapped && (!!accessToken || !!storeUser) && params.length > 0,
   })
   return data || Array(params.length).fill(false)
 }

@@ -16,7 +16,11 @@ import { DaCopy } from '@/components/atoms/DaCopy'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { UspSeviceList, ServiceDetail } from '@/components/organisms/ViewApiUSP'
-import { V2CApiList, ApiDetail, DEFAULT_V2C } from '@/components/organisms/ViewApiV2C'
+import {
+  V2CApiList,
+  ApiDetail,
+  DEFAULT_V2C,
+} from '@/components/organisms/ViewApiV2C'
 import { useQuery } from '@tanstack/react-query'
 import { getCustomApiSetById } from '@/services/customApiSet.service'
 import { getCustomApiSchemaById } from '@/services/customApiSchema.service'
@@ -24,7 +28,10 @@ import CustomAPIList from '@/components/organisms/CustomAPIList'
 import CustomAPIView from '@/components/organisms/CustomAPIView'
 import { Spinner } from '@/components/atoms/spinner'
 import { VscChevronLeft, VscChevronRight } from 'react-icons/vsc'
-import { TbLayoutSidebarRight, TbLayoutSidebarRightFilled } from 'react-icons/tb'
+import {
+  TbLayoutSidebarRight,
+  TbLayoutSidebarRightFilled,
+} from 'react-icons/tb'
 import { useUsedVehicleApis } from '@/hooks/useUsedVehicleApis'
 import { useSiteConfig } from '@/utils/siteConfig'
 
@@ -87,9 +94,7 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
                 {activeApi.name}
               </span>
             </DaCopy>
-            <div className={textClass}>
-              {activeApi.type.toUpperCase()}
-            </div>
+            <div className={textClass}>{activeApi.type.toUpperCase()}</div>
           </div>
           <div className="max-h-[500px] overflow-y-auto">
             {['branch'].includes(activeApi.type) && (
@@ -204,7 +209,9 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
 
     const scrollAmount = el.clientWidth * 0.6 // scroll by ~60% of visible width
     const next =
-      direction === 'left' ? el.scrollLeft - scrollAmount : el.scrollLeft + scrollAmount
+      direction === 'left'
+        ? el.scrollLeft - scrollAmount
+        : el.scrollLeft + scrollAmount
 
     el.scrollTo({ left: next, behavior: 'smooth' })
   }
@@ -227,13 +234,21 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   // Get CustomApiSet IDs from model (empty when feature disabled)
   const customApiSetIds = useMemo(() => {
     if (!customApiSetsEnabled) return []
-    return (model?.custom_api_sets || []).map((id: any) => {
-      if (typeof id === 'string') return id
-      if (id && typeof id === 'object' && 'toString' in id) return id.toString()
-      return String(id)
-    }).filter((id: any): id is string =>
-      !!id && typeof id === 'string' && id !== '[object Object]' && id !== 'undefined' && id !== 'null'
-    )
+    return (model?.custom_api_sets || [])
+      .map((id: any) => {
+        if (typeof id === 'string') return id
+        if (id && typeof id === 'object' && 'toString' in id)
+          return id.toString()
+        return String(id)
+      })
+      .filter(
+        (id: any): id is string =>
+          !!id &&
+          typeof id === 'string' &&
+          id !== '[object Object]' &&
+          id !== 'undefined' &&
+          id !== 'null',
+      )
   }, [model?.custom_api_sets, customApiSetsEnabled])
 
   // Recalculate scroll buttons whenever tab set changes
@@ -294,7 +309,9 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   const customApiSchemaId = activeCustomApiSet?.custom_api_schema
     ? typeof activeCustomApiSet.custom_api_schema === 'string'
       ? activeCustomApiSet.custom_api_schema
-      : (activeCustomApiSet.custom_api_schema as any).id || (activeCustomApiSet.custom_api_schema as any)._id || activeCustomApiSet.custom_api_schema
+      : (activeCustomApiSet.custom_api_schema as any).id ||
+        (activeCustomApiSet.custom_api_schema as any)._id ||
+        activeCustomApiSet.custom_api_schema
     : null
 
   // Fetch CustomApiSchema schema
@@ -305,7 +322,9 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   })
 
   // State for selected API item in CustomApiSet view
-  const [selectedCustomApiItemId, setSelectedCustomApiItemId] = useState<string | null>(null)
+  const [selectedCustomApiItemId, setSelectedCustomApiItemId] = useState<
+    string | null
+  >(null)
 
   // Fall back from custom-api-set tabs when the feature is disabled
   useEffect(() => {
@@ -324,11 +343,13 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   const getMethodOptions = (): string[] => {
     if (!activeCustomApiSchema?.schema) return []
     try {
-      const schemaObj = typeof activeCustomApiSchema.schema === 'string'
-        ? JSON.parse(activeCustomApiSchema.schema)
-        : activeCustomApiSchema.schema
+      const schemaObj =
+        typeof activeCustomApiSchema.schema === 'string'
+          ? JSON.parse(activeCustomApiSchema.schema)
+          : activeCustomApiSchema.schema
 
-      const itemSchema = schemaObj.type === 'array' ? schemaObj.items : schemaObj
+      const itemSchema =
+        schemaObj.type === 'array' ? schemaObj.items : schemaObj
       const methodProperty = itemSchema?.properties?.method
 
       if (methodProperty?.enum) {
@@ -341,11 +362,10 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
     }
   }
 
-  const [activeModelUspSevices, activeModelV2CApis] =
-    useModelStore((state) => [
-      state.activeModelUspSevices,
-      state.activeModelV2CApis,
-    ])
+  const [activeModelUspSevices, activeModelV2CApis] = useModelStore((state) => [
+    state.activeModelUspSevices,
+    state.activeModelV2CApis,
+  ])
 
   // Check if USP or V2C are available (for backward compatibility, but we'll prioritize CustomApiSets)
   const hasUSP = activeModelUspSevices && activeModelUspSevices.length > 0
@@ -358,7 +378,9 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   }, [model])
 
   const useApis = useUsedVehicleApis(code)
-  const [usedCustomApiItems, setUsedCustomApiItems] = useState<Map<string, any[]>>(new Map()) // Map of setId -> used items
+  const [usedCustomApiItems, setUsedCustomApiItems] = useState<
+    Map<string, any[]>
+  >(new Map()) // Map of setId -> used items
   const [activeApi, setActiveApi] = useState<any>()
   const [popupApi, setPopupApi] = useState<boolean>(false)
   const [activeService, setActiveService] = useState<any>(null)
@@ -368,7 +390,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
     queryKey: ['custom-api-sets', customApiSetIds.join(',')],
     queryFn: async () => {
       const sets = await Promise.all(
-        customApiSetIds.map((id) => getCustomApiSetById(id))
+        customApiSetIds.map((id) => getCustomApiSetById(id)),
       )
       return sets
     },
@@ -437,7 +459,8 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
         // Collapsed view - thin column with just expand button
         <button
           onClick={toggleCollapse}
-          className="flex flex-col h-full transition-all duration-200 ease-in-out hover:bg-gray-100">
+          className="flex flex-col h-full transition-all duration-200 ease-in-out hover:bg-gray-100"
+        >
           <div className="flex items-center justify-center py-1.5 border-b border-gray-200 bg-gray-100">
             <div
               title="Expand Panel"
@@ -487,9 +510,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                     setTab('used-signals')
                   }}
                 >
-                  <span className="max-w-[200px] truncate">
-                    Used APIs
-                  </span>
+                  <span className="max-w-[200px] truncate">Used APIs</span>
                 </DaTabItem>
                 <DaTabItem
                   active={tab === 'all-signals'}
@@ -500,9 +521,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                     setTab('all-signals')
                   }}
                 >
-                  <span className="max-w-[200px] truncate">
-                    COVESA Signals
-                  </span>
+                  <span className="max-w-[200px] truncate">COVESA Signals</span>
                 </DaTabItem>
                 {/* USP and V2C tabs (for backward compatibility) */}
                 {hasUSP && (
@@ -514,9 +533,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                       setTab('usp')
                     }}
                   >
-                    <span className="max-w-[200px] truncate">
-                      USP 2.0
-                    </span>
+                    <span className="max-w-[200px] truncate">USP 2.0</span>
                   </DaTabItem>
                 )}
                 {hasV2C && (
@@ -528,28 +545,26 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                       setTab('v2c')
                     }}
                   >
-                    <span className="max-w-[200px] truncate">
-                      V2C
-                    </span>
+                    <span className="max-w-[200px] truncate">V2C</span>
                   </DaTabItem>
                 )}
                 {/* CustomApiSet tabs */}
                 {customApiSetsEnabled &&
                   customApiSetIds.map((setId) => {
-                  const tabId = `custom-api-set-${setId}`
-                  return (
-                    <CustomApiSetTab
-                      key={setId}
-                      setId={setId}
-                      active={tab === tabId}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        setTab(tabId)
-                        setSelectedCustomApiItemId(null) // Reset selection when switching tabs
-                      }}
-                    />
-                  )
-                })}
+                    const tabId = `custom-api-set-${setId}`
+                    return (
+                      <CustomApiSetTab
+                        key={setId}
+                        setId={setId}
+                        active={tab === tabId}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setTab(tabId)
+                          setSelectedCustomApiItemId(null) // Reset selection when switching tabs
+                        }}
+                      />
+                    )
+                  })}
               </div>
             </div>
 
@@ -594,29 +609,37 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
 
                   {/* CustomApiSet sections */}
                   {customApiSetsEnabled &&
-                    Array.from(usedCustomApiItems.entries()).map(([setId, items]) => {
-                    const set = customApiSetQueries.data?.find((s) => s.id === setId)
-                    const setName = set?.name || setId
+                    Array.from(usedCustomApiItems.entries()).map(
+                      ([setId, items]) => {
+                        const set = customApiSetQueries.data?.find(
+                          (s) => s.id === setId,
+                        )
+                        const setName = set?.name || setId
 
-                    return (
-                      <React.Fragment key={setId}>
-                        <div className='mt-4'></div>
-                        <span className="text-sm font-semibold">{setName}:</span>
-                        {items.map((item: any, index: number) => (
-                          <div
-                            key={`${setId}-${item.id}-${index}`}
-                            className="flex items-center py-1 px-2 hover:bg-muted rounded cursor-pointer"
-                            onClick={() => {
-                              setTab(`custom-api-set-${setId}`)
-                              setSelectedCustomApiItemId(item.id)
-                            }}
-                          >
-                            <span className="text-sm">{item.id || item.path || 'Unknown API'}</span>
-                          </div>
-                        ))}
-                      </React.Fragment>
-                    )
-                  })}
+                        return (
+                          <React.Fragment key={setId}>
+                            <div className="mt-4"></div>
+                            <span className="text-sm font-semibold">
+                              {setName}:
+                            </span>
+                            {items.map((item: any, index: number) => (
+                              <div
+                                key={`${setId}-${item.id}-${index}`}
+                                className="flex items-center py-1 px-2 hover:bg-muted rounded cursor-pointer"
+                                onClick={() => {
+                                  setTab(`custom-api-set-${setId}`)
+                                  setSelectedCustomApiItemId(item.id)
+                                }}
+                              >
+                                <span className="text-sm">
+                                  {item.id || item.path || 'Unknown API'}
+                                </span>
+                              </div>
+                            ))}
+                          </React.Fragment>
+                        )
+                      },
+                    )}
                 </div>
               </div>
             </>
@@ -670,7 +693,9 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
               {isLoadingSet || isLoadingSchema ? (
                 <div className="flex items-center justify-center h-full">
                   <Spinner className="mr-2" />
-                  <span className="text-sm font-medium text-muted-foreground">Loading API set...</span>
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Loading API set...
+                  </span>
                 </div>
               ) : !activeCustomApiSet || !activeCustomApiSchema ? (
                 <div className="flex items-center justify-center h-full">
@@ -705,7 +730,12 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                         item={selectedCustomApiItem}
                         schema={activeCustomApiSchema.schema}
                         itemId={selectedCustomApiItem.id}
-                        excludeFields={['id', 'path', 'parent_id', 'relationships']}
+                        excludeFields={[
+                          'id',
+                          'path',
+                          'parent_id',
+                          'relationships',
+                        ]}
                       />
                     ) : (
                       <div className="text-center py-12 text-sm text-muted-foreground">
@@ -730,7 +760,11 @@ interface CustomApiSetTabProps {
   onClick: (e: React.MouseEvent) => void
 }
 
-const CustomApiSetTab: FC<CustomApiSetTabProps> = ({ setId, active, onClick }) => {
+const CustomApiSetTab: FC<CustomApiSetTabProps> = ({
+  setId,
+  active,
+  onClick,
+}) => {
   const { data: set } = useQuery({
     queryKey: ['custom-api-set-tab-name', setId],
     queryFn: () => getCustomApiSetById(setId),
@@ -739,11 +773,7 @@ const CustomApiSetTab: FC<CustomApiSetTabProps> = ({ setId, active, onClick }) =
   })
 
   return (
-    <DaTabItem
-      active={active}
-      to="#"
-      onClick={onClick}
-    >
+    <DaTabItem active={active} to="#" onClick={onClick}>
       <span className="max-w-[200px] truncate">
         {set?.name || 'Loading...'}
       </span>

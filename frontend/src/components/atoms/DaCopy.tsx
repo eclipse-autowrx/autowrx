@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -42,9 +42,7 @@ const DaCopy = ({
               <span className="text-sm font-semibold text-primary">
                 {textToCopy}
               </span>
-              <span className="text-sm font-medium ">
-                Copied to clipboard
-              </span>
+              <span className="text-sm font-medium ">Copied to clipboard</span>
             </div>
           ),
           duration: 2000,
@@ -53,7 +51,7 @@ const DaCopy = ({
       .catch((err) => {
         console.error('Failed to copy!', err)
       })
-    if(onCopied) {
+    if (onCopied) {
       onCopied()
     }
   }
@@ -70,12 +68,7 @@ const DaCopy = ({
         {children}
         <div className="flex items-center">
           {label && (
-            <span
-              
-              className="ml-1 text-primary cursor-pointer"
-            >
-              {label}
-            </span>
+            <span className="ml-1 text-primary cursor-pointer">{label}</span>
           )}
           {showIcon && (
             <TbCopy className="text-muted-foreground hover:text-primary ml-1" />

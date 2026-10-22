@@ -7,8 +7,16 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState, useEffect } from 'react'
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
-import { configManagementService, Config } from '@/services/configManagement.service'
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from '@hello-pangea/dnd'
+import {
+  configManagementService,
+  Config,
+} from '@/services/configManagement.service'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Spinner } from '@/components/atoms/spinner'
 import { Button } from '@/components/atoms/button'
@@ -31,7 +39,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/atoms/dropdown-menu'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import { TbGripVertical, TbPencil, TbTrash, TbPlus, TbCheck, TbX, TbPhotoEdit, TbDotsVertical } from 'react-icons/tb'
+import {
+  TbGripVertical,
+  TbPencil,
+  TbTrash,
+  TbPlus,
+  TbCheck,
+  TbX,
+  TbPhotoEdit,
+  TbDotsVertical,
+} from 'react-icons/tb'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { listPlugins, type Plugin } from '@/services/plugin.service'
 import PluginForm from '@/components/organisms/PluginForm'
@@ -49,19 +66,35 @@ interface Stage {
 const DeployPluginSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
   const { setOpenLoginDialog } = useAuthStore()
-  const [stagingFrameConfig, setStagingFrameConfig] = useState<Config | null>(null)
+  const [stagingFrameConfig, setStagingFrameConfig] = useState<Config | null>(
+    null,
+  )
   const [stages, setStages] = useState<Stage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editFormData, setEditFormData] = useState<Stage>({ name: '', version: '', image: '', plugins: [] })
+  const [editFormData, setEditFormData] = useState<Stage>({
+    name: '',
+    version: '',
+    image: '',
+    plugins: [],
+  })
   const [pluginFormOpen, setPluginFormOpen] = useState(false)
-  const [pluginFormStageIndex, setPluginFormStageIndex] = useState<number | null>(null)
-  const [editingPluginId, setEditingPluginId] = useState<string | undefined>(undefined)
-  const [stageMenuOpenIndex, setStageMenuOpenIndex] = useState<number | null>(null)
-  const [pluginMenuOpen, setPluginMenuOpen] = useState<{ stageIndex: number; pluginId: string } | null>(null)
+  const [pluginFormStageIndex, setPluginFormStageIndex] = useState<
+    number | null
+  >(null)
+  const [editingPluginId, setEditingPluginId] = useState<string | undefined>(
+    undefined,
+  )
+  const [stageMenuOpenIndex, setStageMenuOpenIndex] = useState<number | null>(
+    null,
+  )
+  const [pluginMenuOpen, setPluginMenuOpen] = useState<{
+    stageIndex: number
+    pluginId: string
+  } | null>(null)
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
@@ -79,12 +112,17 @@ const DeployPluginSection: React.FC = () => {
   }, [selfLoading, !!self])
 
   useEffect(() => {
-    if (stagingFrameConfig?.value && Array.isArray(stagingFrameConfig.value.stages)) {
+    if (
+      stagingFrameConfig?.value &&
+      Array.isArray(stagingFrameConfig.value.stages)
+    ) {
       // Ensure each stage has a plugins array
-      const stagesWithPlugins = stagingFrameConfig.value.stages.map((stage: Stage) => ({
-        ...stage,
-        plugins: stage.plugins || [],
-      }))
+      const stagesWithPlugins = stagingFrameConfig.value.stages.map(
+        (stage: Stage) => ({
+          ...stage,
+          plugins: stage.plugins || [],
+        }),
+      )
       setStages(stagesWithPlugins)
     }
   }, [stagingFrameConfig])
@@ -93,7 +131,8 @@ const DeployPluginSection: React.FC = () => {
     try {
       setIsLoading(true)
       // Get the config by key - backend will return default if not found or null
-      const config = await configManagementService.getConfigByKey(STAGING_FRAME_KEY)
+      const config =
+        await configManagementService.getConfigByKey(STAGING_FRAME_KEY)
       setStagingFrameConfig(config)
     } catch (err: any) {
       // If config doesn't exist (404), backend should have returned default
@@ -114,14 +153,20 @@ const DeployPluginSection: React.FC = () => {
         } catch (queryErr) {
           toast({
             title: 'Load failed',
-            description: queryErr instanceof Error ? queryErr.message : 'Failed to load staging frame config',
+            description:
+              queryErr instanceof Error
+                ? queryErr.message
+                : 'Failed to load staging frame config',
             variant: 'destructive',
           })
         }
       } else {
         toast({
           title: 'Load failed',
-          description: err instanceof Error ? err.message : 'Failed to load staging frame config',
+          description:
+            err instanceof Error
+              ? err.message
+              : 'Failed to load staging frame config',
           variant: 'destructive',
         })
       }
@@ -134,7 +179,7 @@ const DeployPluginSection: React.FC = () => {
     try {
       setIsSaving(true)
       const newValue = { stages: updatedStages }
-      
+
       if (stagingFrameConfig?.id) {
         // Update existing config
         await configManagementService.updateConfigById(stagingFrameConfig.id, {
@@ -152,7 +197,7 @@ const DeployPluginSection: React.FC = () => {
         })
         setStagingFrameConfig(newConfig)
       }
-      
+
       setStages(updatedStages)
       toast({
         title: 'Saved',
@@ -161,7 +206,8 @@ const DeployPluginSection: React.FC = () => {
     } catch (err) {
       toast({
         title: 'Save failed',
-        description: err instanceof Error ? err.message : 'Failed to save staging frames',
+        description:
+          err instanceof Error ? err.message : 'Failed to save staging frames',
         variant: 'destructive',
       })
     } finally {
@@ -182,21 +228,26 @@ const DeployPluginSection: React.FC = () => {
 
   const handleEdit = (index: number) => {
     setEditingIndex(index)
-    setEditFormData({ 
+    setEditFormData({
       ...stages[index],
-      plugins: stages[index].plugins || []
+      plugins: stages[index].plugins || [],
     })
     setIsEditDialogOpen(true)
   }
 
   const handleSaveEdit = () => {
-    if (editingIndex !== null && editFormData.name.trim() && editFormData.image.trim()) {
+    if (
+      editingIndex !== null &&
+      editFormData.name.trim() &&
+      editFormData.image.trim()
+    ) {
       const updatedStages = [...stages]
       updatedStages[editingIndex] = {
         name: editFormData.name.trim(),
         version: editFormData.version.trim() || 'v1.0',
         image: editFormData.image.trim(),
-        plugins: editFormData.plugins || updatedStages[editingIndex].plugins || [],
+        plugins:
+          editFormData.plugins || updatedStages[editingIndex].plugins || [],
       }
       setStages(updatedStages)
       saveStages(updatedStages)
@@ -236,10 +287,12 @@ const DeployPluginSection: React.FC = () => {
     if (pluginFormStageIndex !== null) {
       const updatedStages = [...stages]
       const stagePlugins = updatedStages[pluginFormStageIndex].plugins || []
-      
+
       if (editingPluginId) {
         // Update existing plugin in the stage
-        const pluginIndex = stagePlugins.findIndex((p) => p.id === editingPluginId)
+        const pluginIndex = stagePlugins.findIndex(
+          (p) => p.id === editingPluginId,
+        )
         if (pluginIndex !== -1) {
           updatedStages[pluginFormStageIndex].plugins = [
             ...stagePlugins.slice(0, pluginIndex),
@@ -281,7 +334,9 @@ const DeployPluginSection: React.FC = () => {
   const handleRemovePlugin = (stageIndex: number, pluginId: string) => {
     const updatedStages = [...stages]
     const stagePlugins = updatedStages[stageIndex].plugins || []
-    updatedStages[stageIndex].plugins = stagePlugins.filter((p) => p.id !== pluginId)
+    updatedStages[stageIndex].plugins = stagePlugins.filter(
+      (p) => p.id !== pluginId,
+    )
     setStages(updatedStages)
     saveStages(updatedStages)
     toast({
@@ -319,7 +374,8 @@ const DeployPluginSection: React.FC = () => {
     } catch (err) {
       toast({
         title: 'Upload failed',
-        description: err instanceof Error ? err.message : 'Failed to upload image',
+        description:
+          err instanceof Error ? err.message : 'Failed to upload image',
         variant: 'destructive',
       })
     } finally {
@@ -332,7 +388,9 @@ const DeployPluginSection: React.FC = () => {
     return (
       <div className="flex flex-col justify-center items-center py-8 gap-4">
         <Spinner />
-        <p className="text-sm text-muted-foreground">Loading user information...</p>
+        <p className="text-sm text-muted-foreground">
+          Loading user information...
+        </p>
       </div>
     )
   }
@@ -341,7 +399,9 @@ const DeployPluginSection: React.FC = () => {
   if (!self) {
     return (
       <div className="flex flex-col justify-center items-center py-16 gap-4">
-        <h3 className="text-lg font-semibold text-foreground">Authentication Required</h3>
+        <h3 className="text-lg font-semibold text-foreground">
+          Authentication Required
+        </h3>
         <p className="text-sm text-muted-foreground text-center max-w-md">
           Please sign in to view staging configuration
         </p>
@@ -362,11 +422,10 @@ const DeployPluginSection: React.FC = () => {
       <div className="px-6 py-4 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
-            <h2 className="text-lg font-semibold text-foreground">
-              Staging
-            </h2>
+            <h2 className="text-lg font-semibold text-foreground">Staging</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Manage stages for maturity level test setup. Each stage represents an increasing level of test environment maturity.
+              Manage stages for maturity level test setup. Each stage represents
+              an increasing level of test environment maturity.
             </p>
           </div>
           <Button onClick={handleAddNew} size="sm">
@@ -379,7 +438,9 @@ const DeployPluginSection: React.FC = () => {
         {isLoading ? (
           <div className="flex flex-col justify-center items-center py-8 gap-4">
             <Spinner />
-            <p className="text-sm text-muted-foreground">Loading staging configuration...</p>
+            <p className="text-sm text-muted-foreground">
+              Loading staging configuration...
+            </p>
           </div>
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
@@ -391,7 +452,11 @@ const DeployPluginSection: React.FC = () => {
                   className="flex gap-4 overflow-x-auto pb-4"
                 >
                   {stages.map((stage, index) => (
-                    <Draggable key={`stage-${index}`} draggableId={`stage-${index}`} index={index}>
+                    <Draggable
+                      key={`stage-${index}`}
+                      draggableId={`stage-${index}`}
+                      index={index}
+                    >
                       {(provided, snapshot) => (
                         <div
                           ref={provided.innerRef}
@@ -425,55 +490,65 @@ const DeployPluginSection: React.FC = () => {
                             {/* Content */}
                             <div className="px-2 py-4">
                               <div className="w-full px-2">
-                              <div className="flex items-center justify-between mb-1">
-                                <h3 className="font-semibold text-foreground truncate flex-1">
-                                  {stage.name}
-                                </h3>
-                                <DropdownMenu
-                                  open={stageMenuOpenIndex === index}
-                                  onOpenChange={(open) => setStageMenuOpenIndex(open ? index : null)}
-                                >
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-6 w-6 flex-shrink-0"
-                                    >
-                                      <TbDotsVertical className="w-4 h-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem
-                                      onClick={() => {
-                                        setStageMenuOpenIndex(null)
-                                        handleEdit(index)
-                                      }}
-                                    >
-                                      <TbPencil className="w-4 h-4 mr-2" />
-                                      Edit
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() => {
-                                        setStageMenuOpenIndex(null)
-                                        handleDelete(index)
-                                      }}
-                                      className="text-destructive focus:text-destructive"
-                                    >
-                                      <TbTrash className="w-4 h-4 mr-2" />
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                              <p className="text-sm text-muted-foreground mb-3">
-                                {stage.version}
-                              </p>
+                                <div className="flex items-center justify-between mb-1">
+                                  <h3 className="font-semibold text-foreground truncate flex-1">
+                                    {stage.name}
+                                  </h3>
+                                  <DropdownMenu
+                                    open={stageMenuOpenIndex === index}
+                                    onOpenChange={(open) =>
+                                      setStageMenuOpenIndex(open ? index : null)
+                                    }
+                                  >
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 flex-shrink-0"
+                                      >
+                                        <TbDotsVertical className="w-4 h-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem
+                                        onClick={() => {
+                                          setStageMenuOpenIndex(null)
+                                          handleEdit(index)
+                                        }}
+                                      >
+                                        <TbPencil className="w-4 h-4 mr-2" />
+                                        Edit
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => {
+                                          setStageMenuOpenIndex(null)
+                                          handleDelete(index)
+                                        }}
+                                        className="text-destructive focus:text-destructive"
+                                      >
+                                        <TbTrash className="w-4 h-4 mr-2" />
+                                        Delete
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  {stage.version}
+                                </p>
                               </div>
 
                               {/* Plugins Section */}
                               <div className="border-t border-border w-full pt-2 mt-2">
                                 <div className="flex items-center justify-between mb-2 px-1">
-                                  <Label className="text-xs text-muted-foreground">Plugins {stage.plugins && stage.plugins.filter((p) => p.type === 'deploy' || !p.type).length > 0 ? `(${stage.plugins.filter((p) => p.type === 'deploy').length})` : ''}</Label>
+                                  <Label className="text-xs text-muted-foreground">
+                                    Plugins{' '}
+                                    {stage.plugins &&
+                                    stage.plugins.filter(
+                                      (p) => p.type === 'deploy' || !p.type,
+                                    ).length > 0
+                                      ? `(${stage.plugins.filter((p) => p.type === 'deploy').length})`
+                                      : ''}
+                                  </Label>
                                   <Button
                                     variant="ghost"
                                     size="sm"
@@ -488,7 +563,10 @@ const DeployPluginSection: React.FC = () => {
                                   </Button>
                                 </div>
                                 <div className="space-y-1.5 max-h-[200px] min-h-[200px] overflow-y-auto px-0">
-                                  {stage.plugins && stage.plugins.filter((p) => p.type === 'deploy' || !p.type).length > 0 ? (
+                                  {stage.plugins &&
+                                  stage.plugins.filter(
+                                    (p) => p.type === 'deploy' || !p.type,
+                                  ).length > 0 ? (
                                     stage.plugins
                                       .filter((p) => p.type === 'deploy')
                                       .map((plugin) => (
@@ -498,11 +576,15 @@ const DeployPluginSection: React.FC = () => {
                                         >
                                           <div className="w-12 h-12 rounded overflow-hidden bg-white flex-shrink-0">
                                             <img
-                                              src={plugin.image || '/imgs/plugin.png'}
+                                              src={
+                                                plugin.image ||
+                                                '/imgs/plugin.png'
+                                              }
                                               alt={plugin.name}
                                               className="w-full h-full object-contain p-1"
                                               onError={(e) => {
-                                                const target = e.target as HTMLImageElement
+                                                const target =
+                                                  e.target as HTMLImageElement
                                                 target.src = '/imgs/plugin.png'
                                               }}
                                             />
@@ -518,9 +600,21 @@ const DeployPluginSection: React.FC = () => {
                                             )}
                                           </div>
                                           <DropdownMenu
-                                            open={pluginMenuOpen?.stageIndex === index && pluginMenuOpen?.pluginId === plugin.id}
+                                            open={
+                                              pluginMenuOpen?.stageIndex ===
+                                                index &&
+                                              pluginMenuOpen?.pluginId ===
+                                                plugin.id
+                                            }
                                             onOpenChange={(open) =>
-                                              setPluginMenuOpen(open ? { stageIndex: index, pluginId: plugin.id } : null)
+                                              setPluginMenuOpen(
+                                                open
+                                                  ? {
+                                                      stageIndex: index,
+                                                      pluginId: plugin.id,
+                                                    }
+                                                  : null,
+                                              )
                                             }
                                           >
                                             <DropdownMenuTrigger asChild>
@@ -528,7 +622,9 @@ const DeployPluginSection: React.FC = () => {
                                                 variant="ghost"
                                                 size="icon"
                                                 className="h-4 w-4 flex-shrink-0"
-                                                onClick={(e) => e.stopPropagation()}
+                                                onClick={(e) =>
+                                                  e.stopPropagation()
+                                                }
                                               >
                                                 <TbDotsVertical className="w-2.5 h-2.5" />
                                               </Button>
@@ -538,7 +634,10 @@ const DeployPluginSection: React.FC = () => {
                                                 onClick={(e) => {
                                                   e.stopPropagation()
                                                   setPluginMenuOpen(null)
-                                                  handleOpenPluginForm(index, plugin.id)
+                                                  handleOpenPluginForm(
+                                                    index,
+                                                    plugin.id,
+                                                  )
                                                 }}
                                               >
                                                 <TbPencil className="w-3 h-3 mr-2" />
@@ -548,7 +647,10 @@ const DeployPluginSection: React.FC = () => {
                                                 onClick={(e) => {
                                                   e.stopPropagation()
                                                   setPluginMenuOpen(null)
-                                                  handleRemovePlugin(index, plugin.id)
+                                                  handleRemovePlugin(
+                                                    index,
+                                                    plugin.id,
+                                                  )
                                                 }}
                                                 className="text-destructive focus:text-destructive"
                                               >
@@ -600,7 +702,9 @@ const DeployPluginSection: React.FC = () => {
               <Input
                 id="stage-name"
                 value={editFormData.name}
-                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, name: e.target.value })
+                }
                 placeholder="e.g., SDV Mock"
               />
             </div>
@@ -610,7 +714,9 @@ const DeployPluginSection: React.FC = () => {
               <Input
                 id="stage-version"
                 value={editFormData.version}
-                onChange={(e) => setEditFormData({ ...editFormData, version: e.target.value })}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, version: e.target.value })
+                }
                 placeholder="e.g., v1.0"
               />
             </div>
@@ -672,7 +778,12 @@ const DeployPluginSection: React.FC = () => {
             </Button>
             <Button
               onClick={editingIndex === -1 ? handleSaveNew : handleSaveEdit}
-              disabled={!editFormData.name.trim() || !editFormData.image.trim() || isSaving || uploadingImage}
+              disabled={
+                !editFormData.name.trim() ||
+                !editFormData.image.trim() ||
+                isSaving ||
+                uploadingImage
+              }
             >
               <TbCheck className="w-4 h-4 mr-2" />
               {isSaving ? 'Saving...' : 'Save'}

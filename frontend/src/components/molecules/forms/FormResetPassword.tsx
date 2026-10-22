@@ -56,7 +56,6 @@ const FormResetPassword = () => {
       setError('')
       await new Promise(() =>
         setTimeout(() => {
-          // eslint-disable-next-line no-self-assign
           window.location.href = '/'
         }, 3000),
       )
@@ -72,10 +71,7 @@ const FormResetPassword = () => {
   }
 
   return (
-    <form
-      onSubmit={resetPassword}
-      className="flex flex-col bg-background"
-    >
+    <form onSubmit={resetPassword} className="flex flex-col bg-background">
       {/* Title */}
       <h2 className="text-lg font-semibold text-primary">Reset Password</h2>
 

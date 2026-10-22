@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -26,7 +26,10 @@ const useListAllModels = () => {
     setScopeStep(initialScope)
   }, [initialScope])
 
-  const baseKey = useMemo(() => ['modelsList', userId ?? 'anonymous'] as const, [userId])
+  const baseKey = useMemo(
+    () => ['modelsList', userId ?? 'anonymous'] as const,
+    [userId],
+  )
 
   const ownedQuery = useInfiniteQuery({
     queryKey: [...baseKey, 'owned'],
@@ -118,7 +121,11 @@ const useListAllModels = () => {
       return
     }
 
-    if (scopeStep === 'owned' && ownedQuery.status === 'success' && !ownedQuery.hasNextPage) {
+    if (
+      scopeStep === 'owned' &&
+      ownedQuery.status === 'success' &&
+      !ownedQuery.hasNextPage
+    ) {
       setScopeStep('contributed')
     }
 
@@ -139,20 +146,24 @@ const useListAllModels = () => {
   ])
 
   const ownedModels = useMemo(
-    () => (ownedQuery.data?.pages.flatMap((p) => p.results) ?? []) as ModelLite[],
+    () =>
+      (ownedQuery.data?.pages.flatMap((p) => p.results) ?? []) as ModelLite[],
     [ownedQuery.data],
   )
   const contributedModels = useMemo(
     () =>
-      (contributedQuery.data?.pages.flatMap((p) => p.results) ?? []) as ModelLite[],
+      (contributedQuery.data?.pages.flatMap((p) => p.results) ??
+        []) as ModelLite[],
     [contributedQuery.data],
   )
   const publicReleasedModels = useMemo(
-    () => (publicQuery.data?.pages.flatMap((p) => p.results) ?? []) as ModelLite[],
+    () =>
+      (publicQuery.data?.pages.flatMap((p) => p.results) ?? []) as ModelLite[],
     [publicQuery.data],
   )
 
-  const totalResults = ownedModels.length + contributedModels.length + publicReleasedModels.length
+  const totalResults =
+    ownedModels.length + contributedModels.length + publicReleasedModels.length
 
   const error = ownedQuery.error || contributedQuery.error || publicQuery.error
 
@@ -161,7 +172,8 @@ const useListAllModels = () => {
     contributedQuery.isFetchingNextPage ||
     publicQuery.isFetchingNextPage
 
-  const isLoading = ownedQuery.isLoading || contributedQuery.isLoading || publicQuery.isLoading
+  const isLoading =
+    ownedQuery.isLoading || contributedQuery.isLoading || publicQuery.isLoading
 
   const refetch = useCallback(async () => {
     setScopeStep(initialScope)
@@ -177,7 +189,10 @@ const useListAllModels = () => {
     error,
     refetch,
     isFetchingNextPage,
-    hasNextPage: ownedQuery.hasNextPage || contributedQuery.hasNextPage || publicQuery.hasNextPage,
+    hasNextPage:
+      ownedQuery.hasNextPage ||
+      contributedQuery.hasNextPage ||
+      publicQuery.hasNextPage,
   }
 }
 

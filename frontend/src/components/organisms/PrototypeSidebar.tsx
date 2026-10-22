@@ -44,57 +44,69 @@ const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
     }
   }, [defaultWidthPercent, width])
 
-  const startResize = useCallback((startX: number) => {
-    isResizing.current = true
-    setIsDragging(true)
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
+  const startResize = useCallback(
+    (startX: number) => {
+      isResizing.current = true
+      setIsDragging(true)
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
 
-    const startWidth = width ?? minWidthPx
+      const startWidth = width ?? minWidthPx
 
-    const onMove = (clientX: number) => {
-      if (!isResizing.current) return
-      const delta = clientX - startX
-      const newWidth = startWidth + delta
-      const parentWidth = containerRef.current?.parentElement?.clientWidth ?? window.innerWidth
-      const maxWidth = Math.round(parentWidth * 0.7)
-      setWidth(Math.max(minWidthPx, Math.min(newWidth, maxWidth)))
-    }
+      const onMove = (clientX: number) => {
+        if (!isResizing.current) return
+        const delta = clientX - startX
+        const newWidth = startWidth + delta
+        const parentWidth =
+          containerRef.current?.parentElement?.clientWidth ?? window.innerWidth
+        const maxWidth = Math.round(parentWidth * 0.7)
+        setWidth(Math.max(minWidthPx, Math.min(newWidth, maxWidth)))
+      }
 
-    const onEnd = () => {
-      isResizing.current = false
-      setIsDragging(false)
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', onEnd)
-      document.removeEventListener('touchmove', handleTouchMove)
-      document.removeEventListener('touchend', onEnd)
-      document.removeEventListener('touchcancel', onEnd)
-    }
+      const onEnd = () => {
+        isResizing.current = false
+        setIsDragging(false)
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', onEnd)
+        document.removeEventListener('touchmove', handleTouchMove)
+        document.removeEventListener('touchend', onEnd)
+        document.removeEventListener('touchcancel', onEnd)
+      }
 
-    const handleMouseMove = (e: MouseEvent) => onMove(e.clientX)
-    const handleTouchMove = (e: TouchEvent) => {
+      const handleMouseMove = (e: MouseEvent) => onMove(e.clientX)
+      const handleTouchMove = (e: TouchEvent) => {
+        e.preventDefault()
+        onMove(e.touches[0].clientX)
+      }
+
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', onEnd)
+      document.addEventListener('touchmove', handleTouchMove, {
+        passive: false,
+      })
+      document.addEventListener('touchend', onEnd)
+      document.addEventListener('touchcancel', onEnd)
+    },
+    [width, minWidthPx],
+  )
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
       e.preventDefault()
-      onMove(e.touches[0].clientX)
-    }
+      startResize(e.clientX)
+    },
+    [startResize],
+  )
 
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', onEnd)
-    document.addEventListener('touchmove', handleTouchMove, { passive: false })
-    document.addEventListener('touchend', onEnd)
-    document.addEventListener('touchcancel', onEnd)
-  }, [width, minWidthPx])
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    startResize(e.clientX)
-  }, [startResize])
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    e.preventDefault()
-    startResize(e.touches[0].clientX)
-  }, [startResize])
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault()
+      startResize(e.touches[0].clientX)
+    },
+    [startResize],
+  )
 
   return (
     <div ref={containerRef} className="flex h-full">
@@ -111,7 +123,11 @@ const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
         }}
       >
         <div className={isCollapsed ? 'hidden' : 'w-full h-full'}>
-          <PagePrototypePlugin pluginSlug={pluginSlug} onSetActiveTab={onSetActiveTab} onNotifyTab={onNotifyTab} />
+          <PagePrototypePlugin
+            pluginSlug={pluginSlug}
+            onSetActiveTab={onSetActiveTab}
+            onNotifyTab={onNotifyTab}
+          />
         </div>
       </div>
 

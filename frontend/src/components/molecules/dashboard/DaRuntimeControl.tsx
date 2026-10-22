@@ -9,7 +9,11 @@
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
-import { TbPlayerPlayFilled, TbPlayerStopFilled, TbSettings } from 'react-icons/tb'
+import {
+  TbPlayerPlayFilled,
+  TbPlayerStopFilled,
+  TbSettings,
+} from 'react-icons/tb'
 import { FaAnglesLeft, FaAnglesRight } from 'react-icons/fa6'
 import { SlOptionsVertical } from 'react-icons/sl'
 import { cn } from '@/lib/utils'
@@ -65,9 +69,7 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   )
   const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
-  const runtimeServerUrl = useSiteConfig(
-    'RUNTIME_SERVER_URL',
-  )
+  const runtimeServerUrl = useSiteConfig('RUNTIME_SERVER_URL')
   const runtimeServerConfigRaw = useSiteConfig('RUNTIME_SERVER_CONFIG', '')
   const runtimeServerConfig = useMemo(() => {
     if (!runtimeServerConfigRaw) return {}
@@ -83,7 +85,9 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   }, [runtimeServerConfigRaw])
   const { showPrototypeDashboardFullScreen } = useSystemUI()
 
-  const setActiveRuntimeName = useRuntimeStore((state) => state.setActiveRuntimeName)
+  const setActiveRuntimeName = useRuntimeStore(
+    (state) => state.setActiveRuntimeName,
+  )
   const setIsAppRunning = useRuntimeStore((state) => state.setIsAppRunning)
   const [isExpand, setIsExpand] = useState(false)
   const [isRunning, setIsRunning] = useState(false)
@@ -117,7 +121,6 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   const [listenerOnRt, setListenerOnRt] = useState<any[]>([])
   const [isAdvantageMode, setIsAdvantageMode] = useState<number>(-5)
   const rustCompilerRef = useRef<any>()
-  
 
   useEffect(() => {
     localStorage.setItem('customKitServer', customKitServer.trim())
@@ -138,8 +141,8 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
       setRunningAppsOnRt(curRuntimeInfo.lsOfRunner || [])
     }
     if (curRuntimeInfo && curRuntimeInfo.lsOfApiSubscriber) {
-      let lsOfListener = []
-      for (let [key, value] of Object.entries(
+      const lsOfListener = []
+      for (const [key, value] of Object.entries(
         curRuntimeInfo.lsOfApiSubscriber,
       )) {
         lsOfListener.push(value)
@@ -252,9 +255,9 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   const handleMessageListener = (e: any) => {
     if (!e.data) return
     try {
-      let payload = JSON.parse(e.data)
+      const payload = JSON.parse(e.data)
       if (payload.cmd === 'set-api-value' && payload.api) {
-        let obj = {} as any
+        const obj = {} as any
         obj[`${payload.api}`] = payload.value
         writeSignalValue(obj)
         writeVarsValue(obj)
@@ -601,10 +604,11 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
                         }}
                       />
                       <div
-                        className={`ml-2 mr-2 px-2 py-1 rounded text-xs ${requestContent.trim()
-                          ? 'text-yellow-400 font-semibold cursor-pointer hover:underline'
-                          : 'text-gray-400 font-thin'
-                          }`}
+                        className={`ml-2 mr-2 px-2 py-1 rounded text-xs ${
+                          requestContent.trim()
+                            ? 'text-yellow-400 font-semibold cursor-pointer hover:underline'
+                            : 'text-gray-400 font-thin'
+                        }`}
                         onClick={() => {
                           if (!requestContent.trim()) return
                           if (runTimeRef.current) {

@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -9,7 +9,16 @@
 import { FC, useState, useEffect } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
-import { TbRefresh, TbEye, TbEyeOff, TbPlus, TbTrash, TbEdit, TbX, TbDeviceFloppy } from 'react-icons/tb'
+import {
+  TbRefresh,
+  TbEye,
+  TbEyeOff,
+  TbPlus,
+  TbTrash,
+  TbEdit,
+  TbX,
+  TbDeviceFloppy,
+} from 'react-icons/tb'
 import { Prototype } from '@/types/model.type'
 import { set } from 'lodash'
 import useRuntimeStore from '@/stores/runtimeStore'
@@ -25,15 +34,18 @@ interface WatchVariable {
 }
 
 interface VarItemProps {
-  variable: WatchVariable,
-  onEnter: (obj: any) => void,
+  variable: WatchVariable
+  onEnter: (obj: any) => void
   requestDeleteVar: (id: string) => void
 }
 
 const VarItem = ({ variable, onEnter, requestDeleteVar }: VarItemProps) => {
   const [value, setValue] = useState(variable.value)
   return (
-    <div key={variable.id} className="bg-da-gray-dark pl-2 pr-1 px-0 py-0.5 rounded">
+    <div
+      key={variable.id}
+      className="bg-da-gray-dark pl-2 pr-1 px-0 py-0.5 rounded"
+    >
       <div className="flex justify-between items-center">
         <div className="flex-1 flex items-center">
           <div className="flex items-center gap-1 grow">
@@ -44,12 +56,11 @@ const VarItem = ({ variable, onEnter, requestDeleteVar }: VarItemProps) => {
               {variable.type}
             </span>
           </div>
-          <span
-            className="ml-2 min-w-20 text-right inline-block text-da-white text-sm font-mono px-2 py-0.5  bg-da-gray-medium rounded"
-          >
+          <span className="ml-2 min-w-20 text-right inline-block text-da-white text-sm font-mono px-2 py-0.5  bg-da-gray-medium rounded">
             {String(variable.value) || 'N/A'}
           </span>
-          <input type="text"
+          <input
+            type="text"
             value={value}
             className="w-20 flex px-2 py-1 h-6 ml-2 rounded
                 text-da-gray-dark text-right font-semibold
@@ -57,10 +68,10 @@ const VarItem = ({ variable, onEnter, requestDeleteVar }: VarItemProps) => {
                 disabled:cursor-not-allowed"
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e: any) => {
-              if (e.key === "Enter") {
+              if (e.key === 'Enter') {
                 if (onEnter && e.target.value) {
                   onEnter(e.target.value)
-                  setValue("")
+                  setValue('')
                 }
               }
             }}
@@ -85,18 +96,15 @@ export interface PrototypeVarsWatchProps {
   requestWriteVarValue?: (obj: any) => void
 }
 
-const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue }) => {
+const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({
+  requestWriteVarValue,
+}) => {
   const [prototype, setActivePrototype] = useModelStore(
-    (state) => [
-      state.prototype as Prototype,
-      state.setActivePrototype,
-    ],
+    (state) => [state.prototype as Prototype, state.setActivePrototype],
     shallow,
   )
   const [traceVars] = useRuntimeStore(
-    (state) => [
-      state.traceVars as any
-    ],
+    (state) => [state.traceVars as any],
     shallow,
   )
 
@@ -106,7 +114,7 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
   const [newVariable, setNewVariable] = useState<Partial<WatchVariable>>({
     name: '',
     type: 'string',
-    value: ''
+    value: '',
   })
 
   // Load variables from prototype.extend.watch_vars
@@ -120,17 +128,20 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
 
   useEffect(() => {
     if (!variables || !traceVars || Object.keys(traceVars).length === 0) return
-    
+
     // Only update if there are actual changes to avoid infinite loops
-    const hasChanges = variables.some(variable => {
+    const hasChanges = variables.some((variable) => {
       const traceValue = traceVars[variable.name]
       return traceValue !== undefined && traceValue !== variable.value
     })
-    
+
     if (hasChanges) {
-      const newVariables = variables.map(variable => ({
+      const newVariables = variables.map((variable) => ({
         ...variable,
-        value: traceVars[variable.name] !== undefined ? traceVars[variable.name] : variable.value
+        value:
+          traceVars[variable.name] !== undefined
+            ? traceVars[variable.name]
+            : variable.value,
       }))
       setVariables(newVariables)
     }
@@ -143,7 +154,7 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
       id: Date.now().toString(),
       name: newVariable.name.trim(),
       type: newVariable.type || 'string',
-      value: newVariable.value
+      value: newVariable.value,
     }
 
     const updatedVariables = [...variables, variable]
@@ -154,8 +165,8 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
       await updatePrototypeService(prototype.id, {
         extend: {
           ...prototype.extend,
-          watch_vars: updatedVariables
-        }
+          watch_vars: updatedVariables,
+        },
       })
 
       // Update local state
@@ -174,9 +185,12 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
     setIsAdding(false)
   }
 
-  const updateVariable = async (id: string, updates: Partial<WatchVariable>) => {
-    const updatedVariables = variables.map(v =>
-      v.id === id ? { ...v, ...updates } : v
+  const updateVariable = async (
+    id: string,
+    updates: Partial<WatchVariable>,
+  ) => {
+    const updatedVariables = variables.map((v) =>
+      v.id === id ? { ...v, ...updates } : v,
     )
     setVariables(updatedVariables)
 
@@ -185,8 +199,8 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
       await updatePrototypeService(prototype.id, {
         extend: {
           ...prototype.extend,
-          watch_vars: updatedVariables
-        }
+          watch_vars: updatedVariables,
+        },
       })
 
       // Update local state
@@ -204,7 +218,7 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
   }
 
   const deleteVariable = async (id: string) => {
-    const updatedVariables = variables.filter(v => v.id !== id)
+    const updatedVariables = variables.filter((v) => v.id !== id)
     setVariables(updatedVariables)
 
     try {
@@ -212,8 +226,8 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
       await updatePrototypeService(prototype.id, {
         extend: {
           ...prototype.extend,
-          watch_vars: updatedVariables
-        }
+          watch_vars: updatedVariables,
+        },
       })
 
       // Update local state
@@ -227,8 +241,6 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
       setVariables(variables)
     }
   }
-
-
 
   return (
     <div className="h-full flex flex-col p-2">
@@ -252,13 +264,17 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
             <Input
               placeholder="Variable name"
               value={newVariable.name}
-              onChange={(e: any) => setNewVariable({ ...newVariable, name: e.target.value })}
+              onChange={(e: any) =>
+                setNewVariable({ ...newVariable, name: e.target.value })
+              }
               className="flex-1 text-da-black"
             />
             <Input
               placeholder="Type (e.g. int, uint, boolean)"
               value={newVariable.type}
-              onChange={(e: any) => setNewVariable({ ...newVariable, type: e.target.value })}
+              onChange={(e: any) =>
+                setNewVariable({ ...newVariable, type: e.target.value })
+              }
               className="text-da-black !text-xs w-20"
               style={{ minWidth: 80 }}
             />
@@ -302,18 +318,20 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
           </div>
         ) : (
           <div className="space-y-1">
-            {variables.map((variable) => <VarItem
-              key={variable.id}
-              variable={variable}
-              onEnter={(val: string) => {
-                if (requestWriteVarValue) {
-                  requestWriteVarValue({[variable.name]: val})
-                }
-              }}
-              requestDeleteVar={(id: string) => {
-                deleteVariable(id)
-              }}
-            />)}
+            {variables.map((variable) => (
+              <VarItem
+                key={variable.id}
+                variable={variable}
+                onEnter={(val: string) => {
+                  if (requestWriteVarValue) {
+                    requestWriteVarValue({ [variable.name]: val })
+                  }
+                }}
+                requestDeleteVar={(id: string) => {
+                  deleteVariable(id)
+                }}
+              />
+            ))}
           </div>
         )}
       </div>

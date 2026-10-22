@@ -196,9 +196,7 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
       </div>
 
       {/* Error */}
-      {error && (
-        <p className="mt-4 text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
 
       {/* Action */}
       <div className="ml-auto space-x-2 mt-8 flex justify-end">

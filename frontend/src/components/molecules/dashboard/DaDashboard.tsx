@@ -22,7 +22,7 @@ import {
   TbPalette,
   TbDeviceFloppy,
   TbCheck,
-  TbDotsVertical
+  TbDotsVertical,
 } from 'react-icons/tb'
 import { Button } from '@/components/atoms/button'
 const MODE_RUN = 'run'
@@ -49,12 +49,12 @@ import {
 } from '@/components/atoms/dropdown-menu'
 import DaDialog from '@/components/molecules/DaDialog'
 import { useSiteConfig } from '@/utils/siteConfig'
-import { getUsedVehicleApiNames, applySyncWithCodeToOptions } from '@/hooks/useUsedVehicleApisFromCode'
+import {
+  getUsedVehicleApiNames,
+  applySyncWithCodeToOptions,
+} from '@/hooks/useUsedVehicleApisFromCode'
 
-const processWidgetConfigs = (
-  widgetConfigs: any[],
-  usedApiNames: string[],
-) => {
+const processWidgetConfigs = (widgetConfigs: any[], usedApiNames: string[]) => {
   if (!widgetConfigs) return
   widgetConfigs.forEach((widget) => {
     if (!widget?.url) {
@@ -116,7 +116,8 @@ const DaDashboard = () => {
   const [applyOpen, setApplyOpen] = useState(false)
   const [adminMenuOpen, setAdminMenuOpen] = useState(false)
 
-  const [conflictTemplate, setConflictTemplate] = useState<DashboardTemplate | null>(null)
+  const [conflictTemplate, setConflictTemplate] =
+    useState<DashboardTemplate | null>(null)
   const [showOverrideDialog, setShowOverrideDialog] = useState(false)
 
   const { data: templatesData } = useQuery({
@@ -126,7 +127,11 @@ const DaDashboard = () => {
 
   const buildWidgetConfig = () => {
     if (!prototype?.widget_config) return undefined
-    try { return JSON.parse(prototype.widget_config) } catch { return undefined }
+    try {
+      return JSON.parse(prototype.widget_config)
+    } catch {
+      return undefined
+    }
   }
 
   // Derive the currently applied template ID from prototype.extend.
@@ -135,12 +140,22 @@ const DaDashboard = () => {
   // because (null)?.dashboard_template_id also yields undefined.
   const extendObj = prototype?.extend
   const hasTemplateDecision =
-    extendObj != null && typeof extendObj === 'object' && 'dashboard_template_id' in extendObj
-  const activeTemplateId = extendObj?.dashboard_template_id as string | null | undefined
+    extendObj != null &&
+    typeof extendObj === 'object' &&
+    'dashboard_template_id' in extendObj
+  const activeTemplateId = extendObj?.dashboard_template_id as
+    string | null | undefined
 
   useEffect(() => {
-    if (!hasTemplateDecision && templatesData?.results?.length && prototype && mode === MODE_RUN) {
-      const defaultTemplate = templatesData.results.find((t: DashboardTemplate) => t.is_default)
+    if (
+      !hasTemplateDecision &&
+      templatesData?.results?.length &&
+      prototype &&
+      mode === MODE_RUN
+    ) {
+      const defaultTemplate = templatesData.results.find(
+        (t: DashboardTemplate) => t.is_default,
+      )
       if (defaultTemplate) handleApplyTemplate(defaultTemplate)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -165,7 +180,9 @@ const DaDashboard = () => {
       closeSaveDialog()
     },
     onError: (e: any) =>
-      toast.error(e?.response?.data?.message || e.message || 'Failed to save template'),
+      toast.error(
+        e?.response?.data?.message || e.message || 'Failed to save template',
+      ),
   })
 
   const overrideTemplateMutation = useMutation({
@@ -182,7 +199,11 @@ const DaDashboard = () => {
       closeSaveDialog()
     },
     onError: (e: any) =>
-      toast.error(e?.response?.data?.message || e.message || 'Failed to override template'),
+      toast.error(
+        e?.response?.data?.message ||
+          e.message ||
+          'Failed to override template',
+      ),
   })
 
   const handleSaveTemplate = () => {
@@ -204,8 +225,15 @@ const DaDashboard = () => {
       return
     }
     const newConfig = JSON.stringify(template.widget_config, null, 2)
-    const newExtend = { ...(prototype?.extend ?? {}), dashboard_template_id: template.id }
-    const newPrototype = { ...prototype, widget_config: newConfig, extend: newExtend }
+    const newExtend = {
+      ...(prototype?.extend ?? {}),
+      dashboard_template_id: template.id,
+    }
+    const newPrototype = {
+      ...prototype,
+      widget_config: newConfig,
+      extend: newExtend,
+    }
     setActivePrototype(newPrototype)
     setApplyOpen(false)
     if (prototype?.id) {
@@ -221,7 +249,6 @@ const DaDashboard = () => {
       }
     }
   }
-
 
   useEffect(() => {
     if (prototypeHasUnsavedChanges && prototype?.id) {
@@ -243,7 +270,7 @@ const DaDashboard = () => {
     // prototype.widget_config: JSON string
     if (prototype?.widget_config) {
       try {
-        let parsedWidgetConfig = JSON.parse(prototype.widget_config) // parsedWidgetConfig: JSON object
+        const parsedWidgetConfig = JSON.parse(prototype.widget_config) // parsedWidgetConfig: JSON object
         if (Array.isArray(parsedWidgetConfig)) {
           widgetConfigs = parsedWidgetConfig
         } else {
@@ -301,7 +328,10 @@ const DaDashboard = () => {
   const handleSave = async () => {
     if (prototype?.id) {
       try {
-        const newExtend = { ...(prototype?.extend ?? {}), dashboard_template_id: null }
+        const newExtend = {
+          ...(prototype?.extend ?? {}),
+          dashboard_template_id: null,
+        }
         await updatePrototypeService(prototype.id, {
           widget_config: prototype.widget_config,
           extend: newExtend,
@@ -335,7 +365,8 @@ const DaDashboard = () => {
       <div
         className={cn(
           'da-dashboard-toolbar absolute z-10 left-0 px-2 top-0 flex gap-1 w-full py-1 shadow-xl items-center bg-white',
-          showPrototypeDashboardFullScreen && 'da-dashboard-fullscreen-toolbar h-[56px]',
+          showPrototypeDashboardFullScreen &&
+            'da-dashboard-fullscreen-toolbar h-[56px]',
         )}
       >
         {showPrototypeDashboardFullScreen && (
@@ -354,14 +385,26 @@ const DaDashboard = () => {
                 {/* Apply Template — all authorized users */}
                 <DropdownMenu open={applyOpen} onOpenChange={setApplyOpen}>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" data-id="dashboard-apply-template-button">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      data-id="dashboard-apply-template-button"
+                    >
                       <TbPalette className="size-4" />
-                      {activeTemplateId && templatesData?.results?.find((t) => t.id === activeTemplateId)
-                        ? templatesData.results.find((t) => t.id === activeTemplateId)!.name
+                      {activeTemplateId &&
+                      templatesData?.results?.find(
+                        (t) => t.id === activeTemplateId,
+                      )
+                        ? templatesData.results.find(
+                            (t) => t.id === activeTemplateId,
+                          )!.name
                         : ''}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-64 max-h-64 overflow-y-auto">
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-64 max-h-64 overflow-y-auto"
+                  >
                     {templatesData?.results?.length ? (
                       templatesData.results.map((t: DashboardTemplate) => (
                         <DropdownMenuItem
@@ -369,13 +412,16 @@ const DaDashboard = () => {
                           onClick={() => handleApplyTemplate(t)}
                           className="cursor-pointer"
                         >
-                          <span className={`truncate ${t.id === activeTemplateId ? 'flex-1 font-semibold text-da-primary-500' : ''}`}>
+                          <span
+                            className={`truncate ${t.id === activeTemplateId ? 'flex-1 font-semibold text-da-primary-500' : ''}`}
+                          >
                             {t.name}
                           </span>
-                          {t.id === activeTemplateId
-                            ? (<span className="flex size-4 mr-2 shrink-0 items-center justify-center">
+                          {t.id === activeTemplateId ? (
+                            <span className="flex size-4 mr-2 shrink-0 items-center justify-center">
                               <TbCheck className="size-4 text-da-primary-500" />
-                            </span>) : null}
+                            </span>
+                          ) : null}
                         </DropdownMenuItem>
                       ))
                     ) : (
@@ -514,14 +560,21 @@ const DaDashboard = () => {
       >
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            A template named <span className="font-semibold text-foreground">&quot;{conflictTemplate?.name}&quot;</span> already exists.
-            Do you want to override it with the current dashboard layout?
+            A template named{' '}
+            <span className="font-semibold text-foreground">
+              &quot;{conflictTemplate?.name}&quot;
+            </span>{' '}
+            already exists. Do you want to override it with the current
+            dashboard layout?
           </p>
           <div className="flex justify-end gap-2 pt-1">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => { setShowOverrideDialog(false); setConflictTemplate(null) }}
+              onClick={() => {
+                setShowOverrideDialog(false)
+                setConflictTemplate(null)
+              }}
             >
               Cancel
             </Button>
@@ -529,7 +582,10 @@ const DaDashboard = () => {
               size="sm"
               variant="destructive"
               disabled={overrideTemplateMutation.isPending}
-              onClick={() => conflictTemplate && overrideTemplateMutation.mutate(conflictTemplate.id)}
+              onClick={() =>
+                conflictTemplate &&
+                overrideTemplateMutation.mutate(conflictTemplate.id)
+              }
             >
               {overrideTemplateMutation.isPending ? 'Overriding…' : 'Override'}
             </Button>
@@ -541,7 +597,10 @@ const DaDashboard = () => {
       <DaDialog
         open={showSaveDialog}
         onOpenChange={(v) => {
-          if (!v) { setTemplateName(''); setTemplateDesc('') }
+          if (!v) {
+            setTemplateName('')
+            setTemplateDesc('')
+          }
           setShowSaveDialog(v)
         }}
         dialogTitle="Save Dashboard as Template"
@@ -559,7 +618,9 @@ const DaDashboard = () => {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium">Description (optional)</label>
+            <label className="text-sm font-medium">
+              Description (optional)
+            </label>
             <textarea
               className="flex min-h-18 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               placeholder="Short description..."
@@ -571,7 +632,11 @@ const DaDashboard = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => { setShowSaveDialog(false); setTemplateName(''); setTemplateDesc('') }}
+              onClick={() => {
+                setShowSaveDialog(false)
+                setTemplateName('')
+                setTemplateDesc('')
+              }}
             >
               Cancel
             </Button>
@@ -590,4 +655,3 @@ const DaDashboard = () => {
 }
 
 export default DaDashboard
-

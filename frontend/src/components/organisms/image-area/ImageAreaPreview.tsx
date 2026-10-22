@@ -20,7 +20,9 @@ const ImageAreaPreview = ({
   navigate,
 }: ImageAreaPreviewProps) => {
   const [displayShapes, setDisplayShapes] = useState<ImageAreaShape[]>([])
-  const [displayBgColor, setDisplayBgColor] = useState<string | undefined>(undefined)
+  const [displayBgColor, setDisplayBgColor] = useState<string | undefined>(
+    undefined,
+  )
   const [loaded, setLoaded] = useState(true)
 
   useEffect(() => {

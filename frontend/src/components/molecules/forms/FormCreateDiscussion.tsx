@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -135,16 +135,14 @@ const FormCreateDiscussion = ({
       {/* Content */}
       <Textarea
         value={data.content}
-        onChange={(e: FormEvent<HTMLTextAreaElement>) => handleChange('content', (e.target as HTMLTextAreaElement).value)}
+        onChange={(e: FormEvent<HTMLTextAreaElement>) =>
+          handleChange('content', (e.target as HTMLTextAreaElement).value)
+        }
         placeholder={replyingId ? 'Replying...' : 'Start a discussion'}
       />
 
       {/* Error */}
-      {error && (
-        <p className="mt-2 text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
 
       {/* Action */}
       <div className="flex mt-3 ml-auto gap-2">

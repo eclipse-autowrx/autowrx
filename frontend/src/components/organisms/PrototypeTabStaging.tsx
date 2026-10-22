@@ -42,47 +42,181 @@ const LIFECYCLES = [
 
 // Lifecycle option definitions
 const InfrastructureMaturity = [
-  { ID: '1', name: 'Planned', description: 'Component is conceptualized; requirements are being defined.', icon: '📌' },
-  { ID: '2', name: 'Prototyped', description: 'Initial implementation exists, but not yet integrated.', icon: '🛠️' },
-  { ID: '3', name: 'Integrated', description: 'Available in a development or pre-production environment.', icon: '🔗' },
-  { ID: '4', name: 'Certified', description: 'Meets infrastructure compliance, security, and performance requirements.', icon: '✅' },
+  {
+    ID: '1',
+    name: 'Planned',
+    description: 'Component is conceptualized; requirements are being defined.',
+    icon: '📌',
+  },
+  {
+    ID: '2',
+    name: 'Prototyped',
+    description: 'Initial implementation exists, but not yet integrated.',
+    icon: '🛠️',
+  },
+  {
+    ID: '3',
+    name: 'Integrated',
+    description: 'Available in a development or pre-production environment.',
+    icon: '🔗',
+  },
+  {
+    ID: '4',
+    name: 'Certified',
+    description:
+      'Meets infrastructure compliance, security, and performance requirements.',
+    icon: '✅',
+  },
 ]
 
 const FunctionalMaturity = [
-  { ID: '1', name: 'Feature Defined', description: 'Functional specification is complete.', icon: '📝' },
-  { ID: '2', name: 'Prototype Available', description: 'Early-stage implementation exists but is not production-ready.', icon: '🔬' },
-  { ID: '3', name: 'Baseline Established', description: 'First stable version with core functionality.', icon: '⚙️' },
-  { ID: '4', name: 'Feature Complete', description: 'Fully functional with all intended features.', icon: '🎯' },
-  { ID: '5', name: 'Optimized', description: 'Performance tuning, efficiency, and robustness improvements.', icon: '🚀' },
+  {
+    ID: '1',
+    name: 'Feature Defined',
+    description: 'Functional specification is complete.',
+    icon: '📝',
+  },
+  {
+    ID: '2',
+    name: 'Prototype Available',
+    description:
+      'Early-stage implementation exists but is not production-ready.',
+    icon: '🔬',
+  },
+  {
+    ID: '3',
+    name: 'Baseline Established',
+    description: 'First stable version with core functionality.',
+    icon: '⚙️',
+  },
+  {
+    ID: '4',
+    name: 'Feature Complete',
+    description: 'Fully functional with all intended features.',
+    icon: '🎯',
+  },
+  {
+    ID: '5',
+    name: 'Optimized',
+    description: 'Performance tuning, efficiency, and robustness improvements.',
+    icon: '🚀',
+  },
 ]
 
 const DeploymentVersion = [
-  { ID: '1', name: 'Older version', description: 'Work-in-progress; frequent changes.', icon: '✗' },
-  { ID: '2', name: 'Latest version', description: 'Merged into a shared environment with other components.', icon: '🗸' },
+  {
+    ID: '1',
+    name: 'Older version',
+    description: 'Work-in-progress; frequent changes.',
+    icon: '✗',
+  },
+  {
+    ID: '2',
+    name: 'Latest version',
+    description: 'Merged into a shared environment with other components.',
+    icon: '🗸',
+  },
 ]
 
 const ComplianceReadiness = [
-  { ID: '1', name: 'Regulatory Mapping Complete', description: 'Applicable regulations identified.', icon: '📜' },
-  { ID: '2', name: 'Requirements Implemented', description: 'Compliance measures integrated.', icon: '🛡' },
-  { ID: '3', name: 'Preliminary Assessment', description: 'Initial compliance checks completed.', icon: '🔍' },
-  { ID: '4', name: 'Certified', description: 'Passed regulatory audits and certified for use.', icon: '✅' },
-  { ID: '5', name: 'Maintained', description: 'Compliance monitored and updated as regulations evolve.', icon: '🔄' },
+  {
+    ID: '1',
+    name: 'Regulatory Mapping Complete',
+    description: 'Applicable regulations identified.',
+    icon: '📜',
+  },
+  {
+    ID: '2',
+    name: 'Requirements Implemented',
+    description: 'Compliance measures integrated.',
+    icon: '🛡',
+  },
+  {
+    ID: '3',
+    name: 'Preliminary Assessment',
+    description: 'Initial compliance checks completed.',
+    icon: '🔍',
+  },
+  {
+    ID: '4',
+    name: 'Certified',
+    description: 'Passed regulatory audits and certified for use.',
+    icon: '✅',
+  },
+  {
+    ID: '5',
+    name: 'Maintained',
+    description: 'Compliance monitored and updated as regulations evolve.',
+    icon: '🔄',
+  },
 ]
 
 const SecurityReadiness = [
-  { ID: '1', name: 'Threat Model Defined', description: 'Security risks and attack vectors analyzed.', icon: '⚠️' },
-  { ID: '2', name: 'Security Controls Implemented', description: 'Encryption and authentication mechanisms integrated.', icon: '🔐' },
-  { ID: '3', name: 'Vulnerability Tested', description: 'Security testing, including penetration testing, conducted.', icon: '🛡' },
-  { ID: '4', name: 'Certified Secure', description: 'Meets security certification standards.', icon: '✅' },
-  { ID: '5', name: 'Security Monitoring Active', description: 'Continuous monitoring for vulnerabilities and threats.', icon: '🔍' },
+  {
+    ID: '1',
+    name: 'Threat Model Defined',
+    description: 'Security risks and attack vectors analyzed.',
+    icon: '⚠️',
+  },
+  {
+    ID: '2',
+    name: 'Security Controls Implemented',
+    description: 'Encryption and authentication mechanisms integrated.',
+    icon: '🔐',
+  },
+  {
+    ID: '3',
+    name: 'Vulnerability Tested',
+    description: 'Security testing, including penetration testing, conducted.',
+    icon: '🛡',
+  },
+  {
+    ID: '4',
+    name: 'Certified Secure',
+    description: 'Meets security certification standards.',
+    icon: '✅',
+  },
+  {
+    ID: '5',
+    name: 'Security Monitoring Active',
+    description: 'Continuous monitoring for vulnerabilities and threats.',
+    icon: '🔍',
+  },
 ]
 
 const HomologationReadiness = [
-  { ID: '1', name: 'Homologation Impact Assessed', description: 'Impact on vehicle-level certification analyzed.', icon: '⚖️' },
-  { ID: '2', name: 'Certification Strategy Defined', description: 'Approach for compliance certification established.', icon: '📑' },
-  { ID: '3', name: 'Pre-Homologation Tests Passed', description: 'Initial verification against regulatory test cases completed.', icon: '🔍' },
-  { ID: '4', name: 'Certified for Deployment', description: 'Regulatory approval obtained for production release.', icon: '✅' },
-  { ID: '5', name: 'In-Service Compliance Ensured', description: 'Ongoing adherence to regulatory requirements monitored post-deployment.', icon: '🔄' },
+  {
+    ID: '1',
+    name: 'Homologation Impact Assessed',
+    description: 'Impact on vehicle-level certification analyzed.',
+    icon: '⚖️',
+  },
+  {
+    ID: '2',
+    name: 'Certification Strategy Defined',
+    description: 'Approach for compliance certification established.',
+    icon: '📑',
+  },
+  {
+    ID: '3',
+    name: 'Pre-Homologation Tests Passed',
+    description:
+      'Initial verification against regulatory test cases completed.',
+    icon: '🔍',
+  },
+  {
+    ID: '4',
+    name: 'Certified for Deployment',
+    description: 'Regulatory approval obtained for production release.',
+    icon: '✅',
+  },
+  {
+    ID: '5',
+    name: 'In-Service Compliance Ensured',
+    description:
+      'Ongoing adherence to regulatory requirements monitored post-deployment.',
+    icon: '🔄',
+  },
 ]
 
 interface Stage {
@@ -120,7 +254,10 @@ interface PluginDropdownItemProps {
   onClick: () => void
 }
 
-const PluginDropdownItem: React.FC<PluginDropdownItemProps> = ({ plugin, onClick }) => {
+const PluginDropdownItem: React.FC<PluginDropdownItemProps> = ({
+  plugin,
+  onClick,
+}) => {
   const [isHovered, setIsHovered] = useState(false)
 
   return (
@@ -177,14 +314,21 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
 }) => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
   const { setOpenLoginDialog } = useAuthStore()
-  const [stagingFrameConfig, setStagingFrameConfig] = useState<PublicConfig>(null)
-  const [standardStageConfig, setStandardStageConfig] = useState<PublicConfig>(null)
+  const [stagingFrameConfig, setStagingFrameConfig] =
+    useState<PublicConfig>(null)
+  const [standardStageConfig, setStandardStageConfig] =
+    useState<PublicConfig>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [activeLifeCycle, setActiveLifeCycle] = useState<string>('Deployment Version')
+  const [activeLifeCycle, setActiveLifeCycle] =
+    useState<string>('Deployment Version')
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set()) // Default: all collapsed
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null) // Plugin ID or slug
-  const [selectedStageName, setSelectedStageName] = useState<string | null>(null) // Stage name for back button
-  const [openStageMenuName, setOpenStageMenuName] = useState<string | null>(null)
+  const [selectedStageName, setSelectedStageName] = useState<string | null>(
+    null,
+  ) // Stage name for back button
+  const [openStageMenuName, setOpenStageMenuName] = useState<string | null>(
+    null,
+  )
   const { toast } = useToast()
   const { data: routeModel } = useCurrentModel()
   const model = modelProp ?? routeModel
@@ -206,7 +350,7 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
         configManagementService.getPublicConfig(STAGING_FRAME_KEY),
         configManagementService.getPublicConfig(STANDARD_STAGE_KEY),
       ])
-      
+
       // Handle staging frame config
       if (stagingFrame.status === 'fulfilled') {
         setStagingFrameConfig(stagingFrame.value)
@@ -219,28 +363,32 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
               {
                 name: 'SDV Mock',
                 version: 'v1.0',
-                image: 'https://playground-v2.digital.auto/imgs/targets/target_mockup.png',
+                image:
+                  'https://playground-v2.digital.auto/imgs/targets/target_mockup.png',
               },
               {
                 name: 'Virtual Vehicle',
                 version: 'v1.0',
-                image: 'https://playground-v2.digital.auto/imgs/targets/target_3d_car.png',
+                image:
+                  'https://playground-v2.digital.auto/imgs/targets/target_3d_car.png',
               },
               {
                 name: 'Lab HW',
                 version: 'v1.0',
-                image: 'https://playground-v2.digital.auto/imgs/targets/desktopKit.png',
+                image:
+                  'https://playground-v2.digital.auto/imgs/targets/desktopKit.png',
               },
               {
                 name: 'Test Fleet',
                 version: 'v1.0',
-                image: 'https://playground-v2.digital.auto/imgs/targets/desktopKit.png',
+                image:
+                  'https://playground-v2.digital.auto/imgs/targets/desktopKit.png',
               },
             ],
           },
         })
       }
-      
+
       // Handle standard stage config
       if (standardStage.status === 'fulfilled') {
         setStandardStageConfig(standardStage.value)
@@ -281,24 +429,35 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
   }
 
   // Generate default cycle data for a component ID and stage name
-  const getDefaultCycleData = (componentId: string, stageName: string): { version?: string; cycle: Record<string, string> } => {
+  const getDefaultCycleData = (
+    componentId: string,
+    stageName: string,
+  ): { version?: string; cycle: Record<string, string> } => {
     // Default cycle values - these will be used if no data exists in siteconfig
     // Values are based on component ID hash to provide variety
-    const hash = componentId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    const hash = componentId
+      .split('')
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0)
     const baseValue = (hash % 4) + 1 // Value between 1-4
     const deploymentValue = (hash % 2) + 1 // Value 1 or 2 for Deployment Version
-    
+
     // Stage-specific variations
-    const stageVariations: Record<string, { version: string; cycleModifier: number }> = {
+    const stageVariations: Record<
+      string,
+      { version: string; cycleModifier: number }
+    > = {
       'SDV Mock': { version: '1.0', cycleModifier: 0 },
       'Virtual Vehicle': { version: '0.9', cycleModifier: 1 },
       'Lab HW': { version: '0.9', cycleModifier: 0 },
       'Test Fleet': { version: '0.9', cycleModifier: 2 },
     }
-    
-    const stageInfo = stageVariations[stageName] || { version: '1.0', cycleModifier: 0 }
-    const modValue = (baseValue + stageInfo.cycleModifier) % 4 + 1
-    
+
+    const stageInfo = stageVariations[stageName] || {
+      version: '1.0',
+      cycleModifier: 0,
+    }
+    const modValue = ((baseValue + stageInfo.cycleModifier) % 4) + 1
+
     return {
       version: stageInfo.version,
       cycle: {
@@ -331,10 +490,12 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
   const TARGETS: Target[] = stages.map((stage) => {
     // Start with stage's existing state data
     let state = stage.state || {}
-    
+
     // Get all leaf node IDs from the component tree
-    const leafNodeIds = standardStage?.children ? getAllLeafNodeIds(standardStage.children) : []
-    
+    const leafNodeIds = standardStage?.children
+      ? getAllLeafNodeIds(standardStage.children)
+      : []
+
     // If state is empty or missing data for components, generate default cycle data
     if (!stage.state || Object.keys(stage.state).length === 0) {
       state = {}
@@ -352,8 +513,10 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
           }
           return null
         }
-        const component = standardStage?.children ? findComponent(standardStage.children) : null
-        
+        const component = standardStage?.children
+          ? findComponent(standardStage.children)
+          : null
+
         state[componentId] = {
           version: component?.version || defaultData.version || '1.0.0',
           cycle: defaultData.cycle,
@@ -377,17 +540,23 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
             }
             return null
           }
-          const component = standardStage?.children ? findComponent(standardStage.children) : null
-          
+          const component = standardStage?.children
+            ? findComponent(standardStage.children)
+            : null
+
           enhancedState[componentId] = {
-            version: component?.version || enhancedState[componentId]?.version || defaultData.version || '1.0.0',
+            version:
+              component?.version ||
+              enhancedState[componentId]?.version ||
+              defaultData.version ||
+              '1.0.0',
             cycle: enhancedState[componentId]?.cycle || defaultData.cycle,
           }
         }
       })
       state = enhancedState
     }
-    
+
     return {
       name: stage.name,
       version: stage.version,
@@ -417,7 +586,10 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
   }
 
   // Get cycle value for a component in a specific target/stage
-  const getCycleValue = (componentId: string, target: Target): string | null => {
+  const getCycleValue = (
+    componentId: string,
+    target: Target,
+  ): string | null => {
     const componentState = target.state?.[componentId]
     if (!componentState?.cycle) return null
     return componentState.cycle[activeLifeCycle] || null
@@ -434,16 +606,22 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
   // Debug: Log TARGETS structure for debugging
   useEffect(() => {
     if (TARGETS.length > 0 && standardStage) {
-      const leafNodeIds = standardStage.children ? getAllLeafNodeIds(standardStage.children) : []
+      const leafNodeIds = standardStage.children
+        ? getAllLeafNodeIds(standardStage.children)
+        : []
       console.log('[PrototypeTabStaging] TARGETS structure:', {
         targetCount: TARGETS.length,
         leafNodeCount: leafNodeIds.length,
         activeLifeCycle,
-        sampleTarget: TARGETS[0] ? {
-          name: TARGETS[0].name,
-          stateKeys: Object.keys(TARGETS[0].state || {}),
-          sampleComponentState: leafNodeIds[0] ? TARGETS[0].state?.[leafNodeIds[0]] : null,
-        } : null,
+        sampleTarget: TARGETS[0]
+          ? {
+              name: TARGETS[0].name,
+              stateKeys: Object.keys(TARGETS[0].state || {}),
+              sampleComponentState: leafNodeIds[0]
+                ? TARGETS[0].state?.[leafNodeIds[0]]
+                : null,
+            }
+          : null,
       })
     }
   }, [TARGETS, standardStage, activeLifeCycle])
@@ -460,14 +638,20 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
     })
   }
 
-  const renderStageItem = (item: StageItem, level: number = 0): React.ReactNode => {
+  const renderStageItem = (
+    item: StageItem,
+    level: number = 0,
+  ): React.ReactNode => {
     const isExpanded = expandedIds.has(item.id)
     const hasChildren = item.children && item.children.length > 0
     const isLeafNode = !hasChildren // Only leaf nodes (no children) should show versions
 
     return (
       <>
-        <div key={item.id} className="flex w-full border-b border-border/50 h-[28px] items-center">
+        <div
+          key={item.id}
+          className="flex w-full border-b border-border/50 h-[28px] items-center"
+        >
           {/* System Column (Big Column) - Contains Component Name + Version */}
           <div className="flex min-w-[340px] max-w-[340px] flex-1 items-center leading-none border-r border-border">
             {/* Component Name Section */}
@@ -479,30 +663,34 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
                 ))}
               {hasChildren ? (
                 isExpanded ? (
-                  <TbChevronDown 
-                    className="w-4 h-4 mr-1 text-muted-foreground cursor-pointer" 
+                  <TbChevronDown
+                    className="w-4 h-4 mr-1 text-muted-foreground cursor-pointer"
                     onClick={() => toggleExpand(item.id)}
                   />
                 ) : (
-                  <TbChevronRight 
-                    className="w-4 h-4 mr-1 text-muted-foreground cursor-pointer" 
+                  <TbChevronRight
+                    className="w-4 h-4 mr-1 text-muted-foreground cursor-pointer"
                     onClick={() => toggleExpand(item.id)}
                   />
                 )
               ) : (
                 <div className="w-5 mr-1" />
               )}
-              <span className={cn(
-                'text-xs text-foreground',
-                level === 0 && 'font-semibold'
-              )}>
+              <span
+                className={cn(
+                  'text-xs text-foreground',
+                  level === 0 && 'font-semibold',
+                )}
+              >
                 {item.name}
               </span>
             </div>
             {/* Version Column - Part of System Column - Only show for leaf nodes */}
             <div className="h-full px-2 flex items-center justify-center w-24 border-l border-border">
               {isLeafNode && item.version && (
-                <span className="text-xs text-muted-foreground">{item.version}</span>
+                <span className="text-xs text-muted-foreground">
+                  {item.version}
+                </span>
               )}
             </div>
           </div>
@@ -516,28 +704,42 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
                 const cycleOption = getCycleOption(item.id, target)
                 const cycleValue = getCycleValue(item.id, target)
                 const componentState = target.state?.[item.id]
-                const version = componentState?.version || item.version || '1.0.0'
-                
+                const version =
+                  componentState?.version || item.version || '1.0.0'
+
                 // Get the lifecycle option (with fallback to first option if not found)
                 let option
                 if (activeLifeCycle === 'Deployment Version') {
-                  option = cycleValue ? DeploymentVersion.find((opt) => opt.ID === cycleValue) : DeploymentVersion[0]
+                  option = cycleValue
+                    ? DeploymentVersion.find((opt) => opt.ID === cycleValue)
+                    : DeploymentVersion[0]
                 } else {
                   option = cycleOption || getLifecycleOptions()[0]
                 }
-                
+
                 if (option) {
                   const icon = option.icon || ''
-                  const iconColor = icon === '✗' ? 'text-red-500' : icon === '🗸' ? 'text-green-500' : ''
-                  
+                  const iconColor =
+                    icon === '✗'
+                      ? 'text-red-500'
+                      : icon === '🗸'
+                        ? 'text-green-500'
+                        : ''
+
                   cellContent = (
                     <div className="flex items-center gap-1">
                       {/* Always show version first */}
-                      <span className="text-xs text-muted-foreground">{version}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {version}
+                      </span>
                       {/* Then show icon with tooltip */}
                       {icon && (
                         <DaTooltip tooltipMessage={option.name}>
-                          <span className={`text-sm ${iconColor} cursor-help inline-block`}>{icon}</span>
+                          <span
+                            className={`text-sm ${iconColor} cursor-help inline-block`}
+                          >
+                            {icon}
+                          </span>
                         </DaTooltip>
                       )}
                     </div>
@@ -545,11 +747,13 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
                 } else {
                   // Fallback: just show version if no option found
                   cellContent = (
-                    <span className="text-xs text-muted-foreground">{version}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {version}
+                    </span>
                   )
                 }
               }
-              
+
               return (
                 <div
                   key={targetIndex}
@@ -591,7 +795,9 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
     return (
       <div className="flex flex-col justify-center items-center py-8 gap-4">
         <Spinner />
-        <p className="text-sm text-muted-foreground">Loading user information...</p>
+        <p className="text-sm text-muted-foreground">
+          Loading user information...
+        </p>
       </div>
     )
   }
@@ -600,7 +806,9 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
   if (!self) {
     return (
       <div className="flex flex-col justify-center items-center py-16 gap-4">
-        <h3 className="text-lg font-semibold text-foreground">Authentication Required</h3>
+        <h3 className="text-lg font-semibold text-foreground">
+          Authentication Required
+        </h3>
         <p className="text-sm text-muted-foreground text-center max-w-md">
           Please sign in to view staging configuration
         </p>
@@ -621,7 +829,9 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
     return (
       <div className="flex flex-col justify-center items-center py-8 gap-4">
         <Spinner />
-        <p className="text-sm text-muted-foreground">Loading staging configuration...</p>
+        <p className="text-sm text-muted-foreground">
+          Loading staging configuration...
+        </p>
       </div>
     )
   }
@@ -727,7 +937,9 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
                 <div className="mt-2">
                   <DropdownMenu
                     open={openStageMenuName === stage.name}
-                    onOpenChange={(open) => setOpenStageMenuName(open ? stage.name : null)}
+                    onOpenChange={(open) =>
+                      setOpenStageMenuName(open ? stage.name : null)
+                    }
                   >
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -741,27 +953,32 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
                     <DropdownMenuContent align="center" className="w-64 p-1">
                       {/* Header */}
                       <div className="px-2 py-1.5 border-b border-border">
-                        <p className="text-xs font-semibold text-foreground">Select Deploy Target</p>
+                        <p className="text-xs font-semibold text-foreground">
+                          Select Deploy Target
+                        </p>
                       </div>
                       {stage.plugins && stage.plugins.length > 0 ? (
-                        stage.plugins.map((plugin: Plugin, pluginIndex: number) => (
-                          <div key={plugin.id || plugin.slug}>
-                            <PluginDropdownItem
-                              plugin={plugin}
-                              onClick={() => {
-                                setOpenStageMenuName(null)
-                                // Use slug if available, otherwise use id
-                                const pluginId = plugin.slug || plugin.id
-                                setSelectedPlugin(pluginId)
-                                setSelectedStageName(stage.name)
-                              }}
-                            />
-                            {/* Separator line between items (except last) */}
-                            {stage.plugins && pluginIndex < stage.plugins.length - 1 && (
-                              <div className="h-px bg-border mx-2" />
-                            )}
-                          </div>
-                        ))
+                        stage.plugins.map(
+                          (plugin: Plugin, pluginIndex: number) => (
+                            <div key={plugin.id || plugin.slug}>
+                              <PluginDropdownItem
+                                plugin={plugin}
+                                onClick={() => {
+                                  setOpenStageMenuName(null)
+                                  // Use slug if available, otherwise use id
+                                  const pluginId = plugin.slug || plugin.id
+                                  setSelectedPlugin(pluginId)
+                                  setSelectedStageName(stage.name)
+                                }}
+                              />
+                              {/* Separator line between items (except last) */}
+                              {stage.plugins &&
+                                pluginIndex < stage.plugins.length - 1 && (
+                                  <div className="h-px bg-border mx-2" />
+                                )}
+                            </div>
+                          ),
+                        )
                       ) : (
                         <DropdownMenuItem disabled className="text-center">
                           No targets available
@@ -779,7 +996,9 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
           {/* Data Rows - No header row needed */}
           {standardStage && (
             <div>
-              {standardStage.children?.map((child) => renderStageItem(child, 0))}
+              {standardStage.children?.map((child) =>
+                renderStageItem(child, 0),
+              )}
             </div>
           )}
         </div>

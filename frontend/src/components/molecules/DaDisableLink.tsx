@@ -19,7 +19,12 @@ interface DisabledLinkProps {
   dataId?: string
 }
 
-const DisabledLink = ({ to, children, className, dataId }: DisabledLinkProps) => {
+const DisabledLink = ({
+  to,
+  children,
+  className,
+  dataId,
+}: DisabledLinkProps) => {
   const { data: user } = useSelfProfileQuery()
   const { authConfigs } = useAuthConfigs()
 

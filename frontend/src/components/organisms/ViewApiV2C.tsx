@@ -17,8 +17,7 @@ export const DEFAULT_V2C = [
     path: '/driver/hvac/preferences',
     method: 'GET',
     summary: 'Get Driver HVAC Preferences',
-    description:
-      `Retrieves the driver's HVAC preferences based on the COVESA VSS standard.`,
+    description: `Retrieves the driver's HVAC preferences based on the COVESA VSS standard.`,
     parameters: [
       {
         name: 'driverProfileId',
@@ -90,14 +89,14 @@ export const DEFAULT_V2C = [
     },
     server:
       'https://central.eu-fr.axway.com/apimocks/523872032437473/driverhvacpreferences',
-    info_url: 'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d85d6944cd41601944f4c1ea93c80/resources'
+    info_url:
+      'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d85d6944cd41601944f4c1ea93c80/resources',
   },
   {
     path: '/driver/mirror/preferences',
     method: 'GET',
     summary: 'Get Driver Mirror Preferences',
-    description:
-      `Retrieves the driver's mirror preferences based on the COVESA VSS standard.`,
+    description: `Retrieves the driver's mirror preferences based on the COVESA VSS standard.`,
     parameters: [
       {
         name: 'driverProfileId',
@@ -167,7 +166,8 @@ export const DEFAULT_V2C = [
     },
     server:
       'https://central.eu-fr.axway.com/apimocks/523872032437473/drivermirrorpreferences',
-    info_url: 'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d92de944cd40d01944f4c53bb3ec7/overview'
+    info_url:
+      'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d92de944cd40d01944f4c53bb3ec7/overview',
   },
   {
     path: '/driver/preferences',
@@ -240,14 +240,14 @@ export const DEFAULT_V2C = [
     },
     server:
       'https://central.eu-fr.axway.com/apimocks/523872032437473/driverpreferences',
-    info_url: 'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d83ca944cd30301944f4d09b54427/overview'
+    info_url:
+      'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d83ca944cd30301944f4d09b54427/overview',
   },
   {
     path: '/driver/seating/preferences',
     method: 'GET',
     summary: 'Get Driver Seating Preferences',
-    description:
-      `Retrieves the driver's seating preferences based on the COVESA VSS standard.`,
+    description: `Retrieves the driver's seating preferences based on the COVESA VSS standard.`,
     parameters: [
       {
         name: 'driverProfileId',
@@ -301,7 +301,8 @@ export const DEFAULT_V2C = [
     },
     server:
       'https://central.eu-fr.axway.com/apimocks/523872032437473/driverseatingpreferences',
-    info_url: 'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d92de944cd40d01944f4c89a93eec/overview'
+    info_url:
+      'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d92de944cd40d01944f4c89a93eec/overview',
   },
   {
     path: '/vehicle/access_log',
@@ -362,7 +363,8 @@ export const DEFAULT_V2C = [
     },
     server:
       'https://central.eu-fr.axway.com/apimocks/523872032437473/vehicle-access-permissions-log',
-    info_url: 'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d92de944cd40d01944f4cd3253f32/overview'
+    info_url:
+      'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d92de944cd40d01944f4cd3253f32/overview',
   },
   {
     path: '/vehicle/access/check',
@@ -438,7 +440,8 @@ export const DEFAULT_V2C = [
     },
     server:
       'https://central.eu-fr.axway.com/apimocks/523872032437473/vehicleaccesspermissions',
-    info_url: 'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d92de944cd40d01944f4cd3253f32/overview'
+    info_url:
+      'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d92de944cd40d01944f4cd3253f32/overview',
   },
   {
     path: '/vehicle/access/history',
@@ -515,14 +518,15 @@ export const DEFAULT_V2C = [
     },
     server:
       'https://central.eu-fr.axway.com/apimocks/523872032437473/vehicleaccesspermissions',
-    info_url: 'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d92de944cd40d01944f4cd3253f32/resources'
+    info_url:
+      'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d92de944cd40d01944f4cd3253f32/resources',
   },
 ]
 
 interface V2CApiListProps {
   apis: any[]
   onApiSelected: (api: any) => void
-  activeApi: any,
+  activeApi: any
   hideSearch?: boolean
 }
 
@@ -572,17 +576,28 @@ const V2CApiListItem = ({
           </div>
         </div>
 
-        { api.info_url && <div>
-          <a href={api.info_url} target="_blank" rel="noreferrer">
-            <img className='w-16 h-8 object-contain' alt='axway' src='https://www.axway.com/themes/custom/axway2020/img/axway-logo-dark-gray.svg'/>
-          </a>
-        </div> }
+        {api.info_url && (
+          <div>
+            <a href={api.info_url} target="_blank" rel="noreferrer">
+              <img
+                className="w-16 h-8 object-contain"
+                alt="axway"
+                src="https://www.axway.com/themes/custom/axway2020/img/axway-logo-dark-gray.svg"
+              />
+            </a>
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
-const V2CApiList = ({ apis, onApiSelected, activeApi, hideSearch }: V2CApiListProps) => {
+const V2CApiList = ({
+  apis,
+  onApiSelected,
+  activeApi,
+  hideSearch,
+}: V2CApiListProps) => {
   const [searchTerm, setSearchTerm] = useState('')
 
   const filteredApis = apis.filter(
@@ -593,13 +608,15 @@ const V2CApiList = ({ apis, onApiSelected, activeApi, hideSearch }: V2CApiListPr
 
   return (
     <div className="w-full h-full flex flex-col">
-      { !hideSearch && <div className="p-2 border-b">
-        <Input
-          placeholder="Search APIs..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>}
+      {!hideSearch && (
+        <div className="p-2 border-b">
+          <Input
+            placeholder="Search APIs..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      )}
       <div className="flex-1 overflow-auto">
         {filteredApis.map((api, index) => (
           <V2CApiListItem
@@ -626,27 +643,25 @@ const ApiDetail = ({ api }: { api: any }) => {
 
   return (
     <div className="w-full h-full overflow-auto p-4">
-
       <div className="mb-4">
-
-        { api.path && <div className="flex items-center mb-2">
-          <span
-            className={`text-sm font-medium px-2 py-1 rounded mr-2 ${
-              api.method === 'GET'
-                ? 'text-green-600 bg-green-100'
-                : api.method === 'POST'
-                  ? 'text-blue-600 bg-blue-100'
-                  : api.method === 'PUT'
-                    ? 'text-orange-600 bg-orange-100'
-                    : 'text-gray-600 bg-gray-100'
-            }`}
-          >
-            {api.method}
-          </span>
-          <div className="text-lg font-medium">
-            {api.path}
+        {api.path && (
+          <div className="flex items-center mb-2">
+            <span
+              className={`text-sm font-medium px-2 py-1 rounded mr-2 ${
+                api.method === 'GET'
+                  ? 'text-green-600 bg-green-100'
+                  : api.method === 'POST'
+                    ? 'text-blue-600 bg-blue-100'
+                    : api.method === 'PUT'
+                      ? 'text-orange-600 bg-orange-100'
+                      : 'text-gray-600 bg-gray-100'
+              }`}
+            >
+              {api.method}
+            </span>
+            <div className="text-lg font-medium">{api.path}</div>
           </div>
-        </div> }
+        )}
 
         <div className="text-sm font-medium text-muted-foreground mb-4">
           {api.description}
@@ -654,9 +669,7 @@ const ApiDetail = ({ api }: { api: any }) => {
 
         {api.server && (
           <div className="mb-1">
-            <div className="text-sm font-medium mr-2">
-              Server:
-            </div>
+            <div className="text-sm font-medium mr-2">Server:</div>
             <div className="overflow-auto text-xs text-blue-600">
               {api.server}
             </div>
@@ -666,16 +679,12 @@ const ApiDetail = ({ api }: { api: any }) => {
 
       {api.parameters && api.parameters.length > 0 && (
         <div className="mb-4">
-          <div className="text-sm font-medium mb-2">
-            Parameters
-          </div>
+          <div className="text-sm font-medium mb-2">Parameters</div>
           <div className="space-y-2">
             {api.parameters.map((param: any, index: number) => (
               <div key={index} className="border rounded p-2">
                 <div className="flex items-center">
-                  <div className="text-sm font-medium mr-2">
-                    {param.name}
-                  </div>
+                  <div className="text-sm font-medium mr-2">{param.name}</div>
                   <span
                     className={`text-xs px-1 py-0.5 rounded ${param.required ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}`}
                   >
@@ -696,9 +705,7 @@ const ApiDetail = ({ api }: { api: any }) => {
 
       {api.requestBody && (
         <div className="mb-4">
-          <div className="text-sm font-medium mb-2">
-            Request Body
-          </div>
+          <div className="text-sm font-medium mb-2">Request Body</div>
           <div className="border rounded p-2">
             <div className="text-sm font-medium text-muted-foreground">
               Content-Type: application/json
@@ -714,61 +721,63 @@ const ApiDetail = ({ api }: { api: any }) => {
         </div>
       )}
 
-      { api.responses && <div className="mb-4">
-        <div className="text-sm font-medium mb-2">
-          Responses
-        </div>
-        <div className="space-y-2">
-          {Object.entries(api.responses).map(
-            ([code, response]: [string, any]) => (
-              <div key={code} className="border rounded p-2">
-                <div className="flex items-center mb-1">
-                  <span
-                    className={`text-sm font-medium px-2 py-1 rounded mr-2 ${
-                      code.startsWith('2')
-                        ? 'text-green-600 bg-green-100'
-                        : code.startsWith('4')
-                          ? 'text-orange-600 bg-orange-100'
-                          : 'text-red-600 bg-red-100'
-                    }`}
-                  >
-                    {code}
-                  </span>
-                  <div className="text-sm font-medium">{response.description}</div>
-                </div>
-                {response.content && response.content['application/json'] && (
-                  <div className="mt-2">
-                    <div className="text-sm font-medium text-muted-foreground mb-1">
-                      Response Schema:
+      {api.responses && (
+        <div className="mb-4">
+          <div className="text-sm font-medium mb-2">Responses</div>
+          <div className="space-y-2">
+            {Object.entries(api.responses).map(
+              ([code, response]: [string, any]) => (
+                <div key={code} className="border rounded p-2">
+                  <div className="flex items-center mb-1">
+                    <span
+                      className={`text-sm font-medium px-2 py-1 rounded mr-2 ${
+                        code.startsWith('2')
+                          ? 'text-green-600 bg-green-100'
+                          : code.startsWith('4')
+                            ? 'text-orange-600 bg-orange-100'
+                            : 'text-red-600 bg-red-100'
+                      }`}
+                    >
+                      {code}
+                    </span>
+                    <div className="text-sm font-medium">
+                      {response.description}
                     </div>
-                    <pre className="text-xs bg-gray-50 p-2 rounded overflow-auto">
-                      {JSON.stringify(
-                        response.content['application/json'].schema,
-                        null,
-                        2,
-                      )}
-                    </pre>
-                    {response.content['application/json'].example && (
-                      <>
-                        <div className="text-sm font-medium text-muted-foreground mb-1 mt-2">
-                          Example:
-                        </div>
-                        <pre className="text-xs bg-gray-50 p-2 rounded overflow-auto">
-                          {JSON.stringify(
-                            response.content['application/json'].example,
-                            null,
-                            2,
-                          )}
-                        </pre>
-                      </>
-                    )}
                   </div>
-                )}
-              </div>
-            ),
-          )}
+                  {response.content && response.content['application/json'] && (
+                    <div className="mt-2">
+                      <div className="text-sm font-medium text-muted-foreground mb-1">
+                        Response Schema:
+                      </div>
+                      <pre className="text-xs bg-gray-50 p-2 rounded overflow-auto">
+                        {JSON.stringify(
+                          response.content['application/json'].schema,
+                          null,
+                          2,
+                        )}
+                      </pre>
+                      {response.content['application/json'].example && (
+                        <>
+                          <div className="text-sm font-medium text-muted-foreground mb-1 mt-2">
+                            Example:
+                          </div>
+                          <pre className="text-xs bg-gray-50 p-2 rounded overflow-auto">
+                            {JSON.stringify(
+                              response.content['application/json'].example,
+                              null,
+                              2,
+                            )}
+                          </pre>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ),
+            )}
+          </div>
         </div>
-      </div> }
+      )}
     </div>
   )
 }

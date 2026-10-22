@@ -61,7 +61,7 @@ import { ModelVisibility } from '@/types/model.type'
 import { MODEL_VISIBILITY_OPTIONS } from '@/utils/modelVisibility'
 
 const getCreatedById = (createdBy: any): string =>
-  typeof createdBy === 'object' ? createdBy?.id ?? '' : createdBy ?? ''
+  typeof createdBy === 'object' ? (createdBy?.id ?? '') : (createdBy ?? '')
 
 interface VisibilityControlProps {
   initialVisibility: ModelVisibility | undefined
@@ -178,10 +178,14 @@ const DaStateControl: React.FC<{
               <span className="text-sm font-normal">Draft</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleUpdate('released')}>
-              <span className="text-sm font-normal text-secondary">Released</span>
+              <span className="text-sm font-normal text-secondary">
+                Released
+              </span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleUpdate('blocked')}>
-              <span className="text-sm font-normal text-destructive">Blocked</span>
+              <span className="text-sm font-normal text-destructive">
+                Blocked
+              </span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -262,7 +266,10 @@ const PageModelDetail = () => {
       setIsEditingName(false)
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 409) {
-        setNameError(error.response.data?.message || 'A model with this name already exists')
+        setNameError(
+          error.response.data?.message ||
+            'A model with this name already exists',
+        )
       } else {
         console.error('Failed to update model name:', error)
       }
@@ -282,7 +289,9 @@ const PageModelDetail = () => {
         ref_type: 'model',
       })
       if (hasSyncWarningHeader(response.headers)) {
-        await new Promise((resolve) => setTimeout(resolve, SYNC_WARNING_REDIRECT_DELAY_MS))
+        await new Promise((resolve) =>
+          setTimeout(resolve, SYNC_WARNING_REDIRECT_DELAY_MS),
+        )
       }
       window.location.href = '/model'
     } catch (error) {
@@ -313,14 +322,20 @@ const PageModelDetail = () => {
                 <div className="flex flex-col gap-1">
                   <Input
                     value={newName}
-                    onChange={(e) => { setNewName(e.target.value); setNameError('') }}
+                    onChange={(e) => {
+                      setNewName(e.target.value)
+                      setNameError('')
+                    }}
                     className="h-8 min-w-[300px]"
                   />
                   {isDuplicateName && (
                     <DaDuplicateNameHint
                       message="A model with this name already exists"
                       suggestedName={suggestedName}
-                      onApplySuggestion={(name) => { setNewName(name); setNameError('') }}
+                      onApplySuggestion={(name) => {
+                        setNewName(name)
+                        setNameError('')
+                      }}
                       className="mt-2"
                     />
                   )}
@@ -395,7 +410,9 @@ const PageModelDetail = () => {
                 }
                 setIsExporting(false)
               }}
-              disabled={isDeleting || isExporting || isDownloading || isEditingName}
+              disabled={
+                isDeleting || isExporting || isDownloading || isEditingName
+              }
             >
               {isExporting ? (
                 <div className="flex items-center">
@@ -433,7 +450,9 @@ const PageModelDetail = () => {
                   setIsDownloading(false)
                 }
               }}
-              disabled={isDeleting || isExporting || isDownloading || isEditingName}
+              disabled={
+                isDeleting || isExporting || isDownloading || isEditingName
+              }
             >
               {isDownloading ? (
                 <div className="flex items-center">
@@ -455,7 +474,9 @@ const PageModelDetail = () => {
                 isEditingName && 'pointer-events-none opacity-50',
               )}
               onClick={() => setConfirmPopupOpen(true)}
-              disabled={isDeleting || isExporting || isDownloading || isEditingName}
+              disabled={
+                isDeleting || isExporting || isDownloading || isEditingName
+              }
             >
               {isDeleting ? (
                 <div className="flex items-center">
@@ -534,7 +555,10 @@ const PageModelDetail = () => {
                     visibility: newVisibility,
                   })
                   await refetch()
-                  await queryClient.invalidateQueries({ queryKey: ['modelsList'], refetchType: 'all' })
+                  await queryClient.invalidateQueries({
+                    queryKey: ['modelsList'],
+                    refetchType: 'all',
+                  })
                 }}
                 canEdit={isAuthorized}
               />
@@ -546,12 +570,17 @@ const PageModelDetail = () => {
                     state: (state || 'draft') as Model['state'],
                   })
                   await refetch()
-                  await queryClient.invalidateQueries({ queryKey: ['modelsList'], refetchType: 'all' })
+                  await queryClient.invalidateQueries({
+                    queryKey: ['modelsList'],
+                    refetchType: 'all',
+                  })
                 }}
                 canEdit={isAuthorized}
               />
 
-              {isAuthorized && <DaContributorList className="mt-3" canEdit={true} />}
+              {isAuthorized && (
+                <DaContributorList className="mt-3" canEdit={true} />
+              )}
             </>
           </div>
         </div>

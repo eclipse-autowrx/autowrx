@@ -18,12 +18,12 @@ import HomeFooterSection from '@/components/organisms/HomeFooterSection'
 import HomeModelList from '@/components/organisms/HomeModelList'
 
 const homeComponentMap: Record<string, React.ComponentType<any>> = {
-  'hero': HomeHeroSection,
+  hero: HomeHeroSection,
   'feature-list': HomeFeatureList,
   'button-list': HomeButtonList,
-  'news': HomeNews,
-  'recent': HomePrototypeRecent,
-  'popular': HomePrototypePopular,
+  news: HomeNews,
+  recent: HomePrototypeRecent,
+  popular: HomePrototypePopular,
   'prototype-list': HomePrototypeList,
   'partner-list': HomePartners,
   'home-footer': HomeFooterSection,
@@ -38,12 +38,12 @@ export const getHomeComponent = (
 
 export const getBlockTypeLabel = (type: string): string => {
   const labels: Record<string, string> = {
-    'hero': 'Hero',
+    hero: 'Hero',
     'feature-list': 'Feature list',
     'button-list': 'Button list',
-    'news': 'News',
-    'recent': 'Recent prototypes',
-    'popular': 'Popular prototypes',
+    news: 'News',
+    recent: 'Recent prototypes',
+    popular: 'Popular prototypes',
     'prototype-list': 'All prototypes',
     'partner-list': 'Partners',
     'home-footer': 'Footer',

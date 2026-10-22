@@ -31,7 +31,9 @@ const buildTreeNode = (name: string, path: string, node: Branch): TreeNode => {
     path,
     children: node.children
       ? Object.entries(node.children)
-          .filter(([sub_node_name, node]) => ['branch', 'sensor', 'actuator'].includes(node.type))
+          .filter(([sub_node_name, node]) =>
+            ['branch', 'sensor', 'actuator'].includes(node.type),
+          )
           .map(([sub_node_name, node]) =>
             buildTreeNode(
               sub_node_name,
@@ -192,15 +194,26 @@ const DaTreeViewUSP = ({ onNodeClick }: DaTreeViewUSPProps) => {
   const { data: model } = useCurrentModel()
 
   if (!model) {
-    return <div className="text-sm font-medium text-muted-foreground">Model is not available</div>
+    return (
+      <div className="text-sm font-medium text-muted-foreground">
+        Model is not available
+      </div>
+    )
   }
 
-
   const orgChart = model.extend?.vehicle_api?.USP_Tree
-    ? buildTreeNode(model.main_api, '', model.extend?.vehicle_api?.USP_Tree[model.main_api])
+    ? buildTreeNode(
+        model.main_api,
+        '',
+        model.extend?.vehicle_api?.USP_Tree[model.main_api],
+      )
     : null
   if (!orgChart) {
-    return <div className="text-sm font-medium text-muted-foreground">Tree view is not available</div>
+    return (
+      <div className="text-sm font-medium text-muted-foreground">
+        Tree view is not available
+      </div>
+    )
   }
 
   return (

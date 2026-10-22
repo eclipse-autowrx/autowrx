@@ -10,7 +10,13 @@ import React from 'react'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import { Textarea } from '@/components/atoms/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/atoms/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/atoms/select'
 import { Checkbox } from '@/components/atoms/checkbox'
 import JsonEditor from '@/components/atoms/JsonEditor'
 import { Button } from '@/components/atoms/button'
@@ -45,45 +51,47 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
     return fieldName.charAt(0).toUpperCase() + fieldName.slice(1)
   }
 
-
   // Helper function to copy value to clipboard
   const copyToClipboard = (value: any, fieldName: string) => {
     let textToCopy = ''
-    
+
     if (value === null || value === undefined) {
       return
     }
-    
+
     if (typeof value === 'object') {
       textToCopy = JSON.stringify(value, null, 2)
     } else {
       textToCopy = String(value)
     }
-    
-    navigator.clipboard.writeText(textToCopy).then(() => {
-      toast({
-        title: 'Copied',
-        description: `${capitalizeLabel(fieldName)} copied to clipboard`,
+
+    navigator.clipboard
+      .writeText(textToCopy)
+      .then(() => {
+        toast({
+          title: 'Copied',
+          description: `${capitalizeLabel(fieldName)} copied to clipboard`,
+        })
       })
-    }).catch(() => {
-      toast({
-        title: 'Copy failed',
-        description: 'Failed to copy to clipboard',
-        variant: 'destructive',
+      .catch(() => {
+        toast({
+          title: 'Copy failed',
+          description: 'Failed to copy to clipboard',
+          variant: 'destructive',
+        })
       })
-    })
   }
 
   // Parse schema
   const schemaObj = React.useMemo(() => {
     try {
       const parsed = typeof schema === 'string' ? JSON.parse(schema) : schema
-      
+
       // If schema defines an array with items, extract the items schema
       if (parsed.type === 'array' && parsed.items) {
         return parsed.items
       }
-      
+
       // If schema is an object, use it directly
       return parsed
     } catch (error) {
@@ -95,14 +103,17 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
   // Extract properties from schema
   const properties = schemaObj?.properties || {}
   const required = schemaObj?.required || []
-  
 
   const handleFieldChange = (fieldName: string, value: any) => {
     const newData = { ...data, [fieldName]: value }
     onChange(newData)
   }
 
-  const handleArrayItemChange = (fieldName: string, index: number, value: any) => {
+  const handleArrayItemChange = (
+    fieldName: string,
+    index: number,
+    value: any,
+  ) => {
     const currentArray = data[fieldName] || []
     const newArray = [...currentArray]
     newArray[index] = value
@@ -124,24 +135,36 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
   const getDefaultValue = (fieldSchema: any): any => {
     if (fieldSchema.default !== undefined) return fieldSchema.default
     switch (fieldSchema.type) {
-      case 'string': return ''
+      case 'string':
+        return ''
       case 'number':
-      case 'integer': return 0
-      case 'boolean': return false
-      case 'array': return []
-      case 'object': return {}
-      default: return null
+      case 'integer':
+        return 0
+      case 'boolean':
+        return false
+      case 'array':
+        return []
+      case 'object':
+        return {}
+      default:
+        return null
     }
   }
 
-  const renderField = (fieldName: string, fieldSchema: any, currentDepth: number = 0): React.ReactNode => {
+  const renderField = (
+    fieldName: string,
+    fieldSchema: any,
+    currentDepth: number = 0,
+  ): React.ReactNode => {
     if (excludeFields.includes(fieldName)) return null
 
     const isRequired = required.includes(fieldName)
     const fieldValue = data[fieldName]
     const fieldType = fieldSchema.type
     const description = fieldSchema.description || ''
-    const fullFieldName = fieldPrefix ? `${fieldPrefix}.${fieldName}` : fieldName
+    const fullFieldName = fieldPrefix
+      ? `${fieldPrefix}.${fieldName}`
+      : fieldName
 
     // Handle nested objects recursively
     if (fieldType === 'object' && fieldSchema.properties) {
@@ -149,9 +172,16 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
         // View mode: show nested object in a styled block
         const hasValue = fieldValue && Object.keys(fieldValue).length > 0
         return (
-          <div key={fieldName} className={cn("space-y-1", currentDepth > 0 && "ml-4 border-l-2 border-border pl-4")}>
+          <div
+            key={fieldName}
+            className={cn(
+              'space-y-1',
+              currentDepth > 0 && 'ml-4 border-l-2 border-border pl-4',
+            )}
+          >
             <Label className="text-sm font-semibold">
-              {capitalizeLabel(fieldName)} {isRequired && <span className="text-destructive">*</span>}
+              {capitalizeLabel(fieldName)}{' '}
+              {isRequired && <span className="text-destructive">*</span>}
             </Label>
             <div className="relative group">
               <div className="text-sm text-foreground py-2 px-3 bg-muted rounded-md break-words overflow-x-auto max-h-[200px] overflow-y-auto">
@@ -160,7 +190,9 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
                     <DynamicSchemaForm
                       schema={fieldSchema}
                       data={fieldValue || {}}
-                      onChange={(newValue) => handleFieldChange(fieldName, newValue)}
+                      onChange={(newValue) =>
+                        handleFieldChange(fieldName, newValue)
+                      }
                       mode={mode}
                       excludeFields={excludeFields}
                       fieldPrefix={fullFieldName}
@@ -190,13 +222,20 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
           </div>
         )
       }
-      
+
       // Edit mode
       return (
-        <div key={fieldName} className={cn("space-y-3", currentDepth > 0 && "ml-4 border-l-2 border-border pl-4 pt-2")}>
+        <div
+          key={fieldName}
+          className={cn(
+            'space-y-3',
+            currentDepth > 0 && 'ml-4 border-l-2 border-border pl-4 pt-2',
+          )}
+        >
           <div className="flex items-center justify-between">
             <Label className="text-sm font-semibold">
-              {capitalizeLabel(fieldName)} {isRequired && <span className="text-destructive">*</span>}
+              {capitalizeLabel(fieldName)}{' '}
+              {isRequired && <span className="text-destructive">*</span>}
             </Label>
           </div>
           {description && (
@@ -218,33 +257,51 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
     }
 
     // Handle arrays of objects
-    if (fieldType === 'array' && fieldSchema.items?.type === 'object' && fieldSchema.items?.properties) {
+    if (
+      fieldType === 'array' &&
+      fieldSchema.items?.type === 'object' &&
+      fieldSchema.items?.properties
+    ) {
       const arrayValue = fieldValue || []
-      
+
       if (mode === 'view') {
         // View mode: show array in a styled block
         const hasValue = arrayValue.length > 0
         return (
-          <div key={fieldName} className={cn("space-y-1", currentDepth > 0 && "ml-4 border-l-2 border-border pl-4")}>
+          <div
+            key={fieldName}
+            className={cn(
+              'space-y-1',
+              currentDepth > 0 && 'ml-4 border-l-2 border-border pl-4',
+            )}
+          >
             <Label className="text-sm font-semibold">
-              {capitalizeLabel(fieldName)} {isRequired && <span className="text-destructive">*</span>}
+              {capitalizeLabel(fieldName)}{' '}
+              {isRequired && <span className="text-destructive">*</span>}
             </Label>
             <div className="relative group">
               <div className="text-sm text-foreground py-2 px-3 bg-muted rounded-md break-words overflow-x-auto max-h-[200px] overflow-y-auto">
                 {hasValue ? (
                   <div className="space-y-3">
                     {arrayValue.map((item: any, index: number) => (
-                      <div key={index} className="bg-background/50 p-2 rounded border border-border/50">
-                        <div className="text-xs font-medium text-muted-foreground mb-2">Item {index + 1}</div>
-                    <DynamicSchemaForm
-                      schema={fieldSchema.items}
-                      data={item || {}}
-                      onChange={(newValue) => handleArrayItemChange(fieldName, index, newValue)}
-                      mode={mode}
-                      excludeFields={excludeFields}
-                      fieldPrefix={`${fullFieldName}.${index}`}
-                      depth={currentDepth + 1}
-                    />
+                      <div
+                        key={index}
+                        className="bg-background/50 p-2 rounded border border-border/50"
+                      >
+                        <div className="text-xs font-medium text-muted-foreground mb-2">
+                          Item {index + 1}
+                        </div>
+                        <DynamicSchemaForm
+                          schema={fieldSchema.items}
+                          data={item || {}}
+                          onChange={(newValue) =>
+                            handleArrayItemChange(fieldName, index, newValue)
+                          }
+                          mode={mode}
+                          excludeFields={excludeFields}
+                          fieldPrefix={`${fullFieldName}.${index}`}
+                          depth={currentDepth + 1}
+                        />
                       </div>
                     ))}
                   </div>
@@ -271,13 +328,20 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
           </div>
         )
       }
-      
+
       // Edit mode - use JSON editor for array items (simpler approach)
       return (
-        <div key={fieldName} className={cn("space-y-2", currentDepth > 0 && "ml-4 border-l-2 border-border pl-4 pt-2")}>
+        <div
+          key={fieldName}
+          className={cn(
+            'space-y-2',
+            currentDepth > 0 && 'ml-4 border-l-2 border-border pl-4 pt-2',
+          )}
+        >
           <div className="flex items-center justify-between">
             <Label className="text-sm font-semibold">
-              {capitalizeLabel(fieldName)} {isRequired && <span className="text-destructive">*</span>}
+              {capitalizeLabel(fieldName)}{' '}
+              {isRequired && <span className="text-destructive">*</span>}
             </Label>
             <Button
               type="button"
@@ -294,9 +358,14 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
           )}
           <div className="space-y-3">
             {arrayValue.map((item: any, index: number) => (
-              <div key={index} className="bg-muted/30 p-3 rounded-md border border-border">
+              <div
+                key={index}
+                className="bg-muted/30 p-3 rounded-md border border-border"
+              >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-muted-foreground">Item {index + 1}</span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Item {index + 1}
+                  </span>
                   <Button
                     type="button"
                     variant="ghost"
@@ -308,7 +377,9 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
                 </div>
                 <JsonEditor
                   value={item || {}}
-                  onChange={(value) => handleArrayItemChange(fieldName, index, value)}
+                  onChange={(value) =>
+                    handleArrayItemChange(fieldName, index, value)
+                  }
                   valueType="object"
                 />
               </div>
@@ -327,18 +398,30 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
     if (mode === 'view') {
       const hasValue = fieldValue !== null && fieldValue !== undefined
       return (
-        <div key={fieldName} className={cn("space-y-1", currentDepth > 0 && "ml-4 border-l-2 border-border pl-4")}>
+        <div
+          key={fieldName}
+          className={cn(
+            'space-y-1',
+            currentDepth > 0 && 'ml-4 border-l-2 border-border pl-4',
+          )}
+        >
           <Label className="text-sm font-semibold">
-            {capitalizeLabel(fieldName)} {isRequired && <span className="text-destructive">*</span>}
+            {capitalizeLabel(fieldName)}{' '}
+            {isRequired && <span className="text-destructive">*</span>}
           </Label>
           <div className="relative group">
             <div className="text-sm text-foreground py-2 px-3 bg-muted rounded-md break-words overflow-x-auto max-h-[200px] overflow-y-auto">
-              {!hasValue
-                ? <span className="text-muted-foreground italic">Not set</span>
-                : typeof fieldValue === 'object' 
-                  ? <pre className="text-xs whitespace-pre-wrap break-words overflow-x-auto">{JSON.stringify(fieldValue, null, 2)}</pre>
-                  : <div className="break-words overflow-wrap-anywhere">{String(fieldValue)}</div>
-              }
+              {!hasValue ? (
+                <span className="text-muted-foreground italic">Not set</span>
+              ) : typeof fieldValue === 'object' ? (
+                <pre className="text-xs whitespace-pre-wrap break-words overflow-x-auto">
+                  {JSON.stringify(fieldValue, null, 2)}
+                </pre>
+              ) : (
+                <div className="break-words overflow-wrap-anywhere">
+                  {String(fieldValue)}
+                </div>
+              )}
             </div>
             {hasValue && (
               <Button
@@ -365,7 +448,8 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
       return (
         <div key={fieldName} className="space-y-1">
           <Label htmlFor={fullFieldName}>
-            {capitalizeLabel(fieldName)} {isRequired && <span className="text-destructive">*</span>}
+            {capitalizeLabel(fieldName)}{' '}
+            {isRequired && <span className="text-destructive">*</span>}
           </Label>
           <JsonEditor
             value={fieldValue || []}
@@ -386,14 +470,17 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
           return (
             <div key={fieldName} className="space-y-1">
               <Label htmlFor={fullFieldName}>
-                {capitalizeLabel(fieldName)} {isRequired && <span className="text-destructive">*</span>}
+                {capitalizeLabel(fieldName)}{' '}
+                {isRequired && <span className="text-destructive">*</span>}
               </Label>
               <Select
                 value={fieldValue || ''}
                 onValueChange={(value) => handleFieldChange(fieldName, value)}
               >
                 <SelectTrigger id={fullFieldName} className="min-w-[160px]">
-                  <SelectValue placeholder={`Select ${capitalizeLabel(fieldName)}`} />
+                  <SelectValue
+                    placeholder={`Select ${capitalizeLabel(fieldName)}`}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {fieldSchema.enum.map((option: any) => (
@@ -412,7 +499,8 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
         return (
           <div key={fieldName} className="space-y-1">
             <Label htmlFor={fullFieldName}>
-              {capitalizeLabel(fieldName)} {isRequired && <span className="text-destructive">*</span>}
+              {capitalizeLabel(fieldName)}{' '}
+              {isRequired && <span className="text-destructive">*</span>}
             </Label>
             {fieldSchema.format === 'uri' || description.length > 100 ? (
               <Textarea
@@ -444,13 +532,16 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
         return (
           <div key={fieldName} className="space-y-1">
             <Label htmlFor={fullFieldName}>
-              {capitalizeLabel(fieldName)} {isRequired && <span className="text-destructive">*</span>}
+              {capitalizeLabel(fieldName)}{' '}
+              {isRequired && <span className="text-destructive">*</span>}
             </Label>
             <Input
               id={fullFieldName}
               type="number"
               value={fieldValue || ''}
-              onChange={(e) => handleFieldChange(fieldName, parseFloat(e.target.value) || 0)}
+              onChange={(e) =>
+                handleFieldChange(fieldName, parseFloat(e.target.value) || 0)
+              }
               placeholder={description}
               min={fieldSchema.minimum}
               max={fieldSchema.maximum}
@@ -470,10 +561,13 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
               <Checkbox
                 id={fullFieldName}
                 checked={fieldValue || false}
-                onCheckedChange={(checked) => handleFieldChange(fieldName, checked)}
+                onCheckedChange={(checked) =>
+                  handleFieldChange(fieldName, checked)
+                }
               />
               <Label htmlFor={fullFieldName}>
-                {capitalizeLabel(fieldName)} {isRequired && <span className="text-destructive">*</span>}
+                {capitalizeLabel(fieldName)}{' '}
+                {isRequired && <span className="text-destructive">*</span>}
               </Label>
             </div>
             {description && (
@@ -487,7 +581,8 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
         return (
           <div key={fieldName} className="space-y-1">
             <Label htmlFor={fullFieldName}>
-              {capitalizeLabel(fieldName)} {isRequired && <span className="text-destructive">*</span>}
+              {capitalizeLabel(fieldName)}{' '}
+              {isRequired && <span className="text-destructive">*</span>}
             </Label>
             <JsonEditor
               value={fieldValue || {}}
@@ -507,19 +602,21 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
     return (
       <div className="text-sm text-muted-foreground py-2">
         <p>No properties defined in schema.</p>
-        <p className="text-xs mt-1">Schema type: {schemaObj?.type || 'unknown'}</p>
+        <p className="text-xs mt-1">
+          Schema type: {schemaObj?.type || 'unknown'}
+        </p>
       </div>
     )
   }
 
   return (
     <div className="space-y-2">
-      {Object.entries(properties).map(([fieldName, fieldSchema]: [string, any]) =>
-        renderField(fieldName, fieldSchema, depth)
+      {Object.entries(properties).map(
+        ([fieldName, fieldSchema]: [string, any]) =>
+          renderField(fieldName, fieldSchema, depth),
       )}
     </div>
   )
 }
 
 export default DynamicSchemaForm
-

@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -35,7 +35,7 @@ type Actions = {
 const useRuntimeStore = createWithEqualityFn<RuntimeState & Actions>()(
   immer((set) => ({
     apisValue: [],
-    appLog: "",
+    appLog: '',
     activeRuntimeName: undefined,
     isAppRunning: false,
     remountCountByRuntime: 0,
@@ -69,7 +69,7 @@ const useRuntimeStore = createWithEqualityFn<RuntimeState & Actions>()(
       set((state) => {
         state.isRuntimeBusyByOther = isBusy
       }),
-  }))
+  })),
 )
 
 if (process.env.NODE_ENV === 'development') {
@@ -77,4 +77,3 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 export default useRuntimeStore
-

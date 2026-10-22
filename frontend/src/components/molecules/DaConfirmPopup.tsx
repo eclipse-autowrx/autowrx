@@ -88,13 +88,20 @@ const DaConfirmPopup = ({
       className="w-125 max-w-[calc(100vw-40px)]"
       footer={
         <>
-          <Button variant="outline" size="sm" onClick={handleClose} disabled={isConfirming}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClose}
+            disabled={isConfirming}
+          >
             Cancel
           </Button>
           <Button
             variant="destructive"
             size="sm"
-            disabled={isConfirming || (confirmText ? inputValue !== confirmText : false)}
+            disabled={
+              isConfirming || (confirmText ? inputValue !== confirmText : false)
+            }
             onClick={handleConfirm}
           >
             {isConfirming ? (

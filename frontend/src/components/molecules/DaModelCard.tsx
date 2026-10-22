@@ -170,9 +170,7 @@ export const DaModelCard = React.memo(
     const queryClient = useQueryClient()
     const { toast } = useToast()
     const createdBy = model?.created_by as unknown as
-      | string
-      | { id?: string }
-      | undefined
+      string | { id?: string } | undefined
     const createdById =
       typeof createdBy === 'string' ? createdBy : createdBy?.id
     const isCreator = !!user && !!createdById && user.id === createdById
@@ -365,7 +363,9 @@ export const DaModelCard = React.memo(
           ) : (
             <TbApi className="size-4" />
           )}
-          {isDownloading ? 'Downloading Vehicle API...' : 'Download Vehicle API'}
+          {isDownloading
+            ? 'Downloading Vehicle API...'
+            : 'Download Vehicle API'}
         </MenuItem>
         <MenuItem
           className="gap-2 cursor-pointer"
@@ -457,7 +457,10 @@ export const DaModelCard = React.memo(
                   >
                     <TbHistoryToggle className="size-4 text-[#7B838B]" />
                   </button>
-                  <DropdownMenu open={dotsMenuOpen} onOpenChange={setDotsMenuOpen}>
+                  <DropdownMenu
+                    open={dotsMenuOpen}
+                    onOpenChange={setDotsMenuOpen}
+                  >
                     <DropdownMenuTrigger asChild disabled={!isOwner}>
                       <button
                         title="Menu"

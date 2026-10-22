@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -170,7 +170,9 @@ const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
           customer_journey: prototype.customer_journey,
           // partner_logo: prototype.partner_logo,
           ...(prototype.extend != null && { extend: prototype.extend }),
-          ...(prototype.portfolio != null && { portfolio: prototype.portfolio }),
+          ...(prototype.portfolio != null && {
+            portfolio: prototype.portfolio,
+          }),
         })),
         null,
         4,
@@ -198,7 +200,9 @@ const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
             customer_journey: prototype.customer_journey,
             // partner_logo: prototype.partner_logo,
             ...(prototype.extend != null && { extend: prototype.extend }),
-            ...(prototype.portfolio != null && { portfolio: prototype.portfolio }),
+            ...(prototype.portfolio != null && {
+              portfolio: prototype.portfolio,
+            }),
           },
           null,
           4,
@@ -212,7 +216,7 @@ const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
         )
       }
     }
-  } catch (err) { }
+  } catch (err) {}
 }
 
 export const downloadModelZip = async (model: Model) => {
@@ -384,7 +388,9 @@ export const downloadPrototypeZip = async (prototype: Prototype) => {
           customer_journey: prototype.customer_journey,
           // partner_logo: prototype.partner_logo,
           ...(prototype.extend != null && { extend: prototype.extend }),
-          ...(prototype.portfolio != null && { portfolio: prototype.portfolio }),
+          ...(prototype.portfolio != null && {
+            portfolio: prototype.portfolio,
+          }),
         },
         null,
         4,
@@ -396,7 +402,7 @@ export const downloadPrototypeZip = async (prototype: Prototype) => {
 
     const content = await zip.generateAsync({ type: 'blob' })
     saveAs(content, zipFilename)
-  } catch (err) { }
+  } catch (err) {}
 }
 
 export const buildPrototypeImportPayload = (
@@ -470,34 +476,36 @@ export const zipToPrototype = async (
         'zipToPrototype: found code/ folder without code.py; project files are currently ignored on import.',
       )
     }
-    if (code.startsWith("from sdv_model import Vehicle")) {
-      let converted_code = await convertCode(code)
+    if (code.startsWith('from sdv_model import Vehicle')) {
+      const converted_code = await convertCode(code)
       code = converted_code || code
     }
 
-    let dashboard =
+    const dashboard =
       (await zipFile.file('dashboard.json')?.async('string')) || '[]'
     let newWidgets = []
     try {
-      let dash = JSON.parse(dashboard)
+      const dash = JSON.parse(dashboard)
       let widgets = []
-      if(Array.isArray(dash)) {
+      if (Array.isArray(dash)) {
         widgets = dash
       } else {
-        if(Array.isArray(dash.widgets)){
+        if (Array.isArray(dash.widgets)) {
           widgets = dash.widgets
         }
       }
-      newWidgets = widgets.map((w:any) => convertV1WidgetToV2Widget(w))
+      newWidgets = widgets.map((w: any) => convertV1WidgetToV2Widget(w))
       // console.log(`converted widgets`, newWidgets)
-
-    } catch(err) {
+    } catch (err) {
       console.log(err)
     }
 
-    let newDashboard = { widgets: newWidgets }
+    const newDashboard = { widgets: newWidgets }
 
-    Object.assign(prototype, metadata, { code, widget_config: JSON.stringify(newDashboard) })
+    Object.assign(prototype, metadata, {
+      code,
+      widget_config: JSON.stringify(newDashboard),
+    })
 
     const imageUrl = await resolvePrototypeImageUrl(
       zipFile,
@@ -519,51 +527,64 @@ export const zipToPrototype = async (
 
 function convertV1WidgetToV2Widget(widget: any) {
   if (!widget) return null
-  let returnWidget = widget
-  if (returnWidget.plugin == 'Builtin' && returnWidget.name != 'Embedded-Widget') {
+  const returnWidget = widget
+  if (
+    returnWidget.plugin == 'Builtin' &&
+    returnWidget.name != 'Embedded-Widget'
+  ) {
     switch (returnWidget.widget) {
       case 'Table-APIs-Widget':
         returnWidget.widget = 'Embedded-Widget'
-        returnWidget.options.url = 'https://bestudio.digitalauto.tech/project/392KwRI3M9NY/signal_table.html'
+        returnWidget.options.url =
+          'https://bestudio.digitalauto.tech/project/392KwRI3M9NY/signal_table.html'
         break
       case 'Chart-APIs-Widget':
         returnWidget.widget = 'Embedded-Widget'
-        returnWidget.options.url = 'https://bestudio.digitalauto.tech/project/r4RywFMJk8aE/index.html'
-        break;
+        returnWidget.options.url =
+          'https://bestudio.digitalauto.tech/project/r4RywFMJk8aE/index.html'
+        break
       case 'Single-API-Widget':
         returnWidget.widget = 'Embedded-Widget'
-        returnWidget.options.url = 'https://bestudio.digitalauto.tech/project/392KwRI3M9NY/single_api.html'
-        break;
+        returnWidget.options.url =
+          'https://bestudio.digitalauto.tech/project/392KwRI3M9NY/single_api.html'
+        break
       case 'Image-By-VSS-Value':
         returnWidget.widget = 'Embedded-Widget'
-        returnWidget.options.url = 'https://bestudio.digitalauto.tech/project/Ml2Sc9TYoOHc/image_by_value.html'
-        break;
+        returnWidget.options.url =
+          'https://bestudio.digitalauto.tech/project/Ml2Sc9TYoOHc/image_by_value.html'
+        break
       case 'Wiper-Simulator':
         returnWidget.widget = 'Embedded-Widget'
-        returnWidget.options.url = 'https://bestudio.digitalauto.tech/project/Ml2Sc9TYoOHc/image_by_value.html'
-        break;
+        returnWidget.options.url =
+          'https://bestudio.digitalauto.tech/project/Ml2Sc9TYoOHc/image_by_value.html'
+        break
       case 'Fan-Widget':
         returnWidget.widget = 'Embedded-Widget'
-        returnWidget.options.url = 'https://bewebstudio.digitalauto.tech/data/projects/XlKMZp8TaCWO/FanWidget.html'
-        break;
+        returnWidget.options.url =
+          'https://bewebstudio.digitalauto.tech/data/projects/XlKMZp8TaCWO/FanWidget.html'
+        break
       case 'HVAC-Dreampack':
         returnWidget.widget = 'Embedded-Widget'
-        returnWidget.options.url = 'https://bewebstudio.digitalauto.tech/data/projects/hr0yLm8fYomw/Chair_Widget.html'
-        break;
+        returnWidget.options.url =
+          'https://bewebstudio.digitalauto.tech/data/projects/hr0yLm8fYomw/Chair_Widget.html'
+        break
       case 'Gauge':
         returnWidget.widget = 'Embedded-Widget'
-        returnWidget.options.url = 'https://bewebstudio.digitalauto.tech/data/projects/CblRHN4Ddp1F/index.html'
-        break;
+        returnWidget.options.url =
+          'https://bewebstudio.digitalauto.tech/data/projects/CblRHN4Ddp1F/index.html'
+        break
       case 'Drowsiness-Level':
         returnWidget.widget = 'Embedded-Widget'
-        returnWidget.options.url = 'https://bewebstudio.digitalauto.tech/data/projects/SUYgVkLrVl9r/index.html'
-        break;
+        returnWidget.options.url =
+          'https://bewebstudio.digitalauto.tech/data/projects/SUYgVkLrVl9r/index.html'
+        break
       case 'Driver-Distraction':
         returnWidget.widget = 'Embedded-Widget'
-        returnWidget.options.url = 'https://bewebstudio.digitalauto.tech/data/projects/AEoeUpTumqmq/index.html'
-        break;
+        returnWidget.options.url =
+          'https://bewebstudio.digitalauto.tech/data/projects/AEoeUpTumqmq/index.html'
+        break
       default:
-        break;
+        break
     }
   }
 

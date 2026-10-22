@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -55,7 +55,11 @@ export const sendResetPasswordEmailService = async (email: string) => {
   })
 }
 
-export const resetPasswordWithCodeService = async (email: string, code: string, password: string) => {
+export const resetPasswordWithCodeService = async (
+  email: string,
+  code: string,
+  password: string,
+) => {
   return serverAxios.post('/auth/reset-password', {
     email,
     code,

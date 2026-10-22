@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -23,7 +23,12 @@ import { PERMISSIONS } from '@/data/permission'
 import { useParams } from 'react-router-dom'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import FormCreateWishlistApi from './forms/FormCreateWishlistApi'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/atoms/tooltip'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/atoms/tooltip'
 import DaConfirmPopup from './DaConfirmPopup'
 import { deleteExtendedApi } from '@/services/extendedApis.service'
 
@@ -214,7 +219,9 @@ const DaHierarchicalViewItem = ({
                           <TbPlus className="ml-1 size-4 text-muted-foreground hover:text-fuchsia-500" />
                         </span>
                       </TooltipTrigger>
-                      <TooltipContent>Add wishlist signal from this branch</TooltipContent>
+                      <TooltipContent>
+                        Add wishlist signal from this branch
+                      </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 )}
@@ -232,7 +239,9 @@ const DaHierarchicalViewItem = ({
             </DaConfirmPopup>
           )} */}
           <div className="flex w-fit justify-end cursor-pointer pl-4">
-            <div className={`text-sm uppercase font-medium cursor-pointer ${textClass}`}>
+            <div
+              className={`text-sm uppercase font-medium cursor-pointer ${textClass}`}
+            >
               {api.type}
             </div>
           </div>
@@ -262,7 +271,10 @@ const DaHierarchicalViewItem = ({
 
       {/* Render the popup for creating a wishlist signal when the branch icon is clicked */}
       {isAuthorized && (
-        <Dialog open={isOpenWishlistPopup} onOpenChange={setIsOpenWishlistPopup}>
+        <Dialog
+          open={isOpenWishlistPopup}
+          onOpenChange={setIsOpenWishlistPopup}
+        >
           <DialogContent>
             {model_id && model && (
               <FormCreateWishlistApi

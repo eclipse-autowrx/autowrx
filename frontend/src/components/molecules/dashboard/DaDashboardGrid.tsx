@@ -54,7 +54,7 @@ const WidgetItem: FC<PropsWidgetItem> = ({
     if (url && url.startsWith('/builtin-widgets/')) {
       setUrl(url)
     } else if (url && widgetConfig.options) {
-      let send_options = JSON.parse(JSON.stringify(widgetConfig.options))
+      const send_options = JSON.parse(JSON.stringify(widgetConfig.options))
       delete send_options.url
       url = url + '?options=' + encodeURIComponent(JSON.stringify(send_options))
       setUrl(url)
@@ -69,7 +69,7 @@ const WidgetItem: FC<PropsWidgetItem> = ({
   }, [widgetConfig?.boxes])
 
   useEffect(() => {
-    let setData = JSON.parse(JSON.stringify(apisValue))
+    const setData = JSON.parse(JSON.stringify(apisValue))
     for (const api in setData) {
       setData[api] = { value: setData[api] }
     }
@@ -212,11 +212,19 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({
   const [showModal, setShowModal] = useState(false)
   const [payload, setPayload] = useState<any>()
   const { data: cvi } = useCurrentModelApi()
-  
+
   // Memoize VSS tree to prevent unnecessary re-renders with large data
   const memoizedVssTree = useMemo(() => cvi, [cvi])
 
-  const [apisValue, traceVars, appLog, isAppRunning, activeRuntimeName, remountCountByRuntime, isRuntimeBusyByOther] = useRuntimeStore((state) => [
+  const [
+    apisValue,
+    traceVars,
+    appLog,
+    isAppRunning,
+    activeRuntimeName,
+    remountCountByRuntime,
+    isRuntimeBusyByOther,
+  ] = useRuntimeStore((state) => [
     state.apisValue,
     state.traceVars,
     state.appLog,
@@ -308,7 +316,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({
             const widgetIndex = widgetConfigs.findIndex((w) =>
               w.boxes?.includes(cell),
             )
-            
+
             if (widgetIndex !== -1 && !renderedWidgets.has(widgetIndex)) {
               renderedWidgets.add(widgetIndex)
               return (
@@ -326,10 +334,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({
             } else if (widgetIndex === -1) {
               // Empty cell
               return (
-                <div
-                  key={`empty-${cell}`}
-                  className="border border-gray-200"
-                />
+                <div key={`empty-${cell}`} className="border border-gray-200" />
               )
             }
             // Cell is occupied by a widget that spans multiple cells

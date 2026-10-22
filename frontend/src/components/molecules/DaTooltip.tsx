@@ -36,7 +36,11 @@
  * </DaTooltip>
  */
 
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/atoms/tooltip'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/atoms/tooltip'
 import { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -86,7 +90,7 @@ const DaTooltip = ({
         <span
           className={cn(
             'text-justify w-fit max-w-sm select-none whitespace-pre-wrap',
-            tooltipClassName
+            tooltipClassName,
           )}
         >
           {tooltipText}

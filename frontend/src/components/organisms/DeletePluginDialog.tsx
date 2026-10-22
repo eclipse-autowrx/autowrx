@@ -25,12 +25,16 @@ const DeletePluginDialog: React.FC<DeletePluginDialogProps> = ({
   onCancel,
 }) => {
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && !isLoading && onCancel()}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => !nextOpen && !isLoading && onCancel()}
+    >
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Delete plugin</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete &quot;{pluginName}&quot;? This action cannot be undone.
+            Are you sure you want to delete &quot;{pluginName}&quot;? This
+            action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">
@@ -51,4 +55,3 @@ const DeletePluginDialog: React.FC<DeletePluginDialogProps> = ({
 }
 
 export default DeletePluginDialog
-

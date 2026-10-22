@@ -73,7 +73,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
       setSelectedCompareObj(null)
       return
     }
-    let obj = mergedMap.get(selectedApi?.name)
+    const obj = mergedMap.get(selectedApi?.name)
     setSelectedCompareObj(obj)
   }, [selectedApi])
 
@@ -118,9 +118,15 @@ const VssComparator = ({}: DaVssCompareProps) => {
     }
 
     // If CURRENT_MODEL is selected, ensure modelsApi is populated
-    if ((activeTargetVer === CURRENT_MODEL || activeCurrentVer === CURRENT_MODEL)) {
+    if (
+      activeTargetVer === CURRENT_MODEL ||
+      activeCurrentVer === CURRENT_MODEL
+    ) {
       if (!modelsApi || modelsApi.length === 0) {
-        console.log('Waiting for modelsApi to be populated...', modelsApi?.length)
+        console.log(
+          'Waiting for modelsApi to be populated...',
+          modelsApi?.length,
+        )
         return
       }
     }
@@ -158,10 +164,10 @@ const VssComparator = ({}: DaVssCompareProps) => {
     currentVersion: any,
     targetVersion: any,
   ) => {
-    let newAPIs = [] as any
-    let deletedAPIs = [] as any
-    let modifiedAPIs = [] as any
-    let _mergeMap = new Map()
+    const newAPIs = [] as any
+    const deletedAPIs = [] as any
+    const modifiedAPIs = [] as any
+    const _mergeMap = new Map()
     try {
       let CURRENT_TREE = null
       let CURRENT_MAP = new Map()
@@ -180,11 +186,11 @@ const VssComparator = ({}: DaVssCompareProps) => {
         if (!targetVersion?.browser_download_url) {
           throw 'No target URL'
         }
-        let newUrl = targetVersion?.browser_download_url.replace(
+        const newUrl = targetVersion?.browser_download_url.replace(
           'https://github.com/COVESA/vehicle_signal_specification/releases/download/',
           '/vss/',
         )
-        let response = await fetch(newUrl)
+        const response = await fetch(newUrl)
         TARGET_TREE = await response.json()
         TARGET_MAP = new Map()
         TARGET_LIST = convertTree2List(TARGET_TREE, TARGET_MAP)
@@ -200,11 +206,11 @@ const VssComparator = ({}: DaVssCompareProps) => {
         if (!currentVersion?.browser_download_url) {
           throw 'No current URL'
         }
-        let newUrl = currentVersion?.browser_download_url.replace(
+        const newUrl = currentVersion?.browser_download_url.replace(
           'https://github.com/COVESA/vehicle_signal_specification/releases/download/',
           '/vss/',
         )
-        let response = await fetch(newUrl)
+        const response = await fetch(newUrl)
         CURRENT_TREE = await response.json()
         CURRENT_MAP = new Map()
         CURRENT_LIST = convertTree2List(CURRENT_TREE, CURRENT_MAP)
@@ -227,7 +233,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
             newAPIs.push(api)
           }
         }
-        let existItem = _mergeMap.get(api.name) || {
+        const existItem = _mergeMap.get(api.name) || {
           current: null,
           target: null,
           isMetaChanged: false,
@@ -246,7 +252,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
             deletedAPIs.push(api)
           }
         }
-        let existItem = _mergeMap.get(api.name) || {
+        const existItem = _mergeMap.get(api.name) || {
           current: null,
           target: null,
           isMetaChanged: false,
@@ -429,9 +435,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
 
       <div className="flex-1 h-full w-full flex flex-col">
         <div className="bg-slate-100 p-2 flex items-center">
-          <div className="text-sm font-medium mx-2">
-            (new)
-          </div>
+          <div className="text-sm font-medium mx-2">(new)</div>
           <select
             aria-label="deploy-select"
             className="w-[280px] cursor-pointer transition border rounded font-semibold text-center text-sm px-2 py-1 min-w-[90px] text-foreground bg-white shadow-sm"
@@ -453,9 +457,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
               ))}
           </select>
           <TbArrowRight className="w-5 h-5 mx-4" />
-          <div className="text-sm font-medium mr-2">
-            (old)
-          </div>
+          <div className="text-sm font-medium mr-2">(old)</div>
           <select
             aria-label="deploy-select"
             className="w-[280px] cursor-pointer transition border rounded font-semibold text-sm text-center px-2 py-1 min-w-[90px] text-foreground bg-white shadow-sm"

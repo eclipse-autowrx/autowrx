@@ -134,8 +134,7 @@ const Saturation = ({ hsl, hsv, onChange }: SaturationProps) => {
           position: 'absolute',
           inset: 0,
           borderRadius: 3,
-          background:
-            'linear-gradient(to right, #fff, rgba(255,255,255,0))',
+          background: 'linear-gradient(to right, #fff, rgba(255,255,255,0))',
         }}
       >
         <div
@@ -179,7 +178,7 @@ const Hue = ({ hsl, onChange }: SliderProps) => {
     const el = ref.current
     if (!el) return
     const { x, width } = pointerPosition(e, el)
-    const h = x < 0 ? 0 : x > width ? 359 : ((100 * x) / width) * 360 / 100
+    const h = x < 0 ? 0 : x > width ? 359 : (((100 * x) / width) * 360) / 100
     if (h !== hsl.h) {
       onChange({ h, s: hsl.s, l: hsl.l, a: hsl.a, source: 'hsl' })
     }
@@ -225,7 +224,14 @@ const Alpha = ({ hsl, rgb, onChange }: SliderProps) => {
         borderRadius: 2,
       }}
     >
-      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 2 }}>
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          overflow: 'hidden',
+          borderRadius: 2,
+        }}
+      >
         <div style={{ position: 'absolute', inset: 0, ...CHECKBOARD }} />
       </div>
       <div
@@ -237,7 +243,10 @@ const Alpha = ({ hsl, rgb, onChange }: SliderProps) => {
           background: `linear-gradient(to right, rgba(${rgb.r},${rgb.g},${rgb.b}, 0) 0%, rgba(${rgb.r},${rgb.g},${rgb.b}, 1) 100%)`,
         }}
       />
-      <div ref={ref} style={{ position: 'relative', height: '100%', margin: '0 3px' }}>
+      <div
+        ref={ref}
+        style={{ position: 'relative', height: '100%', margin: '0 3px' }}
+      >
         <div style={{ position: 'absolute', left: `${rgb.a * 100}%` }}>
           <div style={BAR_POINTER} />
         </div>
@@ -384,7 +393,13 @@ const SketchFields = ({
       })
     } else if (a !== undefined) {
       const clamped = a < 0 ? 0 : a > 100 ? 100 : a
-      onChange({ h: hsl.h, s: hsl.s, l: hsl.l, a: clamped / 100, source: 'rgb' })
+      onChange({
+        h: hsl.h,
+        s: hsl.s,
+        l: hsl.l,
+        a: clamped / 100,
+        source: 'rgb',
+      })
     }
   }
   return (
@@ -457,7 +472,10 @@ const SketchPresetColors = ({
     }}
   >
     {PRESET_COLORS.map((color) => (
-      <div key={color} style={{ width: 16, height: 16, margin: '0 10px 10px 0' }}>
+      <div
+        key={color}
+        style={{ width: 16, height: 16, margin: '0 10px 10px 0' }}
+      >
         <div
           title={color}
           onClick={() => onChange({ hex: color, source: 'hex' })}
@@ -546,7 +564,12 @@ export const SketchColorPicker = ({
             <Hue hsl={hsl} rgb={rgb} onChange={handleChange} />
           </div>
           <div
-            style={{ position: 'relative', height: 10, marginTop: 4, overflow: 'hidden' }}
+            style={{
+              position: 'relative',
+              height: 10,
+              marginTop: 4,
+              overflow: 'hidden',
+            }}
           >
             <Alpha hsl={hsl} rgb={rgb} onChange={handleChange} />
           </div>
@@ -599,7 +622,10 @@ export const ColorSwatchSelect = ({
 }: ColorSwatchSelectProps) => {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
-  useOutsideClose(rootRef, useCallback(() => setOpen(false), []))
+  useOutsideClose(
+    rootRef,
+    useCallback(() => setOpen(false), []),
+  )
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.keyCode === 27) setOpen(false)
@@ -609,24 +635,28 @@ export const ColorSwatchSelect = ({
   }, [])
   const current = hex || '#FFFFFF'
   return (
-    <div
-      ref={rootRef}
-      className={`relative cursor-pointer ${className ?? ''}`}
-    >
+    <div ref={rootRef} className={`relative cursor-pointer ${className ?? ''}`}>
       <div className="flex h-full items-center justify-center">
-        <div className="flex flex-col" onClick={() => !disabled && setOpen((v) => !v)}>
+        <div
+          className="flex flex-col"
+          onClick={() => !disabled && setOpen((v) => !v)}
+        >
           {showFillIcon ? (
             <>
               <ShapeIconSvg name="FILL" className="m-auto mb-1 w-5" />
               <div
                 className="h-1 w-7"
-                style={{ backgroundColor: current === TRANSPARENT ? 'white' : current }}
+                style={{
+                  backgroundColor: current === TRANSPARENT ? 'white' : current,
+                }}
               />
             </>
           ) : (
             <div
               className="h-5 w-10"
-              style={{ backgroundColor: current === TRANSPARENT ? 'white' : current }}
+              style={{
+                backgroundColor: current === TRANSPARENT ? 'white' : current,
+              }}
             />
           )}
         </div>
@@ -652,9 +682,15 @@ export const ColorSwatchSelect = ({
             onClick={() => setHex(TRANSPARENT)}
           >
             <div className="w-[23px]">
-              <ShapeIconSvg name="SQUARE" fill="black" className="h-auto w-full" />
+              <ShapeIconSvg
+                name="SQUARE"
+                fill="black"
+                className="h-auto w-full"
+              />
             </div>
-            <div className="ml-1.5 text-base font-semibold text-black">No Fill</div>
+            <div className="ml-1.5 text-base font-semibold text-black">
+              No Fill
+            </div>
           </div>
         </div>
       )}

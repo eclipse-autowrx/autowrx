@@ -41,8 +41,7 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
 
   const isOwner =
     !!user &&
-    (user.id === prototype?.created_by?.id ||
-      user.id === model?.created_by?.id)
+    (user.id === prototype?.created_by?.id || user.id === model?.created_by?.id)
 
   const [renameOpen, setRenameOpen] = useState(false)
   const [newName, setNewName] = useState('')

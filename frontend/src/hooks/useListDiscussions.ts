@@ -10,7 +10,11 @@ import { useQuery } from '@tanstack/react-query'
 import { listDiscussionsService } from '@/services/discussion.service'
 import { DISCUSSION_REF_TYPE } from '@/types/discussion.type'
 
-const useListDiscussions = (ref: string, refType: DISCUSSION_REF_TYPE, page: number = 1) => {
+const useListDiscussions = (
+  ref: string,
+  refType: DISCUSSION_REF_TYPE,
+  page: number = 1,
+) => {
   return useQuery({
     queryKey: ['listDiscussions', ref, refType, page],
     queryFn: () => listDiscussionsService(ref, refType, page),

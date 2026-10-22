@@ -46,7 +46,9 @@ export const applySyncWithCodeToOptions = (
     options.api = usedApiNames[0]
   }
 
-  const signalKeys = Object.keys(options).filter((key) => key.endsWith('Signal'))
+  const signalKeys = Object.keys(options).filter((key) =>
+    key.endsWith('Signal'),
+  )
   if (signalKeys.length > 0 && !('apis' in options) && !('api' in options)) {
     signalKeys.forEach((key, index) => {
       if (usedApiNames[index]) {

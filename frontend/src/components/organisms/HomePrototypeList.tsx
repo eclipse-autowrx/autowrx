@@ -39,7 +39,10 @@ import {
 } from '../atoms/dropdown-menu'
 import DaDialog from '../molecules/DaDialog'
 import useAuthStore from '@/stores/authStore'
-import { DaPrototypeCard, DaPrototypeCardSkeleton } from '../molecules/DaPrototypeCard'
+import {
+  DaPrototypeCard,
+  DaPrototypeCardSkeleton,
+} from '../molecules/DaPrototypeCard'
 import { useAuthConfigs } from '@/hooks/useAuthConfigs'
 import { cn } from '@/lib/utils'
 import { sortPrototypesByViewed } from '@/utils/prototypeSort'
@@ -51,12 +54,7 @@ type HomePrototypeListProps = {
 }
 
 type PrototypeSortOption =
-  | 'newest'
-  | 'oldest'
-  | 'name-az'
-  | 'name-za'
-  | 'last-viewed'
-  | 'first-viewed'
+  'newest' | 'oldest' | 'name-az' | 'name-za' | 'last-viewed' | 'first-viewed'
 
 type PrototypeCategory = 'all' | 'mine'
 
@@ -169,8 +167,7 @@ const HomePrototypeList = ({
     setCurrentItemIndex(0)
   }, [itemsPerView, sortBy, activeCategory])
 
-  const isClientViewSort =
-    sortBy === 'last-viewed' || sortBy === 'first-viewed'
+  const isClientViewSort = sortBy === 'last-viewed' || sortBy === 'first-viewed'
 
   const viewSortFilterParams = useMemo(
     () => ({
@@ -186,9 +183,7 @@ const HomePrototypeList = ({
     queryFn: () =>
       listAllPrototypesFiltered({
         fields: PROTOTYPE_LIST_CARD_FIELDS,
-        ...(activeCategory === 'mine' && user
-          ? { created_by: user.id }
-          : {}),
+        ...(activeCategory === 'mine' && user ? { created_by: user.id } : {}),
       }),
     enabled: authBootstrapped && !userLoading && isClientViewSort,
   })
@@ -571,10 +566,7 @@ const HomePrototypeList = ({
                         onClick={() => handlePrototypeClick(prototype)}
                         className="cursor-pointer"
                       >
-                        <DaPrototypeCard
-                          prototype={prototype}
-                          variant="home"
-                        />
+                        <DaPrototypeCard prototype={prototype} variant="home" />
                       </div>
                     ) : (
                       renderSkeletonCard(`sk-${i}`)

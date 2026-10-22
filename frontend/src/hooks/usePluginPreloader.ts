@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,7 +7,11 @@
 // SPDX-License-Identifier: MIT
 
 import { useEffect, useRef } from 'react'
-import { getPluginBySlug, getPluginById, type Plugin } from '@/services/plugin.service'
+import {
+  getPluginBySlug,
+  getPluginById,
+  type Plugin,
+} from '@/services/plugin.service'
 import { TabConfig } from '@/components/organisms/CustomTabEditor'
 
 interface PreloadOptions {
@@ -68,11 +72,11 @@ const usePluginPreloader = ({
       // Fetch plugin metadata and preload scripts
       const preloadAll = async () => {
         const pluginIds = Array.from(pluginIdentifiers)
-        
+
         // Batch fetch plugin metadata (with small delay between batches to avoid overwhelming server)
         for (let i = 0; i < pluginIds.length; i++) {
           const pluginId = pluginIds[i]
-          
+
           try {
             // Try to get plugin by slug first, then by ID
             let pluginMeta: Plugin | null = null
@@ -84,7 +88,9 @@ const usePluginPreloader = ({
               } catch (e2) {
                 // Plugin not found, skip
                 if (process.env.NODE_ENV === 'development') {
-                  console.warn(`[usePluginPreloader] Plugin not found: ${pluginId}`)
+                  console.warn(
+                    `[usePluginPreloader] Plugin not found: ${pluginId}`,
+                  )
                 }
                 continue
               }
@@ -97,7 +103,10 @@ const usePluginPreloader = ({
           } catch (error) {
             // Silently handle errors - don't block preloading of other plugins
             if (process.env.NODE_ENV === 'development') {
-              console.warn(`[usePluginPreloader] Failed to preload plugin ${pluginId}:`, error)
+              console.warn(
+                `[usePluginPreloader] Failed to preload plugin ${pluginId}:`,
+                error,
+              )
             }
           }
 
@@ -119,11 +128,11 @@ const usePluginPreloader = ({
         () => {
           setTimeout(startPreload, delay)
         },
-        { timeout: delay + 1000 }
+        { timeout: delay + 1000 },
       )
       return () => {
         if (idleCallbackId) {
-          (window as any).cancelIdleCallback(idleCallbackId)
+          ;(window as any).cancelIdleCallback(idleCallbackId)
         }
       }
     } else {
@@ -151,7 +160,10 @@ const preloadScript = (url: string) => {
     document.head.appendChild(link)
   } catch (error) {
     if (process.env.NODE_ENV === 'development') {
-      console.warn(`[usePluginPreloader] Failed to create prefetch link for ${url}:`, error)
+      console.warn(
+        `[usePluginPreloader] Failed to create prefetch link for ${url}:`,
+        error,
+      )
     }
   }
 

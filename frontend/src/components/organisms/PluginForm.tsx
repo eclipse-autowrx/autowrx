@@ -315,24 +315,24 @@ const PluginForm = ({
 
               {/* Upload button to derive URL via internal ZIP (admins only) */}
               {isAdmin && (
-              <div className="space-y-2 flex items-center gap-2">
-                <DaImportFile
-                  accept=".zip"
-                  disabled={!form.name || doUpload.isPending}
-                  onFileChange={async (file) => {
-                    setZip(file)
-                    try {
-                      const res = await doUpload.mutateAsync(file)
-                      // onSuccess already sets url; ensure internal flag
-                      onChange('is_internal', true as any)
-                    } catch (err) {}
-                  }}
-                >
-                  <Button disabled={!form.name || doUpload.isPending}>
-                    {doUpload.isPending ? 'Uploading...' : 'Upload ZIP'}
-                  </Button>
-                </DaImportFile>
-              </div>
+                <div className="space-y-2 flex items-center gap-2">
+                  <DaImportFile
+                    accept=".zip"
+                    disabled={!form.name || doUpload.isPending}
+                    onFileChange={async (file) => {
+                      setZip(file)
+                      try {
+                        const res = await doUpload.mutateAsync(file)
+                        // onSuccess already sets url; ensure internal flag
+                        onChange('is_internal', true as any)
+                      } catch (err) {}
+                    }}
+                  >
+                    <Button disabled={!form.name || doUpload.isPending}>
+                      {doUpload.isPending ? 'Uploading...' : 'Upload ZIP'}
+                    </Button>
+                  </DaImportFile>
+                </div>
               )}
             </div>
           )}

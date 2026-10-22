@@ -38,7 +38,10 @@ const GROUP_STYLE: React.CSSProperties = {
 }
 
 const GROUP_SEPARATOR = (
-  <div className="mx-2.5 h-full" style={{ borderRight: '1px solid lightgray' }} />
+  <div
+    className="mx-2.5 h-full"
+    style={{ borderRight: '1px solid lightgray' }}
+  />
 )
 
 // The lib's dropdown item (width 100px, 10px padding, left-aligned, #b8d6ff
@@ -94,7 +97,8 @@ const ShapeSettings = ({
   const update = (patch: Partial<ImageAreaShape>) =>
     onChange({ ...shape, ...patch })
   const fontSizeLabel =
-    Object.values(FONT_SIZE).find((f) => f.value === shape.fontSize)?.label ?? ''
+    Object.values(FONT_SIZE).find((f) => f.value === shape.fontSize)?.label ??
+    ''
   return (
     <div className="w-full h-full flex flex-col">
       <ConfirmDialog
@@ -217,9 +221,13 @@ const ImageAreaEditor = ({
   handleUploadImage,
 }: ImageAreaEditorProps) => {
   const [displayShapes, setDisplayShapes] = useState<ImageAreaShape[]>([])
-  const [selectedShape, setSelectedShape] = useState<ImageAreaShape | null>(null)
+  const [selectedShape, setSelectedShape] = useState<ImageAreaShape | null>(
+    null,
+  )
   const [isChanged, setIsChanged] = useState(false)
-  const [displayBgColor, setDisplayBgColor] = useState<string | undefined>(undefined)
+  const [displayBgColor, setDisplayBgColor] = useState<string | undefined>(
+    undefined,
+  )
   const [loaded, setLoaded] = useState(true)
   const [sourceType, setSourceType] = useState<ShapeType>(SHAPE.RECTANGLE)
   const [visibleIcons, setVisibleIcons] = useState<ShapeType[]>(() =>

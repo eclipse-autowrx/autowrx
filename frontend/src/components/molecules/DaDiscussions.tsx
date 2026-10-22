@@ -42,7 +42,20 @@ interface DaDiscussionsProps {
   className?: string
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+]
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr)
@@ -107,7 +120,10 @@ const DiscussionItem = ({
       <div className="flex items-center gap-3">
         <Avatar className="size-8 shrink-0">
           {discussion.created_by?.image_file && (
-            <AvatarImage src={discussion.created_by.image_file} alt={discussion.created_by?.name} />
+            <AvatarImage
+              src={discussion.created_by.image_file}
+              alt={discussion.created_by?.name}
+            />
           )}
           <AvatarFallback className="bg-muted-foreground text-white">
             <TbUser className="h-4 w-4" />
@@ -133,7 +149,9 @@ const DiscussionItem = ({
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => setTimeout(() => setConfirmDeleteOpen(true), 100)}
+                  onClick={() =>
+                    setTimeout(() => setConfirmDeleteOpen(true), 100)
+                  }
                   disabled={deleting}
                   className="text-destructive focus:text-destructive"
                 >
@@ -170,7 +188,9 @@ const DiscussionItem = ({
         </div>
       ) : (
         <div className="mt-2 rounded-lg bg-muted p-3">
-          <p className="text-sm whitespace-pre-wrap break-words">{discussion.content}</p>
+          <p className="text-sm whitespace-pre-wrap break-words">
+            {discussion.content}
+          </p>
         </div>
       )}
 
@@ -192,9 +212,13 @@ const DiscussionItem = ({
                 onClick={() => setRepliesExpanded(!repliesExpanded)}
               >
                 {repliesExpanded ? (
-                  <>Collapse <TbChevronUp className="ml-1" /></>
+                  <>
+                    Collapse <TbChevronUp className="ml-1" />
+                  </>
                 ) : (
-                  <>Expand <TbChevronDown className="ml-1" /></>
+                  <>
+                    Expand <TbChevronDown className="ml-1" />
+                  </>
                 )}
               </DaButton>
             </>
@@ -290,7 +314,11 @@ const DaDiscussions = ({ refId, refType, className }: DaDiscussionsProps) => {
 
       {/* New discussion form */}
       <div className="px-4 pt-4 pb-4 mt-auto">
-        <FormCreateDiscussion refId={refId} refType={refType} refetch={refetch} />
+        <FormCreateDiscussion
+          refId={refId}
+          refType={refType}
+          refetch={refetch}
+        />
       </div>
     </div>
   )

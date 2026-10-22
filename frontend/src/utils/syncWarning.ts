@@ -28,7 +28,9 @@ export const showSyncWarningToast = (_rawHeader?: string) => {
   toast.warn(SYNC_WARNING_MESSAGE, { autoClose: 6000 })
 }
 
-export const hasSyncWarningHeader = (headers: Record<string, unknown> | undefined): boolean => {
+export const hasSyncWarningHeader = (
+  headers: Record<string, unknown> | undefined,
+): boolean => {
   if (!headers) return false
   return Boolean(headers['x-sync-warning'])
 }

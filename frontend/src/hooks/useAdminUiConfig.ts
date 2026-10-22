@@ -7,10 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { useState, useEffect } from 'react'
-import {
-  AdminUiConfig,
-  resolveAdminUiFromViteEnv,
-} from '@/configs/config'
+import { AdminUiConfig, resolveAdminUiFromViteEnv } from '@/configs/config'
 import { configManagementService } from '@/services/configManagement.service'
 
 let adminUiCache: AdminUiConfig | null = null
@@ -33,7 +30,9 @@ const toAdminUiConfig = (payload: {
 const isSameConfig = (a: AdminUiConfig, b: AdminUiConfig): boolean =>
   a.cleanMode === b.cleanMode &&
   a.hiddenSiteConfigSections.size === b.hiddenSiteConfigSections.size &&
-  [...a.hiddenSiteConfigSections].every((k) => b.hiddenSiteConfigSections.has(k)) &&
+  [...a.hiddenSiteConfigSections].every((k) =>
+    b.hiddenSiteConfigSections.has(k),
+  ) &&
   JSON.stringify(a.visibleFeatureCategories) ===
     JSON.stringify(b.visibleFeatureCategories)
 
@@ -81,7 +80,9 @@ export const useAdminUiConfig = () => {
       setError(null)
       setAdminUi(await fetchAdminUiConfig())
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch admin UI config')
+      setError(
+        err instanceof Error ? err.message : 'Failed to fetch admin UI config',
+      )
       setAdminUi(resolveAdminUiFromViteEnv())
     } finally {
       setLoading(false)

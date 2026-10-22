@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,12 +7,12 @@
 // SPDX-License-Identifier: MIT
 
 // Export other data modules
-export * from './builtinWidgets';
-export * from './customAPI';
-export * from './default_generated_code';
-export * from './default_journey';
-export * from './discussion_mock';
-export * from './models_mock';
-export * from './permission';
-export * from './users_mock';
-export * from './vehicle_classification';
+export * from './builtinWidgets'
+export * from './customAPI'
+export * from './default_generated_code'
+export * from './default_journey'
+export * from './discussion_mock'
+export * from './models_mock'
+export * from './permission'
+export * from './users_mock'
+export * from './vehicle_classification'

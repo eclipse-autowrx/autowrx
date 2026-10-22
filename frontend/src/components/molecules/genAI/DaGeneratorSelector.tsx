@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -36,7 +36,12 @@ const DaGeneratorSelector = ({
   useEffect(() => {
     const loadConfig = async () => {
       const logo = await getConfig('SITE_LOGO_WIDE', 'site', undefined, '')
-      const marketplace = await getConfig('GENAI_MARKETPLACE_URL', 'site', undefined, '')
+      const marketplace = await getConfig(
+        'GENAI_MARKETPLACE_URL',
+        'site',
+        undefined,
+        '',
+      )
       setInstanceLogo(logo)
       setMarketplaceUrl(marketplace)
     }
@@ -72,7 +77,12 @@ const DaGeneratorSelector = ({
         onSelectedGeneratorChange(marketplaceAddOns[0])
       }
     }
-  }, [builtInAddOns, marketplaceAddOns, userAIAddons, onSelectedGeneratorChange])
+  }, [
+    builtInAddOns,
+    marketplaceAddOns,
+    userAIAddons,
+    onSelectedGeneratorChange,
+  ])
 
   const handleAddOnSelect = (addOn: AddOn) => {
     setSelectedAddOn(addOn)
@@ -93,13 +103,15 @@ const DaGeneratorSelector = ({
         <div className="flex w-full items-center justify-between">
           <div className="flex w-full items-center">
             {selectedAddOn ? selectedAddOn.name : 'Select generator'}
-            {selectedAddOn && instanceLogo && selectedAddOn.id.includes('autowrx') && (
-              <img
-                src={instanceLogo}
-                alt="instance"
-                className="ml-2 h-10 w-10 object-contain"
-              />
-            )}
+            {selectedAddOn &&
+              instanceLogo &&
+              selectedAddOn.id.includes('autowrx') && (
+                <img
+                  src={instanceLogo}
+                  alt="instance"
+                  className="ml-2 h-10 w-10 object-contain"
+                />
+              )}
             {selectedAddOn && selectedAddOn.team && (
               <div className="ml-2 truncate rounded-full bg-primary/10 px-1 py-0 text-xs text-primary">
                 GenAI Awards : {selectedAddOn.team}
@@ -210,7 +222,9 @@ const DaGeneratorSelector = ({
                           <TbCheck
                             className={cn(
                               'h-4 w-4 text-muted-foreground',
-                              selectedAddOn?.id === addOn.id ? 'text-primary' : 'hidden'
+                              selectedAddOn?.id === addOn.id
+                                ? 'text-primary'
+                                : 'hidden',
                             )}
                           />
                         </div>

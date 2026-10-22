@@ -13,7 +13,13 @@ import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Spinner } from '@/components/atoms/spinner'
-import { TbPlus, TbEdit, TbTrash, TbToggleLeft, TbToggleRight } from 'react-icons/tb'
+import {
+  TbPlus,
+  TbEdit,
+  TbTrash,
+  TbToggleLeft,
+  TbToggleRight,
+} from 'react-icons/tb'
 import { v4 as uuidv4 } from 'uuid'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
@@ -36,7 +42,9 @@ const SSOConfigSection: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingProvider, setEditingProvider] = useState<SSOProvider | null>(null)
+  const [editingProvider, setEditingProvider] = useState<SSOProvider | null>(
+    null,
+  )
   const { toast } = useToast()
 
   // Form state
@@ -66,7 +74,7 @@ const SSOConfigSection: React.FC = () => {
         category: 'sso',
         scope: 'site',
       })
-      
+
       if (response.results && response.results.length > 0) {
         setProviders(response.results[0].value || [])
       } else {
@@ -106,20 +114,24 @@ const SSOConfigSection: React.FC = () => {
   }
 
   const handleDeleteProvider = async (providerId: string) => {
-    if (!window.confirm('Delete this SSO provider? Users will no longer be able to sign in using this provider.')) {
+    if (
+      !window.confirm(
+        'Delete this SSO provider? Users will no longer be able to sign in using this provider.',
+      )
+    ) {
       return
     }
 
     try {
       setIsSaving(true)
-      const updatedProviders = providers.filter(p => p.id !== providerId)
+      const updatedProviders = providers.filter((p) => p.id !== providerId)
       await saveProviders(updatedProviders)
-      
+
       toast({
         title: 'Deleted',
         description: 'SSO provider deleted successfully. Reloading page...',
       })
-      
+
       setTimeout(() => {
         window.location.href = window.location.href
       }, 800)
@@ -136,16 +148,16 @@ const SSOConfigSection: React.FC = () => {
   const handleToggleEnabled = async (provider: SSOProvider) => {
     try {
       setIsSaving(true)
-      const updatedProviders = providers.map(p =>
-        p.id === provider.id ? { ...p, enabled: !p.enabled } : p
+      const updatedProviders = providers.map((p) =>
+        p.id === provider.id ? { ...p, enabled: !p.enabled } : p,
       )
       await saveProviders(updatedProviders)
-      
+
       toast({
         title: 'Updated',
         description: `SSO provider ${!provider.enabled ? 'enabled' : 'disabled'}. Reloading page...`,
       })
-      
+
       setTimeout(() => {
         window.location.href = window.location.href
       }, 800)
@@ -180,27 +192,39 @@ const SSOConfigSection: React.FC = () => {
     try {
       setIsSaving(true)
       let updatedProviders: SSOProvider[]
-      
-      const toSave = formData.type === 'GITHUB'
-        ? { ...formData, authority: undefined, scopes: (formData.scopes && formData.scopes.length) ? formData.scopes : ['user:email'] }
-        : { ...formData, authority: formData.authority || '', scopes: formData.scopes || ['User.Read'] }
+
+      const toSave =
+        formData.type === 'GITHUB'
+          ? {
+              ...formData,
+              authority: undefined,
+              scopes:
+                formData.scopes && formData.scopes.length
+                  ? formData.scopes
+                  : ['user:email'],
+            }
+          : {
+              ...formData,
+              authority: formData.authority || '',
+              scopes: formData.scopes || ['User.Read'],
+            }
       if (editingProvider) {
-        updatedProviders = providers.map(p =>
-          p.id === editingProvider.id ? toSave : p
+        updatedProviders = providers.map((p) =>
+          p.id === editingProvider.id ? toSave : p,
         )
       } else {
         updatedProviders = [...providers, toSave]
       }
 
       await saveProviders(updatedProviders)
-      
+
       toast({
         title: editingProvider ? 'Updated' : 'Created',
         description: `SSO provider ${editingProvider ? 'updated' : 'created'} successfully. Reloading page...`,
       })
-      
+
       setIsFormOpen(false)
-      
+
       setTimeout(() => {
         window.location.href = window.location.href
       }, 800)
@@ -265,7 +289,9 @@ const SSOConfigSection: React.FC = () => {
   if (!user) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">Please sign in to manage SSO providers.</p>
+        <p className="text-muted-foreground">
+          Please sign in to manage SSO providers.
+        </p>
       </div>
     )
   }
@@ -291,7 +317,8 @@ const SSOConfigSection: React.FC = () => {
         {providers.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
-              No SSO providers configured. Add your first provider to enable SSO authentication.
+              No SSO providers configured. Add your first provider to enable SSO
+              authentication.
             </p>
           </div>
         ) : (
@@ -303,7 +330,9 @@ const SSOConfigSection: React.FC = () => {
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
-                    <h3 className="font-semibold text-foreground">{provider.name}</h3>
+                    <h3 className="font-semibold text-foreground">
+                      {provider.name}
+                    </h3>
                     <span
                       className={`text-xs px-2 py-1 rounded ${
                         provider.enabled
@@ -326,12 +355,16 @@ const SSOConfigSection: React.FC = () => {
                     {provider.type === 'MSAL' && (
                       <div className="flex gap-2">
                         <dt className="text-muted-foreground">Authority:</dt>
-                        <dd className="font-mono text-xs break-all">{provider.authority || '—'}</dd>
+                        <dd className="font-mono text-xs break-all">
+                          {provider.authority || '—'}
+                        </dd>
                       </div>
                     )}
                     <div className="flex gap-2">
                       <dt className="text-muted-foreground">Scopes:</dt>
-                      <dd className="text-xs">{(provider.scopes || []).join(', ')}</dd>
+                      <dd className="text-xs">
+                        {(provider.scopes || []).join(', ')}
+                      </dd>
                     </div>
                   </dl>
                 </div>
@@ -343,7 +376,11 @@ const SSOConfigSection: React.FC = () => {
                     disabled={isSaving}
                     title={provider.enabled ? 'Disable' : 'Enable'}
                   >
-                    {provider.enabled ? <TbToggleRight size={18} /> : <TbToggleLeft size={18} />}
+                    {provider.enabled ? (
+                      <TbToggleRight size={18} />
+                    ) : (
+                      <TbToggleLeft size={18} />
+                    )}
                   </Button>
                   <Button
                     size="sm"
@@ -383,11 +420,13 @@ const SSOConfigSection: React.FC = () => {
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   placeholder="e.g., Bosch SSO, Company SSO"
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="type">Type</Label>
                 <select
@@ -398,7 +437,14 @@ const SSOConfigSection: React.FC = () => {
                     setFormData({
                       ...formData,
                       type: newType,
-                      ...(newType === 'GITHUB' ? { scopes: ['user:email'], authority: undefined } : { scopes: formData.scopes?.length ? formData.scopes : ['User.Read'], authority: formData.authority || '' }),
+                      ...(newType === 'GITHUB'
+                        ? { scopes: ['user:email'], authority: undefined }
+                        : {
+                            scopes: formData.scopes?.length
+                              ? formData.scopes
+                              : ['User.Read'],
+                            authority: formData.authority || '',
+                          }),
                     })
                   }}
                   className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
@@ -413,8 +459,14 @@ const SSOConfigSection: React.FC = () => {
                 <Input
                   id="clientId"
                   value={formData.clientId}
-                  onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                  placeholder={formData.type === 'GITHUB' ? 'GitHub OAuth App Client ID' : 'Azure AD Application (client) ID'}
+                  onChange={(e) =>
+                    setFormData({ ...formData, clientId: e.target.value })
+                  }
+                  placeholder={
+                    formData.type === 'GITHUB'
+                      ? 'GitHub OAuth App Client ID'
+                      : 'Azure AD Application (client) ID'
+                  }
                   className="font-mono text-sm"
                 />
               </div>
@@ -425,7 +477,9 @@ const SSOConfigSection: React.FC = () => {
                   <Input
                     id="authority"
                     value={formData.authority || ''}
-                    onChange={(e) => setFormData({ ...formData, authority: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, authority: e.target.value })
+                    }
                     placeholder="https://login.microsoftonline.com/{tenant-id}"
                     className="font-mono text-sm"
                   />
@@ -438,8 +492,14 @@ const SSOConfigSection: React.FC = () => {
                   id="clientSecret"
                   type="password"
                   value={formData.clientSecret || ''}
-                  onChange={(e) => setFormData({ ...formData, clientSecret: e.target.value })}
-                  placeholder={formData.type === 'GITHUB' ? 'GitHub OAuth App Client Secret' : 'Client secret from Azure AD'}
+                  onChange={(e) =>
+                    setFormData({ ...formData, clientSecret: e.target.value })
+                  }
+                  placeholder={
+                    formData.type === 'GITHUB'
+                      ? 'GitHub OAuth App Client Secret'
+                      : 'Client secret from Azure AD'
+                  }
                   className="font-mono text-sm"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
@@ -450,23 +510,37 @@ const SSOConfigSection: React.FC = () => {
               {formData.type === 'GITHUB' && (
                 <>
                   <div>
-                    <Label htmlFor="github-scopes">Scopes (comma or space-separated)</Label>
+                    <Label htmlFor="github-scopes">
+                      Scopes (comma or space-separated)
+                    </Label>
                     <Input
                       id="github-scopes"
-                      value={(formData.scopes && formData.scopes.length) ? formData.scopes.join(', ') : 'user:email'}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        scopes: e.target.value.split(/[\s,]+/).map(s => s.trim()).filter(Boolean),
-                      })}
+                      value={
+                        formData.scopes && formData.scopes.length
+                          ? formData.scopes.join(', ')
+                          : 'user:email'
+                      }
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          scopes: e.target.value
+                            .split(/[\s,]+/)
+                            .map((s) => s.trim())
+                            .filter(Boolean),
+                        })
+                      }
                       placeholder="user:email, read:user"
                       className="font-mono text-sm"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      e.g. user:email (required for login), read:user. Leave default for sign-in.
+                      e.g. user:email (required for login), read:user. Leave
+                      default for sign-in.
                     </p>
                   </div>
                   <div>
-                    <Label>Callback URL (add this in GitHub OAuth App settings)</Label>
+                    <Label>
+                      Callback URL (add this in GitHub OAuth App settings)
+                    </Label>
                     <p className="text-xs font-mono text-muted-foreground mt-1 break-all">
                       {`${config.serverBaseUrl}/${config.serverVersion}/auth/github-sso/callback`}
                     </p>
@@ -480,10 +554,15 @@ const SSOConfigSection: React.FC = () => {
                   <Input
                     id="scopes"
                     value={(formData.scopes || []).join(', ')}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      scopes: e.target.value.split(',').map(s => s.trim()).filter(Boolean) 
-                    })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        scopes: e.target.value
+                          .split(',')
+                          .map((s) => s.trim())
+                          .filter(Boolean),
+                      })
+                    }
                     placeholder="User.Read, email, profile"
                   />
                 </div>
@@ -494,7 +573,9 @@ const SSOConfigSection: React.FC = () => {
                   type="checkbox"
                   id="enabled"
                   checked={formData.enabled}
-                  onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, enabled: e.target.checked })
+                  }
                   className="rounded"
                 />
                 <Label htmlFor="enabled" className="cursor-pointer">
@@ -523,4 +604,3 @@ const SSOConfigSection: React.FC = () => {
 }
 
 export default SSOConfigSection
-

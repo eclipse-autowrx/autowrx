@@ -43,7 +43,9 @@ const AttributeDefinition: React.FC<AttributeDefinitionProps> = ({
 }) => {
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState<'list' | 'json'>('list')
-  const [attributes, setAttributes] = useState<PluginApiAttribute[]>(value || [])
+  const [attributes, setAttributes] = useState<PluginApiAttribute[]>(
+    value || [],
+  )
   const [jsonError, setJsonError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -65,7 +67,10 @@ const AttributeDefinition: React.FC<AttributeDefinitionProps> = ({
     handleListChange([...attributes, newAttribute])
   }
 
-  const handleUpdateAttribute = (index: number, updates: Partial<PluginApiAttribute>) => {
+  const handleUpdateAttribute = (
+    index: number,
+    updates: Partial<PluginApiAttribute>,
+  ) => {
     const updated = [...attributes]
     updated[index] = { ...updated[index], ...updates }
     handleListChange(updated)
@@ -118,7 +123,7 @@ const AttributeDefinition: React.FC<AttributeDefinitionProps> = ({
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
-    
+
     toast({
       title: 'Exported',
       description: `Exported ${attributes.length} attribute(s) to attributes.json`,
@@ -138,7 +143,7 @@ const AttributeDefinition: React.FC<AttributeDefinitionProps> = ({
         try {
           const jsonString = event.target?.result as string
           const parsed = JSON.parse(jsonString)
-          
+
           if (!Array.isArray(parsed)) {
             setJsonError('Imported file must contain an array of attributes')
             return
@@ -156,16 +161,17 @@ const AttributeDefinition: React.FC<AttributeDefinitionProps> = ({
           setAttributes(importedAttributes)
           onChange(importedAttributes)
           setJsonError(null)
-          
+
           // Switch to list mode to show imported attributes
           setActiveTab('list')
-          
+
           toast({
             title: 'Imported',
             description: `Successfully imported ${importedAttributes.length} attribute(s)`,
           })
         } catch (err) {
-          const errorMessage = err instanceof Error ? err.message : 'Invalid JSON file'
+          const errorMessage =
+            err instanceof Error ? err.message : 'Invalid JSON file'
           setJsonError(errorMessage)
           toast({
             title: 'Import failed',
@@ -257,7 +263,6 @@ const AttributeDefinition: React.FC<AttributeDefinitionProps> = ({
 
       {activeTab === 'list' && (
         <div className="space-y-2 overflow-y-auto flex-1 min-h-0 mt-2">
-
           {attributes.length === 0 ? (
             <div className="text-center py-6 text-sm text-muted-foreground">
               No attributes defined. Click "Add Attribute" to create one.
@@ -283,10 +288,7 @@ const AttributeDefinition: React.FC<AttributeDefinitionProps> = ({
 
               {/* Attribute rows */}
               {attributes.map((attr, index) => (
-                <div
-                  key={index}
-                  className="bg-primary/5 rounded-md p-2"
-                >
+                <div key={index} className="bg-primary/5 rounded-md p-2">
                   <div className="grid grid-cols-[1fr_120px_1fr_40px_40px] gap-2 items-center">
                     <div>
                       <Input
@@ -303,9 +305,9 @@ const AttributeDefinition: React.FC<AttributeDefinitionProps> = ({
                     <div>
                       <Select
                         value={attr.data_type}
-                        onValueChange={(value: PluginApiAttribute['data_type']) =>
-                          handleUpdateAttribute(index, { data_type: value })
-                        }
+                        onValueChange={(
+                          value: PluginApiAttribute['data_type'],
+                        ) => handleUpdateAttribute(index, { data_type: value })}
                       >
                         <SelectTrigger className="w-full h-8 text-sm border-white bg-white">
                           <SelectValue />
@@ -377,7 +379,9 @@ const AttributeDefinition: React.FC<AttributeDefinitionProps> = ({
             />
           </div>
           {jsonError && (
-            <p className="text-sm text-destructive shrink-0 mt-2">{jsonError}</p>
+            <p className="text-sm text-destructive shrink-0 mt-2">
+              {jsonError}
+            </p>
           )}
         </div>
       )}
@@ -386,4 +390,3 @@ const AttributeDefinition: React.FC<AttributeDefinitionProps> = ({
 }
 
 export default AttributeDefinition
-

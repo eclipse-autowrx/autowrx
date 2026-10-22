@@ -1,5 +1,5 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -39,7 +39,9 @@ export const parseCvi = (cvi: any) => {
 
 export const getCSSVariable = (variableName: string): string => {
   if (typeof window === 'undefined') return ''
-  return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim()
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue(variableName)
+    .trim()
 }
 
 export const getApiTypeClasses = (type: string) => {
@@ -67,12 +69,12 @@ export const isContinuousRectangle = (pickedCells: number[]): boolean => {
   if (pickedCells.length <= 1) return true // Single cell is always valid
   // Convert cell number to grid position
   const toGridPosition = (cell: number): [number, number] => {
-    let row = Math.floor((cell - 1) / numCols)
-    let col = (cell - 1) % numCols
+    const row = Math.floor((cell - 1) / numCols)
+    const col = (cell - 1) % numCols
     return [row, col]
   }
   // Create a matrix to represent the grid
-  let grid = Array(2)
+  const grid = Array(2)
     .fill(null)
     .map(() => Array(5).fill(false))
   // Mark the selected cells in the grid
@@ -108,13 +110,13 @@ export const isContinuousRectangle = (pickedCells: number[]): boolean => {
 
 // Dashboard utils : Calculate the rowSpan and colSpan of widget box to merge the cells
 export const calculateSpans = (boxes: any) => {
-  let minCol = Math.min(...boxes.map((box: any) => ((box - 1) % 5) + 1))
-  let maxCol = Math.max(...boxes.map((box: any) => ((box - 1) % 5) + 1))
-  let minRow = Math.ceil(Math.min(...boxes) / 5)
-  let maxRow = Math.ceil(Math.max(...boxes) / 5)
+  const minCol = Math.min(...boxes.map((box: any) => ((box - 1) % 5) + 1))
+  const maxCol = Math.max(...boxes.map((box: any) => ((box - 1) % 5) + 1))
+  const minRow = Math.ceil(Math.min(...boxes) / 5)
+  const maxRow = Math.ceil(Math.max(...boxes) / 5)
 
-  let colSpan = maxCol - minCol + 1
-  let rowSpan = maxRow - minRow + 1
+  const colSpan = maxCol - minCol + 1
+  const rowSpan = maxRow - minRow + 1
 
   return { rowSpan, colSpan }
 }

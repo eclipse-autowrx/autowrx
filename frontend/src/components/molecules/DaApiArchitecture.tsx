@@ -6,7 +6,10 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { ImageAreaEditor, ImageAreaPreview } from '@/components/organisms/image-area'
+import {
+  ImageAreaEditor,
+  ImageAreaPreview,
+} from '@/components/organisms/image-area'
 import { AxiosError } from 'axios'
 import { Button } from '@/components/atoms/button'
 import { useEffect, useState } from 'react'
@@ -41,7 +44,9 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
     return (
       <div className="flex items-center justify-center h-[200px]">
         <Spinner className="mr-2" />
-        <span className="text-sm font-medium text-muted-foreground">Loading API architecture</span>
+        <span className="text-sm font-medium text-muted-foreground">
+          Loading API architecture
+        </span>
       </div>
     )
 
@@ -59,8 +64,8 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
   }
 
   const createNodeWithImage = async (imageFileUrl?: string) => {
-    let tmpSkele: Skeleton = { nodes: [] } // Create a new skeleton object
-    let id = new Date().getTime()
+    const tmpSkele: Skeleton = { nodes: [] } // Create a new skeleton object
+    const id = new Date().getTime()
     tmpSkele.nodes.push({
       id: id,
       name: 'Node 1',
@@ -248,11 +253,11 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
     try {
       const { url } = await uploadFileService(file)
       if (!url) return
-      let tmpSkele =
+      const tmpSkele =
         typeof skeleton === 'string' ? JSON.parse(skeleton) : skeleton
       if (!tmpSkele.nodes) tmpSkele.nodes = []
-      let nodes = tmpSkele.nodes
-      let node = nodes[0]
+      const nodes = tmpSkele.nodes
+      const node = nodes[0]
       if (node) {
         node.bgImage = url
         setSkeleton(tmpSkele)
@@ -278,9 +283,9 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
 
   const onSaveRequested = async (data: any) => {
     if (!data) return
-    let tmpSkele = JSON.parse(JSON.stringify(skeleton)) || { nodes: [] }
-    let nodes = tmpSkele.nodes
-    let node = nodes[0]
+    const tmpSkele = JSON.parse(JSON.stringify(skeleton)) || { nodes: [] }
+    const nodes = tmpSkele.nodes
+    const node = nodes[0]
 
     node.shapes = data.shapes
     node.bgImage = data.bgImage
@@ -369,24 +374,27 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
         activeSkeleton.nodes &&
         activeSkeleton.nodes.length > 0 && (
           <div className="flex w-full h-auto">
-            {isEditMode ? (<>
-              <ImageAreaEditor
-                shapes={activeSkeleton?.nodes[0]?.shapes}
-                bgImage={activeSkeleton?.nodes[0]?.bgImage}
-                bgColor={activeSkeleton?.nodes[0]?.bgColor}
-                onSave={onSaveRequested}
-                handleUploadImage={handleUploadImage}
-              />
+            {isEditMode ? (
+              <>
+                <ImageAreaEditor
+                  shapes={activeSkeleton?.nodes[0]?.shapes}
+                  bgImage={activeSkeleton?.nodes[0]?.bgImage}
+                  bgColor={activeSkeleton?.nodes[0]?.bgColor}
+                  onSave={onSaveRequested}
+                  handleUploadImage={handleUploadImage}
+                />
               </>
-            ) : <>
-              {/* <img src={activeSkeleton?.nodes[0]?.bgImage} alt="API Architecture" /> */}
-              <ImageAreaPreview
-                shapes={activeSkeleton?.nodes[0]?.shapes}
-                bgImage={activeSkeleton?.nodes[0]?.bgImage}
-                bgColor={activeSkeleton?.nodes[0]?.bgColor}
-                navigate={handleNavigate}
-              />
-            </>}
+            ) : (
+              <>
+                {/* <img src={activeSkeleton?.nodes[0]?.bgImage} alt="API Architecture" /> */}
+                <ImageAreaPreview
+                  shapes={activeSkeleton?.nodes[0]?.shapes}
+                  bgImage={activeSkeleton?.nodes[0]?.bgImage}
+                  bgColor={activeSkeleton?.nodes[0]?.bgColor}
+                  navigate={handleNavigate}
+                />
+              </>
+            )}
           </div>
         )}
     </div>

@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -25,7 +25,7 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
   const editable = useCanEditPrototype(prototype)
 
   useEffect(() => {
-    let timer = setInterval(() => {
+    const timer = setInterval(() => {
       setTicker((oldTicker) => oldTicker + 1)
     }, 3000)
     return () => {
@@ -50,9 +50,9 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
     let updateConfig = dashboardConfig
 
     try {
-      let configObj = JSON.parse(updateConfig)
+      const configObj = JSON.parse(updateConfig)
       if (Array.isArray(configObj)) {
-        let revisedObj = {
+        const revisedObj = {
           autorun: false,
           widgets: configObj,
         }
@@ -68,7 +68,7 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
     }
 
     setDashboardCfg(updateConfig)
-    let newPrototype = { ...prototype, widget_config: updateConfig }
+    const newPrototype = { ...prototype, widget_config: updateConfig }
     setActivePrototype(newPrototype)
 
     if (prototype && prototype.id) {
@@ -94,4 +94,3 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
 }
 
 export default PrototypeTabCodeDashboardCfg
-

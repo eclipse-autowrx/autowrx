@@ -8,7 +8,10 @@
 
 import { Button } from '@/components/atoms/button'
 import DaTabItem from '@/components/atoms/DaTabItem'
-import { DEFAULT_COPY_RIGHT_NAV_BUTTON, TabConfig } from '@/components/organisms/CustomTabEditor'
+import {
+  DEFAULT_COPY_RIGHT_NAV_BUTTON,
+  TabConfig,
+} from '@/components/organisms/CustomTabEditor'
 import StagingTabButton from '@/components/organisms/StagingTabButton'
 import { renderTabIcon } from '@/lib/tabUtils'
 import { cn } from '@/lib/utils'
