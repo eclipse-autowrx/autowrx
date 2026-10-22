@@ -81,7 +81,9 @@ const FormCreatePrototype = ({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
-  const [disabled, setDisabled] = disabledState ?? useState(false)
+  const [fallbackDisabled, setFallbackDisabled] = useState(false)
+  const [disabled, setDisabled] =
+    disabledState ?? [fallbackDisabled, setFallbackDisabled]
 
   const { data: currentModel } = useCurrentModel()
   const { data: contributionModels, isLoading: isFetchingModelContribution } =
