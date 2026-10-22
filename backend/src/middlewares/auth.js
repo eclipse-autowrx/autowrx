@@ -61,11 +61,11 @@ const auth =
       } else {
         // If auth service url is not provided, use passport to authenticate the user
         user = await new Promise((resolve, reject) => {
-          passport.authenticate('jwt', { session: false }, (err, user, info) => {
-            if (err || info || !user) {
+          passport.authenticate('jwt', { session: false }, (err, authenticatedUser, info) => {
+            if (err || info || !authenticatedUser) {
               return reject(new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate'));
             }
-            resolve(user);
+            resolve(authenticatedUser);
           })(req, res, next);
         });
       }

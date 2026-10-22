@@ -7,6 +7,8 @@
 // SPDX-License-Identifier: MIT
 
 const express = require('express');
+const httpStatus = require('http-status');
+const ApiError = require('../../../utils/ApiError');
 const auth = require('../../../middlewares/auth');
 const validate = require('../../../middlewares/validate');
 const userValidation = require('../../../validations/user.validation');
@@ -37,8 +39,6 @@ router
     (req, res, next) => {
       // Check if password management is enabled when user tries to update password
       if (req.body.password && !req.authConfig.PASSWORD_MANAGEMENT) {
-        const ApiError = require('../../../utils/ApiError');
-        const httpStatus = require('http-status');
         return next(new ApiError(httpStatus.FORBIDDEN, 'Password management is disabled. Contact administrator.'));
       }
       next();

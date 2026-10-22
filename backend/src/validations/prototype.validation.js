@@ -8,7 +8,7 @@
 
 const Joi = require('joi');
 const { stateTypes } = require('../config/enums');
-const { objectId, jsonString, slug } = require('./custom.validation');
+const { objectId, jsonString } = require('./custom.validation');
 
 const bodyValidation = Joi.object().keys({
   extend: Joi.any(),

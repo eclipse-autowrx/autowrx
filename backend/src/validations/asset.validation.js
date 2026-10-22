@@ -8,7 +8,6 @@
 
 const Joi = require('joi');
 const { objectId, objectIdList } = require('./custom.validation');
-const { PERMISSIONS } = require('../config/roles');
 
 const createAsset = {
   body: Joi.object().keys({

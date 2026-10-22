@@ -13,8 +13,6 @@ const ApiError = require('../utils/ApiError');
 const { jwtVerify } = require('./passport');
 const { verifyJwt } = require('../utils/jwtKeys');
 const { tokenTypes } = require('./tokens');
-const permissionService = require('../services/permission.service');
-const { PERMISSIONS } = require('./roles');
 
 let io = null;
 

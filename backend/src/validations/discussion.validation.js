@@ -8,7 +8,6 @@
 
 const Joi = require('joi');
 const { objectId } = require('./custom.validation');
-const { populate } = require('../models/token.model');
 
 const createDiscussion = {
   body: Joi.object().keys({

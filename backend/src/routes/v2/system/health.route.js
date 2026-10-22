@@ -60,7 +60,8 @@ router.get('/', auth(), checkPermission(PERMISSIONS.ADMIN), async (req, res) => 
   res.set('Cache-Control', 'no-store');
   try {
     const report = await runHealthCheck();
-    const httpStatus = report.status === 'ok' ? 200 : report.status === 'degraded' ? 200 : 503;
+    // 'ok' and 'degraded' are both served as 200; anything else is 503.
+    const httpStatus = report.status === 'ok' || report.status === 'degraded' ? 200 : 503;
     res.status(httpStatus).json(report);
   } catch (err) {
     res.status(500).json({

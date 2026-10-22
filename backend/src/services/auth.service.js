@@ -304,7 +304,7 @@ const parseIdToken = async (idToken, provider) => {
 
     if (!userData.displayName) {
       // Fallback to email if name not provided
-      userData.displayName = userData.mail.split('@')[0];
+      [userData.displayName] = userData.mail.split('@');
     }
 
     return userData;

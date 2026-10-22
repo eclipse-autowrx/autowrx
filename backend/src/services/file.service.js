@@ -9,6 +9,7 @@
 const axios = require('axios');
 const httpStatus = require('http-status');
 const fs = require('fs');
+const path = require('path');
 const ApiError = require('../utils/ApiError');
 const logger = require('../config/logger');
 const config = require('../config/config');
@@ -83,7 +84,7 @@ const downloadFile = async (url, filePath) => {
     }
     const arrayBuffer = await response.arrayBuffer();
     // Ensure directory exists
-    const dir = require('path').dirname(filePath);
+    const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
@@ -94,13 +95,6 @@ const downloadFile = async (url, filePath) => {
     throw error; // Re-throw so caller knows it failed
   }
 };
-
-/**
- *
- * @param {File} file1
- * @param {File} file2
- */
-const compareImages = async (file1, file2) => {};
 
 module.exports.upload = upload;
 module.exports.resolveUrl = resolveUrl;

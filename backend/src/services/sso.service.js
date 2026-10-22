@@ -14,6 +14,55 @@ const ApiError = require('../utils/ApiError');
 const SSO_PROVIDERS_KEY = 'SSO_PROVIDERS';
 
 /**
+ * Encrypt clientSecret fields in all providers
+ * @param {Array} providers - Array of provider objects
+ * @returns {Array} Providers with encrypted secrets
+ */
+const encryptProviderSecrets = (providers) => {
+  if (!Array.isArray(providers)) {
+    return providers;
+  }
+
+  return providers.map((provider) => {
+    if (provider.clientSecret && !provider.clientSecret.includes(':')) {
+      // Only encrypt if not already encrypted (no colon separator)
+      return {
+        ...provider,
+        clientSecret: encrypt(provider.clientSecret),
+      };
+    }
+    return provider;
+  });
+};
+
+/**
+ * Decrypt clientSecret fields in all providers
+ * @param {Array} providers - Array of provider objects with encrypted secrets
+ * @returns {Array} Providers with decrypted secrets
+ */
+const decryptProviderSecrets = (providers) => {
+  if (!Array.isArray(providers)) {
+    return providers;
+  }
+
+  return providers.map((provider) => {
+    if (provider.clientSecret && provider.clientSecret.includes(':')) {
+      // Only decrypt if encrypted (has colon separator)
+      try {
+        return {
+          ...provider,
+          clientSecret: decrypt(provider.clientSecret),
+        };
+      } catch (error) {
+        console.error(`Failed to decrypt secret for provider ${provider.id}:`, error);
+        return provider;
+      }
+    }
+    return provider;
+  });
+};
+
+/**
  * Get all SSO providers from config
  * @param {boolean} includeSecrets - Whether to decrypt client secrets
  * @returns {Promise<Array>} Array of SSO provider objects
@@ -79,55 +128,6 @@ const getSSOProviderById = async (id, includeSecrets = false) => {
   }
 
   return provider;
-};
-
-/**
- * Encrypt clientSecret fields in all providers
- * @param {Array} providers - Array of provider objects
- * @returns {Array} Providers with encrypted secrets
- */
-const encryptProviderSecrets = (providers) => {
-  if (!Array.isArray(providers)) {
-    return providers;
-  }
-
-  return providers.map((provider) => {
-    if (provider.clientSecret && !provider.clientSecret.includes(':')) {
-      // Only encrypt if not already encrypted (no colon separator)
-      return {
-        ...provider,
-        clientSecret: encrypt(provider.clientSecret),
-      };
-    }
-    return provider;
-  });
-};
-
-/**
- * Decrypt clientSecret fields in all providers
- * @param {Array} providers - Array of provider objects with encrypted secrets
- * @returns {Array} Providers with decrypted secrets
- */
-const decryptProviderSecrets = (providers) => {
-  if (!Array.isArray(providers)) {
-    return providers;
-  }
-
-  return providers.map((provider) => {
-    if (provider.clientSecret && provider.clientSecret.includes(':')) {
-      // Only decrypt if encrypted (has colon separator)
-      try {
-        return {
-          ...provider,
-          clientSecret: decrypt(provider.clientSecret),
-        };
-      } catch (error) {
-        console.error(`Failed to decrypt secret for provider ${provider.id}:`, error);
-        return provider;
-      }
-    }
-    return provider;
-  });
 };
 
 module.exports = {

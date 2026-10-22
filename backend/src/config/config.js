@@ -281,9 +281,6 @@ const config = {
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
   },
   services: {
-    log: {
-      port: envVars.LOG_PORT || 9600,
-    },
     cache: {
       url: envVars.CACHE_URL,
     },
@@ -315,6 +312,7 @@ const config = {
       url: envVars.KIT_SERVER_URL,
     },
     log: {
+      port: envVars.LOG_PORT || 9600,
       url: envVars.LOG_URL,
     },
   },

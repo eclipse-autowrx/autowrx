@@ -10,7 +10,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const config = require('../config/config');
-const logger = require('../config/logger');
 const { User, CustomApiSchema, CustomApiSet, Model } = require('../models');
 const { customApiSchemaService, customApiSetService, modelService } = require('../services');
 
@@ -372,7 +371,9 @@ const testItemOperations = async () => {
       testAdminId,
     );
     // Wait a bit for save to complete
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
     const updatedSet = await customApiSetService.getCustomApiSetById(testCustomApiSetIds.treeSystem, testAdminId);
     const updatedItem = updatedSet.data.items.find((item) => item.id === 'ABC.NEW');
     const itemValue = updatedItem?.value || updatedItem?.get?.('value') || updatedItem?.toObject?.()?.value;

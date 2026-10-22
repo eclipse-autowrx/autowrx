@@ -21,6 +21,7 @@ const logger = require('../config/logger');
  */
 const getEmailConfig = async () => {
   try {
+    // eslint-disable-next-line global-require -- lazy import avoids circular dependency with siteConfig.service
     const { SiteConfig } = require('../models');
     const configDoc = await SiteConfig.findOne({ key: 'EMAIL_CONFIG', scope: 'site' });
     if (!configDoc || !configDoc.value || configDoc.value.provider === 'none') {
@@ -49,25 +50,6 @@ const getEmailConfig = async () => {
     logger.error('Failed to load email config from site-config:', error.message);
     return null;
   }
-};
-
-/**
- * Send an email using site-config-based provider (Resend or SMTP).
- * Falls back to legacy env-based config if site-config is not set.
- * @param {string} to - Recipient email
- * @param {string} subject - Email subject
- * @param {string} html - HTML content
- * @returns {Promise}
- */
-const sendEmail = async (to, subject, html) => {
-  const emailCfg = await getEmailConfig();
-
-  if (emailCfg) {
-    return sendWithSiteConfig(emailCfg, to, subject, html);
-  }
-
-  // Fallback to legacy env-based config
-  return sendWithLegacyConfig(to, subject, html);
 };
 
 /**
@@ -157,6 +139,25 @@ const sendWithLegacyConfig = async (to, subject, html) => {
       },
     },
   );
+};
+
+/**
+ * Send an email using site-config-based provider (Resend or SMTP).
+ * Falls back to legacy env-based config if site-config is not set.
+ * @param {string} to - Recipient email
+ * @param {string} subject - Email subject
+ * @param {string} html - HTML content
+ * @returns {Promise}
+ */
+const sendEmail = async (to, subject, html) => {
+  const emailCfg = await getEmailConfig();
+
+  if (emailCfg) {
+    return sendWithSiteConfig(emailCfg, to, subject, html);
+  }
+
+  // Fallback to legacy env-based config
+  return sendWithLegacyConfig(to, subject, html);
 };
 
 /**

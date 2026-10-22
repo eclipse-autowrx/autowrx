@@ -91,10 +91,13 @@ async function checkRuntimeServer() {
     // Try to get from site config in DB
     let runtimeUrl = process.env.RUNTIME_SERVER_URL || 'https://kit.digitalauto.tech';
     try {
+      // eslint-disable-next-line global-require -- lazy load keeps the model out of the health module's import graph
       const SiteConfig = require('../models/siteConfig.model');
       const cfg = await SiteConfig.findOne({ key: 'RUNTIME_SERVER_URL', scope: 'site' });
       if (cfg?.value) runtimeUrl = cfg.value;
-    } catch (_) {}
+    } catch (_) {
+      // Site config is optional; fall back to the env/default URL.
+    }
 
     if (!runtimeUrl) return { status: STATUS.SKIPPED, message: 'RUNTIME_SERVER_URL not configured' };
 

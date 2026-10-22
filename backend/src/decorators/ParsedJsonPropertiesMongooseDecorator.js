@@ -17,7 +17,7 @@ const { Model } = require('mongoose');
  */
 function getValueByPath(obj, path) {
   let current = obj;
-  for (let i = 0; i < path.length; i++) {
+  for (let i = 0; i < path.length; i += 1) {
     // Check if current level is valid before accessing the next key
     if (!current || typeof current !== 'object') {
       const parentPath = path.slice(0, i).join('.');
@@ -39,7 +39,7 @@ function getValueByPath(obj, path) {
 function setValueByPath(obj, path, value) {
   let current = obj;
   // Iterate up to the second-to-last key to ensure the parent exists
-  for (let i = 0; i < path.length - 1; i++) {
+  for (let i = 0; i < path.length - 1; i += 1) {
     // Check if current level is valid before accessing the next key
     if (!current || typeof current !== 'object') {
       const parentPath = path.slice(0, i).join('.');

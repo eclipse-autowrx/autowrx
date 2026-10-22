@@ -39,7 +39,8 @@ const createUser = async (userBody) => {
  * @param {string} [advanced.id] - Whether to filter users by id
  * @returns {Promise<QueryResult>}
  */
-const queryUsers = async (filter, options, advanced) => {
+const queryUsers = async (baseFilter, options, advanced) => {
+  let filter = baseFilter;
   if (advanced.id) {
     const ids = advanced.id.split(',');
     for (const id of ids) {
@@ -72,7 +73,7 @@ const queryUsers = async (filter, options, advanced) => {
   }
 
   const results = await User.paginate(filter, options);
-  results.results = results.results.map((user, index) => ({
+  results.results = results.results.map((user) => ({
     ...user.toJSON(),
     created_at: user.createdAt,
   }));

@@ -132,11 +132,11 @@ async function captureUpdates(next) {
         const changes = {};
         Object.keys(this._doc).forEach((field) => {
           if (
-            field != '_id' &&
-            field != '__v' &&
-            field != 'updatedAt' &&
-            field != 'createdAt' &&
-            field != 'created_by' &&
+            field !== '_id' &&
+            field !== '__v' &&
+            field !== 'updatedAt' &&
+            field !== 'createdAt' &&
+            field !== 'created_by' &&
             !_.isEqual(JSON.stringify(original[field]), JSON.stringify(this[field]))
           ) {
             changes[field] = {
@@ -210,12 +210,12 @@ async function captureRemove(doc) {
 }
 
 // Clean up stale throttle loggers
-setInterval(() => {
+const staleCleanupTimer = setInterval(() => {
   const now = Date.now();
-  for (const [key, logger] of throttleLoggers.entries()) {
-    const timeSyncLastTouched = now - logger.lastTouched;
-    if (!logger.timer && timeSyncLastTouched >= STALE_THRESHOLD) {
-      logger
+  for (const [key, throttleLogger] of throttleLoggers.entries()) {
+    const timeSyncLastTouched = now - throttleLogger.lastTouched;
+    if (!throttleLogger.timer && timeSyncLastTouched >= STALE_THRESHOLD) {
+      throttleLogger
         ._logDataUpdate()
         .catch((error) => {
           logger.error(`Error logging stale data for ${key}: %o`, error?.message || error);
@@ -226,6 +226,8 @@ setInterval(() => {
     }
   }
 }, STALE_THRESHOLD);
+// Do not keep the process (e.g. Jest workers, scripts) alive just for this housekeeping timer.
+staleCleanupTimer.unref();
 
 module.exports.captureUpdates = captureUpdates;
 module.exports.captureCreate = captureCreate;

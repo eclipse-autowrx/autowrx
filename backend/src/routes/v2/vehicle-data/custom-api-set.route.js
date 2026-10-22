@@ -11,8 +11,6 @@ const validate = require('../../../middlewares/validate');
 const customApiSetValidation = require('../../../validations/customApiSet.validation');
 const { customApiSetController } = require('../../../controllers');
 const auth = require('../../../middlewares/auth');
-const { checkPermission } = require('../../../middlewares/permission');
-const { PERMISSIONS } = require('../../../config/roles');
 
 const router = express.Router();
 

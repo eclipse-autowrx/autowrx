@@ -45,8 +45,6 @@ const uploadFile = async (req, res, next) => {
     // Check if it's an image file
     const isImage = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].includes(fileExt);
 
-    const finalFilePath = filePath;
-
     // If it's an image, try to scale it down
     if (isImage) {
       try {

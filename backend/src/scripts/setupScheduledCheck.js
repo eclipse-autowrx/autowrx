@@ -74,6 +74,7 @@ const checkUpdateVSS = async () => {
         if (match) {
           return Number(match[1]) >= 3.0;
         }
+        return false;
       })
       ?.map((release) => {
         return {

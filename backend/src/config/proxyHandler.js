@@ -6,12 +6,10 @@
 //
 // SPDX-License-Identifier: MIT
 
-const { createProxyMiddleware } = require('http-proxy-middleware');
 const httpStatus = require('http-status');
-const config = require('./config');
 const logger = require('./logger');
 
-const setupProxy = (app) => {
+const setupProxy = (_app) => {
   // File upload is now handled directly by the backend
   // No proxy needed for /v2/file
 };
@@ -28,7 +26,7 @@ const proxyHandler =
    * @param {import('http').IncomingMessage} req
    * @param {import('http').ServerResponse} res
    */
-  (req, res, next) => {
+  (req, res, _next) => {
     if (!proxy) {
       return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `${name} is not implemented` });
     }

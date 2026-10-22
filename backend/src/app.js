@@ -16,6 +16,7 @@ const passport = require('passport');
 const httpStatus = require('http-status');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const config = require('./config/config');
 const morgan = require('./config/morgan');
@@ -520,7 +521,7 @@ if (config.env === 'development') {
   });
 }
 
-const server = require('http').createServer(app);
+const server = http.createServer(app);
 
 initSocketIO(server);
 

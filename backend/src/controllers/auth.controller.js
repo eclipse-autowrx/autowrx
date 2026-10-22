@@ -14,6 +14,7 @@ const ApiError = require('../utils/ApiError');
 const logger = require('../config/logger');
 const pick = require('../utils/pick');
 const platformAuthService = require('../services/platformAuth.service');
+const ssoService = require('../services/sso.service');
 const { sanitizeUser } = require('../middlewares/auth');
 
 // origin/state on these routes comes straight from the query string, before the user
@@ -207,7 +208,6 @@ const githubCallback = catchAsync(async (req, res) => {
 
 const sso = catchAsync(async (req, res) => {
   const { providerId, idToken } = req.body;
-  const ssoService = require('../services/sso.service');
 
   // Validate that provider exists and is enabled
   let provider;
@@ -249,8 +249,6 @@ const sso = catchAsync(async (req, res) => {
   res.send({ user, tokens });
 });
 
-const ssoService = require('../services/sso.service');
-
 const githubSsoStart = catchAsync(async (req, res) => {
   const { providerId, origin } = req.query;
   if (!providerId) {
@@ -266,12 +264,12 @@ const githubSsoStart = catchAsync(async (req, res) => {
   const redirectUri = baseUrl + callbackPath;
   const returnOrigin = resolveRedirectOrigin(origin);
   const state = encodeURIComponent(JSON.stringify({ providerId, origin: returnOrigin }));
-  const scope =
-    Array.isArray(provider.scopes) && provider.scopes.length
-      ? provider.scopes.join(' ')
-      : typeof provider.scopes === 'string' && provider.scopes.trim()
-        ? provider.scopes.trim()
-        : 'user:email';
+  let scope = 'user:email';
+  if (Array.isArray(provider.scopes) && provider.scopes.length) {
+    scope = provider.scopes.join(' ');
+  } else if (typeof provider.scopes === 'string' && provider.scopes.trim()) {
+    scope = provider.scopes.trim();
+  }
   const params = new URLSearchParams({
     client_id: provider.clientId,
     redirect_uri: redirectUri,

@@ -9,7 +9,6 @@
 const httpStatus = require('http-status');
 const { CustomApiSchema } = require('../models');
 const ApiError = require('../utils/ApiError');
-const logger = require('../config/logger');
 
 /**
  * Create a CustomApiSchema schema

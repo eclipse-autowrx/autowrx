@@ -6,6 +6,8 @@
 //
 // SPDX-License-Identifier: MIT
 
+// One-off migration script; the driver is provided transitively by mongoose.
+// eslint-disable-next-line import/no-extraneous-dependencies
 const Client = require('mongodb').MongoClient;
 
 const connect = async (url) => {
@@ -15,7 +17,7 @@ const connect = async (url) => {
 };
 
 const main = async () => {
-  db = await connect('mongodb://etas-prod-playground-db:27017/playground-be');
+  const db = await connect('mongodb://etas-prod-playground-db:27017/playground-be');
   const models = await db
     .collection('models')
     .find({

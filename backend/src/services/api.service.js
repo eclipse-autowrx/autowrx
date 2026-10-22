@@ -145,7 +145,7 @@ const parseCvi = (cvi) => {
   const ret = traverse(cvi[mainApi], mainApi);
 
   ret.forEach((item) => {
-    if (item.type == 'branch') return;
+    if (item.type === 'branch') return;
     const arName = item.name.split('.');
     if (arName.length > 1) {
       item.shortName = `.${arName.slice(1).join('.')}`;
@@ -158,7 +158,7 @@ const parseCvi = (cvi) => {
     const aParts = a.name.split('.');
     const bParts = b.name.split('.');
 
-    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i += 1) {
       if (aParts[i] !== bParts[i]) {
         return (aParts[i] || '').localeCompare(bParts[i] || '');
       }
@@ -202,10 +202,11 @@ const ensureParentApiHierarchy = (root, api) => {
   for (const currentApi of api.split('.')) {
     parentNode.children ??= {};
 
-    parentNode = parentNode.children[currentApi] ??= {
+    parentNode.children[currentApi] ??= {
       type: 'branch',
       children: {},
     };
+    parentNode = parentNode.children[currentApi];
   }
 
   parentNode.children ??= {};
@@ -341,7 +342,7 @@ const getApiDetail = async (modelId, apiName) => {
   traverse(
     tree[mainApi],
     (api, prefix) => {
-      if (prefix === apiName || api?.name === apiName || api?.apiName == apiName) {
+      if (prefix === apiName || api?.name === apiName || api?.apiName === apiName) {
         ret = api;
       }
     },

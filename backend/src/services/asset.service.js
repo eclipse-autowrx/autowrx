@@ -9,7 +9,7 @@
 const httpStatus = require('http-status');
 const { isValidObjectId } = require('mongoose');
 const permissionService = require('./permission.service');
-const { PERMISSIONS, RESOURCES } = require('../config/roles');
+const { PERMISSIONS } = require('../config/roles');
 const { Role } = require('../models');
 const Asset = require('../models/asset.model');
 const ApiError = require('../utils/ApiError');

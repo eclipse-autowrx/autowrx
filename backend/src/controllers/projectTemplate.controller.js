@@ -7,7 +7,7 @@ const catchAsync = require('../utils/catchAsync');
 const { projectTemplateService, permissionService } = require('../services');
 const { PERMISSIONS } = require('../config/roles');
 
-const isAdminUser = async (req) => req.user && (await permissionService.hasPermission(req.user.id, PERMISSIONS.ADMIN));
+const isAdminUser = async (req) => req.user && permissionService.hasPermission(req.user.id, PERMISSIONS.ADMIN);
 
 const list = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['name', 'visibility']);

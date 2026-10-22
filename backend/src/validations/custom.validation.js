@@ -17,8 +17,8 @@ const objectId = (value, helpers) => {
 
 const objectIdList = (value, helpers) => {
   const origin = value;
-  value = value.split(',');
-  for (const id of value) {
+  const ids = value.split(',');
+  for (const id of ids) {
     if (!id.match(/^[0-9a-fA-F]{24}$/)) {
       return helpers.message('"{{#label}}" must be a list of valid mongo ids');
     }

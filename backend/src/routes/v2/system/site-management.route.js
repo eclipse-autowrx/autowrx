@@ -10,7 +10,6 @@ const express = require('express');
 const validate = require('../../../middlewares/validate');
 const siteConfigValidation = require('../../../validations/siteConfig.validation');
 const siteConfigController = require('../../../controllers/siteConfig.controller');
-const config = require('../../../config/config');
 const auth = require('../../../middlewares/auth');
 const { checkPermission } = require('../../../middlewares/permission');
 const { PERMISSIONS } = require('../../../config/roles');

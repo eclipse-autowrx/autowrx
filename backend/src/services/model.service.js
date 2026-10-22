@@ -743,6 +743,8 @@ const processApiDataUrl = async (apiDataUrl) => {
         // No standard VSS files available, treat as custom
         logger.debug('vss.json not found, treating uploaded file as custom');
       } else {
+        // Intentional require(): loads and caches the JSON index of standard VSS versions.
+        // eslint-disable-next-line global-require
         const versionList = require('../../data/vss.json');
         if (!versionList || versionList.length === 0) {
           // No versions to check, treat as custom
@@ -775,6 +777,8 @@ const processApiDataUrl = async (apiDataUrl) => {
               }
 
               // Size is similar, do deep comparison
+              // Intentional require(): loads and caches the (large) standard VSS file for comparison.
+              // eslint-disable-next-line global-require, import/no-dynamic-require
               const file = require(`../../data/${version.name}.json`);
               const fileKeys = Object.keys(file);
 
@@ -863,7 +867,7 @@ const addCustomApiSet = async (modelId, setId, userId) => {
   const model = await getModelById(modelId, userId);
 
   // Verify set exists and user has access
-  const set = await customApiSetService.getSetById(setId, userId);
+  await customApiSetService.getSetById(setId, userId);
 
   if (!model.custom_api_sets) {
     model.custom_api_sets = [];
