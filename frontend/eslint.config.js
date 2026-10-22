@@ -50,6 +50,8 @@ export default [
       'react-hooks/exhaustive-deps': 'warn',
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       'prettier/prettier': 'error',
+      // TypeScript props types replace prop-types (and the rule misreports forwardRef/memo/inline-typed components).
+      'react/prop-types': 'off',
       // Allow intentionally-unused identifiers to be marked with a leading underscore (args, vars, catch bindings,
       // and destructured siblings).
       '@typescript-eslint/no-unused-vars': [

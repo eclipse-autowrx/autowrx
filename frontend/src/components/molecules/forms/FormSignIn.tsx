@@ -136,7 +136,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
           {authConfigs.SELF_REGISTRATION && (
             <div className="mt-4 flex w-full justify-center items-center">
               <p className="text-sm text-muted-foreground">
-                Don't have an account?
+                Don&apos;t have an account?
               </p>
               <Button
                 type="button"

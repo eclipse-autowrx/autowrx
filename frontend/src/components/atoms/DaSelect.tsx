@@ -67,6 +67,7 @@ const DaSelect = React.forwardRef<
     </Select>
   ),
 )
+DaSelect.displayName = 'DaSelect'
 
 const DaSelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,

@@ -51,7 +51,9 @@ export const loadMarketWidgets = async () => {
               parsedWidget.options = tmpConfig
               parsedWidget.options.url = parsedWidget.url
             }
-          } catch {}
+          } catch {
+            // ignore: unparsable options keep the widget as is
+          }
         }
         return parsedWidget //return the parsed widget for each widget
       })
@@ -100,7 +102,9 @@ export const searchWidget = async (widgetId: any) => {
             parsedWidget.options = tmpConfig
             parsedWidget.options.url = parsedWidget.url
           }
-        } catch {}
+        } catch {
+          // ignore: unparsable options keep the widget as is
+        }
       }
       return parsedWidget
     }

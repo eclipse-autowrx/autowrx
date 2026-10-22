@@ -93,7 +93,9 @@ const PythonGenAIEditor = ({ dataStr, onDataChange }: iPropGenAIPython) => {
       setMethod(data.method || '')
       setUrl(data.url || '')
       setAccessToken(data.accessToken || '')
-    } catch {}
+    } catch {
+      // ignore: invalid JSON leaves the fields unchanged
+    }
   }, [dataStr])
 
   const onUrlChange = (value: string) => {
@@ -345,7 +347,7 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
                   title: `Invalid info`,
                   description: (
                     <span className="text-sm flex items-center text-red-500">
-                      Missing "name", please enter name and try again!
+                      Missing &quot;name&quot;, please enter name and try again!
                     </span>
                   ),
                   duration: 3000,

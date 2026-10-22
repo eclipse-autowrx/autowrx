@@ -185,7 +185,9 @@ const DaDashboardWidgetEditor = ({
         )
         delete options.iconURL
         delete options.url
-      } catch {}
+      } catch {
+        // ignore: options cleanup is best-effort
+      }
       const usedApiNames = getUsedVehicleApiNames(
         localPrototype.code,
         activeModelApis,
@@ -356,12 +358,16 @@ const DaDashboardWidgetEditor = ({
               let newOption = {} as any
               try {
                 newOption = JSON.parse(optionStr)
-              } catch {}
+              } catch {
+                // ignore: invalid JSON keeps the default options
+              }
 
               let widget = {} as any
               try {
                 widget = JSON.parse(selectedWidget)
-              } catch {}
+              } catch {
+                // ignore: invalid JSON keeps the empty widget
+              }
 
               // Check if this is a built-in widget (has a non-empty path)
               const isBuiltInWidget = widget.path && widget.path.trim() !== ''
@@ -378,7 +384,9 @@ const DaDashboardWidgetEditor = ({
               widget.options = newOption
               try {
                 widget.boxes = JSON.parse(boxes)
-              } catch {}
+              } catch {
+                // ignore: invalid JSON leaves boxes unchanged
+              }
               handleUpdateWidget(JSON.stringify(widget, null, 4))
               codeEditorPopup[1](false)
             }}
@@ -558,7 +566,9 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
           if (a.weight > b.weight) return 1
           return 0
         })
-      } catch {}
+      } catch {
+        // ignore: sorting is best-effort; keep unsorted order
+      }
     }
 
     setRenderWidgets(widgets)

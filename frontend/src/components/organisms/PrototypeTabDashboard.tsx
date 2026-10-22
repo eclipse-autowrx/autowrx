@@ -11,7 +11,7 @@ import DaDashboard from '../molecules/dashboard/DaDashboard'
 import { cn } from '@/lib/utils'
 import { useSystemUI } from '@/hooks/useSystemUI'
 
-const PrototypeTabDashboard: FC = ({}) => {
+const PrototypeTabDashboard: FC = () => {
   const { showPrototypeDashboardFullScreen } = useSystemUI()
 
   return (

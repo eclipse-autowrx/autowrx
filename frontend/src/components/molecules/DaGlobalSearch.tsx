@@ -257,7 +257,10 @@ const DaGlobalSearch = ({ trigger }: DaGlobalSearchProps) => {
                 <div className="flex flex-col space-y-1 max-h-[50vh] overflow-y-auto mt-4">
                   <p className="text-sm font-light mb-2">
                     Search{' '}
-                    <span className="font-semibold"> '{searchTerm}' </span>
+                    <span className="font-semibold">
+                      {' '}
+                      &apos;{searchTerm}&apos;{' '}
+                    </span>
                     for{' '}
                     <span className="font-semibold">
                       {selectedFilters

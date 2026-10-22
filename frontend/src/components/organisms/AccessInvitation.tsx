@@ -80,7 +80,7 @@ const AccessInvitation = ({
     onSuccess: () => {
       setSelectedUsers(new Map())
       onClose()
-      onInviteSuccess && onInviteSuccess(accessLevelId)
+      onInviteSuccess?.(accessLevelId)
     },
     onError: (error) => {
       if (isAxiosError(error)) {

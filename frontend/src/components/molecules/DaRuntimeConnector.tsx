@@ -1000,4 +1000,6 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
   },
 )
 
+DaRuntimeConnector.displayName = 'DaRuntimeConnector'
+
 export default DaRuntimeConnector

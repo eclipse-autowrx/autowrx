@@ -41,6 +41,8 @@ const ApiInput = React.forwardRef<HTMLInputElement, InputProps>(
   },
 )
 
+ApiInput.displayName = 'ApiInput'
+
 export interface DaApisWatchProps extends React.InputHTMLAttributes<HTMLInputElement> {
   usedAPIs?: string[]
   requestWriteSignalValue?: (obj: any) => void

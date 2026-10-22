@@ -79,7 +79,7 @@ interface ViewPrototypeProps {
   display?: 'tree' | 'list'
 }
 
-const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
+const PagePrototypeDetail: FC<ViewPrototypeProps> = () => {
   const { model_id, prototype_id, tab } = useParams()
   const [searchParams] = useSearchParams()
   const pluginId = searchParams.get('plugid')

@@ -119,7 +119,7 @@ const useImportModel = (options?: UseImportModelOptions) => {
           name: `New model '${newModel.name}' with visibility: ${newModel.visibility}`,
           description: `New model '${newModel.name}' was created by ${user?.email || user?.name || user?.id}`,
           type: 'new-model',
-          create_by: user?.id!,
+          create_by: user?.id as string,
           ref_id: createdModelId,
           ref_type: 'model',
         })

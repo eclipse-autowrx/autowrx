@@ -219,7 +219,12 @@ const DaTableEditor = ({
                             setColumnNames(updatedColumnNames)
 
                             const newData = tableData.map((row) => {
-                              if (row.hasOwnProperty(oldColumnName)) {
+                              if (
+                                Object.prototype.hasOwnProperty.call(
+                                  row,
+                                  oldColumnName,
+                                )
+                              ) {
                                 row[newColumnName] = row[oldColumnName]
                                 delete row[oldColumnName]
                               }

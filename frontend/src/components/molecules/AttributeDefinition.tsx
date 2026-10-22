@@ -264,7 +264,8 @@ const AttributeDefinition: React.FC<AttributeDefinitionProps> = ({
         <div className="space-y-2 overflow-y-auto flex-1 min-h-0 mt-2">
           {attributes.length === 0 ? (
             <div className="text-center py-6 text-sm text-muted-foreground">
-              No attributes defined. Click "Add Attribute" to create one.
+              No attributes defined. Click &quot;Add Attribute&quot; to create
+              one.
             </div>
           ) : (
             <div className="space-y-2">

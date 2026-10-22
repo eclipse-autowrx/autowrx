@@ -657,7 +657,7 @@ const CustomApiSetSection: React.FC = () => {
                   className="mt-2"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Schema will be created if it doesn't exist. Code is
+                  Schema will be created if it doesn&apos;t exist. Code is
                   auto-generated from name.
                 </p>
               </div>

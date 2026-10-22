@@ -213,7 +213,9 @@ const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
         )
       }
     }
-  } catch {}
+  } catch {
+    // ignore: export is best-effort
+  }
 }
 
 export const downloadModelZip = async (model: Model) => {
@@ -399,7 +401,9 @@ export const downloadPrototypeZip = async (prototype: Prototype) => {
 
     const content = await zip.generateAsync({ type: 'blob' })
     saveAs(content, zipFilename)
-  } catch {}
+  } catch {
+    // ignore: export is best-effort
+  }
 }
 
 export const buildPrototypeImportPayload = (

@@ -21,5 +21,7 @@ export function recordModelView(modelId: string): void {
     const map = getLastViewedMap()
     map[modelId] = Date.now()
     localStorage.setItem(LS_LAST_VIEWED_KEY, JSON.stringify(map))
-  } catch {}
+  } catch {
+    // ignore: localStorage may be unavailable
+  }
 }

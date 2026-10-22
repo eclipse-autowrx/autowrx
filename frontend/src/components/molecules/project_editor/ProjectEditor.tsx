@@ -2280,12 +2280,12 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             <p className="text-gray-600 mb-4">
               Do you want to save the changes you made to{' '}
               <span className="font-semibold">
-                "{closeConfirmDialog.file.name}"
+                &quot;{closeConfirmDialog.file.name}&quot;
               </span>
               ?
             </p>
             <p className="text-gray-500 text-sm mb-4">
-              Your changes will be lost if you don't save them.
+              Your changes will be lost if you don&apos;t save them.
             </p>
             <div className="flex justify-end space-x-3">
               <button
@@ -2298,7 +2298,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 onClick={handleCloseConfirmDontSave}
                 className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
               >
-                Don't Save
+                Don&apos;t Save
               </button>
               <button
                 onClick={handleCloseConfirmCancel}
@@ -2319,7 +2319,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             <p className="text-gray-600 mb-4">
               Are you sure you want to delete{' '}
               <span className="font-semibold">
-                "{deleteConfirmDialog.itemName}"
+                &quot;{deleteConfirmDialog.itemName}&quot;
               </span>
               ?
             </p>

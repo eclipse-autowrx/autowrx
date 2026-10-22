@@ -176,7 +176,7 @@ const FormCreateWishlistApi = ({
         name: `Create wishlist Signal ${customApi.name}`,
         description: `User ${currentUser?.email} created wishlist Signal ${customApi.name} in model ${modelId}`,
         type: 'create-wishlist',
-        create_by: currentUser?.id!,
+        create_by: currentUser?.id as string,
         ref_id: modelId,
         ref_type: 'model',
       })

@@ -20,9 +20,7 @@ import clsx from 'clsx'
 import Diff from 'diff-match-patch'
 import _ from 'lodash'
 
-interface DaVssCompareProps {}
-
-const VssComparator = ({}: DaVssCompareProps) => {
+const VssComparator = () => {
   const CURRENT_MODEL = 'CURRENT_MODEL'
 
   const [collapsed, setCollapsed] = useState({

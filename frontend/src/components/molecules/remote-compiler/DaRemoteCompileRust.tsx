@@ -119,4 +119,6 @@ const DaRemoteCompileRust = forwardRef<any, RemoteCompileRustProps>(
   },
 )
 
+DaRemoteCompileRust.displayName = 'DaRemoteCompileRust'
+
 export default DaRemoteCompileRust

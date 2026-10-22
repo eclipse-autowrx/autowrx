@@ -50,7 +50,7 @@ const DaStep = ({
 
   const handleClick = () => {
     if (disabled) return null
-    index !== undefined && setCurrentStep && setCurrentStep(index)
+    if (index !== undefined && setCurrentStep) setCurrentStep(index)
   }
 
   return (

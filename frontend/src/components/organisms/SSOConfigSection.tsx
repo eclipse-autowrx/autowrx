@@ -133,7 +133,7 @@ const SSOConfigSection: React.FC = () => {
       })
 
       setTimeout(() => {
-        window.location.href = window.location.href
+        window.location.assign(window.location.href)
       }, 800)
     } catch {
       toast({
@@ -159,7 +159,7 @@ const SSOConfigSection: React.FC = () => {
       })
 
       setTimeout(() => {
-        window.location.href = window.location.href
+        window.location.assign(window.location.href)
       }, 800)
     } catch {
       toast({
@@ -226,7 +226,7 @@ const SSOConfigSection: React.FC = () => {
       setIsFormOpen(false)
 
       setTimeout(() => {
-        window.location.href = window.location.href
+        window.location.assign(window.location.href)
       }, 800)
     } catch {
       toast({

@@ -73,7 +73,7 @@ const SimpleSwitch = ({
   </button>
 )
 
-const NavigationBar = ({}) => {
+const NavigationBar = () => {
   const { data: user, isLoading, isFetching } = useSelfProfileQuery()
   const authBootstrapped = useAuthStore((state) => state.authBootstrapped)
   const isResolvingAuth =

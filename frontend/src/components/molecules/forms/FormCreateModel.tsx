@@ -161,7 +161,7 @@ const FormCreateModel = () => {
         description: (
           <p className="flex items-center text-base font-medium">
             <TbCircleCheckFilled className="mr-2 h-5 w-5 text-green-500" />
-            Model "{createdName}" created successfully
+            Model &quot;{createdName}&quot; created successfully
           </p>
         ),
         duration: 3000,

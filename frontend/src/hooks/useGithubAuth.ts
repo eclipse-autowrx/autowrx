@@ -87,7 +87,7 @@ const useGithubAuth = () => {
   }
 
   const onTriggerAuth = async () => {
-    const user = await retrieveUser(access?.token!)
+    const user = await retrieveUser(access?.token as string)
     if (isExpired() || !user) {
       window.open(
         `https://github.com/login/oauth/authorize/?client_id=${config.github.clientId}&redirect_uri=${redirectUri}&scope=user:email%20public_repo%20repo`,

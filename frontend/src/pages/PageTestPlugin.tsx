@@ -65,7 +65,9 @@ export default function PageTestPlugin() {
               log(`ready: ${label} in ${Date.now() - start}ms`)
               return resolve()
             }
-          } catch {}
+          } catch {
+            // ignore: not ready yet, keep polling
+          }
           if (Date.now() - start > maxMs) {
             log(`timeout: ${label}`)
             return reject(new Error(`timeout: ${label}`))
@@ -111,7 +113,6 @@ export default function PageTestPlugin() {
         pluginReadyRef.current = Promise.resolve()
         await waitFor(() => !!containerRef.current, 'containerRef')
         if (cancelled) return
-        // @ts-ignore
         log('plugin ready for lazy consumption')
         setLoaded(true)
       } catch (e: any) {
@@ -129,9 +130,11 @@ export default function PageTestPlugin() {
     return () => {
       cancelled = true
       try {
-        // @ts-ignore
+        // @ts-expect-error - DAPlugins is injected on window by the plugin script
         window?.DAPlugins?.sample?.unmount?.(containerRef.current)
-      } catch {}
+      } catch {
+        // ignore: plugin may already be unmounted
+      }
     }
   }, [PLUGIN_URL])
 
@@ -148,9 +151,10 @@ export default function PageTestPlugin() {
           if (pluginReadyRef.current) {
             try {
               await pluginReadyRef.current
-            } catch {}
+            } catch {
+              // ignore: readiness failure is handled below
+            }
           }
-          // @ts-ignore
           const comp = (window as any).DAPlugins?.['sample-tsx']?.components
             ?.Page
           if (!comp) throw new Error('Remote Page component missing')

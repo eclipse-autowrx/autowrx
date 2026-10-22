@@ -6,9 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-type HomeFooterSectionProps = {}
-
-const HomeFooterSection = ({}: HomeFooterSectionProps) => {
+const HomeFooterSection = () => {
   return (
     <div className="pb-10 pt-6 bg-gray-100 ">
       <div className="min-h-[180px] flex flex-1 min-w-0 flex-col font-medium items-center text-center justify-center">

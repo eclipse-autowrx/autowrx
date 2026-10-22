@@ -31,7 +31,7 @@ const DaErrorDisplay = ({ error, className }: DaErrorDisplay) => {
         <Button
           size="sm"
           className="mt-3"
-          onClick={() => (window.location.href = window.location.href)}
+          onClick={() => window.location.assign(window.location.href)}
         >
           Reload page
         </Button>

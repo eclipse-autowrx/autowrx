@@ -101,7 +101,7 @@ const SSOHandler = ({ provider, setSSOLoading, children }: SSOHandlerProps) => {
           description: `Welcome back, ${response.data.user?.name || 'User'}!`,
         })
         setTimeout(() => {
-          window.location.href = window.location.href
+          window.location.assign(window.location.href)
         }, 500)
       }
     } catch (error: any) {

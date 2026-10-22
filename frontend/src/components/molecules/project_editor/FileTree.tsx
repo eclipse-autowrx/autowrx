@@ -1945,7 +1945,7 @@ const FileTree: React.FC<FileTreeProps> = ({
               <p className="text-gray-600 mb-4">
                 An item named{' '}
                 <span className="font-semibold">
-                  "{conflictDialog.existingName}"
+                  &quot;{conflictDialog.existingName}&quot;
                 </span>{' '}
                 already exists in this location. What would you like to do?
               </p>

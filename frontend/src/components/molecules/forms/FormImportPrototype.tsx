@@ -156,7 +156,7 @@ const FormImportPrototype = () => {
         name: `New prototype '${prototypeName}' under model '${model.name}'`,
         description: `Prototype '${prototypeName}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
         type: 'new-prototype',
-        create_by: currentUser?.id!,
+        create_by: currentUser?.id as string,
         ref_id: response.id,
         ref_type: 'prototype',
         parent_id: model.id,
@@ -167,7 +167,7 @@ const FormImportPrototype = () => {
         description: (
           <p className="flex items-center text-sm">
             <TbCircleCheckFilled className="mr-2 h-4 w-4 text-green-500" />
-            Prototype "{prototypeName}" imported successfully
+            Prototype &quot;{prototypeName}&quot; imported successfully
           </p>
         ),
         duration: 3000,
