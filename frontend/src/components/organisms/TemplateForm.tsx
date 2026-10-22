@@ -41,7 +41,6 @@ import {
   TbSearch,
   TbTrash,
   TbPencil,
-  TbChevronUp,
   TbCode,
   TbRoute,
   TbMapPin,
@@ -157,8 +156,7 @@ export default function TemplateForm({
     'model' | 'prototype'
   >('model')
   const [prototypeTabs, setPrototypeTabs] = useState<TabConfig[]>([])
-  const [prototypeStagingConfig, setPrototypeStagingConfig] =
-    useState<StagingConfig>({})
+  const [, setPrototypeStagingConfig] = useState<StagingConfig>({})
   const [prototypeTabsVariant, setPrototypeTabsVariant] =
     useState<string>('tab')
   const [prototypeTabsBorderRadius, setPrototypeTabsBorderRadius] =
@@ -729,7 +727,7 @@ export default function TemplateForm({
                       {prototypeTabs.length > 0 ? (
                         <DragDropContext onDragEnd={handleDragEnd}>
                           <Droppable droppableId="prototype-tabs">
-                            {(provided, snapshot) => (
+                            {(provided, _snapshot) => (
                               <div
                                 {...provided.droppableProps}
                                 ref={provided.innerRef}

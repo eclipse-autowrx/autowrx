@@ -27,7 +27,6 @@ interface PrototypeOverviewProps {
 const PrototypeOverview: React.FC<PrototypeOverviewProps> = ({
   mode: externalMode,
   prototype,
-  onModeChange,
 }) => {
   const [internalMode, setInternalMode] = useState<Mode>(
     externalMode ?? 'overview',

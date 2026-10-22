@@ -86,7 +86,6 @@ const PageModelList = () => {
     isLoading,
     error,
     refetch,
-    isFetchingNextPage,
   } = useListAllModels()
 
   const filterModels = useCallback(
@@ -251,7 +250,7 @@ const PageModelList = () => {
             user?.email || user?.name || user?.id
           }`,
           type: 'new-model',
-          create_by: user?.id!,
+          create_by: user?.id as string,
           ref_id: createdModelId,
           ref_type: 'model',
         })

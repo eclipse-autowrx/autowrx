@@ -17,7 +17,7 @@ import {
   TooltipTrigger,
 } from '@/components/atoms/tooltip'
 import { useState } from 'react'
-import { TbPlaylistAdd, TbPlus } from 'react-icons/tb'
+import { TbPlus } from 'react-icons/tb'
 import { Dialog, DialogContent } from '@/components/atoms/dialog'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
@@ -141,7 +141,7 @@ const DaApiListItem = ({
                 onClose={() => {
                   setIsOpenWishlistPopup(false)
                 }}
-                onApiCreate={(api: VehicleApi) => {
+                onApiCreate={(_api: VehicleApi) => {
                   onClick()
                 }}
                 // Set the prefix to the current branch API's name

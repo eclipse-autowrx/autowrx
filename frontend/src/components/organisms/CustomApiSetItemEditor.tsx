@@ -25,16 +25,11 @@ import {
   updateSetItem,
   removeSetItem,
   updateCustomApiSet,
-  type CustomApiSet,
   type CustomApiSetItem,
 } from '@/services/customApiSet.service'
-import {
-  getCustomApiSchemaById,
-  type CustomApiSchema,
-} from '@/services/customApiSchema.service'
+import { getCustomApiSchemaById } from '@/services/customApiSchema.service'
 import { Spinner } from '@/components/atoms/spinner'
 import DaImportFile from '@/components/atoms/DaImportFile'
-import DynamicSchemaForm from '@/components/molecules/DynamicSchemaForm'
 import {
   generateItemId,
   extractIdFormat,
@@ -156,29 +151,6 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
       setFormData({ ...selectedItem })
     }
     setIsEditMode(false)
-  }
-
-  const handleFormChange = (field: string, value: any) => {
-    const newFormData = { ...formData, [field]: value }
-
-    // Auto-generate ID if id_format is defined in schema and ID is empty or being edited
-    if (
-      customApiSchema?.schema &&
-      (!formData.id || field !== 'id' || isNewItem)
-    ) {
-      const idFormat = extractIdFormat(customApiSchema.schema)
-      if (idFormat) {
-        const generatedId = generateIdFromTemplate(idFormat, newFormData)
-        if (generatedId) {
-          // Only auto-update ID if it's a new item or ID is currently empty
-          if (isNewItem || !formData.id) {
-            newFormData.id = generatedId
-          }
-        }
-      }
-    }
-
-    setFormData(newFormData)
   }
 
   const validateItem = (): boolean => {
@@ -637,7 +609,7 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
                       try {
                         const formatted = JSON.stringify(jsonItems, null, 2)
                         setJsonItems(JSON.parse(formatted))
-                      } catch (error) {
+                      } catch {
                         // Ignore formatting errors
                       }
                     }}
@@ -655,7 +627,7 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
                       if (Array.isArray(parsed)) {
                         handleJsonChange(parsed)
                       }
-                    } catch (error) {
+                    } catch {
                       // Allow invalid JSON during editing
                     }
                   }}
@@ -672,7 +644,7 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
                           variant: 'destructive',
                         })
                       }
-                    } catch (error) {
+                    } catch {
                       toast({
                         title: 'Invalid JSON',
                         description: 'Please check your JSON syntax',

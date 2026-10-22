@@ -72,7 +72,6 @@ interface FormNewPrototypeProps {
 type ModelSelection = { type: 'existing'; modelId: string } | { type: 'new' }
 
 const FormNewPrototype = ({
-  onClose,
   code,
   widget_config,
   buttonText,

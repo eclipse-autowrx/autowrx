@@ -11,7 +11,6 @@ import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import { Spinner } from '@/components/atoms/spinner'
 import { loginService } from '@/services/auth.service'
-import { addLog } from '@/services/log.service'
 import { isAxiosError } from 'axios'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -137,7 +136,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
           {authConfigs.SELF_REGISTRATION && (
             <div className="mt-4 flex w-full justify-center items-center">
               <p className="text-sm text-muted-foreground">
-                Don't have an account?
+                Don&apos;t have an account?
               </p>
               <Button
                 type="button"

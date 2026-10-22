@@ -429,7 +429,7 @@ const CustomApiSchemaForm: React.FC<CustomApiSchemaFormProps> = ({
         const parsed = JSON.parse(formData.schema)
         setSchemaObject(parsed)
         setSchemaError(null)
-      } catch (error) {
+      } catch {
         setSchemaError('Invalid JSON format')
         setSchemaObject({})
       }
@@ -446,7 +446,7 @@ const CustomApiSchemaForm: React.FC<CustomApiSchemaFormProps> = ({
       JSON.parse(schemaString)
       handleChange('schema', schemaString)
       setSchemaError(null)
-    } catch (error) {
+    } catch {
       setSchemaError('Invalid JSON format')
     }
   }
@@ -477,7 +477,7 @@ const CustomApiSchemaForm: React.FC<CustomApiSchemaFormProps> = ({
       // Validate schema is valid JSON
       try {
         JSON.parse(formData.schema)
-      } catch (error) {
+      } catch {
         newErrors.schema = 'Schema must be valid JSON'
       }
     }
@@ -633,7 +633,7 @@ const CustomApiSchemaForm: React.FC<CustomApiSchemaFormProps> = ({
                         const parsed = JSON.parse(code)
                         setSchemaObject(parsed)
                         setSchemaError(null)
-                      } catch (error) {
+                      } catch {
                         // Allow invalid JSON during editing, but mark error
                         setSchemaError('Invalid JSON format')
                       }
@@ -646,7 +646,7 @@ const CustomApiSchemaForm: React.FC<CustomApiSchemaFormProps> = ({
                         const parsed = JSON.parse(formData.schema || '{}')
                         setSchemaObject(parsed)
                         setSchemaError(null)
-                      } catch (error) {
+                      } catch {
                         setSchemaError('Invalid JSON format')
                       }
                     }}

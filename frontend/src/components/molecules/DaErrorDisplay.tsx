@@ -7,9 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { Button } from '@/components/atoms/button'
-import { getWithExpiry, setWithExpiry } from '@/lib/storage'
 import { cn } from '@/lib/utils'
-import { useEffect } from 'react'
 import { TbExclamationCircle } from 'react-icons/tb'
 
 type DaErrorDisplay = {
@@ -33,7 +31,7 @@ const DaErrorDisplay = ({ error, className }: DaErrorDisplay) => {
         <Button
           size="sm"
           className="mt-3"
-          onClick={() => (window.location.href = window.location.href)}
+          onClick={() => window.location.assign(window.location.href)}
         >
           Reload page
         </Button>

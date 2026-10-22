@@ -121,7 +121,7 @@ const UsersManagement = () => {
         </div>
         {search && (
           <p className="mt-4 text-sm text-muted-foreground">
-            Showing results for "{search}"
+            Showing results for &quot;{search}&quot;
           </p>
         )}
       </div>

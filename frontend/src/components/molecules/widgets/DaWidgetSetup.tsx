@@ -22,7 +22,7 @@ const DaWidgetSetup = ({
   setWidgetUrl,
 }: DaWidgetConfigProps) => {
   // Placeholder for DaGenAI_Widget
-  const DaGenAI_Widget = ({ outerSetiWidgetUrl }: any) => {
+  const DaGenAI_Widget = (_props: any) => {
     return (
       <div className="flex flex-col w-full h-full p-4">
         <p className="text-muted-foreground">Widget ProtoPilot coming soon</p>

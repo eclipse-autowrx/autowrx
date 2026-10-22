@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { DaTableProperty } from '../molecules/DaTableProperty'
 import { DaCopy } from '../atoms/DaCopy'
 import { cn, getApiTypeClasses } from '@/lib/utils'
@@ -30,7 +30,6 @@ import {
 import DaConsumedPrototypes from '../molecules/DaConsumedPrototypes'
 import { deleteExtendedApi } from '@/services/extendedApis.service'
 import useModelStore from '@/stores/modelStore'
-import { customAPIs } from '@/data/customAPI'
 import DaVehicleAPIEditor from '../molecules/DaVehicleAPIEditor'
 import { CustomPropertyType } from '@/types/property.type'
 

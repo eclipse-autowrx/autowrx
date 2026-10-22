@@ -69,7 +69,7 @@ const flushStatsQueue = async () => {
       modelStatsPromises.delete(id)
       modelStatsResolvers.delete(id)
     })
-  } catch (e) {
+  } catch {
     // On error, resolve promises as `undefined` so UI won't be stuck.
     ids.forEach((id) => {
       const resolve = modelStatsResolvers.get(id)

@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/atoms/button'
 import DaDialog from '@/components/molecules/DaDialog'
 import FormSignIn from './forms/FormSignIn.tsx'

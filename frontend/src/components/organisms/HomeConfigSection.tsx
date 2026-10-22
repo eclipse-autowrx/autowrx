@@ -285,7 +285,7 @@ const HomeConfigSection: React.FC = () => {
       let configValue: any
       try {
         configValue = JSON.parse(configStr || '[]')
-      } catch (parseErr) {
+      } catch {
         toast({
           title: 'Invalid JSON',
           description: 'Please ensure the configuration is valid JSON',
@@ -346,7 +346,7 @@ const HomeConfigSection: React.FC = () => {
 
       // Reload page to show changes immediately
       setTimeout(() => {
-        window.location.href = window.location.href
+        window.location.assign(window.location.href)
       }, 800)
     } catch (err: any) {
       console.error('Save home config error:', err)

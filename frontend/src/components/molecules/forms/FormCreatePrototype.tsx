@@ -21,7 +21,7 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import { isAxiosError } from 'axios'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import useListModelContribution from '@/hooks/useListModelContribution'
 import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/atoms/select'
-import { Model, ModelLite, ModelCreate } from '@/types/model.type'
+import { ModelLite, ModelCreate } from '@/types/model.type'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Spinner } from '@/components/atoms/spinner'
 import { CVI } from '@/data/CVI'
@@ -75,9 +75,7 @@ const FormCreatePrototype = ({
   onPrototypeChange,
   disabledState,
   hideCreateButton,
-  code,
   widget_config,
-  title,
   buttonText,
 }: FormCreatePrototypeProps) => {
   const [loading, setLoading] = useState(false)
@@ -192,7 +190,6 @@ const FormCreatePrototype = ({
 
       // Initialize variables to hold the model ID and response from prototype creation
       let modelId: string
-      let response
 
       if (localModel) {
         // Scenario 1: `localModel` exists, use its ID
@@ -254,14 +251,14 @@ const FormCreatePrototype = ({
 
       // Create the prototype using the model ID
 
-      response = await createPrototypeService(body)
+      const response = await createPrototypeService(body)
 
       // Log the prototype creation
       await addLog({
         name: `New prototype '${data.prototypeName}' under model '${localModel?.name || data.modelName}'`,
         description: `Prototype '${data.prototypeName}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
         type: 'new-prototype',
-        create_by: currentUser?.id!,
+        create_by: currentUser?.id as string,
         ref_id: response.id,
         ref_type: 'prototype',
         parent_id: modelId,
@@ -272,7 +269,7 @@ const FormCreatePrototype = ({
         description: (
           <p className="flex items-center text-sm">
             <TbCircleCheckFilled className="mr-2 h-4 w-4 text-green-500" />
-            Prototype "{data.prototypeName}" created successfully
+            Prototype &quot;{data.prototypeName}&quot; created successfully
           </p>
         ),
         duration: 3000,
@@ -372,7 +369,7 @@ const FormCreatePrototype = ({
                 const selectedModel = contributionModels.results.find(
                   (model: ModelLite) => model.id === e,
                 )
-                selectedModel && setLocalModel(selectedModel)
+                if (selectedModel) setLocalModel(selectedModel)
               }}
             >
               <SelectTrigger>

@@ -21,7 +21,7 @@ interface iPropShareAssetPanel {
   onDone: () => void
 }
 
-const ShareAssetPanel = ({ asset, onDone, onCancel }: iPropShareAssetPanel) => {
+const ShareAssetPanel = ({ asset }: iPropShareAssetPanel) => {
   const [showInviteDialog, setShowInviteDialog] = useState(false)
   const { shareMyAsset, getAssetById, removeUserFromShareList } = useAssets()
 
@@ -116,7 +116,7 @@ const ShareAssetPanel = ({ asset, onDone, onCancel }: iPropShareAssetPanel) => {
                 console.log(`Error on shareMyAsset`, err)
               }
             }}
-            onInviteSuccess={(role) => {
+            onInviteSuccess={(_role) => {
               // console.log("onInviteSuccess ", role)
             }}
             onRemoveUserAccess={async (user: InvitedUser) => {

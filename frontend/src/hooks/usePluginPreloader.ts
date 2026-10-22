@@ -82,10 +82,10 @@ const usePluginPreloader = ({
             let pluginMeta: Plugin | null = null
             try {
               pluginMeta = await getPluginBySlug(pluginId)
-            } catch (e) {
+            } catch {
               try {
                 pluginMeta = await getPluginById(pluginId)
-              } catch (e2) {
+              } catch {
                 // Plugin not found, skip
                 if (process.env.NODE_ENV === 'development') {
                   console.warn(
@@ -173,7 +173,7 @@ const preloadScript = (url: string) => {
     fetch(url, {
       method: 'GET',
       cache: 'default',
-      // @ts-ignore - priority is not in all TypeScript definitions but is supported in some browsers
+      // priority is not in all TypeScript definitions but is supported in some browsers
       priority: 'low',
       credentials: 'same-origin', // Same-origin plugins need the session (auth gateways); cross-origin sends no cookies
     }).catch(() => {

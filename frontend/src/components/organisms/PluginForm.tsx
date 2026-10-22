@@ -170,7 +170,7 @@ const PluginForm = ({
       // Invalidate all plugin queries to refresh both sections
       qc.invalidateQueries({ queryKey: ['plugins'] })
       qc.invalidateQueries({ queryKey: ['plugin', pluginId] })
-      onSaved && onSaved(p)
+      onSaved?.(p)
       onClose()
     },
     onError: (e: any) =>
@@ -259,7 +259,6 @@ const PluginForm = ({
                 </div>
                 <div className="w-44 relative">
                   <div className="w-44 h-44 border border-border rounded-md overflow-hidden bg-white flex items-center justify-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={form.image || '/imgs/plugin.png'}
                       alt="plugin"
@@ -277,7 +276,7 @@ const PluginForm = ({
                         const { url } = await uploadFileService(file)
                         onChange('image', url)
                         toast.success('Image uploaded')
-                      } catch (err) {
+                      } catch {
                         toast.error('Upload image failed')
                       }
                     }}
@@ -322,10 +321,12 @@ const PluginForm = ({
                     onFileChange={async (file) => {
                       setZip(file)
                       try {
-                        const res = await doUpload.mutateAsync(file)
+                        await doUpload.mutateAsync(file)
                         // onSuccess already sets url; ensure internal flag
                         onChange('is_internal', true as any)
-                      } catch (err) {}
+                      } catch {
+                        // ignore: flag is best-effort; upload already succeeded
+                      }
                     }}
                   >
                     <Button disabled={!form.name || doUpload.isPending}>

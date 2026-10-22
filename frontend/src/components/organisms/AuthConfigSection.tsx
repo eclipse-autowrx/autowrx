@@ -13,7 +13,6 @@ import {
 } from '@/services/configManagement.service'
 import { Button } from '@/components/atoms/button'
 import { Checkbox } from '@/components/atoms/checkbox'
-import { Label } from '@/components/atoms/label'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
@@ -115,7 +114,7 @@ const AuthConfigSection: React.FC = () => {
 
         // Force hard reload to clear all caches including auth config cache
         setTimeout(() => {
-          window.location.href = window.location.href
+          window.location.assign(window.location.href)
         }, 800)
       }
     } catch (err) {

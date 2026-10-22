@@ -81,7 +81,7 @@ const SecretConfigSection: React.FC = () => {
 
         // Reload page to show changes immediately
         setTimeout(() => {
-          window.location.href = window.location.href
+          window.location.assign(window.location.href)
         }, 800)
       }
     } catch (err) {
@@ -121,7 +121,7 @@ const SecretConfigSection: React.FC = () => {
 
       // Reload page to show changes immediately
       setTimeout(() => {
-        window.location.href = window.location.href
+        window.location.assign(window.location.href)
       }, 800)
     } catch (err) {
       toast({

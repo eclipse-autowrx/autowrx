@@ -8,7 +8,6 @@
 
 import { User } from '@/types/user.type.ts'
 import { TbCube, TbLogout, TbUser } from 'react-icons/tb'
-import { BsBox } from 'react-icons/bs'
 import { Button } from '@/components/atoms/button'
 import useAuthStore from '@/stores/authStore'
 import {
@@ -29,7 +28,7 @@ const DaUserMenu = ({ user }: DaUserDropdownProps) => {
   const handleLogout = async () => {
     try {
       logOut()
-    } catch (error) {
+    } catch {
       console.error('Logout failed')
     }
   }

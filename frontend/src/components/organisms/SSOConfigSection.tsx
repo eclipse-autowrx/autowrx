@@ -133,9 +133,9 @@ const SSOConfigSection: React.FC = () => {
       })
 
       setTimeout(() => {
-        window.location.href = window.location.href
+        window.location.assign(window.location.href)
       }, 800)
-    } catch (error) {
+    } catch {
       toast({
         title: 'Delete failed',
         description: 'Failed to delete SSO provider',
@@ -159,9 +159,9 @@ const SSOConfigSection: React.FC = () => {
       })
 
       setTimeout(() => {
-        window.location.href = window.location.href
+        window.location.assign(window.location.href)
       }, 800)
-    } catch (error) {
+    } catch {
       toast({
         title: 'Update failed',
         description: 'Failed to update SSO provider',
@@ -226,9 +226,9 @@ const SSOConfigSection: React.FC = () => {
       setIsFormOpen(false)
 
       setTimeout(() => {
-        window.location.href = window.location.href
+        window.location.assign(window.location.href)
       }, 800)
-    } catch (error) {
+    } catch {
       toast({
         title: 'Save failed',
         description: 'Failed to save SSO provider',

@@ -91,7 +91,6 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
 
     useEffect(() => {
       if (!monaco) return
-      const rules = [{ token: 'vehicle', foreground: 'ff0000' }]
       monaco.editor.defineTheme('vs-dauto', {
         base: 'vs',
         inherit: true,

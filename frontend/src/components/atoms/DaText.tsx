@@ -39,5 +39,7 @@ const DaText = React.forwardRef<HTMLLabelElement, DaTextProps>(
   },
 )
 
+DaText.displayName = 'DaText'
+
 export { DaText }
 export default DaText

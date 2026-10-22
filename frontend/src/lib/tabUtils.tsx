@@ -8,10 +8,7 @@
 
 import { ReactNode } from 'react'
 import DOMPurify from 'dompurify'
-import {
-  TabConfig,
-  TabsBorderRadius,
-} from '@/components/organisms/CustomTabEditor'
+import { TabsBorderRadius } from '@/components/organisms/CustomTabEditor'
 import { cn } from '@/lib/utils'
 
 /** Get Tailwind border-radius class from TabsBorderRadius value */

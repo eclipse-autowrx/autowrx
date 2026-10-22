@@ -13,7 +13,7 @@ import {
 import { AxiosError } from 'axios'
 import { Button } from '@/components/atoms/button'
 import { useEffect, useState } from 'react'
-import { TbArrowLeft, TbEdit } from 'react-icons/tb'
+import { TbEdit } from 'react-icons/tb'
 import { Spinner } from '@/components/atoms/spinner'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { useNavigate } from 'react-router-dom'

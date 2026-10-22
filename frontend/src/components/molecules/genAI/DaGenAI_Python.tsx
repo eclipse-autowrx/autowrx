@@ -124,7 +124,7 @@ const DaGenAI_Python = ({
             variant="outline"
             className="h-8 w-full"
             onClick={() => {
-              onCodeChanged ? onCodeChanged(genCode) : null
+              onCodeChanged?.(genCode)
             }}
             disabled={!(genCode && genCode.length > 0) || !isFinished}
           >

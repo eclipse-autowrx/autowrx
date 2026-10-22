@@ -61,7 +61,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
       }
 
       onChange(parsed)
-    } catch (parseError) {
+    } catch {
       setError('Invalid JSON format')
       setIsValid(false)
     }
@@ -98,7 +98,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
 
       setError(null)
       setIsValid(true)
-    } catch (parseError) {
+    } catch {
       setError('Invalid JSON format')
       setIsValid(false)
     }

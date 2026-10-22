@@ -25,7 +25,7 @@ const ErrorFallback = ({ error }: FallbackProps) => {
     ) {
       if (!getWithExpiry('chunk_failed')) {
         setWithExpiry('chunk_failed', true, 3000)
-        window.location.href = window.location.href
+        window.location.assign(window.location.href)
       }
     }
   }, [errorMessage])
@@ -46,7 +46,7 @@ const ErrorFallback = ({ error }: FallbackProps) => {
         <Button
           size="sm"
           className="mt-3"
-          onClick={() => (window.location.href = window.location.href)}
+          onClick={() => window.location.assign(window.location.href)}
         >
           Reload page
         </Button>

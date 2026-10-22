@@ -7,7 +7,6 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useMemo } from 'react'
-import { Button } from '@/components/atoms/button'
 import DynamicSchemaForm from '@/components/molecules/DynamicSchemaForm'
 import { DaImage } from '@/components/atoms/DaImage'
 import { DaCopy } from '@/components/atoms/DaCopy'

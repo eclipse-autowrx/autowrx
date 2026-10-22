@@ -6,7 +6,6 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React from 'react'
 import { Components } from 'react-markdown'
 
 /**

@@ -114,7 +114,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         name: `User ${user?.name} gave feedback`,
         description: `User ${user?.name} with id ${user?.id} as interviewee ${data.interviewee} gave feedback to prototype ${prototype?.name} within model ${model?.name}`,
         type: 'create-feedback',
-        create_by: user?.id!,
+        create_by: user?.id as string,
         ref_id: feedback.id,
         ref_type: 'feedback',
         parent_id: prototype.id,

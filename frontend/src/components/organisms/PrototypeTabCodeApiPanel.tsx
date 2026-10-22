@@ -77,11 +77,6 @@ interface APIDetailsProps {
 }
 
 const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
-  useEffect(() => {
-    if (activeApi) {
-    }
-  }, [activeApi])
-
   const { textClass } = getApiTypeClasses(activeApi?.type || '')
 
   return (

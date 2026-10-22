@@ -60,7 +60,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
         name: `User ${currentUser?.email} updated prototype ${localPrototype.name}`,
         description: `User ${currentUser?.email} updated Prototype ${localPrototype.name} with id ${localPrototype?.id} of model ${localPrototype.model_id}`,
         type: 'update-prototype',
-        create_by: currentUser?.id!,
+        create_by: currentUser?.id as string,
         parent_id: localPrototype.model_id,
         ref_id: localPrototype.id,
         ref_type: 'prototype',

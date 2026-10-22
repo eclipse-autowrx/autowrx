@@ -10,7 +10,6 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
-import { Textarea } from '@/components/atoms/textarea'
 import { cn } from '@/lib/utils'
 import JsonEditor from '@/components/atoms/JsonEditor'
 import {
@@ -20,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/atoms/select'
-import { TbPlus, TbTrash, TbPencil, TbDownload, TbUpload } from 'react-icons/tb'
+import { TbPlus, TbTrash, TbDownload, TbUpload } from 'react-icons/tb'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 
 // Legacy type - kept for backward compatibility with AttributeDefinition component
@@ -265,7 +264,8 @@ const AttributeDefinition: React.FC<AttributeDefinitionProps> = ({
         <div className="space-y-2 overflow-y-auto flex-1 min-h-0 mt-2">
           {attributes.length === 0 ? (
             <div className="text-center py-6 text-sm text-muted-foreground">
-              No attributes defined. Click "Add Attribute" to create one.
+              No attributes defined. Click &quot;Add Attribute&quot; to create
+              one.
             </div>
           ) : (
             <div className="space-y-2">

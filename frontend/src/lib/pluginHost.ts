@@ -20,10 +20,6 @@ export const REGISTER_TIMEOUT_MS = 15000
 export const POLL_INTERVAL_MS = 100
 export const YIELD_AFTER_LOAD_MS = 200
 
-/** Module-level: survives unmount so we know when user comes back to same plugin (refs would be reset). */
-let lastInjectedPluginUrl: string | null = null
-/** Track which plugin_id owns the current registration - prevents reusing wrong plugin when switching tabs. */
-let lastInjectedPluginId: string | null = null
 /** Store plugin registrations per plugin_id since all plugins register under the same 'page-plugin' key */
 const pluginRegistrations = new Map<string, any>()
 /** Map plugin URLs to plugin_ids so we can match registrations even when multiple plugins load simultaneously */
@@ -244,7 +240,7 @@ export async function loadPluginRegistration(
           resolve()
         }
         script.onload = onLoaded
-        script.onerror = (e) => {
+        script.onerror = (_e) => {
           scriptLoadError = new Error(
             `Failed to load plugin script: ${scriptUrl}`,
           )
@@ -265,9 +261,6 @@ export async function loadPluginRegistration(
     if (scriptLoadError) {
       throw scriptLoadError
     }
-
-    lastInjectedPluginUrl = PLUGIN_URL
-    lastInjectedPluginId = pluginId
 
     // Yield so the script has a chance to run (especially important for module scripts).
     // For modules, onload fires when module is loaded, but evaluation happens asynchronously.
@@ -392,7 +385,7 @@ export async function loadPluginRegistration(
   let registration: any = null
   try {
     registration = await injectAndWait(true)
-  } catch (e1) {
+  } catch {
     if (isCancelled?.()) {
       return { registration: null, script: injectedScript }
     }

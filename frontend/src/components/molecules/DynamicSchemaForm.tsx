@@ -386,7 +386,7 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
             ))}
             {arrayValue.length === 0 && (
               <div className="text-sm text-muted-foreground italic text-center py-2">
-                No items. Click "Add Item" to add one.
+                No items. Click &quot;Add Item&quot; to add one.
               </div>
             )}
           </div>

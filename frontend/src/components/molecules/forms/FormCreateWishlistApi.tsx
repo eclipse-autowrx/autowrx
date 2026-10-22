@@ -18,7 +18,6 @@ import {
 import { Spinner } from '@/components/atoms/spinner'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { isAxiosError } from 'axios'
-import { updateModelService } from '@/services/model.service'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { CustomApi } from '@/types/model.type'
 import { addLog } from '@/services/log.service'
@@ -101,7 +100,7 @@ const FormCreateWishlistApi = ({
   const [error, setError] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
 
-  const { refetch, data: currentModel } = useCurrentModel()
+  const { data: currentModel } = useCurrentModel()
   const { data: currentUser } = useSelfProfileQuery()
   const refreshModel = useModelStore((state) => state.refreshModel)
   const [activeModelApis] = useModelStore(
@@ -177,7 +176,7 @@ const FormCreateWishlistApi = ({
         name: `Create wishlist Signal ${customApi.name}`,
         description: `User ${currentUser?.email} created wishlist Signal ${customApi.name} in model ${modelId}`,
         type: 'create-wishlist',
-        create_by: currentUser?.id!,
+        create_by: currentUser?.id as string,
         ref_id: modelId,
         ref_type: 'model',
       })

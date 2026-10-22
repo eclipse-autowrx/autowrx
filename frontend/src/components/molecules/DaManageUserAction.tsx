@@ -33,7 +33,7 @@ const DaManageUserAction = ({
   const deleteUser = async () => {
     try {
       await deleteUserService(user.id)
-      onUpdateList && (await onUpdateList())
+      if (onUpdateList) await onUpdateList()
       setOpenDelete(false)
       toast({
         title: 'Success',

@@ -11,8 +11,8 @@ import { immer } from 'zustand/middleware/immer'
 import { createWithEqualityFn } from 'zustand/traditional'
 
 type RuntimeState = {
-  apisValue?: {}
-  traceVars?: {}
+  apisValue?: object
+  traceVars?: object
   appLog?: string
   activeRuntimeName?: string
   isAppRunning: boolean

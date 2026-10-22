@@ -349,7 +349,7 @@ const DaVehicleAPIEditor = ({
             ))
           ) : (
             <div className="flex h-10 w-full mt-1 px-4 py-2 items-center bg-white border rounded-md text-sm font-medium text-muted-foreground">
-              There's no custom properties yet.
+              There&apos;s no custom properties yet.
             </div>
           )}
         </div>

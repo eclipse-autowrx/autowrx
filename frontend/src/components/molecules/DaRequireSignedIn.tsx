@@ -21,8 +21,7 @@ interface DaRequireSignedInProps {
 const DaRequireSignedIn = ({ children, message }: DaRequireSignedInProps) => {
   const { data: user, isLoading, isFetching } = useSelfProfileQuery()
   const { authConfigs } = useAuthConfigs()
-  const { openLoginDialog, setOpenLoginDialog, authBootstrapped } =
-    useAuthStore()
+  const { setOpenLoginDialog, authBootstrapped } = useAuthStore()
   const [openRemindDialog, setOpenRemindDialog] = useState(false)
   const isResolvingAuth =
     !authBootstrapped || (!user && (isLoading || isFetching))

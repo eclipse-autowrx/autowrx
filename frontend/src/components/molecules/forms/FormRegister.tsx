@@ -14,7 +14,6 @@ import { registerService } from '@/services/auth.service'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { usePolicy } from '@/hooks/useInstanceCfg'
-import { addLog } from '@/services/log.service'
 import { useQueryClient } from '@tanstack/react-query'
 import useAuthStore from '@/stores/authStore'
 

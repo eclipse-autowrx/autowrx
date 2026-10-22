@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useMemo, useState } from 'react'
+import React, { useState } from 'react'
 import {
   Config,
   configManagementService,
@@ -48,7 +48,6 @@ interface ConfigListProps {
 
 const ConfigList: React.FC<ConfigListProps> = ({
   configs,
-  onEdit,
   onDelete,
   isLoading = false,
   onUpdated,
@@ -179,13 +178,6 @@ const ConfigList: React.FC<ConfigListProps> = ({
     } finally {
       setSavingKey(null)
     }
-  }
-
-  const getValueTypeVariant = (valueType: string): 'default' | 'secondary' => {
-    // Use secondary for special types, default for common ones
-    return ['object', 'array', 'color', 'image_url'].includes(valueType)
-      ? 'secondary'
-      : 'default'
   }
 
   // Delete is hidden by default; only shown when showDelete=true

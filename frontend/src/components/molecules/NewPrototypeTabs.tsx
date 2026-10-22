@@ -14,10 +14,7 @@ import {
   TbMessagePlus,
   TbRoute,
 } from 'react-icons/tb'
-import {
-  TabConfig,
-  TabsBorderRadius,
-} from '@/components/organisms/CustomTabEditor'
+import { TabsBorderRadius } from '@/components/organisms/CustomTabEditor'
 import { getTabConfig } from '@/components/molecules/PrototypeTabs'
 import { renderTabIcon, tabItemClasses } from '@/lib/tabUtils'
 

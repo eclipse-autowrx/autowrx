@@ -61,7 +61,7 @@ const PrototypeTabFeedback = () => {
       name: `User ${profile?.name} deleted feedback`,
       description: `User ${profile?.name} with id ${profile?.id} deleted feedback with id ${id} from prototype ${prototype?.name}`,
       type: 'delete-feedback',
-      create_by: profile?.id!,
+      create_by: profile?.id as string,
       ref_id: id,
       ref_type: 'feedback',
       parent_id: prototype?.id,

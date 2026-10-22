@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { AnyNode, Branch, LeafTypes } from '@/types/api.type'
+import { Branch, LeafTypes } from '@/types/api.type'
 import Tree from 'react-d3-tree'
 import { PathFunction } from 'react-d3-tree'
 import { useNavigate } from 'react-router-dom'
@@ -15,7 +15,6 @@ import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { CustomNodeElementProps } from 'react-d3-tree'
 import { NavigateFunction } from 'react-router-dom'
 import useCurrentModel from '@/hooks/useCurrentModel'
-import useCurrentModelApi from '@/hooks/useCurrentModelApi'
 
 export interface TreeNode {
   name: string
@@ -31,7 +30,7 @@ const buildTreeNode = (name: string, path: string, node: Branch): TreeNode => {
     path,
     children: node.children
       ? Object.entries(node.children)
-          .filter(([sub_node_name, node]) =>
+          .filter(([_sub_node_name, node]) =>
             ['branch', 'sensor', 'actuator'].includes(node.type),
           )
           .map(([sub_node_name, node]) =>
@@ -46,7 +45,7 @@ const buildTreeNode = (name: string, path: string, node: Branch): TreeNode => {
 }
 
 const RenderRectSvgNode = (
-  { hierarchyPointNode, nodeDatum, toggleNode }: CustomNodeElementProps,
+  { nodeDatum, toggleNode }: CustomNodeElementProps,
   navigate: NavigateFunction,
   prototype_id: string,
   model: Model,
@@ -71,12 +70,6 @@ const RenderRectSvgNode = (
     <g>
       <g
         onClick={() => {
-          const cviLink = `/api/${(node as TreeNode).path}.${node.name}`
-          const fullLink =
-            prototype_id === ''
-              ? `/model/${model.id}${cviLink}/`
-              : `/model/${model.id}/library/prototype/${prototype_id}/view${cviLink}/`
-
           // if (['sensor', 'actuator', 'attribute'].includes(node.type)) {
           //   navigate(fullLink)
           //   onNodeClick?.()
@@ -141,7 +134,7 @@ const RenderRectSvgNode = (
   )
 }
 
-const getDynamicPathClass: PathFunction = ({ source, target }, orientation) => {
+const getDynamicPathClass: PathFunction = ({ target }, _orientation) => {
   const targetData: any = target.data
 
   if (!target.data.__rd3t.collapsed) {

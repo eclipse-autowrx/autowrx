@@ -284,7 +284,7 @@ const PageModelDetail = () => {
         name: `User ${currentUser?.email} deleted model '${model.name}'`,
         description: `User ${currentUser?.email} deleted model '${model.name}' with id ${model.id}`,
         type: 'delete-model',
-        create_by: currentUser?.id!,
+        create_by: currentUser?.id as string,
         ref_id: model.id,
         ref_type: 'model',
       })

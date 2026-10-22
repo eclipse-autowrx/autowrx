@@ -363,9 +363,9 @@ const HomeModelList = ({ title }: HomeModelListProps) => {
                   </span>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-sm text-xs">
-                  Based on COVESA's Vehicle Signal Specification (VSS) syntax
-                  the vehicle interface can be quickly defined via the available
-                  VSS catalogue or by extending specific signals. This
+                  Based on COVESA&apos;s Vehicle Signal Specification (VSS)
+                  syntax the vehicle interface can be quickly defined via the
+                  available VSS catalogue or by extending specific signals. This
                   abstraction conveniently allows the reuse of vehicle
                   applications on different vehicle models and types.
                 </TooltipContent>

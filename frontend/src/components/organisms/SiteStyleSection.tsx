@@ -183,7 +183,7 @@ const SiteStyleSection: React.FC = () => {
 
       // Reload page to apply new CSS immediately
       setTimeout(() => {
-        window.location.href = window.location.href
+        window.location.assign(window.location.href)
       }, 800)
     } catch (err) {
       toast({
@@ -215,7 +215,7 @@ const SiteStyleSection: React.FC = () => {
 
       // Reload page to apply default CSS immediately
       setTimeout(() => {
-        window.location.href = window.location.href
+        window.location.assign(window.location.href)
       }, 800)
     } catch (err) {
       toast({
@@ -256,7 +256,7 @@ const SiteStyleSection: React.FC = () => {
           'Site style restored to selected snapshot. Reloading page...',
       })
       setTimeout(() => {
-        window.location.href = window.location.href
+        window.location.assign(window.location.href)
       }, 800)
     } catch (err) {
       toast({

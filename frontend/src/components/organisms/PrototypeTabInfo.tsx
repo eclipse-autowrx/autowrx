@@ -63,7 +63,6 @@ interface PrototypeTabInfoProps {
 }
 
 const complexityLevels = ['Lowest', 'Low', 'Medium', 'High', 'Highest']
-const statusOptions = ['development', 'Released']
 
 const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({ prototype }) => {
   const [isEditing, setIsEditing] = useState(false)

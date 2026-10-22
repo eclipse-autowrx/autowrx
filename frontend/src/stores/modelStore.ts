@@ -8,7 +8,7 @@
 
 import { mountStoreDevtool } from 'simple-zustand-devtools'
 import { createWithEqualityFn } from 'zustand/traditional'
-import { CustomApi, Model, Prototype, VehicleApi } from '@/types/model.type'
+import { CustomApi, Model, Prototype } from '@/types/model.type'
 import { parseCvi } from '@/lib/utils'
 import { getComputedAPIs } from '@/services/model.service'
 
@@ -60,7 +60,7 @@ const useModelStore = createWithEqualityFn<ModelState & Actions>()(
         // console.log("model", model)
         try {
           ret = await getComputedAPIs(model.id)
-        } catch (error) {
+        } catch {
           ret = { Vehicle: defaultNodeData }
         }
 

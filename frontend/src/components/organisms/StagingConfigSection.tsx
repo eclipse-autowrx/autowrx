@@ -44,7 +44,7 @@ const StagingConfigSection: React.FC = () => {
             : JSON.stringify(config.value || {}, null, 2)
         setStagingConfig(content)
         lastSavedStagingRef.current = content
-      } catch (err: any) {
+      } catch {
         // Config doesn't exist yet, use default structure as fallback
         const defaultStandardStage = {
           isTopMost: true,
@@ -89,7 +89,7 @@ const StagingConfigSection: React.FC = () => {
       let configValue: any
       try {
         configValue = JSON.parse(stagingConfig || '{}')
-      } catch (parseErr) {
+      } catch {
         toast({
           title: 'Invalid JSON',
           description: 'Please ensure the configuration is valid JSON',
@@ -108,7 +108,7 @@ const StagingConfigSection: React.FC = () => {
         await configManagementService.updateConfigByKey(STANDARD_STAGE_KEY, {
           value: configValue,
         })
-      } catch (err: any) {
+      } catch {
         // Config doesn't exist, create new one
         await configManagementService.createConfig({
           key: STANDARD_STAGE_KEY,

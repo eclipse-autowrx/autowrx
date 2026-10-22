@@ -161,8 +161,8 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
       <form onSubmit={handleSendCode} className="flex flex-col bg-background">
         <h2 className="text-lg font-semibold text-primary">Forgot Password</h2>
         <p className="text-base mt-4">
-          Enter the email associated with your account. We'll send you a 6-digit
-          code to reset your password.
+          Enter the email associated with your account. We&apos;ll send you a
+          6-digit code to reset your password.
         </p>
 
         <div className="mt-4 flex flex-col gap-1.5">
@@ -250,7 +250,7 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
               disabled={loading}
               className="text-xs text-muted-foreground hover:text-primary transition-colors"
             >
-              Didn't receive the code? Resend
+              Didn&apos;t receive the code? Resend
             </button>
           </div>
         </div>

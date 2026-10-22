@@ -99,7 +99,7 @@ const DeployPluginSection: React.FC = () => {
   const queryClient = useQueryClient()
 
   // Fetch deploy plugins - wait for user authentication
-  const { data: pluginsData, isLoading: pluginsLoading } = useQuery({
+  useQuery({
     queryKey: ['plugins', 'deploy'],
     queryFn: () => listPlugins({ limit: 100, page: 1, type: 'deploy' }),
     enabled: !selfLoading && !!self, // Wait for user auth before fetching
@@ -445,7 +445,7 @@ const DeployPluginSection: React.FC = () => {
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
             <Droppable droppableId="stages" direction="horizontal">
-              {(provided, snapshot) => (
+              {(provided, _snapshot) => (
                 <div
                   {...provided.droppableProps}
                   ref={provided.innerRef}
