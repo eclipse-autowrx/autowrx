@@ -37,6 +37,33 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
   const [pendingSkeletonUpdate, setPendingSkeletonUpdate] = useState<any>(null)
   const navigate = useNavigate()
 
+  // Fetch api skeleton when changing API
+  useEffect(() => {
+    if (!model) return
+    setActiveSkeleton(null)
+    setSkeleton({})
+    setIsEditMode(false)
+    fetchAPISkeleton(model.id, apiName, model.main_api)
+  }, [model, apiName])
+
+  // Set active skeleton when changing skeleton
+  useEffect(() => {
+    if (skeleton) {
+      setActiveSkeleton(skeleton)
+    }
+  }, [skeleton])
+
+  // Ensure 'Vehicle' API exists when the model becomes available
+  useEffect(() => {
+    if (model && model.model_home_image_file) {
+      ensureRootVehicleApiExist(
+        model.id,
+        model.model_home_image_file,
+        model.main_api,
+      )
+    }
+  }, [model])
+
   if (!model)
     return (
       <div className="flex items-center justify-center h-[200px]">
@@ -290,32 +317,6 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
     setPendingSkeletonUpdate(data)
     setIsEditMode(false)
   }
-
-  // Fetch api skeleton when changing API
-  useEffect(() => {
-    setActiveSkeleton(null)
-    setSkeleton({})
-    setIsEditMode(false)
-    fetchAPISkeleton(model.id, apiName, model.main_api)
-  }, [model, apiName])
-
-  // Set active skeleton when changing skeleton
-  useEffect(() => {
-    if (skeleton) {
-      setActiveSkeleton(skeleton)
-    }
-  }, [skeleton])
-
-  // Ensure 'Vehicle' API exists when the model becomes available
-  useEffect(() => {
-    if (model && model.model_home_image_file) {
-      ensureRootVehicleApiExist(
-        model.id,
-        model.model_home_image_file,
-        model.main_api,
-      )
-    }
-  }, [model])
 
   return (
     <div className={`flex flex-col w-full h-full items-center`}>
