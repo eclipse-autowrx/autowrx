@@ -12,6 +12,7 @@ module.exports = {
     NODE_ENV: 'test',
   },
   restoreMocks: true,
+  setupFilesAfterEnv: ['<rootDir>/tests/utils/closeRolesClient.setup.js'],
   // Some dependencies are ESM-only (@faker-js/faker, @paralleldrive/cuid2 via supertest > superagent > formidable)
   // and cannot be require()d by Jest's CommonJS runtime. Transform just those packages to CommonJS.
   transform: {
