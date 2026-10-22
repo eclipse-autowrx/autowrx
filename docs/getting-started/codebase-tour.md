@@ -16,7 +16,7 @@ autowrx/
 ├── instance-setup/      production docker-compose + guides
 ├── dev-stage/           shared dev preview (PM2, deployed via deploy-dev-stage.yml)
 ├── scripts/             repo helper scripts
-└── .github/workflows/   CI: docker build/release, dev-stage deploy
+└── .github/workflows/   CI: quality gates + security scans, docker build/release, dev-stage deploy
 ```
 
 The backend also **serves the built frontend** in production, so the two ship as

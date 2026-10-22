@@ -41,7 +41,7 @@ backend also serves the built frontend, so the two ship as one image.
     - dev-stage/                   # shared dev-stage deploy (PM2) + its compose files
     - scripts/                     # auto-update.sh, setup-auto-update.sh
     - docs/                        # this documentation
-    - .github/workflows/           # CI: build-docker.yml, deploy-dev-stage.yml
+    - .github/workflows/           # CI: ci.yml, security.yml, image-scan.yml, build-docker.yml, deploy-dev-stage.yml
     - build-frontend.sh  README.md  LICENSE
 ```
 

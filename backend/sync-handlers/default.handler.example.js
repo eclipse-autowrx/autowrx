@@ -34,8 +34,7 @@
 
 const apiService = require('../src/services/api.service');
 
-const EXTERNAL_SYNC_MODEL_URL =
-  process.env.EXTERNAL_SYNC_MODEL_URL || 'http://localhost:5050';
+const EXTERNAL_SYNC_MODEL_URL = process.env.EXTERNAL_SYNC_MODEL_URL || 'http://localhost:5050';
 
 function transformVSSToGenAIFormat(vssTree, profileName) {
   const rootKey = Object.keys(vssTree)[0] || 'Vehicle';
@@ -80,11 +79,7 @@ module.exports = {
       return;
     }
 
-    if (
-      resourceType === 'Model' ||
-      resourceType === 'ExtendedApi' ||
-      resourceType === 'Api'
-    ) {
+    if (resourceType === 'Model' || resourceType === 'ExtendedApi' || resourceType === 'Api') {
       await putProfileFromModel(http, String(modelId));
     }
   },

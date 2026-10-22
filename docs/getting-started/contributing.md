@@ -38,11 +38,11 @@ git checkout -b <short-descriptive-branch>
 
 ---
 
-## 3. Verify locally (CI won't do it for you)
+## 3. Verify locally (CI only partly covers it)
 
-> **Important:** the PR pipeline currently only runs the **ECA** check — there is
-> **no automated build/test/lint gate on PRs**. So you must verify locally
-> before opening the PR.
+> **Important:** PR CI only blocks on a few checks (see [CI gates](#ci-gates)).
+> Jest and lint are still advisory, so you must verify locally before opening
+> the PR.
 
 ```bash
 # frontend
@@ -54,6 +54,27 @@ cd backend && yarn test
 
 Run the app ([Local Development](./local-development.md)) and exercise the actual
 flow you changed — don't rely on types/tests alone.
+
+### CI gates
+
+Besides the Eclipse **ECA** check, PRs run:
+
+- **Blocking** (`.github/workflows/ci.yml`; maintainers should mark these jobs as
+  required in branch protection):
+  - `backend-format`: `yarn prettier`
+  - `frontend-build`: `yarn build` (`tsc` + vite)
+- **Advisory, pending fix** (`ci.yml`, `continue-on-error`; main already fails
+  them, so they report without blocking):
+  - `backend-lint`: ~731 ESLint errors in `src`/`tests`; `eslint .` hangs.
+  - `backend-test`: Jest fails on ESM-only `cuid2`/`faker`, 2 `paginate` tests,
+    and an open handle that needs `--forceExit`.
+  - `frontend-lint`: ESLint 9 can't read the legacy `.eslintrc.cjs`
+    (flat-config migration needed).
+- **Advisory security scans** (`security.yml`, `image-scan.yml`): CodeQL,
+  `yarn audit` (high+), TruffleHog (verified secrets only), Trivy on the backend
+  image (when Dockerfile/dependency files change, and weekly).
+
+Each advisory job becomes blocking once its `continue-on-error` is removed.
 
 ---
 

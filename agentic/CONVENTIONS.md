@@ -13,7 +13,7 @@ Style and structure conventions for this repo. Load always (imported by `AGENTS.
 - PRs target **`main`**.
 - Title: `<type>(<scope>): <summary>`.
 - Body: **What / Why / How verified**. Note if the change touches security, data, runtime, or plugins. Link the issue (`Closes #nnn` / `Ref #nnn`).
-- The PR pipeline currently runs the **ECA check only**; CI doesn't run tests on PRs, so the agent/author must run tests locally and state how it was verified.
+- PR checks: the **ECA check**, plus `ci.yml` (**blocking:** backend `prettier`, frontend `tsc`+build; **advisory until fixed:** backend ESLint, backend Jest, frontend ESLint) and advisory security scans (`security.yml`, `image-scan.yml`). Because Jest/lint are advisory, the agent/author must still run tests locally and state how it was verified. See [`docs/getting-started/contributing.md`](../docs/getting-started/contributing.md#ci-gates).
 
 ## Backend (`backend/`, Node.js + Express + MongoDB)
 

@@ -1,0 +1,130 @@
+name: ci
+
+# Quality gates. BLOCKING (mark as required checks in branch protection):
+# `backend-format`, `frontend-build`. ADVISORY (continue-on-error) jobs report
+# failures that already exist on main; drop continue-on-error once fixed.
+# Node 22 + yarn --frozen-lockfile match backend/Dockerfile.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: backend/yarn.lock
+      - run: yarn install --frozen-lockfile
+      - name: Prettier
+        run: yarn prettier
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      # Dummy build-time values; nothing is deployed from this job.
+      VITE_SERVER_BASE_URL: http://localhost:3200
+      VITE_SERVER_VERSION: v2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+      - run: yarn install --frozen-lockfile
+      - name: Build (tsc + vite)
+        run: yarn build
+
+  # advisory until ~731 backend lint errors and the `eslint .` hang are fixed (#642 follow-up)
+  backend-lint:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: backend/yarn.lock
+      - run: yarn install --frozen-lockfile
+      - name: ESLint (src, tests)
+        run: npx eslint src tests
+
+  # advisory until ESM-only deps (cuid2/faker), paginate tests and open handles are fixed (#642 follow-up)
+  backend-test:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      # Jest integration tests need a real MongoDB (no in-memory server).
+      mongo:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      MONGODB_URL: mongodb://localhost:27017/autowrx
+      JWT_SECRET: ci-only-dummy-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: backend/yarn.lock
+      - run: yarn install --frozen-lockfile
+      # --forceExit: captureChange's setInterval keeps Jest alive otherwise
+      - name: Jest
+        run: yarn test --forceExit
+
+  # advisory until the ESLint 9 flat-config migration is done (#642 follow-up)
+  frontend-lint:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+      - run: yarn install --frozen-lockfile
+      - name: ESLint
+        run: yarn lint

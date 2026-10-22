@@ -60,7 +60,7 @@ This is a monorepo:
   ([details](backend/README.md) · [architecture](docs/architecture/backend.md))
 - **`docs/`** — documentation ([index](docs/README.md))
 - **`instance-setup/`** — production docker-compose + guides
-- **`.github/workflows/`** — CI: docker build/release, dev-stage deploy
+- **`.github/workflows/`** — CI: quality gates + security scans, docker build/release, dev-stage deploy
 
 The backend also serves the built frontend in production, so the two ship as one
 image.
