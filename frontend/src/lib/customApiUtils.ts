@@ -10,10 +10,7 @@ import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 import axios from 'axios'
 import { CustomApiSchema } from '@/services/customApiSchema.service'
-import {
-  CustomApiSet,
-  getCustomApiSetById,
-} from '@/services/customApiSet.service'
+import { CustomApiSet } from '@/services/customApiSet.service'
 import { getCustomApiSchemaById } from '@/services/customApiSchema.service'
 
 const removeSpecialCharacters = (str: string) => {
@@ -135,7 +132,7 @@ export const exportCustomApiSet = async (set: CustomApiSet) => {
         zip.file(`avatar.${imageExtension}`, imageResponse.data, {
           binary: true,
         })
-      } catch (error) {
+      } catch {
         // Continue without avatar if download fails
       }
     }

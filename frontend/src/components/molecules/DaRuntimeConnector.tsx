@@ -126,9 +126,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const [renderRuntimes, setRenderRuntimes] = useState<Runtime[]>([])
     const [hasLoadedKitList, setHasLoadedKitList] = useState(false)
     hasLoadedKitListRef.current = hasLoadedKitList
-    const [kitListRequestTime, setKitListRequestTime] = useState<number | null>(
-      null,
-    )
+    const [, setKitListRequestTime] = useState<number | null>(null)
     const [kitListRequestTimeout, setKitListRequestTimeout] = useState(false)
     const [socketConnectionTimeout, setSocketConnectionTimeout] =
       useState(false)
@@ -174,7 +172,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       }
     })
 
-    const [apisValue, setActiveApis, setTraceVars, setAppLog, setIsAppRunning] =
+    const [, setActiveApis, setTraceVars, setAppLog, setIsAppRunning] =
       useRuntimeStore(
         (state) => [
           state.apisValue,
@@ -607,7 +605,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       requestKitList()
     }, [ticker, forceKitId, socketio])
 
-    const onDisconnect = (reason?: string) => {
+    const onDisconnect = (_reason?: string) => {
       wasDisconnectedRef.current = true
       if (forceKitId) {
         setHasLoadedKitList(false)

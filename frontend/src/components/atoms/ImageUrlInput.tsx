@@ -61,7 +61,7 @@ const ImageUrlInput: React.FC<ImageUrlInputProps> = ({
         setIsUploading(false)
       }
       reader.readAsDataURL(file)
-    } catch (error) {
+    } catch {
       setUploadError('Failed to process file')
       setIsUploading(false)
     }

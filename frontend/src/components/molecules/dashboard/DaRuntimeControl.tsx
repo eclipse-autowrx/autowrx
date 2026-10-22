@@ -68,7 +68,7 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
     shallow,
   )
   const { data: model } = useCurrentModel()
-  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+  usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
   const runtimeServerUrl = useSiteConfig('RUNTIME_SERVER_URL')
   const runtimeServerConfigRaw = useSiteConfig('RUNTIME_SERVER_CONFIG', '')
   const runtimeServerConfig = useMemo(() => {
@@ -142,7 +142,7 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
     }
     if (curRuntimeInfo && curRuntimeInfo.lsOfApiSubscriber) {
       const lsOfListener = []
-      for (const [key, value] of Object.entries(
+      for (const [, value] of Object.entries(
         curRuntimeInfo.lsOfApiSubscriber,
       )) {
         lsOfListener.push(value)
@@ -262,7 +262,7 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
         writeSignalValue(obj)
         writeVarsValue(obj)
       }
-    } catch (err) {
+    } catch {
       // Silent fail for invalid JSON
     }
   }

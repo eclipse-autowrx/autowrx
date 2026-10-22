@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'

@@ -7,9 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { Button } from '@/components/atoms/button'
-import { getWithExpiry, setWithExpiry } from '@/lib/storage'
 import { cn } from '@/lib/utils'
-import { useEffect } from 'react'
 import { TbExclamationCircle } from 'react-icons/tb'
 
 type DaErrorDisplay = {

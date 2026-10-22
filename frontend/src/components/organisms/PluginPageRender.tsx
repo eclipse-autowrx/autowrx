@@ -119,7 +119,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({
   const writeModelPermission: [string, string?][] = isPreviewTemplate
     ? []
     : [[PERMISSIONS.WRITE_MODEL, model_id]]
-  const [isAuthorized = false] = usePermissionHook(...writeModelPermission)
+  usePermissionHook(...writeModelPermission)
   const canEditPrototype = useCanEditPrototype(data?.prototype)
   const { data: currentUser } = useSelfProfileQuery()
 
@@ -814,7 +814,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({
           if (payload.cmd === 'set-api-value' && payload.api) {
             callback({ [`${payload.api}`]: payload.value })
           }
-        } catch (err) {
+        } catch {
           // Silent fail for invalid JSON
         }
       }
@@ -938,12 +938,12 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({
         try {
           pluginMeta = await getPluginBySlug(plugin_id)
           log('Fetched by slug')
-        } catch (e) {
+        } catch {
           log('Fetch by slug failed, attempting by id')
           try {
             pluginMeta = await getPluginById(plugin_id)
             log('Fetched by id')
-          } catch (e2) {
+          } catch {
             log('Fetch by id failed')
           }
         }

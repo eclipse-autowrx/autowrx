@@ -9,10 +9,7 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import {
-  getCustomApiSetById,
-  type CustomApiSetItem,
-} from '@/services/customApiSet.service'
+import { getCustomApiSetById } from '@/services/customApiSet.service'
 import { getCustomApiSchemaById } from '@/services/customApiSchema.service'
 import CustomAPIList from '@/components/organisms/CustomAPIList'
 import CustomAPIView from '@/components/organisms/CustomAPIView'

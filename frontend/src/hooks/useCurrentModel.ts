@@ -20,7 +20,7 @@ const useCurrentModel = () => {
   // this, a page reload fires the request during the async refresh-tokens
   // restore and the request goes out unauthenticated (403 on private models,
   // #665). Same pattern as useSelfProfile.
-  const [authBootstrapped, accessToken] = useAuthStore((state) => [
+  const [authBootstrapped] = useAuthStore((state) => [
     state.authBootstrapped,
     state.access?.token,
   ])

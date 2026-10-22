@@ -13,7 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose,
 } from '@/components/atoms/dialog'
 import { cn } from '@/lib/utils'
 

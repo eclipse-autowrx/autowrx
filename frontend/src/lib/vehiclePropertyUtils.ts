@@ -25,7 +25,7 @@ export const convertJSONToProperty = (json: string) => {
       result.push({ name: key, type: type, value: String(value) })
     }
     return result
-  } catch (error) {}
+  } catch {}
   return result
 }
 

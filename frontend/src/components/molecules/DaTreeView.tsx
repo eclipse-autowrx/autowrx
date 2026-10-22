@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { AnyNode, Branch, LeafTypes } from '@/types/api.type'
+import { Branch, LeafTypes } from '@/types/api.type'
 import Tree from 'react-d3-tree'
 import { PathFunction } from 'react-d3-tree'
 import { useNavigate } from 'react-router-dom'
@@ -28,7 +28,7 @@ const buildTreeNode = (name: string, path: string, node: Branch): TreeNode => {
   const children = node.children
     ? Object.entries(node.children)
         // Include branches, sensors, and actuators (exclude attributes)
-        .filter(([sub_node_name, node]) =>
+        .filter(([_sub_node_name, node]) =>
           ['branch', 'sensor', 'actuator'].includes(node.type),
         )
         // Sort: branches first, then sensors/actuators, both alphabetically within their group
@@ -61,7 +61,7 @@ const buildTreeNode = (name: string, path: string, node: Branch): TreeNode => {
 }
 
 const RenderRectSvgNode = (
-  { hierarchyPointNode, nodeDatum, toggleNode }: CustomNodeElementProps,
+  { nodeDatum, toggleNode }: CustomNodeElementProps,
   navigate: NavigateFunction,
   prototype_id: string,
   model: Model,
@@ -169,7 +169,7 @@ const RenderRectSvgNode = (
   )
 }
 
-const getDynamicPathClass: PathFunction = ({ source, target }, orientation) => {
+const getDynamicPathClass: PathFunction = ({ target }, _orientation) => {
   const targetData: any = target.data
 
   if (!target.data.__rd3t.collapsed) {

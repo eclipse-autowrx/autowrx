@@ -91,7 +91,7 @@ const FormImportPrototype = () => {
         setExtractedPrototype(null)
         setPrototypeName('')
       }
-    } catch (error) {
+    } catch {
       setImportError('Error processing the zip file.')
       setExtractedPrototype(null)
       setPrototypeName('')

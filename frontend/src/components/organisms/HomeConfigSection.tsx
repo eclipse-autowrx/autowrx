@@ -285,7 +285,7 @@ const HomeConfigSection: React.FC = () => {
       let configValue: any
       try {
         configValue = JSON.parse(configStr || '[]')
-      } catch (parseErr) {
+      } catch {
         toast({
           title: 'Invalid JSON',
           description: 'Please ensure the configuration is valid JSON',

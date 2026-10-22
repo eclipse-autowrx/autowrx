@@ -8,7 +8,7 @@
 
 import { TbCopy } from 'react-icons/tb'
 import { useToast } from '../molecules/toaster/use-toast'
-import { Suspense, lazy } from 'react'
+import { Suspense } from 'react'
 import { cn } from '@/lib/utils'
 
 interface DaCopyProps {

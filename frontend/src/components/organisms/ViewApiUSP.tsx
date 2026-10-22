@@ -7,11 +7,10 @@
 // SPDX-License-Identifier: MIT
 
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
 import { DaImage } from '@/components/atoms/DaImage'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import useModelStore from '@/stores/modelStore'
-import { TbBinaryTree2, TbList, TbSearch } from 'react-icons/tb'
+import { TbBinaryTree2, TbList } from 'react-icons/tb'
 import { DaCopy } from '../atoms/DaCopy'
 import { GoDotFill } from 'react-icons/go'
 import DaTreeViewUSP from '../molecules/DaTreeViewUSP'
@@ -118,10 +117,6 @@ const UspSeviceList = ({
       service.ServiceName.toLowerCase().includes(term.trim().toLowerCase()),
     )
     setLocalServices(filteredServices)
-  }
-
-  const handleFilterChange = (selectedOptions: string[]) => {
-    // Implement filter change logic here
   }
 
   return (
@@ -358,17 +353,12 @@ const ServiceDetail = ({
 }
 
 const ViewApiUSP = () => {
-  const { model_id } = useParams()
-  const navigate = useNavigate()
-
-  const [activeModelUspSevices, refreshModel] = useModelStore((state) => [
+  const [activeModelUspSevices] = useModelStore((state) => [
     state.activeModelUspSevices,
     state.refreshModel,
   ])
 
   const [activeService, setActiveService] = useState()
-
-  const [loading, setLoading] = useState(false)
 
   const [activeTab, setActiveTab] = useState('list')
 

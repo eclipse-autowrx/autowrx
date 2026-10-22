@@ -51,9 +51,7 @@ const quadrants: Plugin = {
 
 const PrototypeLibraryPortfolio = () => {
   const { data: model } = useCurrentModel()
-  const { data: prototypes, refetch } = useListModelPrototypes(
-    model ? model.id : '',
-  )
+  const { data: prototypes } = useListModelPrototypes(model ? model.id : '')
   const [data, setData] = useState<any>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
@@ -190,7 +188,7 @@ const PrototypeLibraryPortfolio = () => {
     onHover: (
       event: ChartEvent,
       chartElement: InteractionItem[],
-      chart: ChartJS,
+      _chart: ChartJS,
     ) => {
       const nativeEvent = event.native
       if (nativeEvent && nativeEvent.target) {
@@ -247,7 +245,7 @@ const PrototypeLibraryPortfolio = () => {
         },
       },
     },
-    onClick(event: ChartEvent, elements: InteractionItem[], chart: ChartJS) {
+    onClick(event: ChartEvent, elements: InteractionItem[], _chart: ChartJS) {
       if (elements.length === 0) return
       window.location.href = (elements[0].element as any).$context.raw.href
     },

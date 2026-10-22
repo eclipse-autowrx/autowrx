@@ -11,7 +11,6 @@ import {
   QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import axios, { isAxiosError } from 'axios'
 import { useState } from 'react'
 import config from '@/configs/config'

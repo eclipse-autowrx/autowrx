@@ -7,8 +7,6 @@
 // SPDX-License-Identifier: MIT
 
 import { FC, useEffect, useState } from 'react'
-import useRuntimeStore from '@/stores/runtimeStore'
-import { shallow } from 'zustand/shallow'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { MdDeleteOutline } from 'react-icons/md'

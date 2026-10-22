@@ -98,7 +98,7 @@ const PageManageFeatures = () => {
           title: 'Success',
           description: 'User added to feature successfully',
         })
-      } catch (error) {
+      } catch {
         toast({
           title: 'Error',
           description: 'Failed to add user to feature',
@@ -118,7 +118,7 @@ const PageManageFeatures = () => {
           title: 'Success',
           description: 'User removed from feature successfully',
         })
-      } catch (error) {
+      } catch {
         toast({
           title: 'Error',
           description: 'Failed to remove user from feature',

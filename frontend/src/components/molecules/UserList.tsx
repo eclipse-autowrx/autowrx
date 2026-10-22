@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { TbTrash } from 'react-icons/tb'
 import { User } from '@/types/user.type'
 import { Avatar, AvatarFallback, AvatarImage } from '../atoms/avatar'

@@ -24,13 +24,7 @@ const LearningIntegration = ({ requestClose }: LearningIntegrationProps) => {
   const [isMinimized, setIsMinimized] = useState(false)
   const learningUrl = useSiteConfig('LEARNING_MODE_URL', '')
 
-  const [
-    isShowedAutomationControl,
-    automationSequence,
-    setIsShowedAutomationControl,
-    setAutomationSequence,
-    setAutomationSequenceActionAt,
-  ] = useGlobalStore(
+  const [isShowedAutomationControl, automationSequence] = useGlobalStore(
     (state) => [
       state.isShowedAutomationControl,
       state.automationSequence,

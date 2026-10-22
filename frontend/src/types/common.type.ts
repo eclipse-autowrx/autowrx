@@ -6,11 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import {
-  IndexRouteObject,
-  NonIndexRouteObject,
-  RouteObject,
-} from 'react-router-dom'
+import { IndexRouteObject, NonIndexRouteObject } from 'react-router-dom'
 
 export type List<T> = {
   results: T[]

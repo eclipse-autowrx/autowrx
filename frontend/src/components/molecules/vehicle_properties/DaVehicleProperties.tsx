@@ -6,8 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useEffect, useState } from 'react'
-import { DaTableProperty } from '../DaTableProperty'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/atoms/button'
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
@@ -27,7 +26,6 @@ interface VehiclePropertiesProps {
 
 const DaVehicleProperties = ({
   category,
-  properties,
   className,
   canEdit = true,
 }: VehiclePropertiesProps) => {

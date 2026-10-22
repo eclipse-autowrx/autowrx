@@ -29,7 +29,6 @@ import {
   SelectValue,
 } from '@/components/atoms/select'
 import { useToast } from '@/components/molecules/toaster/use-toast'
-import { IoAddCircleOutline } from 'react-icons/io5'
 import ShareAssetPanel from '@/components/molecules/ShareAssetPanel'
 import { Textarea } from '@/components/atoms/textarea'
 
@@ -94,7 +93,7 @@ const PythonGenAIEditor = ({ dataStr, onDataChange }: iPropGenAIPython) => {
       setMethod(data.method || '')
       setUrl(data.url || '')
       setAccessToken(data.accessToken || '')
-    } catch (e) {}
+    } catch {}
   }, [dataStr])
 
   const onUrlChange = (value: string) => {
@@ -373,7 +372,7 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
               if (onDone) {
                 onDone()
               }
-            } catch (e) {
+            } catch {
               toast({
                 title: `Save error`,
                 description: (

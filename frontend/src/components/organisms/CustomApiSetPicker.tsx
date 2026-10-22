@@ -13,13 +13,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/atoms/dialog'
-import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { useQuery } from '@tanstack/react-query'
-import {
-  listCustomApiSets,
-  type CustomApiSet,
-} from '@/services/customApiSet.service'
+import { listCustomApiSets } from '@/services/customApiSet.service'
 import { Spinner } from '@/components/atoms/spinner'
 import { DaImage } from '@/components/atoms/DaImage'
 import { cn } from '@/lib/utils'

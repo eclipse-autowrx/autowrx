@@ -6,7 +6,6 @@
 //
 // SPDX-License-Identifier: MIT
 
-import config from '@/configs/config'
 import { useSiteConfig } from '@/utils/siteConfig'
 import { useEffect, useRef, useState } from 'react'
 import { TbDownload, TbLoader, TbSend } from 'react-icons/tb'
@@ -191,7 +190,6 @@ interface iPropFormHardwareKitManager {
 }
 
 const FormHardwareKitManager = ({
-  kitId,
   kitName,
   onCancel,
 }: iPropFormHardwareKitManager) => {

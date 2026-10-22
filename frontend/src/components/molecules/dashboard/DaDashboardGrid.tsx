@@ -254,7 +254,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({
       let data = event.data || {}
       try {
         data = JSON.parse(event.data)
-      } catch (error) {
+      } catch {
         // Do nothing
       }
 

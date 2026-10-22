@@ -277,7 +277,7 @@ const PluginForm = ({
                         const { url } = await uploadFileService(file)
                         onChange('image', url)
                         toast.success('Image uploaded')
-                      } catch (err) {
+                      } catch {
                         toast.error('Upload image failed')
                       }
                     }}
@@ -322,10 +322,10 @@ const PluginForm = ({
                     onFileChange={async (file) => {
                       setZip(file)
                       try {
-                        const res = await doUpload.mutateAsync(file)
+                        await doUpload.mutateAsync(file)
                         // onSuccess already sets url; ensure internal flag
                         onChange('is_internal', true as any)
-                      } catch (err) {}
+                      } catch {}
                     }}
                   >
                     <Button disabled={!form.name || doUpload.isPending}>

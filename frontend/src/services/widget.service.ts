@@ -51,7 +51,7 @@ export const loadMarketWidgets = async () => {
               parsedWidget.options = tmpConfig
               parsedWidget.options.url = parsedWidget.url
             }
-          } catch (err_parse) {}
+          } catch {}
         }
         return parsedWidget //return the parsed widget for each widget
       })
@@ -100,7 +100,7 @@ export const searchWidget = async (widgetId: any) => {
             parsedWidget.options = tmpConfig
             parsedWidget.options.url = parsedWidget.url
           }
-        } catch (err_parse) {}
+        } catch {}
       }
       return parsedWidget
     }
@@ -135,7 +135,7 @@ export const loadWidgetReviews = async (widgetId: any) => {
         }
       })
     }
-  } catch (err) {
+  } catch {
     // console.error("Error in loadWidgetReviews:", err);
     return null
   }

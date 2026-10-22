@@ -13,10 +13,7 @@ import { Model, Prototype } from '@/types/model.type'
 // import { getPlugins }
 import { listModelPrototypes } from '@/services/prototype.service'
 import { getComputedAPIs } from '@/services/model.service'
-import {
-  getExtendedApi,
-  listAllExtendedApis,
-} from '@/services/extendedApis.service'
+import { listAllExtendedApis } from '@/services/extendedApis.service'
 
 import { convertCode } from '@/services/convert_code.service'
 import { uploadFileService } from '@/services/upload.service'
@@ -63,7 +60,7 @@ const resolvePrototypeImageUrl = async (
 }
 
 const getImgFile = (zip: JSZip, imageUrl: string, filename: string) => {
-  return new Promise<void>((resolve, reject) => {
+  return new Promise<void>((resolve, _reject) => {
     axios
       .get(imageUrl, { responseType: 'arraybuffer' })
       .then((response) => {
@@ -216,7 +213,7 @@ const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
         )
       }
     }
-  } catch (err) {}
+  } catch {}
 }
 
 export const downloadModelZip = async (model: Model) => {
@@ -341,7 +338,7 @@ export const zipToModel = async (file: File) => {
     const pluginsStr =
       (await zipFile.file('plugins.json')?.async('string')) || '[]'
     plugins = JSON.parse(pluginsStr)
-  } catch (err) {
+  } catch {
     return null
   }
   return { model, plugins, prototypes, modelHomeImageFile }
@@ -402,7 +399,7 @@ export const downloadPrototypeZip = async (prototype: Prototype) => {
 
     const content = await zip.generateAsync({ type: 'blob' })
     saveAs(content, zipFilename)
-  } catch (err) {}
+  } catch {}
 }
 
 export const buildPrototypeImportPayload = (
@@ -518,7 +515,7 @@ export const zipToPrototype = async (
 
     // Ensure the model_id is correctly set to the new model_id
     prototype.model_id = model_id
-  } catch (err) {
+  } catch {
     return null
   }
 

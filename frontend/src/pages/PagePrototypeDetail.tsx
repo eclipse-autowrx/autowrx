@@ -153,7 +153,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           })
           setStagingPlugins(allPlugins)
         }
-      } catch (error) {
+      } catch {
         // Silently fail - staging config might not exist or user might not have access
         setStagingPlugins([])
       }

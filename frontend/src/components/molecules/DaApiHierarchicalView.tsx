@@ -10,13 +10,7 @@ import { useEffect, useRef, useState } from 'react'
 import { VehicleApi } from '@/types/model.type'
 import { getApiTypeClasses } from '@/lib/utils'
 import { DaCopy } from '../atoms/DaCopy'
-import {
-  TbChevronRight,
-  TbChevronDown,
-  TbPlaylistAdd,
-  TbTrash,
-  TbPlus,
-} from 'react-icons/tb'
+import { TbChevronRight, TbChevronDown, TbPlus } from 'react-icons/tb'
 import { Dialog, DialogContent } from '@/components/atoms/dialog'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
@@ -29,8 +23,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/atoms/tooltip'
-import DaConfirmPopup from './DaConfirmPopup'
-import { deleteExtendedApi } from '@/services/extendedApis.service'
 
 interface DaHierarchicalViewItemProps {
   api: VehicleApi
@@ -63,7 +55,6 @@ const DaHierarchicalViewItem = ({
 
   // New state to control the wishlist popup (for branch APIs)
   const [isOpenWishlistPopup, setIsOpenWishlistPopup] = useState(false)
-  const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
 
   // const handleDeleteWishlistApi = async () => {
   //   if (model) {

@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState } from 'react'
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   listCustomApiSets,
   deleteCustomApiSet,
@@ -17,7 +17,6 @@ import {
 } from '@/services/customApiSet.service'
 import {
   listCustomApiSchemas,
-  getCustomApiSchemaById,
   createCustomApiSchema,
   updateCustomApiSchema,
   type CustomApiSchema,
@@ -275,7 +274,7 @@ const CustomApiSetSection: React.FC = () => {
 
           const uploadResult = await uploadFileService(avatarFile)
           avatarUrl = uploadResult.url
-        } catch (error) {
+        } catch {
           toast({
             title: 'Avatar upload failed',
             description:

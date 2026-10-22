@@ -9,18 +9,8 @@
 import { FC, useState, useEffect } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
-import {
-  TbRefresh,
-  TbEye,
-  TbEyeOff,
-  TbPlus,
-  TbTrash,
-  TbEdit,
-  TbX,
-  TbDeviceFloppy,
-} from 'react-icons/tb'
+import { TbPlus, TbTrash, TbX, TbDeviceFloppy } from 'react-icons/tb'
 import { Prototype } from '@/types/model.type'
-import { set } from 'lodash'
 import useRuntimeStore from '@/stores/runtimeStore'
 import useModelStore from '@/stores/modelStore'
 import { shallow } from 'zustand/shallow'

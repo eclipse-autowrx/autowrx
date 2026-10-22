@@ -86,7 +86,6 @@ const PageModelList = () => {
     isLoading,
     error,
     refetch,
-    isFetchingNextPage,
   } = useListAllModels()
 
   const filterModels = useCallback(

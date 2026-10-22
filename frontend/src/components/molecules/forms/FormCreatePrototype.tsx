@@ -21,7 +21,7 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import { isAxiosError } from 'axios'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import useListModelContribution from '@/hooks/useListModelContribution'
 import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/atoms/select'
-import { Model, ModelLite, ModelCreate } from '@/types/model.type'
+import { ModelLite, ModelCreate } from '@/types/model.type'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Spinner } from '@/components/atoms/spinner'
 import { CVI } from '@/data/CVI'
@@ -75,9 +75,7 @@ const FormCreatePrototype = ({
   onPrototypeChange,
   disabledState,
   hideCreateButton,
-  code,
   widget_config,
-  title,
   buttonText,
 }: FormCreatePrototypeProps) => {
   const [loading, setLoading] = useState(false)

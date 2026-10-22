@@ -18,13 +18,6 @@ import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import { Textarea } from '@/components/atoms/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/atoms/select'
 import { useQuery } from '@tanstack/react-query'
 import {
   listCustomApiSchemas,

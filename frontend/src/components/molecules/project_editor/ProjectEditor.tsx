@@ -20,10 +20,7 @@ import {
 import {
   VscNewFile,
   VscNewFolder,
-  VscRefresh,
   VscCollapseAll,
-  VscChevronLeft,
-  VscChevronRight,
   VscCloudDownload,
   VscCloudUpload,
 } from 'react-icons/vsc'
@@ -113,7 +110,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     message: string
   } | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
+  const [, setSaveError] = useState<string | null>(null)
   const resizeRef = useRef<HTMLDivElement>(null)
   const startXRef = useRef(0)
   const startWidthRef = useRef(0)
@@ -1617,23 +1614,6 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
         setCreatingAtRoot(null)
         setNewRootItemName('')
       }
-    }
-  }
-
-  const handleRefresh = () => {
-    try {
-      if (!data || data.trim() === '') {
-        setFsData([{ type: 'folder', name: 'root', items: [] }])
-        return
-      }
-      const parsed = JSON.parse(data)
-      setFsData(
-        Array.isArray(parsed)
-          ? parsed
-          : [{ type: 'folder', name: 'root', items: [] }],
-      )
-    } catch {
-      setFsData([{ type: 'folder', name: 'root', items: [] }])
     }
   }
 

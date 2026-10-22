@@ -7,10 +7,8 @@
 // SPDX-License-Identifier: MIT
 
 import { forwardRef, useState, useEffect, useImperativeHandle } from 'react'
-import { shallow } from 'zustand/shallow'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import useRuntimeStore from '@/stores/runtimeStore'
 import { io } from 'socket.io-client'
 
 interface RemoteCompileRustProps {
@@ -35,13 +33,8 @@ const DaRemoteCompileRust = forwardRef<any, RemoteCompileRustProps>(
       }
     })
 
-    const [apisValue, setActiveApis, setAppLog] = useRuntimeStore(
-      (state) => [state.apisValue, state.setActiveApis, state.setAppLog],
-      shallow,
-    )
-
-    const { data: prototype } = useCurrentPrototype()
-    const { data: currentUser } = useSelfProfileQuery()
+    useCurrentPrototype()
+    useSelfProfileQuery()
 
     const [socketio, setSocketIo] = useState<any>(null)
     const [isConnected, setIsConnected] = useState<boolean>(false)

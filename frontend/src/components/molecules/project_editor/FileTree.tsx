@@ -8,13 +8,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import {
-  FileSystemItem,
-  File,
-  Folder,
-  getItemPath,
-  getParentPath,
-} from './types'
+import { FileSystemItem, File, Folder, getParentPath } from './types'
 import {
   VscFile,
   VscFolder,
@@ -113,7 +107,7 @@ const FileTree: React.FC<FileTreeProps> = ({
   } | null>(null)
   const [hoverFolderTimeout, setHoverFolderTimeout] =
     useState<NodeJS.Timeout | null>(null)
-  const [dragPosition, setDragPosition] = useState<{
+  const [, setDragPosition] = useState<{
     x: number
     y: number
   } | null>(null)
@@ -692,16 +686,6 @@ const FileTree: React.FC<FileTreeProps> = ({
     setShowRootMenu(false)
   }
 
-  const handleRootUpload = () => {
-    onUploadFile({ type: 'folder', name: 'root', items: items })
-    setShowRootMenu(false)
-  }
-
-  const handleRootPaste = () => {
-    handlePaste({ type: 'folder', name: 'root', items: items })
-    setShowRootMenu(false)
-  }
-
   const handleRename = (item: FileSystemItem, itemPath: string) => {
     setRenamingItem({ item, path: itemPath })
     setNewName(item.name)
@@ -960,7 +944,7 @@ const FileTree: React.FC<FileTreeProps> = ({
     try {
       await navigator.clipboard.writeText(itemPath)
       setOpenDropdown(null)
-    } catch (err) {
+    } catch {
       // Fallback for older browsers
       const textArea = document.createElement('textarea')
       textArea.value = itemPath

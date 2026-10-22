@@ -10,7 +10,6 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
-import { Textarea } from '@/components/atoms/textarea'
 import { cn } from '@/lib/utils'
 import JsonEditor from '@/components/atoms/JsonEditor'
 import {
@@ -20,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/atoms/select'
-import { TbPlus, TbTrash, TbPencil, TbDownload, TbUpload } from 'react-icons/tb'
+import { TbPlus, TbTrash, TbDownload, TbUpload } from 'react-icons/tb'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 
 // Legacy type - kept for backward compatibility with AttributeDefinition component

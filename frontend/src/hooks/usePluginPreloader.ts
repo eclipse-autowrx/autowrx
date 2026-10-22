@@ -82,10 +82,10 @@ const usePluginPreloader = ({
             let pluginMeta: Plugin | null = null
             try {
               pluginMeta = await getPluginBySlug(pluginId)
-            } catch (e) {
+            } catch {
               try {
                 pluginMeta = await getPluginById(pluginId)
-              } catch (e2) {
+              } catch {
                 // Plugin not found, skip
                 if (process.env.NODE_ENV === 'development') {
                   console.warn(

@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   TbX,
   TbColumnInsertLeft,
@@ -29,22 +29,14 @@ const DaTableEditor = ({
 }: DaTableEditorProps) => {
   const [tableData, setTableData] = useState<any[]>([])
   const [columnNames, setColumnNames] = useState<string[]>([])
-  const [hoveredColumnIndex, setHoveredColumnIndex] = useState<number | null>(
-    null,
-  )
-  const [hoveredRowIndex, setHoveredRowIndex] = useState<number | null>(null)
+  const [, setHoveredColumnIndex] = useState<number | null>(null)
+  const [, setHoveredRowIndex] = useState<number | null>(null)
   const [editingColumnHeader, setEditingColumnHeader] = useState<number | null>(
     null,
   )
   const [editingRowHeader, setEditingRowHeader] = useState<number | null>(null)
   const textareaRefs = useRef<(HTMLTextAreaElement | null)[]>([])
 
-  const isValidHeader = (header: string) => {
-    // Only check if it's not empty and doesn't start with a number
-    const hasContent = header.trim().length > 0
-    const startsWithNumeric = /^\d/.test(header)
-    return hasContent && !startsWithNumeric
-  }
   const [internalValue, setInternalValue] = useState(defaultValue)
 
   useEffect(() => {

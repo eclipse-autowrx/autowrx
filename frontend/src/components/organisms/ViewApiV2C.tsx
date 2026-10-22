@@ -8,8 +8,6 @@
 
 import { useState } from 'react'
 import { Input } from '@/components/atoms/input'
-import { GoDotFill } from 'react-icons/go'
-import { TbList, TbSearch } from 'react-icons/tb'
 
 // Default V2C API list (Swagger-compatible structure)
 export const DEFAULT_V2C = [

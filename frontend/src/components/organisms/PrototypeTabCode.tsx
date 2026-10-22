@@ -60,7 +60,7 @@ const DaGenAI_Python = lazy(() =>
 )
 
 const PrototypeTabCode: FC = () => {
-  const [prototype, setActivePrototype, activeModelApis] = useModelStore(
+  const [prototype, setActivePrototype] = useModelStore(
     (state) => [
       state.prototype as Prototype,
       state.setActivePrototype,
@@ -70,7 +70,7 @@ const PrototypeTabCode: FC = () => {
   )
   const [code, setCode] = useState<string | undefined>(undefined)
   const [ticker, setTicker] = useState(0)
-  const [activeTab, setActiveTab] = useState('api')
+  const [activeTab] = useState('api')
   const [isOpenGenAI, setIsOpenGenAI] = useState(false)
   const editable = useCanEditPrototype(prototype)
   const showSdvProtoPilotButton = useSiteConfig(

@@ -529,7 +529,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
               )
             }}
           >
-            {(provided, snapshot) => (
+            {(provided, _snapshot) => (
               <div
                 {...provided.droppableProps}
                 ref={provided.innerRef}

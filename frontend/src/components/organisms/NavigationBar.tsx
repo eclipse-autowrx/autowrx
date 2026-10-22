@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { Link, useMatch } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,15 +14,12 @@ import {
   DropdownMenuTrigger,
 } from '../atoms/dropdown-menu'
 import DaNavUser from '../molecules/DaNavUser'
-import { HiMenu } from 'react-icons/hi'
 import {
   TbUsers,
   TbZoom,
   TbStack2,
   TbBuildingWarehouse,
-  TbCar,
   TbSettings,
-  TbMenu2,
   TbPalette,
   TbApps,
   TbFileCode,
@@ -32,7 +29,6 @@ import { PERMISSIONS } from '@/data/permission'
 import DaGlobalSearch from '../molecules/DaGlobalSearch'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 // import useCurrentModel from '@/hooks/useCurrentModel'
-import { IoIosHelpBuoy } from 'react-icons/io'
 import config from '@/configs/config'
 import LearningIntegration from './LearningIntegration'
 

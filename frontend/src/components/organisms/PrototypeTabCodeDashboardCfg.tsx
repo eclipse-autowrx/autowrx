@@ -13,7 +13,6 @@ import { Prototype } from '@/types/model.type'
 import DaDashboardEditor from '../molecules/dashboard/DaDashboardEditor'
 import useCanEditPrototype from '@/hooks/useCanEditPrototype'
 import { updatePrototypeService } from '@/services/prototype.service'
-import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 
 const PrototypeTabCodeDashboardCfg: FC = ({}) => {
   const [prototype, setActivePrototype] = useModelStore(

@@ -13,6 +13,6 @@ export const addLog = async (message: CreateActivityLog) => {
   if (!logAxios) return null
   try {
     return (await logAxios.post('/', message)).data
-  } catch (err) {}
+  } catch {}
   return null
 }

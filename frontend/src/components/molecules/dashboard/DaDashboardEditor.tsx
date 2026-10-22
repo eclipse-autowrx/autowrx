@@ -23,7 +23,6 @@ import {
   TbShoppingCart,
   TbLayoutGrid,
 } from 'react-icons/tb'
-import { BsStars } from 'react-icons/bs'
 import BUILT_IN_WIDGETS, {
   BUILT_IN_EMBEDDED_WIDGETS,
 } from '@/data/builtinWidgets'
@@ -142,7 +141,7 @@ const DaDashboardWidgetEditor = ({
     code: '',
   })
 
-  const [prototype, setActivePrototype, activeModelApis] = useModelStore(
+  const [prototype, , activeModelApis] = useModelStore(
     (state) => [
       state.prototype as Prototype,
       state.setActivePrototype,
@@ -186,7 +185,7 @@ const DaDashboardWidgetEditor = ({
         )
         delete options.iconURL
         delete options.url
-      } catch (e) {}
+      } catch {}
       const usedApiNames = getUsedVehicleApiNames(
         localPrototype.code,
         activeModelApis,
@@ -357,12 +356,12 @@ const DaDashboardWidgetEditor = ({
               let newOption = {} as any
               try {
                 newOption = JSON.parse(optionStr)
-              } catch (err) {}
+              } catch {}
 
               let widget = {} as any
               try {
                 widget = JSON.parse(selectedWidget)
-              } catch (err) {}
+              } catch {}
 
               // Check if this is a built-in widget (has a non-empty path)
               const isBuiltInWidget = widget.path && widget.path.trim() !== ''
@@ -379,7 +378,7 @@ const DaDashboardWidgetEditor = ({
               widget.options = newOption
               try {
                 widget.boxes = JSON.parse(boxes)
-              } catch (err) {}
+              } catch {}
               handleUpdateWidget(JSON.stringify(widget, null, 4))
               codeEditorPopup[1](false)
             }}
@@ -411,7 +410,6 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
   )
   const { data: user } = useSelfProfileQuery()
   const { data: marketWidgets } = useListMarketplaceWidgets()
-  const modalRef = useRef<HTMLDivElement>(null)
   const buildinWidgets = BUILT_IN_WIDGETS
   const [renderWidgets, setRenderWidgets] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<'builtin' | 'market' | 'genAI'>(
@@ -420,7 +418,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
 
   const [activeWidget, setActiveWidget] = useState<any>(null)
   const [pickedCells, setPickedCells] = useState<any[]>([])
-  const [optionsStr, setOptionStr] = useState<string>('')
+  const [optionsStr] = useState<string>('')
 
   // Related to Widget Gen AI
   const [isWidgetGenAI, setIsWidgetGenAI] = useState<boolean>(true)
@@ -560,7 +558,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
           if (a.weight > b.weight) return 1
           return 0
         })
-      } catch (e) {}
+      } catch {}
     }
 
     setRenderWidgets(widgets)
@@ -703,7 +701,7 @@ const DaDashboardEditor = ({
 
   const codeEditorPopup = useState<boolean>(false)
   const [isAddingFromURL, setIsAddingFromURL] = useState<boolean>(false)
-  const [buildinWidgets, setBuildinWidgets] = useState<any[]>(BUILT_IN_WIDGETS)
+  const [buildinWidgets] = useState<any[]>(BUILT_IN_WIDGETS)
 
   useEffect(() => {
     if (!entireWidgetConfig) return
@@ -742,7 +740,7 @@ const DaDashboardEditor = ({
       setIsConfigValid(isConfigValidLocal)
       onConfigValidChanged?.(isConfigValidLocal)
       setWarningMessage2(message)
-    } catch (e) {
+    } catch {
       setWidgetConfigs([])
       setIsConfigValid(false)
       onConfigValidChanged?.(false)

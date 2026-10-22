@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { Tag } from './model.type'
-import { CustomPropertyType, PropertyType } from './property.type.ts'
+import { CustomPropertyType } from './property.type.ts'
 
 export type VSSRelease = {
   name: string

@@ -8,7 +8,6 @@
 
 import React, { useState, useEffect } from 'react'
 import { configManagementService } from '@/services/configManagement.service'
-import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Spinner } from '@/components/atoms/spinner'
 import { Model, Prototype } from '@/types/model.type'
 import { DaImage } from '@/components/atoms/DaImage'
@@ -329,7 +328,6 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({
   const [openStageMenuName, setOpenStageMenuName] = useState<string | null>(
     null,
   )
-  const { toast } = useToast()
   const { data: routeModel } = useCurrentModel()
   const model = modelProp ?? routeModel
 
