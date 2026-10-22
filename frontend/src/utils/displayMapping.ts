@@ -1,3 +1,11 @@
+// Copyright (c) 2026 Eclipse Foundation.
+//
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 /**
  * Extract display_mapping from JSON schema or CustomApiSchema object
  * Priority: schema JSON string > top-level display_mapping
