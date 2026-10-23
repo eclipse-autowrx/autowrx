@@ -15,7 +15,6 @@ jest.mock('../../../src/models', () => ({
 jest.mock('../../../src/services', () => ({ userService: { getUserById: jest.fn() } }));
 jest.mock('../../../src/services/prototype.service', () => ({}));
 jest.mock('../../../src/services/customApiSet.service', () => ({}));
-jest.mock('../../../src/services/file.service', () => ({ resolveUrl: (url) => `http://localhost${url}` }));
 jest.mock('../../../src/services/permission.service', () => ({
   canAccessModel: jest.fn(),
   hasPermission: jest.fn(),
@@ -41,6 +40,7 @@ const modelService = require('../../../src/services/model.service');
 const apiService = require('../../../src/services/api.service');
 const extendedApiService = require('../../../src/services/extendedApi.service');
 const permissionService = require('../../../src/services/permission.service');
+const config = require('../../../src/config/config');
 const { Model, ExtendedApi } = require('../../../src/models');
 const standard = require('../../../data/v6.0.json');
 
@@ -157,6 +157,72 @@ const expectRawExport = async (id, expected = fixture) => {
   expect(response.body).toEqual(expected);
   expect(JSON.stringify(response.body)).toBe(JSON.stringify(expected));
 };
+
+describe('VSS import URL restrictions', () => {
+  let originalAllowlist;
+
+  beforeEach(() => {
+    originalAllowlist = process.env.VSS_DATA_URL_ALLOWLIST;
+    process.env.VSS_DATA_URL_ALLOWLIST = ' EXAMPLE.COM, , vss.example.org ';
+  });
+
+  afterEach(() => {
+    if (originalAllowlist === undefined) delete process.env.VSS_DATA_URL_ALLOWLIST;
+    else process.env.VSS_DATA_URL_ALLOWLIST = originalAllowlist;
+  });
+
+  test('relative paths are fetched from the configured backend origin', async () => {
+    await modelService.processApiDataUrl('/d/custom.json?version=1');
+    expect(fetch).toHaveBeenCalledWith(`http://localhost:${config.port}/d/custom.json?version=1`);
+  });
+
+  test.each(['//evil.com/x', '/d/../custom.json', '/d/a..json', '/\\evil.com/x', '/d\\custom.json', '/@evil.com/x'])(
+    'rejects unsafe relative path %s before fetching',
+    async (url) => {
+      await expect(modelService.processApiDataUrl(url)).rejects.toMatchObject({ statusCode: 400 });
+      expect(fetch).not.toHaveBeenCalled();
+    },
+  );
+
+  test('allowlisted HTTPS URLs use the configured hostname and preserve path and query', async () => {
+    await modelService.processApiDataUrl('https://EXAMPLE.com/d/custom.json?version=1#ignored');
+    expect(fetch).toHaveBeenCalledWith('https://example.com/d/custom.json?version=1');
+  });
+
+  test('allowlisted HTTPS URLs preserve an explicit port', async () => {
+    await modelService.processApiDataUrl('https://vss.example.org:8443/custom.json');
+    expect(fetch).toHaveBeenCalledWith('https://vss.example.org:8443/custom.json');
+  });
+
+  test.each([
+    'https://evil.com/custom.json',
+    'https://sub.example.com/custom.json',
+    'https://example.com.evil.com/custom.json',
+    'https://example.com@evil.com/custom.json',
+    'http://example.com/custom.json',
+    'not a URL',
+  ])('rejects external URL %s before fetching', async (url) => {
+    await expect(modelService.processApiDataUrl(url)).rejects.toMatchObject({ statusCode: 400 });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  test('external URLs are rejected when no allowlist is configured', async () => {
+    delete process.env.VSS_DATA_URL_ALLOWLIST;
+    await expect(modelService.processApiDataUrl('https://example.com/custom.json')).rejects.toMatchObject({
+      statusCode: 400,
+    });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  test.each(['localhost', '127.0.0.1', '10.0.0.1', '192.168.1.1', '172.16.0.1', '169.254.169.254', '0.0.0.0', '[::1]'])(
+    'rejects internal host %s even when allowlisted',
+    async (host) => {
+      process.env.VSS_DATA_URL_ALLOWLIST = host;
+      await expect(modelService.processApiDataUrl(`https://${host}/custom.json`)).rejects.toMatchObject({ statusCode: 400 });
+      expect(fetch).not.toHaveBeenCalled();
+    },
+  );
+});
 
 describe('lossless custom VSS import/export', () => {
   test('create stores the custom base privately and raw export preserves all fields and key order', async () => {
