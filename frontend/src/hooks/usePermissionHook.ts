@@ -17,13 +17,22 @@ const usePermissionHook = (...params: [string, string?][]) => {
     state.user,
   ])
 
-  const { data } = useQuery({
+  const hasSession = !!accessToken || !!storeUser
+  const enabled = authBootstrapped && hasSession && params.length > 0
+  const { data, isPending } = useQuery({
     queryKey: ['permissions', params],
     queryFn: () => checkPermissionService(params),
-    enabled:
-      authBootstrapped && (!!accessToken || !!storeUser) && params.length > 0,
+    enabled,
   })
-  return data || Array(params.length).fill(false)
+  const isResolved = authBootstrapped && (!enabled || !isPending)
+  const permissions =
+    enabled && data ? data : Array<boolean>(params.length).fill(false)
+
+  // Keep array destructuring compatible while exposing pending vs. denied.
+  return Object.assign([...permissions], {
+    isResolved,
+    isLoading: !isResolved,
+  })
 }
 
 export default usePermissionHook

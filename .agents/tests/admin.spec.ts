@@ -1,5 +1,45 @@
-import { test, expect } from '@playwright/test';
-import { loginAsAdmin, saveScreenshot, checkLayoutAnomalies } from './helpers';
+// Copyright (c) 2026 Eclipse Foundation.
+//
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
+import { test, expect, type Page } from '@playwright/test';
+import {
+  loginAs,
+  loginAsAdmin,
+  createTestUserViaApi,
+  deleteTestUserViaApi,
+  TEST_USER,
+  saveScreenshot,
+  checkLayoutAnomalies,
+} from './helpers';
+
+async function expectSiteConfigDenied(page: Page) {
+  const adminRequests: string[] = [];
+  page.on('request', (request) => {
+    const path = new URL(request.url()).pathname;
+    if (
+      /^\/v2\/site-config(?:\/|$)/.test(path) &&
+      !/^\/v2\/site-config\/(?:public(?:\/|$)|admin-ui$|sso\/providers$)/.test(path)
+    ) {
+      adminRequests.push(request.url());
+    }
+  });
+
+  for (const section of ['', '?section=home', '?section=secrets']) {
+    await page.goto(`/admin/site-config${section}`);
+    await expect(page.getByRole('heading', { name: 'Access denied', exact: true })).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('heading', { name: 'Site Management', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Configuration Sections', exact: true })).toHaveCount(0);
+    await expect(page.locator('.da-root-layout-main form, .da-root-layout-main input, .da-root-layout-main textarea')).toHaveCount(0);
+    await expect(page.getByText(/Forbidden/i)).toHaveCount(0);
+    expect(adminRequests).toEqual([]);
+  }
+}
 
 test.describe('Admin Panel', () => {
 
@@ -17,13 +57,41 @@ test.describe('Admin Panel', () => {
   });
 
   test('site config page loads', async ({ page }) => {
-    await page.goto('/admin/site-config');
-    await page.waitForTimeout(2000);
+    let releasePermissions!: () => void;
+    let permissionsRequested!: () => void;
+    const permissionGate = new Promise<void>((resolve) => { releasePermissions = resolve; });
+    const permissionRequest = new Promise<void>((resolve) => { permissionsRequested = resolve; });
+    await page.route('**/v2/permissions/has-permission*', async (route) => {
+      permissionsRequested();
+      await permissionGate;
+      await route.continue();
+    });
+
+    try {
+      await page.goto('/admin/site-config');
+      await permissionRequest;
+      await expect(page.getByRole('heading', { name: 'Access denied', exact: true })).toHaveCount(0);
+      await expect(page.getByRole('heading', { name: 'Site Management', exact: true })).toHaveCount(0);
+    } finally {
+      releasePermissions();
+    }
+
+    await expect(page.getByRole('heading', { name: 'Site Management', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Configuration Sections', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Public Configurations', exact: true })).toBeVisible();
+    await expect(page.getByText(/Forbidden/i)).toHaveCount(0);
     await saveScreenshot(page, 'admin-site-config');
     await checkLayoutAnomalies(page, 'admin-site-config');
+  });
 
-    const hasContent = await page.locator('form, input, [role="main"]').count();
-    expect(hasContent).toBeGreaterThan(0);
+  test('non-admin cannot load site management content or admin configs', async ({ page }) => {
+    const user = await createTestUserViaApi(page);
+    try {
+      await loginAs(page, user.email, TEST_USER.password);
+      await expectSiteConfigDenied(page);
+    } finally {
+      await deleteTestUserViaApi(page, user.id);
+    }
   });
 
   test('user management page loads', async ({ page }) => {
@@ -69,4 +137,9 @@ test.describe('Admin Panel', () => {
     }
   });
 
+});
+
+test('guest cannot load site management content or admin configs', async ({ page }) => {
+  // Keep this outside the admin describe so its login hook never runs.
+  await expectSiteConfigDenied(page);
 });

@@ -199,6 +199,7 @@
 | Admin access (logged in) | Admin can access `/admin` | ✅ `admin.spec.ts` |
 | Unauthenticated access blocked | Redirect / deny for guests | ✅ `admin.spec.ts` |
 | Site config form | Settings form renders | ✅ `admin.spec.ts` |
+| Site config permission guard | Non-admins and guests see no settings content, admin fetches, or Forbidden toast; admins wait for permissions without a denial flash | ⚠️ `admin.spec.ts` added/strengthened; run pending |
 | Default prototype image cache | Model & Prototype save takes effect in `/new-prototype` without reloading the app | ✅ `new-prototype-default-image.spec.ts` |
 | Site config section visibility | Build time clean mode or hidden section list filters sidebar and URL selection | ⚠️ `admin-visibility.spec.ts` added; guarded run pending |
 | Restore default (public config) | Factory reset reverts modified public configs | ✅ `site-config-restore-default.spec.ts` |
