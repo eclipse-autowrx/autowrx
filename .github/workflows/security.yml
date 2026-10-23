@@ -1,7 +1,7 @@
 name: security
 
-# Advisory security scans: CodeQL, yarn audit, TruffleHog. Every job is
-# continue-on-error so findings are reported without blocking merges until
+# Advisory security scans: CodeQL, yarn audit, TruffleHog. Findings are
+# reported (step summary + warning annotation) without failing the job until
 # the existing backlog is triaged; then drop continue-on-error to enforce.
 
 on:
@@ -37,7 +37,6 @@ jobs:
 
   dependency-audit:
     runs-on: ubuntu-latest
-    continue-on-error: true
     timeout-minutes: 10
     strategy:
       fail-fast: false
@@ -49,6 +48,8 @@ jobs:
         with:
           node-version: 22
       - name: yarn audit (${{ matrix.package }}, high+, runtime deps)
+        id: audit
+        continue-on-error: true
         working-directory: ${{ matrix.package }}
         run: |
           set +e
@@ -61,6 +62,8 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
+      - if: steps.audit.outcome == 'failure'
+        run: echo "::warning title=dependency-audit (${{ matrix.package }}, advisory)::high/critical advisories found; see the job summary"
 
   secret-scan:
     runs-on: ubuntu-latest

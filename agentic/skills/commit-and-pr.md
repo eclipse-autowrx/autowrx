@@ -14,7 +14,7 @@ When the work is verified (tests pass per `./run-tests.md`, self-reviewed per `.
 7. **Open the PR against `main`** (only if asked) via `gh pr create --base main`. Title: `<type>(<scope>): <summary>`. Body sections:
    - **What:** what changed (1-3 lines).
    - **Why:** the motivation / issue context.
-   - **How verified:** the exact commands you ran (`backend: npm test`, `cd .agents && npx playwright test ...`, `npm run lint`, manual steps) — PR CI blocks only backend `prettier` and frontend `tsc`+build (Jest and lint are advisory until fixed), so state how you verified it locally. If security-sensitive, note `./security-review.md` result.
+   - **How verified:** the exact commands you ran (`backend: npm test`, `cd .agents && npx playwright test ...`, `npm run lint`, manual steps) — PR CI blocks backend `prettier` + ESLint and frontend `tsc`+build (backend Jest and frontend ESLint are advisory until fixed), so state how you verified it locally. If security-sensitive, note `./security-review.md` result.
    - Issue link: `Closes #nnn` or `Ref #nnn`.
 8. **Note the ECA requirement** in the PR body or comment if the author/committers might not be signed: every commit author must have signed the ECA (https://accounts.eclipse.org/) with the commit email, or the ECA check fails. Don't commit under an unsigned identity.
 9. **Return the PR URL** to the caller. If you only committed (no PR asked), return the short SHA + branch name.

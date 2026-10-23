@@ -62,19 +62,19 @@ Besides the Eclipse **ECA** check, PRs run:
 - **Blocking** (`.github/workflows/ci.yml`; maintainers should mark these jobs as
   required in branch protection):
   - `backend-format`: `yarn prettier`
+  - `backend-lint`: `yarn lint` (ESLint, 0 errors)
   - `frontend-build`: `yarn build` (`tsc` + vite)
-- **Advisory, pending fix** (`ci.yml`, `continue-on-error`; main already fails
-  them, so they report without blocking):
-  - `backend-lint`: ~731 ESLint errors in `src`/`tests`; `eslint .` hangs.
-  - `backend-test`: Jest fails on ESM-only `cuid2`/`faker`, 2 `paginate` tests,
-    and an open handle that needs `--forceExit`.
-  - `frontend-lint`: ESLint 9 can't read the legacy `.eslintrc.cjs`
-    (flat-config migration needed).
+- **Advisory, pending fix** (`ci.yml`, step-level `continue-on-error`: the job
+  stays green and a warning annotation reports the failure):
+  - `backend-test`: the legacy `/v1` `auth` and `user` integration tests still
+    fail (31/33 suites pass).
+  - `frontend-lint`: remaining `no-explicit-any` and `jsx-a11y` errors.
 - **Advisory security scans** (`security.yml`, `image-scan.yml`): CodeQL,
   `yarn audit` (high+), TruffleHog (verified secrets only), Trivy on the backend
-  image (when Dockerfile/dependency files change, and weekly).
+  image (when Dockerfile/dependency files change, and weekly). Findings go to the
+  job summary and a warning annotation; CodeQL alerts show in the Security tab.
 
-Each advisory job becomes blocking once its `continue-on-error` is removed.
+Each advisory check becomes blocking once its `continue-on-error` is removed.
 
 ---
 

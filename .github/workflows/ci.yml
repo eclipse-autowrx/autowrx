@@ -1,8 +1,9 @@
 name: ci
 
 # Quality gates. BLOCKING (mark as required checks in branch protection):
-# `backend-format`, `frontend-build`. ADVISORY (continue-on-error) jobs report
-# failures that already exist on main; drop continue-on-error once fixed.
+# `backend-format`, `backend-lint`, `frontend-build`. ADVISORY jobs run their
+# check with step-level continue-on-error: the job stays green and a warning
+# annotation reports failures that already exist on main. Drop it once fixed.
 # Node 22 + yarn --frozen-lockfile match backend/Dockerfile.
 
 on:
@@ -56,10 +57,8 @@ jobs:
       - name: Build (tsc + vite)
         run: yarn build
 
-  # advisory until ~731 backend lint errors and the `eslint .` hang are fixed (#642 follow-up)
   backend-lint:
     runs-on: ubuntu-latest
-    continue-on-error: true
     timeout-minutes: 10
     defaults:
       run:
@@ -72,13 +71,12 @@ jobs:
           cache: yarn
           cache-dependency-path: backend/yarn.lock
       - run: yarn install --frozen-lockfile
-      - name: ESLint (src, tests)
-        run: npx eslint src tests
+      - name: ESLint
+        run: yarn lint
 
-  # advisory until ESM-only deps (cuid2/faker), paginate tests and open handles are fixed (#642 follow-up)
+  # advisory until the legacy /v1 auth and user integration tests are rewritten (#642 follow-up)
   backend-test:
     runs-on: ubuntu-latest
-    continue-on-error: true
     timeout-minutes: 15
     defaults:
       run:
@@ -106,14 +104,16 @@ jobs:
           cache: yarn
           cache-dependency-path: backend/yarn.lock
       - run: yarn install --frozen-lockfile
-      # --forceExit: captureChange's setInterval keeps Jest alive otherwise
       - name: Jest
-        run: yarn test --forceExit
+        id: jest
+        continue-on-error: true
+        run: yarn test
+      - if: steps.jest.outcome == 'failure'
+        run: echo "::warning title=backend-test (advisory)::Jest failures exist on main (legacy /v1 auth and user integration tests); see the Jest step log"
 
-  # advisory until the ESLint 9 flat-config migration is done (#642 follow-up)
+  # advisory until the remaining no-explicit-any and jsx-a11y errors are fixed (#642 follow-up)
   frontend-lint:
     runs-on: ubuntu-latest
-    continue-on-error: true
     timeout-minutes: 5
     defaults:
       run:
@@ -127,4 +127,8 @@ jobs:
           cache-dependency-path: frontend/yarn.lock
       - run: yarn install --frozen-lockfile
       - name: ESLint
+        id: eslint
+        continue-on-error: true
         run: yarn lint
+      - if: steps.eslint.outcome == 'failure'
+        run: echo "::warning title=frontend-lint (advisory)::ESLint errors exist on main (no-explicit-any, jsx-a11y); see the ESLint step log"

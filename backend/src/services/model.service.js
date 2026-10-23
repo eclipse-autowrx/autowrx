@@ -724,14 +724,23 @@ const validateApiDataUrl = (url) => {
   if (!isAllowed) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      'External api_data_url is not allowlisted; use a relative path or configure VSS_DATA_URL_ALLOWLIST'
+      'External api_data_url is not allowlisted; use a relative path or configure VSS_DATA_URL_ALLOWLIST',
     );
   }
 
   // Defense-in-depth: block internal/private addresses even if somehow allowlisted
   const blocked = [
-    /^localhost$/i, /^127\./, /^10\./, /^192\.168\./, /^172\.(1[6-9]|2\d|3[01])\./,
-    /^169\.254\./, /^0\./, /^\[::1\]$/, /^fe80:/i, /^fc00:/i, /^fd/i,
+    /^localhost$/i,
+    /^127\./,
+    /^10\./,
+    /^192\.168\./,
+    /^172\.(1[6-9]|2\d|3[01])\./,
+    /^169\.254\./,
+    /^0\./,
+    /^\[::1\]$/,
+    /^fe80:/i,
+    /^fc00:/i,
+    /^fd/i,
   ];
   if (blocked.some((p) => p.test(hostname))) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'api_data_url cannot target internal network addresses');
@@ -749,9 +758,9 @@ const processApiDataUrl = async (apiDataUrl) => {
   try {
     // Validate before fetching: only relative paths or allowlisted https URLs
     // (blocks SSRF against internal services and cloud metadata endpoints)
-    apiDataUrl = validateApiDataUrl(apiDataUrl);
+    const validatedUrl = validateApiDataUrl(apiDataUrl);
     // resolve the correct url incase the apiDataUrl is relative. Eg. /api/v2/data/vehicle.json
-    const resolvedUrl = fileService.resolveUrl(apiDataUrl);
+    const resolvedUrl = fileService.resolveUrl(validatedUrl);
     logger.debug(`Processing API data from URL: ${resolvedUrl}`);
     const response = await fetch(resolvedUrl);
 
