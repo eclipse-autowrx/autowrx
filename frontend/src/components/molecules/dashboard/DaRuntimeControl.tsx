@@ -45,6 +45,8 @@ import PrototypeVarsWatch from './PrototypeVarsWatch'
 import DaRemoteCompileRust from '../remote-compiler/DaRemoteCompileRust'
 import { useSystemUI } from '@/hooks/useSystemUI'
 import { useUsedVehicleApis } from '@/hooks/useUsedVehicleApis'
+import { useUnknownVehicleApis } from '@/hooks/useUnknownVehicleApis'
+import { toast } from 'react-toastify'
 
 const AlwaysScrollToBottom = () => {
   const elementRef = useRef<HTMLDivElement>(null)
@@ -110,6 +112,7 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   const [curRuntimeInfo, setCurRuntimeInfo] = useState<any>(null)
   const [code, setCode] = useState<string>('')
   const usedApiObjects = useUsedVehicleApis(code)
+  const unknownApis = useUnknownVehicleApis(code)
   const usedApis = useMemo(
     () => usedApiObjects.map((api) => api.name),
     [usedApiObjects],
@@ -161,6 +164,13 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   }, [prototype?.code, prototype?.id])
 
   const handleRun = () => {
+    if (unknownApis.length) {
+      toast.error(
+        `Unknown signals: ${unknownApis.join(', ')}. Fix them before deploying.`,
+      )
+      return
+    }
+
     setIsRunning(true)
     setIsAppRunning(true)
     setActiveTab('output')

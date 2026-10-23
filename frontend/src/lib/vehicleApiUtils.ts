@@ -77,7 +77,7 @@ const getChildren = (folder: Folder): File[] => {
 
 export const filterAndCompareVehicleApis = (
   code: string,
-  activeModelApis: any,
+  activeModelApis: { name: string }[],
 ) => {
   if (!code) {
     return { apisInCodeOnly: [], apisInModel: [], apisNotInModel: [] }
@@ -118,12 +118,15 @@ export const filterAndCompareVehicleApis = (
     if (!apiUsedInCode) return
 
     const foundInModel = activeModelApis.some(
-      (api: any) => api.name === apiUsedInCode,
+      (api) => api.name === apiUsedInCode,
     )
 
     if (foundInModel) {
       apisInModel.push(apiUsedInCode)
-    } else {
+    } else if (
+      !activeModelApis.some((api) => api.name.startsWith(`${apiUsedInCode}.`))
+    ) {
+      // A branch can be valid even when the model lists only its leaves.
       apisNotInModel.push(apiUsedInCode)
     }
   })

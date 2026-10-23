@@ -218,6 +218,7 @@ in everyday words, what each one checks. No technical background needed.
 | Run prototype code and show output in runtime terminal | Pressing play actually runs the code and shows the result. |
 | Runtime panel plugin replaces the built-in panel | A plugin can take over the runtime panel and still moves live values. |
 | Built-in panel stays when no runtime plugin is configured | Without a plugin, the normal panel is used. |
+| Unknown signals block staging and card deployment (tab and button actions) | `Vehicle.Engine.UnknownSignal` disables staging/Deploy with a tooltip and blocks direct staging URLs and the card deploy dialog. Valid multi-file code, known branches and wishlist/custom signals remain deployable; comments and Markdown do not block deployment. Regression prepared in `prototype-unknown-signals.patch` for `.agents/tests/prototype-unknown-signals.spec.ts`; pending application because `.agents/` is read-only in the editing environment. |
 | Add row and save journey matrix | The Customer Journey table accepts a new row and saves it. |
 | Edit and persist architecture skeleton (shape, color, image) | Changes in the Vehicle API architecture drawing are saved. |
 
