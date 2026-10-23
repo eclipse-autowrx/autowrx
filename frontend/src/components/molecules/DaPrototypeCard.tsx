@@ -11,7 +11,8 @@ import { useState, useRef, useCallback, useMemo } from 'react'
 import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
 import { DaImage } from '../atoms/DaImage'
-import { cn } from '@/lib/utils'
+import { cn, parseCvi } from '@/lib/utils'
+import { filterAndCompareVehicleApis } from '@/lib/vehicleApiUtils'
 import { Prototype } from '@/types/model.type'
 import { HiStar } from 'react-icons/hi'
 import {
@@ -61,7 +62,7 @@ import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Skeleton } from '../atoms/skeleton'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
-import { getModel } from '@/services/model.service'
+import { getComputedAPIs, getModel } from '@/services/model.service'
 
 export interface DaPrototypeCardProps {
   prototype: Prototype
@@ -120,11 +121,36 @@ export const DaPrototypeCard = ({
   const [deployOpen, setDeployOpen] = useState(false)
   const [dotsMenuOpen, setDotsMenuOpen] = useState(false)
 
-  const { data: deployModel, isLoading: isDeployModelLoading } = useQuery({
+  const {
+    data: deployModel,
+    isPending: isDeployModelLoading,
+    isError: isDeployModelError,
+  } = useQuery({
     queryKey: ['model', prototype.model_id],
     queryFn: () => getModel(prototype.model_id),
     enabled: deployOpen && !!prototype.model_id,
   })
+
+  const {
+    data: deployModelApiTree,
+    isPending: isDeployApisLoading,
+    isError: isDeployApisError,
+  } = useQuery({
+    queryKey: ['computed-apis', prototype.model_id],
+    queryFn: () => getComputedAPIs(prototype.model_id),
+    enabled: deployOpen && !!prototype.model_id,
+  })
+
+  const unknownDeployApis = useMemo(() => {
+    if (!deployModel || !deployModelApiTree) return []
+    const apis = parseCvi(deployModelApiTree)
+    // Match modelStore's legacy wishlist handling alongside computed APIs.
+    if (!deployModel.api_version && deployModel.custom_apis) {
+      apis.push(...deployModel.custom_apis)
+    }
+    return filterAndCompareVehicleApis(prototype.code || '', apis)
+      .apisNotInModel
+  }, [deployModel, deployModelApiTree, prototype.code])
 
   const stagingRenderPlugin = useMemo(() => {
     const buttons =
@@ -553,10 +579,19 @@ export const DaPrototypeCard = ({
         className="max-w-[95vw] w-[1200px]"
       >
         <div className="flex overflow-y-auto max-h-[80vh] min-h-[20vh] [&>div]:p-0!">
-          {isDeployModelLoading ? (
+          {isDeployModelError || isDeployApisError ? (
+            <p className="p-4 text-destructive">
+              Unable to validate vehicle signals. Try opening Deploy again.
+            </p>
+          ) : isDeployModelLoading || isDeployApisLoading ? (
             <div className="flex w-full items-center justify-center py-12">
               <TbLoader className="size-6 animate-spin text-muted-foreground" />
             </div>
+          ) : unknownDeployApis.length ? (
+            <p className="p-4 text-destructive" role="alert">
+              Unknown signals: {unknownDeployApis.join(', ')}. Fix them before
+              deploying.
+            </p>
           ) : (
             <PrototypeTabStaging
               prototype={prototype}

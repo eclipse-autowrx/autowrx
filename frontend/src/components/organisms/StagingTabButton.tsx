@@ -1,3 +1,11 @@
+// Copyright (c) 2026 Eclipse Foundation.
+//
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import DaTabItem from '@/components/atoms/DaTabItem'
 import { PrototypeRightActionButton } from '@/components/molecules/PrototypeRightActionButtons'
 import { StagingConfig } from '@/components/organisms/CustomTabEditor'
@@ -55,6 +63,7 @@ const StagingTabButton = ({
       return (
         <span
           title={title}
+          aria-disabled="true"
           className="inline-flex h-full opacity-50 cursor-not-allowed"
         >
           <DaTabItem active={isActive} dataId="tab-staging">

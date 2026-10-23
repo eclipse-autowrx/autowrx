@@ -10,6 +10,7 @@ import DaDialog from '@/components/molecules/DaDialog'
 import PrototypeRightActionButtons from '@/components/molecules/PrototypeRightActionButtons'
 import { TabConfig } from '@/components/organisms/CustomTabEditor'
 import PrototypeTabStaging from '@/components/organisms/PrototypeTabStaging'
+import { useUnknownVehicleApis } from '@/hooks/useUnknownVehicleApis'
 import { hasPrototypeCode } from '@/lib/prototypeCodeUtils'
 import PagePrototypePlugin from '@/pages/PagePrototypePlugin'
 import { Prototype } from '@/types/model.type'
@@ -27,10 +28,14 @@ const PrototypeRightAction = ({
   onCopyClick,
 }: PrototypeRightActionProps) => {
   const [openDialog, setOpenDialog] = useState('')
-  const stagingDisabled = !hasPrototypeCode(prototype?.code)
-  const stagingDisabledTitle = stagingDisabled
-    ? 'Generate code first to enable staging'
-    : undefined
+  const unknownApis = useUnknownVehicleApis(prototype?.code || '')
+  const stagingDisabled =
+    !hasPrototypeCode(prototype?.code) || unknownApis.length > 0
+  const stagingDisabledTitle = unknownApis.length
+    ? `Unknown signals: ${unknownApis.join(', ')}. Fix them before deploying.`
+    : stagingDisabled
+      ? 'Generate code first to enable staging'
+      : undefined
   return (
     <>
       {actions?.map((action) => {
@@ -52,10 +57,16 @@ const PrototypeRightAction = ({
           >
             <div className="flex overflow-y-auto max-h-[80vh]  min-h-[20vh] [&>div]:p-0!">
               {action.builtin ? (
-                <PrototypeTabStaging
-                  prototype={prototype}
-                  renderPlugin={action.renderPlugin}
-                />
+                unknownApis.length ? (
+                  <p className="p-4 text-destructive" role="alert">
+                    {stagingDisabledTitle}
+                  </p>
+                ) : (
+                  <PrototypeTabStaging
+                    prototype={prototype}
+                    renderPlugin={action.renderPlugin}
+                  />
+                )
               ) : (
                 <PagePrototypePlugin
                   pluginSlug={action.plugin}

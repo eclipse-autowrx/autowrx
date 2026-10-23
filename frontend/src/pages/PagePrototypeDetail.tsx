@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/atoms/dropdown-menu'
 import { Spinner } from '@/components/atoms/spinner'
+import { useUnknownVehicleApis } from '@/hooks/useUnknownVehicleApis'
 import AddonSelect from '@/components/molecules/AddonSelect'
 import DaDialog from '@/components/molecules/DaDialog'
 import ProjectTemplateMetadataFields from '@/components/molecules/project/ProjectTemplateMetadataFields'
@@ -92,6 +93,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = () => {
     state.prototype as Prototype,
     state.setActivePrototype,
   ])
+  const unknownApis = useUnknownVehicleApis(prototype?.code || '')
   const [isDefaultTab, setIsDefaultTab] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [showRt, setShowRt] = useState(false)
@@ -625,12 +627,19 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = () => {
             {tab == 'code' && <PrototypeTabCode />}
             {tab == 'dashboard' && <PrototypeTabDashboard />}
             {tab == 'feedback' && <PrototypeTabFeedback />}
-            {tab == 'staging' && hasPrototypeCode(prototype?.code) && (
-              <PrototypeTabStaging
-                prototype={prototype}
-                renderPlugin={_stagingNavItem?.renderPlugin}
-              />
-            )}
+            {tab == 'staging' &&
+              hasPrototypeCode(prototype?.code) &&
+              (unknownApis.length ? (
+                <p className="p-4 text-destructive" role="alert">
+                  Unknown signals: {unknownApis.join(', ')}. Fix them before
+                  deploying.
+                </p>
+              ) : (
+                <PrototypeTabStaging
+                  prototype={prototype}
+                  renderPlugin={_stagingNavItem?.renderPlugin}
+                />
+              ))}
 
             {/* Render ALL plugin components unconditionally - they stay mounted and cached */}
             {/* Only show the one that matches current tab and pluginId */}
