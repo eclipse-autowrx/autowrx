@@ -889,8 +889,10 @@ const processApiData = (data) => {
  */
 const processApiDataUrl = async (apiDataUrl) => {
   try {
-    // Validate before fetching to preserve the existing SSRF restrictions.
+    // Validate before fetching: only relative paths or allowlisted https URLs
+    // (blocks SSRF against internal services and cloud metadata endpoints)
     const validatedUrl = validateApiDataUrl(apiDataUrl);
+    // resolve the correct url incase the apiDataUrl is relative. Eg. /api/v2/data/vehicle.json
     const resolvedUrl = fileService.resolveUrl(validatedUrl);
     logger.debug(`Processing API data from URL: ${resolvedUrl}`);
     const response = await fetch(resolvedUrl);
