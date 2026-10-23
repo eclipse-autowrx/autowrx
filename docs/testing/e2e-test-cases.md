@@ -32,7 +32,9 @@ in everyday words, what each one checks. No technical background needed.
 | Test case | What it checks |
 |---|---|
 | Admin panel is accessible | The admin area opens for an administrator. |
-| Site config page loads | The settings page opens. |
+| Site config page loads | The settings page opens for an administrator once permissions resolve, without a denial flash. |
+| Non-admin cannot load site management | A signed-in non-admin sees "Access denied" on the site config page, with no settings content, admin requests or Forbidden toast. |
+| Guest cannot load site management | A signed-out visitor sees "Access denied" on the site config page, with no settings content, admin requests or Forbidden toast. |
 | User management page loads | The user list page opens. |
 | Manage users via /manage-users route | The user management screen also opens from its direct link. |
 | Plugins page loads | The plugin management page opens. |
