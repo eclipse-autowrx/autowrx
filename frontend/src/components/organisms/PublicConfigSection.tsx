@@ -7,12 +7,20 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState, useEffect } from 'react'
-import { configManagementService, Config } from '@/services/configManagement.service'
+import {
+  configManagementService,
+  Config,
+} from '@/services/configManagement.service'
 import ConfigForm from '@/components/molecules/ConfigForm'
 import ConfigList from '@/components/molecules/ConfigList'
 import { Button } from '@/components/atoms/button'
 import { useToast } from '@/components/molecules/toaster/use-toast'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/atoms/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/atoms/dialog'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import {
@@ -22,7 +30,9 @@ import {
   PREDEFINED_PRIVACY_CONFIG_KEYS,
 } from '@/pages/SiteConfigManagement'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
-import NavBarActionsEditor, { NavBarAction } from '@/components/molecules/NavBarActionsEditor'
+import NavBarActionsEditor, {
+  NavBarAction,
+} from '@/components/molecules/NavBarActionsEditor'
 import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
 import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
 import {
@@ -40,18 +50,20 @@ const PublicConfigSection: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingConfig, setEditingConfig] = useState<Config | undefined>()
   const [navBarActions, setNavBarActions] = useState<NavBarAction[]>([])
-  const [originalNavBarActions, setOriginalNavBarActions] = useState<NavBarAction[]>([])
+  const [originalNavBarActions, setOriginalNavBarActions] = useState<
+    NavBarAction[]
+  >([])
   const [isSavingNavBarActions, setIsSavingNavBarActions] = useState(false)
   const [subTab, setSubTab] = useState<PublicSubTab>('config')
   const { toast } = useToast()
 
-  const isGenAIKey = (key: string) =>
-    PREDEFINED_GENAI_CONFIG_KEYS.includes(key)
+  const isGenAIKey = (key: string) => PREDEFINED_GENAI_CONFIG_KEYS.includes(key)
   const isPrototypeKey = (key: string) =>
     PREDEFINED_PROTOTYPE_CONFIG_KEYS.includes(key)
   const isPrivacyKey = (key: string) =>
     PREDEFINED_PRIVACY_CONFIG_KEYS.includes(key)
-  const isSpecialSectionKey = (key: string) => isGenAIKey(key) || isPrototypeKey(key) || isPrivacyKey(key)
+  const isSpecialSectionKey = (key: string) =>
+    isGenAIKey(key) || isPrototypeKey(key) || isPrivacyKey(key)
 
   useEffect(() => {
     if (selfLoading || !self) return
@@ -83,12 +95,24 @@ const PublicConfigSection: React.FC = () => {
       )
       const filteredConfigs = allConfigs
         .filter((config) => predefinedKeys.has(config.key))
-        .sort((a, b) => (predefinedOrder.get(a.key) ?? 999) - (predefinedOrder.get(b.key) ?? 999))
+        .sort(
+          (a, b) =>
+            (predefinedOrder.get(a.key) ?? 999) -
+            (predefinedOrder.get(b.key) ?? 999),
+        )
 
       // Load nav bar actions
-      const navBarActionsConfig = allConfigs.find((config) => config.key === 'NAV_BAR_ACTIONS')
-      if (navBarActionsConfig && navBarActionsConfig.value !== null && navBarActionsConfig.value !== undefined) {
-        const actions = Array.isArray(navBarActionsConfig.value) ? navBarActionsConfig.value as NavBarAction[] : []
+      const navBarActionsConfig = allConfigs.find(
+        (config) => config.key === 'NAV_BAR_ACTIONS',
+      )
+      if (
+        navBarActionsConfig &&
+        navBarActionsConfig.value !== null &&
+        navBarActionsConfig.value !== undefined
+      ) {
+        const actions = Array.isArray(navBarActionsConfig.value)
+          ? (navBarActionsConfig.value as NavBarAction[])
+          : []
         setNavBarActions(actions)
         setOriginalNavBarActions(JSON.parse(JSON.stringify(actions)))
       } else {
@@ -100,7 +124,8 @@ const PublicConfigSection: React.FC = () => {
     } catch (err) {
       toast({
         title: 'Load failed',
-        description: err instanceof Error ? err.message : 'Failed to load configs',
+        description:
+          err instanceof Error ? err.message : 'Failed to load configs',
         variant: 'destructive',
       })
     } finally {
@@ -115,11 +140,14 @@ const PublicConfigSection: React.FC = () => {
 
   const handleDeleteConfig = async (config: Config) => {
     // Prevent deletion of predefined configs
-    const isPredefined = PREDEFINED_SITE_CONFIGS.some(c => c.key === config.key)
+    const isPredefined = PREDEFINED_SITE_CONFIGS.some(
+      (c) => c.key === config.key,
+    )
     if (isPredefined) {
       toast({
         title: 'Cannot delete',
-        description: 'Predefined configurations cannot be deleted. You can only edit their values.',
+        description:
+          'Predefined configurations cannot be deleted. You can only edit their values.',
         variant: 'destructive',
       })
       return
@@ -131,7 +159,10 @@ const PublicConfigSection: React.FC = () => {
       setIsLoading(true)
       if (config.id) {
         await configManagementService.deleteConfigById(config.id)
-        toast({ title: 'Deleted', description: `Config "${config.key}" deleted. Reloading page...` })
+        toast({
+          title: 'Deleted',
+          description: `Config "${config.key}" deleted. Reloading page...`,
+        })
 
         // Reload page to show changes immediately
         setTimeout(() => {
@@ -141,7 +172,8 @@ const PublicConfigSection: React.FC = () => {
     } catch (err) {
       toast({
         title: 'Delete failed',
-        description: err instanceof Error ? err.message : 'Failed to delete config',
+        description:
+          err instanceof Error ? err.message : 'Failed to delete config',
         variant: 'destructive',
       })
       setIsLoading(false)
@@ -160,10 +192,16 @@ const PublicConfigSection: React.FC = () => {
           valueType: config.valueType,
           section: 'public',
         })
-        toast({ title: 'Updated', description: `Config "${config.key}" updated. Reloading page...` })
+        toast({
+          title: 'Updated',
+          description: `Config "${config.key}" updated. Reloading page...`,
+        })
       } else {
         await configManagementService.createConfig({ ...config, secret: false })
-        toast({ title: 'Created', description: `Config "${config.key}" created. Reloading page...` })
+        toast({
+          title: 'Created',
+          description: `Config "${config.key}" created. Reloading page...`,
+        })
       }
 
       // Reload page to show changes immediately
@@ -173,7 +211,8 @@ const PublicConfigSection: React.FC = () => {
     } catch (err) {
       toast({
         title: 'Save failed',
-        description: err instanceof Error ? err.message : 'Failed to save config',
+        description:
+          err instanceof Error ? err.message : 'Failed to save config',
         variant: 'destructive',
       })
       setIsLoading(false)
@@ -202,7 +241,8 @@ const PublicConfigSection: React.FC = () => {
       })
       toast({
         title: 'Saved',
-        description: 'Navigation bar actions updated successfully. Reloading page...'
+        description:
+          'Navigation bar actions updated successfully. Reloading page...',
       })
 
       // Reload page to show changes immediately
@@ -212,7 +252,10 @@ const PublicConfigSection: React.FC = () => {
     } catch (err) {
       toast({
         title: 'Save failed',
-        description: err instanceof Error ? err.message : 'Failed to save navigation bar actions',
+        description:
+          err instanceof Error
+            ? err.message
+            : 'Failed to save navigation bar actions',
         variant: 'destructive',
       })
       setIsSavingNavBarActions(false)
@@ -220,7 +263,12 @@ const PublicConfigSection: React.FC = () => {
   }
 
   const handleFactoryReset = async () => {
-    if (!window.confirm('Restore all public configs to the deployment snapshot? This will overwrite your current settings.')) return
+    if (
+      !window.confirm(
+        'Restore all public configs to the deployment snapshot? This will overwrite your current settings.',
+      )
+    )
+      return
 
     try {
       setIsLoading(true)
@@ -230,14 +278,19 @@ const PublicConfigSection: React.FC = () => {
 
       await restoreConfigsFromSnapshot({ keys: publicKeys })
 
-      toast({ title: 'Restored', description: 'Public configs restored from deployment snapshot. Reloading page...' })
+      toast({
+        title: 'Restored',
+        description:
+          'Public configs restored from deployment snapshot. Reloading page...',
+      })
 
       // Reload page to show changes immediately
       reloadSoon()
     } catch (err) {
       toast({
         title: 'Reset failed',
-        description: err instanceof Error ? err.message : 'Failed to reset configs',
+        description:
+          err instanceof Error ? err.message : 'Failed to reset configs',
         variant: 'destructive',
       })
       setIsLoading(false)
@@ -246,7 +299,9 @@ const PublicConfigSection: React.FC = () => {
 
   // Check if navBarActions have changed
   const hasNavBarActionsChanged = () => {
-    return JSON.stringify(navBarActions) !== JSON.stringify(originalNavBarActions)
+    return (
+      JSON.stringify(navBarActions) !== JSON.stringify(originalNavBarActions)
+    )
   }
 
   const handleRestoreHistoryEntry = async (entry: SiteConfigEditEntry) => {
@@ -271,7 +326,10 @@ const PublicConfigSection: React.FC = () => {
     } catch (err) {
       toast({
         title: 'Restore failed',
-        description: err instanceof Error ? err.message : 'Failed to restore configuration',
+        description:
+          err instanceof Error
+            ? err.message
+            : 'Failed to restore configuration',
         variant: 'destructive',
       })
       setIsLoading(false)
@@ -307,20 +365,22 @@ const PublicConfigSection: React.FC = () => {
           <button
             type="button"
             onClick={() => setSubTab('config')}
-            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${subTab === 'config'
-              ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-              }`}
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
+              subTab === 'config'
+                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
           >
             Config
           </button>
           <button
             type="button"
             onClick={() => setSubTab('history')}
-            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${subTab === 'history'
-              ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-              }`}
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
+              subTab === 'history'
+                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
           >
             History
           </button>
@@ -334,7 +394,10 @@ const PublicConfigSection: React.FC = () => {
           </div>
         ) : subTab === 'history' ? (
           <div className="px-0">
-            <SiteConfigEditHistory section="public" onRestoreEntry={handleRestoreHistoryEntry} />
+            <SiteConfigEditHistory
+              section="public"
+              onRestoreEntry={handleRestoreHistoryEntry}
+            />
           </div>
         ) : (
           <>
@@ -354,7 +417,8 @@ const PublicConfigSection: React.FC = () => {
                   Navigation Bar Actions
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Configure custom action buttons for the left and right sides of the navigation bar
+                  Configure custom action buttons for the left and right sides
+                  of the navigation bar
                 </p>
               </div>
               <div className="p-6">
@@ -368,7 +432,9 @@ const PublicConfigSection: React.FC = () => {
                       onClick={handleSaveNavBarActions}
                       disabled={isSavingNavBarActions}
                     >
-                      {isSavingNavBarActions ? 'Saving...' : 'Save Navigation Bar Actions'}
+                      {isSavingNavBarActions
+                        ? 'Saving...'
+                        : 'Save Navigation Bar Actions'}
                     </Button>
                   </div>
                 )}

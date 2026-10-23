@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,15 +7,15 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
+const fs = require('fs');
+const path = require('path');
+const _ = require('lodash');
+const crypto = require('crypto');
 const { userService } = require('.');
 const { Api, Model, ExtendedApi } = require('../models');
 const ApiError = require('../utils/ApiError');
-const fs = require('fs');
-const path = require('path');
 const logger = require('../config/logger');
 const { sortObject } = require('../utils/sort');
-const _ = require('lodash');
-const crypto = require('crypto');
 
 /**
  *
@@ -110,7 +110,22 @@ const listVSSVersions = async () => {
  * @returns {Promise<object>}
  */
 const getVSSVersion = async (name) => {
-  const filePath = path.join(__dirname, `../../data/${name}.json`);
+  // VSS version names are simple identifiers (e.g. "v4.1", "v6.0"). Reject
+  // anything containing path separators or traversal sequences before it
+  // reaches path.join — prevents reading arbitrary JSON files from the
+  // filesystem via crafted api_version values.
+  if (!name || typeof name !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid VSS version name');
+  }
+
+  const dataDir = path.resolve(__dirname, '../../data');
+  const filePath = path.resolve(dataDir, `${name}.json`);
+
+  // Defense-in-depth: the resolved path must stay inside the data directory
+  if (!filePath.startsWith(dataDir + path.sep)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid VSS version name');
+  }
+
   if (!fs.existsSync(filePath)) {
     throw new ApiError(httpStatus.NOT_FOUND, 'VSS version not found');
   }
@@ -145,10 +160,10 @@ const parseCvi = (cvi) => {
   const ret = traverse(cvi[mainApi], mainApi);
 
   ret.forEach((item) => {
-    if (item.type == 'branch') return;
-    let arName = item.name.split('.');
+    if (item.type === 'branch') return;
+    const arName = item.name.split('.');
     if (arName.length > 1) {
-      item.shortName = '.' + arName.slice(1).join('.');
+      item.shortName = `.${arName.slice(1).join('.')}`;
     } else {
       item.shortName = item.name; // Ensure root elements have their name as shortName
     }
@@ -158,7 +173,7 @@ const parseCvi = (cvi) => {
     const aParts = a.name.split('.');
     const bParts = b.name.split('.');
 
-    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i += 1) {
       if (aParts[i] !== bParts[i]) {
         return (aParts[i] || '').localeCompare(bParts[i] || '');
       }
@@ -178,7 +193,7 @@ const parseCvi = (cvi) => {
  */
 const getUsedApis = (code, apiList) => {
   try {
-    let apis = [];
+    const apis = [];
     apiList.forEach((item) => {
       if (item.shortName) {
         if (code.includes(item.shortName)) {
@@ -202,10 +217,11 @@ const ensureParentApiHierarchy = (root, api) => {
   for (const currentApi of api.split('.')) {
     parentNode.children ??= {};
 
-    parentNode = parentNode.children[currentApi] ??= {
+    parentNode.children[currentApi] ??= {
       type: 'branch',
       children: {},
     };
+    parentNode = parentNode.children[currentApi];
   }
 
   parentNode.children ??= {};
@@ -326,7 +342,7 @@ const computeVSSApi = async (modelId) => {
         node.datatype = 'string';
       }
     },
-    mainApi
+    mainApi,
   );
 
   return ret;
@@ -341,11 +357,11 @@ const getApiDetail = async (modelId, apiName) => {
   traverse(
     tree[mainApi],
     (api, prefix) => {
-      if (prefix === apiName || api?.name === apiName || api?.apiName == apiName) {
+      if (prefix === apiName || api?.name === apiName || api?.apiName === apiName) {
         ret = api;
       }
     },
-    mainApi
+    mainApi,
   );
 
   return ret;

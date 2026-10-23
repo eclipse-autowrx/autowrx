@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -14,12 +14,14 @@ const itemRelationshipSchema = Joi.object().keys({
   target_item_id: Joi.string().required(),
 });
 
-const itemSchema = Joi.object().keys({
-  id: Joi.string().required(),
-  path: Joi.string().trim().allow(''),
-  parent_id: Joi.string().allow(null, ''),
-  relationships: Joi.array().items(itemRelationshipSchema).default([]),
-}).unknown(true); // Allow dynamic fields based on CustomApiSchema attributes
+const itemSchema = Joi.object()
+  .keys({
+    id: Joi.string().required(),
+    path: Joi.string().trim().allow(''),
+    parent_id: Joi.string().allow(null, ''),
+    relationships: Joi.array().items(itemRelationshipSchema).default([]),
+  })
+  .unknown(true); // Allow dynamic fields based on CustomApiSchema attributes
 
 const createCustomApiSet = {
   body: Joi.object().keys({
@@ -121,4 +123,3 @@ module.exports = {
   updateSetItem,
   removeSetItem,
 };
-

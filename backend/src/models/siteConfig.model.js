@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -27,7 +27,7 @@ const siteConfigSchema = new mongoose.Schema(
     },
     target_id: {
       type: mongoose.SchemaTypes.ObjectId,
-      required: function() {
+      required() {
         return this.scope !== 'site';
       },
       index: true,
@@ -70,7 +70,7 @@ const siteConfigSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Index for efficient querying

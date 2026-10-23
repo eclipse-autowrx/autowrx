@@ -95,4 +95,3 @@ export const upsertConfigFromHistory = async (params: {
 
   return { valueBefore, targetValue }
 }
-

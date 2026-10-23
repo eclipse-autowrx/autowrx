@@ -57,7 +57,14 @@ const listModelStats = {
 
 const listVisibilityFilter = Joi.string().custom((value, helpers) => {
   const allowed = Object.values(visibilityTypes);
-  const parts = [...new Set(String(value).split(',').map((part) => part.trim()).filter(Boolean))];
+  const parts = [
+    ...new Set(
+      String(value)
+        .split(',')
+        .map((part) => part.trim())
+        .filter(Boolean),
+    ),
+  ];
   if (!parts.length || parts.some((part) => !allowed.includes(part))) {
     return helpers.error('any.invalid');
   }

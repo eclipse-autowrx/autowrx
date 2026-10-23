@@ -39,7 +39,8 @@ const HomePrototypePopular = ({
     null,
   )
   const { setOpenLoginDialog, authBootstrapped } = useAuthStore()
-  const isResolvingAuth = !authBootstrapped || (!user && (isLoading || isFetching))
+  const isResolvingAuth =
+    !authBootstrapped || (!user && (isLoading || isFetching))
 
   if (requiredLogin && !user && !isResolvingAuth) {
     return null
@@ -141,7 +142,9 @@ const HomePrototypePopular = ({
       >
         <p className="text-base text-muted-foreground">
           You must first sign in to explore SDV idea about{' '}
-          <span className="text-primary font-semibold">{selectedPrototype?.name}</span>
+          <span className="text-primary font-semibold">
+            {selectedPrototype?.name}
+          </span>
         </p>
       </DaDialog>
     </div>

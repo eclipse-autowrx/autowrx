@@ -64,7 +64,7 @@ describe('serviceToken.service', () => {
         expect.objectContaining({
           headers: { 'Ocp-Apim-Subscription-Key': 'test-key' },
           proxy: false,
-        })
+        }),
       );
     });
 

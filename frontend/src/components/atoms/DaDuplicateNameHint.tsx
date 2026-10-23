@@ -24,7 +24,8 @@ const DaDuplicateNameHint = ({
   <p className={cn('text-sm text-destructive mt-1', className)}>
     {message}
     {suggestedName && (
-      <>. Please choose another name like:{' '}
+      <>
+        . Please choose another name like:{' '}
         <button
           type="button"
           className="underline hover:opacity-75"

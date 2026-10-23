@@ -139,7 +139,7 @@ const resolveProfilePayload = async (profileId, body) => {
   if (!modelApi || Object.keys(modelApi).length === 0) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      'Invalid payload. Could not find corresponding model API. Please check payload and profile ID.'
+      'Invalid payload. Could not find corresponding model API. Please check payload and profile ID.',
     );
   }
 
@@ -158,7 +158,7 @@ const handle = async (req, res) => {
     resolved.method,
     req.path || req.url,
     resolved.upstreamPath,
-    resolved.environment || 'default'
+    resolved.environment || 'default',
   );
 
   if (resolved.isGeneration) {

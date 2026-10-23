@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -38,22 +38,25 @@ const useGlobalStore = createWithEqualityFn<GlobalState & Actions>()(
       }),
     setAutomationSequence: (sequence) =>
       set((state) => {
-        const newSequence = {...sequence}
+        const newSequence = { ...sequence }
         newSequence.lastUpdated = new Date()
         state.automationSequence = newSequence
       }),
     setAutomationSequenceActionAt: (index, action) => {
       // console.log('setAutomationSequenceActionAt', index, action)
       set((state) => {
-        if (state.automationSequence && state.automationSequence.actions.length > index) {
+        if (
+          state.automationSequence &&
+          state.automationSequence.actions.length > index
+        ) {
           // Create a new array to trigger reactivity
-          const newSequence = {...state.automationSequence}
+          const newSequence = { ...state.automationSequence }
           newSequence.actions[index] = action
           newSequence.lastUpdated = new Date()
           state.automationSequence = newSequence
         }
       })
-    }
+    },
   })),
 )
 

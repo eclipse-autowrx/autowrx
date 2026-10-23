@@ -13,9 +13,7 @@ import DaDialog from '@/components/molecules/DaDialog'
 import CreateNewModelDialog from '@/components/molecules/CreateNewModelDialog'
 import FormNewPrototype from '@/components/molecules/forms/FormNewPrototype'
 import NewPrototypeTabs from '@/components/molecules/NewPrototypeTabs'
-import {
-  getTabConfig,
-} from '@/components/molecules/PrototypeTabs'
+import { getTabConfig } from '@/components/molecules/PrototypeTabs'
 import {
   TabConfig,
   TabsBorderRadius,
@@ -117,9 +115,8 @@ const NewPrototypeLayout: FC = () => {
     navigate('/')
   }, [navigate, urlParamModelId])
 
-  const [openNewPrototypeDialog, setOpenNewPrototypeDialog] = useState(
-    !isCreateModelMode,
-  )
+  const [openNewPrototypeDialog, setOpenNewPrototypeDialog] =
+    useState(!isCreateModelMode)
   const [openCreateModelDialog, setOpenCreateModelDialog] =
     useState(isCreateModelMode)
   const [selectedPluginId, setSelectedPluginId] = useState<string | null>(null)

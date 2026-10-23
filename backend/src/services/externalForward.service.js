@@ -49,7 +49,7 @@ const createForwarder = ({ name, urls, getAuthHeaders, notConfiguredMessage = 'S
       logPrefix,
       url || 'unknown',
       error?.code || 'n/a',
-      error?.message || error
+      error?.message || error,
     );
 
     if (axios.isAxiosError(error) && error.response) {
@@ -250,7 +250,7 @@ const createForwarder = ({ name, urls, getAuthHeaders, notConfiguredMessage = 'S
         logPrefix,
         url,
         error?.code || 'n/a',
-        error?.message || error
+        error?.message || error,
       );
       writeSseError(res, error, onError);
     }

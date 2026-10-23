@@ -21,7 +21,7 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import { isAxiosError } from 'axios'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import useListModelContribution from '@/hooks/useListModelContribution'
 import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/atoms/select'
-import { Model, ModelLite, ModelCreate } from '@/types/model.type'
+import { ModelLite, ModelCreate } from '@/types/model.type'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Spinner } from '@/components/atoms/spinner'
 import { CVI } from '@/data/CVI'
@@ -75,15 +75,15 @@ const FormCreatePrototype = ({
   onPrototypeChange,
   disabledState,
   hideCreateButton,
-  code,
   widget_config,
-  title,
   buttonText,
 }: FormCreatePrototypeProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
-  const [disabled, setDisabled] = disabledState ?? useState(false)
+  const [fallbackDisabled, setFallbackDisabled] = useState(false)
+  const [disabled, setDisabled] =
+    disabledState ?? [fallbackDisabled, setFallbackDisabled]
 
   const { data: currentModel } = useCurrentModel()
   const { data: contributionModels, isLoading: isFetchingModelContribution } =
@@ -98,10 +98,13 @@ const FormCreatePrototype = ({
 
   const { data: currentUser } = useSelfProfileQuery()
 
-  const { data: remoteTemplatesData, isLoading: isLoadingTemplates } = useQuery({
-    queryKey: ['project-templates-list'],
-    queryFn: () => listProjectTemplates({ limit: 100, page: 1, visibility: 'public' }),
-  })
+  const { data: remoteTemplatesData, isLoading: isLoadingTemplates } = useQuery(
+    {
+      queryKey: ['project-templates-list'],
+      queryFn: () =>
+        listProjectTemplates({ limit: 100, page: 1, visibility: 'public' }),
+    },
+  )
 
   const templateOptions = useMemo(
     () => parseProjectTemplates(remoteTemplatesData?.results ?? []),
@@ -114,23 +117,33 @@ const FormCreatePrototype = ({
     if (templateOptions.length && !selectedTemplateId) {
       const first = templateOptions[0]
       setSelectedTemplateId(first.id)
-      setData((prev) => ({ ...prev, code: first.code, language: first.language }))
+      setData((prev) => ({
+        ...prev,
+        code: first.code,
+        language: first.language,
+      }))
     }
   }, [templateOptions, selectedTemplateId])
 
   const [debouncedPrototypeName, setDebouncedPrototypeName] = useState('')
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedPrototypeName(data.prototypeName), 300)
+    const timer = setTimeout(
+      () => setDebouncedPrototypeName(data.prototypeName),
+      300,
+    )
     return () => clearTimeout(timer)
   }, [data.prototypeName])
 
   const existingPrototypeNames = useMemo(
-    () => (localModel ? existingPrototypes?.map((p: any) => p.name) ?? [] : []),
+    () =>
+      localModel ? (existingPrototypes?.map((p: any) => p.name) ?? []) : [],
     [existingPrototypes, localModel],
   )
 
-  const { isDuplicate: isDuplicatePrototypeName, suggestedName: suggestedPrototypeName } =
-    useDuplicateNameCheck(debouncedPrototypeName, existingPrototypeNames)
+  const {
+    isDuplicate: isDuplicatePrototypeName,
+    suggestedName: suggestedPrototypeName,
+  } = useDuplicateNameCheck(debouncedPrototypeName, existingPrototypeNames)
 
   const { data: ownedModelsData } = useQuery({
     queryKey: ['listModelLiteOwned', currentUser?.id],
@@ -149,8 +162,10 @@ const FormCreatePrototype = ({
     return () => clearTimeout(timer)
   }, [data.modelName])
 
-  const { isDuplicate: isDuplicateModelName, suggestedName: suggestedModelName } =
-    useDuplicateNameCheck(debouncedModelName, ownedModelNames)
+  const {
+    isDuplicate: isDuplicateModelName,
+    suggestedName: suggestedModelName,
+  } = useDuplicateNameCheck(debouncedModelName, ownedModelNames)
 
   const handleChange = (name: keyof typeof data, value: string | number) => {
     setData((prev) => ({ ...prev, [name]: value }))
@@ -160,7 +175,11 @@ const FormCreatePrototype = ({
   const onTemplateChange = (templateId: string) => {
     const template = templateOptions.find((t) => t.id === templateId)
     if (template) {
-      setData((prev) => ({ ...prev, code: template.code, language: template.language }))
+      setData((prev) => ({
+        ...prev,
+        code: template.code,
+        language: template.language,
+      }))
       setSelectedTemplateId(templateId)
     }
   }
@@ -173,7 +192,6 @@ const FormCreatePrototype = ({
 
       // Initialize variables to hold the model ID and response from prototype creation
       let modelId: string
-      let response
 
       if (localModel) {
         // Scenario 1: `localModel` exists, use its ID
@@ -199,7 +217,9 @@ const FormCreatePrototype = ({
         '/imgs/default_prototype_cover.jpg',
       )
 
-      const selectedTemplate = templateOptions.find((t) => t.id === selectedTemplateId)
+      const selectedTemplate = templateOptions.find(
+        (t) => t.id === selectedTemplateId,
+      )
       const language = data.language || selectedTemplate?.language || 'python'
 
       const body = {
@@ -219,24 +239,28 @@ const FormCreatePrototype = ({
           solution: '',
           status: '',
         },
-        image_file: defaultPrototypeImage || '/imgs/default_prototype_cover.jpg',
+        image_file:
+          defaultPrototypeImage || '/imgs/default_prototype_cover.jpg',
         skeleton: '{}',
         tags: [],
         widget_config:
-          widget_config || selectedTemplate?.widget_config || getDefaultDashboardCfg(language) || '[]',
+          widget_config ||
+          selectedTemplate?.widget_config ||
+          getDefaultDashboardCfg(language) ||
+          '[]',
         autorun: true,
       }
 
       // Create the prototype using the model ID
 
-      response = await createPrototypeService(body)
+      const response = await createPrototypeService(body)
 
       // Log the prototype creation
       await addLog({
         name: `New prototype '${data.prototypeName}' under model '${localModel?.name || data.modelName}'`,
         description: `Prototype '${data.prototypeName}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
         type: 'new-prototype',
-        create_by: currentUser?.id!,
+        create_by: currentUser?.id as string,
         ref_id: response.id,
         ref_type: 'prototype',
         parent_id: modelId,
@@ -247,7 +271,7 @@ const FormCreatePrototype = ({
         description: (
           <p className="flex items-center text-sm">
             <TbCircleCheckFilled className="mr-2 h-4 w-4 text-green-500" />
-            Prototype "{data.prototypeName}" created successfully
+            Prototype &quot;{data.prototypeName}&quot; created successfully
           </p>
         ),
         duration: 3000,
@@ -335,10 +359,7 @@ const FormCreatePrototype = ({
   ])
 
   return (
-    <form
-      onSubmit={createNewPrototype}
-      className="flex flex-col bg-background"
-    >
+    <form onSubmit={createNewPrototype} className="flex flex-col bg-background">
       {!currentModel &&
         (contributionModels && !isFetchingModelContribution && localModel ? (
           <div className="flex flex-col mt-4">
@@ -350,7 +371,7 @@ const FormCreatePrototype = ({
                 const selectedModel = contributionModels.results.find(
                   (model: ModelLite) => model.id === e,
                 )
-                selectedModel && setLocalModel(selectedModel)
+                if (selectedModel) setLocalModel(selectedModel)
               }}
             >
               <SelectTrigger>
@@ -429,7 +450,10 @@ const FormCreatePrototype = ({
                 onTemplateChange(v)
               }}
             >
-              <SelectTrigger data-id="project-template-select" className="w-full">
+              <SelectTrigger
+                data-id="project-template-select"
+                className="w-full"
+              >
                 <SelectValue placeholder="Select a template" />
               </SelectTrigger>
               <SelectContent>
@@ -448,7 +472,10 @@ const FormCreatePrototype = ({
         disabled={disabled}
         type="submit"
         data-id="btn-create-prototype"
-        className={cn('mt-8 w-full da-form-create-prototype-submit', hideCreateButton && 'hidden')}
+        className={cn(
+          'mt-8 w-full da-form-create-prototype-submit',
+          hideCreateButton && 'hidden',
+        )}
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
         {buttonText ?? 'Create Prototype'}

@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -60,23 +60,25 @@ const DaGenAI_Base = ({
   const [hasGenAIAssets, setHasGenAIAssets] = useState(false)
   const timeouts = useRef<NodeJS.Timeout[]>([])
   const [copied, setCopied] = useState(false)
-  
+
   // Initialize built-in addons immediately for GenAI_Python
   const [builtInAddOns, setBuiltInAddOns] = useState<AddOn[]>(() => {
     if (type === 'GenAI_Python') {
       // Create default SDV Copilot immediately, endpoint will be loaded from GENAI_SDV_APP_ENDPOINT config
-      return [{
-        id: 'sdv-copilot-builtin',
-        type: 'GenAI_Python' as const,
-        name: 'SDV Copilot',
-        description: 'Support develop basic SDV Python App',
-        apiKey: 'Empty',
-        endpointUrl: '', // Will be loaded from config
-        customPayload: (prompt: string) => ({ prompt }),
-        method: 'POST',
-        requestField: 'prompt',
-        responseField: 'data',
-      }]
+      return [
+        {
+          id: 'sdv-copilot-builtin',
+          type: 'GenAI_Python' as const,
+          name: 'SDV Copilot',
+          description: 'Support develop basic SDV Python App',
+          apiKey: 'Empty',
+          endpointUrl: '', // Will be loaded from config
+          customPayload: (prompt: string) => ({ prompt }),
+          method: 'POST',
+          requestField: 'prompt',
+          responseField: 'data',
+        },
+      ]
     }
     return []
   })
@@ -93,22 +95,24 @@ const DaGenAI_Base = ({
             'GENAI_SDV_APP_ENDPOINT',
             'site',
             undefined,
-            '' // No hardcoded fallback - use default from DEFAULT_SITE_CONFIGS or require admin configuration
+            '', // No hardcoded fallback - use default from DEFAULT_SITE_CONFIGS or require admin configuration
           )
 
           // Update the endpoint URL from config
-          setBuiltInAddOns([{
-            id: 'sdv-copilot-builtin',
-            type: 'GenAI_Python',
-            name: 'SDV Copilot',
-            description: 'Support develop basic SDV Python App',
-            apiKey: 'Empty',
-            endpointUrl: endpointUrl || '', // Use empty string if not configured
-            customPayload: (prompt: string) => ({ prompt }),
-            method: 'POST',
-            requestField: 'prompt',
-            responseField: 'data',
-          }])
+          setBuiltInAddOns([
+            {
+              id: 'sdv-copilot-builtin',
+              type: 'GenAI_Python',
+              name: 'SDV Copilot',
+              description: 'Support develop basic SDV Python App',
+              apiKey: 'Empty',
+              endpointUrl: endpointUrl || '', // Use empty string if not configured
+              customPayload: (prompt: string) => ({ prompt }),
+              method: 'POST',
+              requestField: 'prompt',
+              responseField: 'data',
+            },
+          ])
         }
       } catch (err) {
         console.error('Error loading built-in addons endpoint:', err)
@@ -125,12 +129,14 @@ const DaGenAI_Base = ({
       if (marketplaceMatch) {
         return {
           ...marketplaceMatch,
-          customPayload: addOn.customPayload || ((prompt: string) => ({ prompt })),
+          customPayload:
+            addOn.customPayload || ((prompt: string) => ({ prompt })),
         }
       }
       return {
         ...addOn,
-        customPayload: addOn.customPayload || ((prompt: string) => ({ prompt })),
+        customPayload:
+          addOn.customPayload || ((prompt: string) => ({ prompt })),
       }
     })
   }, [builtInAddOns, marketplaceAddOns, prompt])
@@ -214,14 +220,18 @@ const DaGenAI_Base = ({
   const filteredMarketplaceAddOns = useMemo(() => {
     if (!marketplaceAddOns) return []
     const builtInIds = mergedBuiltInAddOns.map((addon: AddOn) => addon.id)
-    const builtInNames = mergedBuiltInAddOns.map((addon: AddOn) => addon.name.toLowerCase())
+    const builtInNames = mergedBuiltInAddOns.map((addon: AddOn) =>
+      addon.name.toLowerCase(),
+    )
     // Filter out marketplace addons that match built-in addons by ID or name
     // Also filter out "SDV Copilot" or "SDV-Copilot" variants
     return marketplaceAddOns.filter((addon) => {
       const addonNameLower = addon.name.toLowerCase()
       const isBuiltInById = builtInIds.includes(addon.id)
       const isBuiltInByName = builtInNames.includes(addonNameLower)
-      const isSDVCopilot = addonNameLower.includes('sdv copilot') || addonNameLower.includes('sdv-copilot')
+      const isSDVCopilot =
+        addonNameLower.includes('sdv copilot') ||
+        addonNameLower.includes('sdv-copilot')
       return !isBuiltInById && !isBuiltInByName && !isSDVCopilot
     })
   }, [marketplaceAddOns, mergedBuiltInAddOns])
@@ -313,11 +323,13 @@ const DaGenAI_Base = ({
           'GENAI_SDV_APP_ENDPOINT',
           'site',
           undefined,
-          '' // No hardcoded fallback - use default from DEFAULT_SITE_CONFIGS or require admin configuration
+          '', // No hardcoded fallback - use default from DEFAULT_SITE_CONFIGS or require admin configuration
         )
 
         if (!endpointUrl) {
-          throw new Error('GENAI_SDV_APP_ENDPOINT is not configured. Please configure it in Site Management.')
+          throw new Error(
+            'GENAI_SDV_APP_ENDPOINT is not configured. Please configure it in Site Management.',
+          )
         }
 
         const response = await axios.post(
@@ -334,7 +346,11 @@ const DaGenAI_Base = ({
         )
 
         // Parse the generated content from the response structure
-        onCodeGenerated(response.data.content || response.data.data || JSON.stringify(response.data))
+        onCodeGenerated(
+          response.data.content ||
+            response.data.data ||
+            JSON.stringify(response.data),
+        )
       } catch (err) {
         console.log(err)
       }
@@ -368,7 +384,10 @@ const DaGenAI_Base = ({
         <div className="flex w-full items-center justify-between shrink-0">
           <DaSectionTitle number={1} title="Prompting" />
         </div>
-        <div className="mt-1 flex w-full shrink-0" style={{ maxHeight: '200px' }}>
+        <div
+          className="mt-1 flex w-full shrink-0"
+          style={{ maxHeight: '200px' }}
+        >
           <Textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -387,8 +406,15 @@ const DaGenAI_Base = ({
           />
         </div>
 
-        <DaSectionTitle number={2} title="Select Generator" className="mt-4 shrink-0" />
-        <div className="flex w-full shrink-0" style={{ maxHeight: '200px', minHeight: '120px' }}>
+        <DaSectionTitle
+          number={2}
+          title="Select Generator"
+          className="mt-4 shrink-0"
+        />
+        <div
+          className="flex w-full shrink-0"
+          style={{ maxHeight: '200px', minHeight: '120px' }}
+        >
           {addonsLoaded ? (
             <DaGeneratorSelector
               builtInAddOns={mergedBuiltInAddOns}

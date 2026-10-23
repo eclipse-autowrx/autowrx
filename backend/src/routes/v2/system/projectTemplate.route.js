@@ -12,9 +12,7 @@ const { PERMISSIONS } = require('../../../config/roles');
 const router = express.Router();
 
 // Public read endpoints (anyone can list/get public templates)
-router
-  .route('/')
-  .get(auth({ optional: true }), validate(projectTemplateValidation.list), projectTemplateController.list);
+router.route('/').get(auth({ optional: true }), validate(projectTemplateValidation.list), projectTemplateController.list);
 
 router
   .route('/:id')

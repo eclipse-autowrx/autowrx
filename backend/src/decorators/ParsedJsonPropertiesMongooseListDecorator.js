@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -36,7 +36,7 @@ class ParsedJsonPropertiesMongooseListDecorator {
     fields.forEach((field, index) => {
       if (!field || typeof field !== 'string' || field.trim() === '') {
         throw new Error(
-          `Error initializing list parser: Invalid field name at index ${index}. All field names must be non-empty strings.`
+          `Error initializing list parser: Invalid field name at index ${index}. All field names must be non-empty strings.`,
         );
       }
     });

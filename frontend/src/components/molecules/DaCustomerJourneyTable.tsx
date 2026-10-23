@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   TbX,
   TbColumnInsertLeft,
@@ -29,22 +29,14 @@ const DaTableEditor = ({
 }: DaTableEditorProps) => {
   const [tableData, setTableData] = useState<any[]>([])
   const [columnNames, setColumnNames] = useState<string[]>([])
-  const [hoveredColumnIndex, setHoveredColumnIndex] = useState<number | null>(
-    null,
-  )
-  const [hoveredRowIndex, setHoveredRowIndex] = useState<number | null>(null)
+  const [, setHoveredColumnIndex] = useState<number | null>(null)
+  const [, setHoveredRowIndex] = useState<number | null>(null)
   const [editingColumnHeader, setEditingColumnHeader] = useState<number | null>(
     null,
   )
   const [editingRowHeader, setEditingRowHeader] = useState<number | null>(null)
   const textareaRefs = useRef<(HTMLTextAreaElement | null)[]>([])
 
-  const isValidHeader = (header: string) => {
-    // Only check if it's not empty and doesn't start with a number
-    const hasContent = header.trim().length > 0
-    const startsWithNumeric = /^\d/.test(header)
-    return hasContent && !startsWithNumeric
-  }
   const [internalValue, setInternalValue] = useState(defaultValue)
 
   useEffect(() => {
@@ -89,7 +81,7 @@ const DaTableEditor = ({
   }
 
   const addRow = () => {
-    const newRow: { rowName: string;[key: string]: string } = { rowName: '' }
+    const newRow: { rowName: string; [key: string]: string } = { rowName: '' }
     columnNames.forEach((columnName) => {
       newRow[columnName] = ''
     })
@@ -214,7 +206,7 @@ const DaTableEditor = ({
                     <div className="journey-edit-column-name relative mx-2 group h-full flex items-center justify-center z-10">
                       {editingColumnHeader === columnIndex ? (
                         <input
-                          data-id='journey-edit-column-name-input'
+                          data-id="journey-edit-column-name-input"
                           type="text"
                           className="w-full bg-transparent outline-none mx-4 journey-edit-column-name-input text-primary-foreground"
                           value={columnNames[columnIndex]}
@@ -227,7 +219,12 @@ const DaTableEditor = ({
                             setColumnNames(updatedColumnNames)
 
                             const newData = tableData.map((row) => {
-                              if (row.hasOwnProperty(oldColumnName)) {
+                              if (
+                                Object.prototype.hasOwnProperty.call(
+                                  row,
+                                  oldColumnName,
+                                )
+                              ) {
                                 row[newColumnName] = row[oldColumnName]
                                 delete row[oldColumnName]
                               }
@@ -245,16 +242,16 @@ const DaTableEditor = ({
                         columnName
                       )}
 
-                      { isEditing && 
-                      <Button
-                        className="journey-edit-btn-delete-column m-1 !p-0 !w-6 !h-6 rounded absolute top-0 -right-4 bg-background hover:bg-background text-muted-foreground hover:text-destructive z-10 border"
-                        variant="outline"
-                        onClick={() => deleteColumn(columnIndex)}
-                        size="icon-sm"
-                      >
-                        <TbX className="w-4 h-4" />
-                      </Button>
-                      }
+                      {isEditing && (
+                        <Button
+                          className="journey-edit-btn-delete-column m-1 !p-0 !w-6 !h-6 rounded absolute top-0 -right-4 bg-background hover:bg-background text-muted-foreground hover:text-destructive z-10 border"
+                          variant="outline"
+                          onClick={() => deleteColumn(columnIndex)}
+                          size="icon-sm"
+                        >
+                          <TbX className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </th>
                 ))}
@@ -287,16 +284,17 @@ const DaTableEditor = ({
                     ) : (
                       row.rowName || ''
                     )}
-                    { isEditing && 
-                    <Button
-                      data-id="journey-edit-delete-row-btn"
-                      className="journey-edit-content-cell-btn-delete-row m-1 !p-0 !w-6 !h-6 rounded absolute top-0 right-0 bg-background hover:bg-background text-muted-foreground hover:text-destructive border"
-                      size="icon-sm"
-                      variant="outline"
-                      onClick={() => deleteRow(rowIndex)}
-                    >
-                      <TbX className="size-4" />
-                    </Button> }
+                    {isEditing && (
+                      <Button
+                        data-id="journey-edit-delete-row-btn"
+                        className="journey-edit-content-cell-btn-delete-row m-1 !p-0 !w-6 !h-6 rounded absolute top-0 right-0 bg-background hover:bg-background text-muted-foreground hover:text-destructive border"
+                        size="icon-sm"
+                        variant="outline"
+                        onClick={() => deleteRow(rowIndex)}
+                      >
+                        <TbX className="size-4" />
+                      </Button>
+                    )}
                   </td>
                   {columnNames.map((columnName, columnIndex) => (
                     <td className="border px-4 py-2" key={columnIndex}>
@@ -330,7 +328,7 @@ const DaTableEditor = ({
           data-id="journey-edit-add-row-btn"
           className={`absolute -bottom-10 left-0 w-full !h-8 py-0.5 z-10 border-dashed ${
             isEditing ? 'block' : '!hidden'
-            }`}
+          }`}
           onClick={addRow}
         >
           <TbRowInsertTop className="size-4" />
@@ -341,7 +339,7 @@ const DaTableEditor = ({
           data-id="journey-edit-add-column-btn"
           className={`absolute top-0 -right-10 !h-full w-8 !px-0 z-10 border-dashed ${
             isEditing ? 'flex' : '!hidden'
-            }`}
+          }`}
           onClick={addColumn}
         >
           <TbColumnInsertLeft />
@@ -400,4 +398,3 @@ function getTableColumns(tableString: string | undefined) {
 }
 
 export default DaTableEditor
-

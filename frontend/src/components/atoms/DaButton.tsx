@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -11,8 +11,8 @@ import { cn } from '@/lib/utils'
 
 interface DaButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children?: React.ReactNode
-  className?: string | undefined,
-  dataId?: string,
+  className?: string | undefined
+  dataId?: string
   variant?:
     | 'solid'
     | 'outline'

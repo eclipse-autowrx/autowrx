@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -25,7 +25,9 @@ export const convertJSONToProperty = (json: string) => {
       result.push({ name: key, type: type, value: String(value) })
     }
     return result
-  } catch (error) {}
+  } catch {
+    // ignore: fall through to the partial result
+  }
   return result
 }
 

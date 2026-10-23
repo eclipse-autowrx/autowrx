@@ -23,7 +23,10 @@ import { useNavigate } from 'react-router-dom'
 import { searchService } from '@/services/search.service'
 import { toast } from 'react-toastify'
 import type { Prototype, ModelLite } from '@/types/model.type'
-import { useDefaultModelImage, useDefaultPrototypeImage } from '@/utils/siteConfig'
+import {
+  useDefaultModelImage,
+  useDefaultPrototypeImage,
+} from '@/utils/siteConfig'
 
 interface DaGlobalSearchProps {
   trigger: ReactNode
@@ -99,25 +102,27 @@ const DaGlobalSearch = ({ trigger }: DaGlobalSearchProps) => {
         let results: SearchResult[] = []
 
         if (selectedFilters.includes('Prototypes')) {
-          const filteredPrototypes: SearchResult[] = prototypes
-            .map((prototype: Prototype) => ({
+          const filteredPrototypes: SearchResult[] = prototypes.map(
+            (prototype: Prototype) => ({
               id: prototype.id,
               name: prototype.name,
               image_file: prototype.image_file,
               type: 'Prototype' as const,
               parent: { model_id: prototype.model_id },
-            }))
+            }),
+          )
           results = [...results, ...filteredPrototypes]
         }
 
         if (selectedFilters.includes('Models')) {
-          const filteredModels: SearchResult[] = models
-            .map((model: ModelLite) => ({
+          const filteredModels: SearchResult[] = models.map(
+            (model: ModelLite) => ({
               id: model.id,
               name: model.name,
               image_file: model.model_home_image_file,
               type: 'Model' as const,
-            }))
+            }),
+          )
           results = [...results, ...filteredModels]
         }
 
@@ -252,7 +257,10 @@ const DaGlobalSearch = ({ trigger }: DaGlobalSearchProps) => {
                 <div className="flex flex-col space-y-1 max-h-[50vh] overflow-y-auto mt-4">
                   <p className="text-sm font-light mb-2">
                     Search{' '}
-                    <span className="font-semibold"> '{searchTerm}' </span>
+                    <span className="font-semibold">
+                      {' '}
+                      &apos;{searchTerm}&apos;{' '}
+                    </span>
                     for{' '}
                     <span className="font-semibold">
                       {selectedFilters

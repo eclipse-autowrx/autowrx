@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -11,7 +11,6 @@ const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
 const { userService, permissionService } = require('../services');
-const { Role } = require('../models');
 const { PERMISSIONS } = require('../config/roles');
 
 const createUser = catchAsync(async (req, res) => {

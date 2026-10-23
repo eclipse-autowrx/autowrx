@@ -1,17 +1,17 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
 
-const { SiteConfig, SiteConfigSnapshot, SiteConfigSnapshotMeta } = require('../models');
 const mongoose = require('mongoose');
-const ApiError = require('../utils/ApiError');
 const httpStatus = require('http-status');
 const fs = require('fs');
 const path = require('path');
+const ApiError = require('../utils/ApiError');
+const { SiteConfig, SiteConfigSnapshot, SiteConfigSnapshotMeta } = require('../models');
 const ssoService = require('./sso.service');
 const { encrypt, decrypt } = require('../utils/encryption');
 const PREDEFINED_SITE_CONFIGS = require('../config/predefinedSiteConfigs');
@@ -48,7 +48,12 @@ const encryptEmailConfigSecrets = (emailConfig) => {
   }
 
   // Encrypt SMTP password if present and not already encrypted
-  if (result.smtpConfig && result.smtpConfig.pass && typeof result.smtpConfig.pass === 'string' && !result.smtpConfig.pass.includes(':')) {
+  if (
+    result.smtpConfig &&
+    result.smtpConfig.pass &&
+    typeof result.smtpConfig.pass === 'string' &&
+    !result.smtpConfig.pass.includes(':')
+  ) {
     result.smtpConfig = { ...result.smtpConfig, pass: encrypt(result.smtpConfig.pass) };
   }
 
@@ -72,7 +77,12 @@ const decryptEmailConfigSecrets = (emailConfig) => {
     }
   }
 
-  if (result.smtpConfig && result.smtpConfig.pass && typeof result.smtpConfig.pass === 'string' && result.smtpConfig.pass.includes(':')) {
+  if (
+    result.smtpConfig &&
+    result.smtpConfig.pass &&
+    typeof result.smtpConfig.pass === 'string' &&
+    result.smtpConfig.pass.includes(':')
+  ) {
     try {
       result.smtpConfig = { ...result.smtpConfig, pass: decrypt(result.smtpConfig.pass) };
     } catch {
@@ -108,7 +118,7 @@ const getValueType = (value) => {
  * Add more mappings here as needed
  */
 const DEFAULT_CONFIG_FILES = {
-  'CFG_HOME_CONTENT': 'home_content.json',
+  CFG_HOME_CONTENT: 'home_content.json',
   // Add more default files here as needed
   // 'CFG_ANOTHER_KEY': 'another_default.json',
 };
@@ -120,7 +130,7 @@ const DEFAULT_CONFIG_FILES = {
  */
 const getInlineDefaultValue = (key) => {
   const inlineDefaults = {
-    'STAGING_FRAME': {
+    STAGING_FRAME: {
       value: {
         stages: [
           {
@@ -147,7 +157,7 @@ const getInlineDefaultValue = (key) => {
       },
       valueType: 'object',
     },
-    'STANDARD_STAGE': {
+    STANDARD_STAGE: {
       value: {
         isTopMost: true,
         name: '',
@@ -360,21 +370,34 @@ const loadDefaultConfigValue = (key) => {
  * @returns {Promise<SiteConfig>}
  */
 const createSiteConfig = async (siteConfigBody) => {
-  const { key, scope = 'site', target_id, value, valueType: clientValueType, secret = false, description, category = 'general', created_by } = siteConfigBody;
-  
+  const {
+    key,
+    scope = 'site',
+    target_id,
+    value,
+    valueType: clientValueType,
+    secret = false,
+    description,
+    category = 'general',
+    created_by,
+  } = siteConfigBody;
+
   // Check if key already exists for this scope and target
   const query = { key, scope };
   if (target_id) {
     query.target_id = target_id;
   }
-  
+
   const existingConfig = await SiteConfig.findOne(query);
   if (existingConfig) {
-    throw new ApiError(httpStatus.BAD_REQUEST, `Config key "${key}" already exists for scope "${scope}"${target_id ? ` and target ${target_id}` : ''}`);
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Config key "${key}" already exists for scope "${scope}"${target_id ? ` and target ${target_id}` : ''}`,
+    );
   }
 
   const valueType = clientValueType || getValueType(value);
-  
+
   // Encrypt secrets for specific config keys
   let processedValue = value;
   if (key === 'SSO_PROVIDERS' && Array.isArray(value)) {
@@ -415,7 +438,7 @@ const querySiteConfigs = async (filter, options) => {
   // Process results to apply defaults for null values
   if (useDefaultFallback) {
     const scope = filter.scope || 'site';
-    siteConfigs.results = siteConfigs.results.map(config => {
+    siteConfigs.results = siteConfigs.results.map((config) => {
       // If value is null and we have a default, use default value
       if (config.value === null && scope === 'site') {
         const inlineDefault = getInlineDefaultValue(config.key);
@@ -440,30 +463,34 @@ const querySiteConfigs = async (filter, options) => {
     const defaultConfig = loadDefaultConfigValue(filter.key);
     if (defaultConfig) {
       // Inject the default config into results
-      siteConfigs.results = [{
-        key: filter.key,
-        scope: scope,
-        value: defaultConfig.value,
-        valueType: defaultConfig.valueType,
-        secret: false,
-        category: 'default',
-        isDefault: true,
-      }];
+      siteConfigs.results = [
+        {
+          key: filter.key,
+          scope,
+          value: defaultConfig.value,
+          valueType: defaultConfig.valueType,
+          secret: false,
+          category: 'default',
+          isDefault: true,
+        },
+      ];
       siteConfigs.totalResults = 1;
       siteConfigs.totalPages = 1;
     } else {
       // Then try inline defaults
       const inlineDefault = getInlineDefaultValue(filter.key);
       if (inlineDefault) {
-        siteConfigs.results = [{
-          key: filter.key,
-          scope: scope,
-          value: inlineDefault.value,
-          valueType: inlineDefault.valueType,
-          secret: false,
-          category: 'deploy',
-          isDefault: true,
-        }];
+        siteConfigs.results = [
+          {
+            key: filter.key,
+            scope,
+            value: inlineDefault.value,
+            valueType: inlineDefault.valueType,
+            secret: false,
+            category: 'deploy',
+            isDefault: true,
+          },
+        ];
         siteConfigs.totalResults = 1;
         siteConfigs.totalPages = 1;
       }
@@ -480,7 +507,7 @@ const querySiteConfigs = async (filter, options) => {
  */
 const getSiteConfigById = async (id) => {
   const config = await SiteConfig.findById(id);
-  
+
   // Decrypt secrets for admin access
   if (config && config.key === 'SSO_PROVIDERS' && Array.isArray(config.value)) {
     const decryptedValue = ssoService.decryptProviderSecrets(config.value);
@@ -542,7 +569,7 @@ const getSiteConfigByKey = async (key, scope = 'site', target_id = null, useDefa
         isDefault: true, // Flag to indicate this is from default file, not DB
       };
     }
-    
+
     // Then try inline defaults
     const inlineDefault = getInlineDefaultValue(key);
     if (inlineDefault) {
@@ -588,7 +615,7 @@ const getSiteConfigValues = async (keys, scope = 'site', target_id = null) => {
   }
   const configs = await SiteConfig.find(query);
   const result = {};
-  configs.forEach(config => {
+  configs.forEach((config) => {
     result[config.key] = config.value;
   });
   return result;
@@ -607,7 +634,7 @@ const getPublicSiteConfigs = async (scope = 'site', target_id = null) => {
   }
   const configs = await SiteConfig.find(query);
   const result = {};
-  configs.forEach(config => {
+  configs.forEach((config) => {
     result[config.key] = config.value;
   });
   return result;
@@ -626,7 +653,7 @@ const getAllSiteConfigs = async (scope = 'site', target_id = null) => {
   }
   const configs = await SiteConfig.find(query);
   const result = {};
-  configs.forEach(config => {
+  configs.forEach((config) => {
     result[config.key] = config.value;
   });
   return result;
@@ -715,18 +742,18 @@ const updateSiteConfigById = async (siteConfigId, updateBody) => {
 const updateSiteConfigByKey = async (key, updateBody) => {
   // Don't use default fallback for update operations - get Mongoose document directly
   let siteConfig = await SiteConfig.findOne({ key, scope: 'site' });
-  
+
   // If config doesn't exist, create it (upsert behavior)
   if (!siteConfig) {
     // Determine valueType from updateBody or infer from value
     const valueType = updateBody.valueType || (updateBody.value !== undefined ? getValueType(updateBody.value) : 'string');
-    
+
     // Create new config with required fields
     const newConfigBody = {
       key,
       scope: 'site',
       value: updateBody.value !== undefined ? updateBody.value : null,
-      valueType: valueType,
+      valueType,
       secret: updateBody.secret !== undefined ? updateBody.secret : false,
       description: updateBody.description || '',
       category: updateBody.category || 'general',
@@ -819,7 +846,7 @@ const deleteSiteConfigByKey = async (key) => {
  * @returns {Promise<Array>}
  */
 const bulkUpsertSiteConfigs = async (configs, userId) => {
-  const operations = configs.map(config => ({
+  const operations = configs.map((config) => ({
     updateOne: {
       filter: { key: config.key },
       update: {
@@ -837,7 +864,7 @@ const bulkUpsertSiteConfigs = async (configs, userId) => {
   }));
 
   await SiteConfig.bulkWrite(operations);
-  return SiteConfig.find({ key: { $in: configs.map(c => c.key) } });
+  return SiteConfig.find({ key: { $in: configs.map((c) => c.key) } });
 };
 
 /**
@@ -876,7 +903,7 @@ const seedPredefinedSiteConfigs = async (predefinedConfigs, systemUserId) => {
     if (systemUserId) {
       await SiteConfig.updateMany(
         { scope: 'site', $or: [{ created_by: { $exists: false } }, { created_by: null }] },
-        { $set: { created_by: systemUserId, updated_by: systemUserId } }
+        { $set: { created_by: systemUserId, updated_by: systemUserId } },
       );
     }
 
@@ -932,11 +959,11 @@ const syncSiteConfigSnapshotsIfNeeded = async () => {
   await SiteConfigSnapshotMeta.findByIdAndUpdate(
     SNAPSHOT_META_ID,
     { lastSyncedSeedRunAt: new Date(seedRunAt) },
-    { upsert: true, new: true }
+    { upsert: true, new: true },
   );
 
   console.log(
-    `[SiteConfig] Snapshot synced ${liveConfigs.length} config(s) from seed run at ${new Date(seedRunAt).toISOString()}`
+    `[SiteConfig] Snapshot synced ${liveConfigs.length} config(s) from seed run at ${new Date(seedRunAt).toISOString()}`,
   );
   return true;
 };
@@ -1002,9 +1029,7 @@ const snapshotToRestoreConfig = (snapshot) => ({
  * @returns {{ configs: Array, source: 'snapshot' | 'predefined' | 'mixed' | 'none' }}
  */
 const resolveRestoreConfigs = (filter, snapshots) => {
-  const predefined = ALL_PREDEFINED_RESTORE_DEFAULTS.filter((config) =>
-    matchesRestoreFilter(config, filter)
-  );
+  const predefined = ALL_PREDEFINED_RESTORE_DEFAULTS.filter((config) => matchesRestoreFilter(config, filter));
   const predefinedByKey = new Map(predefined.map((config) => [config.key, config]));
   const snapshotByKey = new Map(snapshots.map((snapshot) => [snapshot.key, snapshot]));
 
@@ -1051,10 +1076,7 @@ const restoreSiteConfigFromSnapshot = async (filter, userId) => {
 
   const snapshotFilter = buildSnapshotRestoreFilter(filter);
   if (!snapshotFilter) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      'At least one filter is required: keys, categories, or secret'
-    );
+    throw new ApiError(httpStatus.BAD_REQUEST, 'At least one filter is required: keys, categories, or secret');
   }
 
   const snapshots = await SiteConfigSnapshot.find({

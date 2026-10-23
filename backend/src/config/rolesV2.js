@@ -1,33 +1,26 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
 
-const { newEnforcer, Enforcer } = require('casbin');
+const { newEnforcer } = require('casbin');
 const { default: MongooseAdapter } = require('casbin-mongoose-adapter');
 const path = require('path');
 const config = require('./config');
 const logger = require('./logger');
 
-/** @type Enforcer | null */
+/** @type import('casbin').Enforcer | null */
 let rolesClient = null;
-
-(async () => {
-  const modelPath = path.join(__dirname, './rolesModel.conf');
-  const adapter = await MongooseAdapter.newAdapter(config.mongoose.url);
-  rolesClient = await newEnforcer(modelPath, adapter);
-  await initDefaultDataAndPolicies(rolesClient);
-})();
 
 /**
  *
- * @param {Enforcer} rolesClient
+ * @param {import('casbin').Enforcer} enforcer
  */
-async function initDefaultDataAndPolicies(rolesClient) {
-  if (!rolesClient) {
+async function initDefaultDataAndPolicies(enforcer) {
+  if (!enforcer) {
     logger.warn('rolesClient is not initialized');
     return;
   }
@@ -42,12 +35,31 @@ async function initDefaultDataAndPolicies(rolesClient) {
   ];
 
   const groupingName = 'role_act';
-  const promises = rolesActionsMap.map(([role, action]) => rolesClient.addNamedGroupingPolicy(groupingName, role, action));
+  const promises = rolesActionsMap.map(([role, action]) => enforcer.addNamedGroupingPolicy(groupingName, role, action));
   await Promise.all(promises);
 }
+
+const rolesClientReady = (async () => {
+  const modelPath = path.join(__dirname, './rolesModel.conf');
+  const adapter = await MongooseAdapter.newAdapter(config.mongoose.url);
+  rolesClient = await newEnforcer(modelPath, adapter);
+  await initDefaultDataAndPolicies(rolesClient);
+})();
 
 function getRolesClient() {
   return rolesClient;
 }
 
+/**
+ * Close the Casbin adapter's MongoDB connection (used by tests so Jest can exit; not called at runtime).
+ */
+async function closeRolesClient() {
+  await rolesClientReady.catch(() => {});
+  const adapter = rolesClient?.getAdapter();
+  if (adapter?.close) {
+    await adapter.close();
+  }
+}
+
 module.exports.getRolesClient = getRolesClient;
+module.exports.closeRolesClient = closeRolesClient;

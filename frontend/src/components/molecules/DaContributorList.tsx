@@ -41,7 +41,10 @@ const accessLevels = [
   },
 ]
 
-const DaContributorList = ({ className, canEdit = true }: ContributorListProps) => {
+const DaContributorList = ({
+  className,
+  canEdit = true,
+}: ContributorListProps) => {
   const { data: model, refetch } = useCurrentModel()
   const [activeTab, setActiveTab] = useState('contributors')
   const { data: currentUser } = useSelfProfileQuery()

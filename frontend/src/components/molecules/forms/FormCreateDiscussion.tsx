@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -70,7 +70,7 @@ const FormCreateDiscussion = ({
         name: `User ${user?.id} created discussion`,
         description: `User ${user?.id} created discussion with id ${discussion.id}}, ref ${refId} and ref_type ${refType}`,
         type: 'create-dicussion',
-        create_by: user?.id!,
+        create_by: user?.id as string,
         parent_id: refId,
         ref_id: discussion?.id,
         ref_type: refType,
@@ -100,12 +100,12 @@ const FormCreateDiscussion = ({
         name: `User ${user?.id} updated discussion`,
         description: `User ${user?.id} updated discussion with id ${updatingData.id}`,
         type: 'update-discussion',
-        create_by: user?.id!,
+        create_by: user?.id as string,
         parent_id: updatingData?.ref,
         ref_id: updatingData?.id,
         ref_type: 'discussion',
       })
-      onCancel && onCancel()
+      onCancel?.()
     } catch (error) {
       if (isAxiosError(error)) {
         setError(error.response?.data?.message || 'Something went wrong')
@@ -135,16 +135,14 @@ const FormCreateDiscussion = ({
       {/* Content */}
       <Textarea
         value={data.content}
-        onChange={(e: FormEvent<HTMLTextAreaElement>) => handleChange('content', (e.target as HTMLTextAreaElement).value)}
+        onChange={(e: FormEvent<HTMLTextAreaElement>) =>
+          handleChange('content', (e.target as HTMLTextAreaElement).value)
+        }
         placeholder={replyingId ? 'Replying...' : 'Start a discussion'}
       />
 
       {/* Error */}
-      {error && (
-        <p className="mt-2 text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
 
       {/* Action */}
       <div className="flex mt-3 ml-auto gap-2">

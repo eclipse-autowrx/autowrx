@@ -27,7 +27,7 @@ const issueAzureSpeechToken = async () => {
     logger.warn(
       '[serviceToken] Azure Speech not configured: hasKey=%s hasRegion=%s',
       Boolean(azureKey),
-      Boolean(azureRegion)
+      Boolean(azureRegion),
     );
     throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, 'Azure Speech Services not configured');
   }
@@ -55,11 +55,7 @@ const issueAzureSpeechToken = async () => {
     if (error instanceof ApiError) {
       throw error;
     }
-    logger.warn(
-      '[serviceToken] STS issueToken failed: code=%s message=%s',
-      error?.code || 'n/a',
-      error.message
-    );
+    logger.warn('[serviceToken] STS issueToken failed: code=%s message=%s', error?.code || 'n/a', error.message);
     throw new ApiError(httpStatus.BAD_GATEWAY, 'Failed to fetch Azure Speech token');
   }
 };

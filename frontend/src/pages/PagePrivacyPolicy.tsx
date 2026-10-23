@@ -36,14 +36,21 @@ const PagePrivacyPolicy: React.FC = () => {
           </div>
         ) : content ? (
           <div className="max-w-4xl mx-auto rounded-xl border border-border bg-background shadow-sm px-8 py-10 sm:px-12 [&>*:first-child]:mt-0">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={privacyMarkdownComponents}>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={privacyMarkdownComponents}
+            >
               {content}
             </ReactMarkdown>
           </div>
         ) : (
           <div className="text-center py-24 text-muted-foreground">
-            <p className="text-lg">No privacy policy content has been configured.</p>
-            <p className="text-sm mt-2">Please contact the site administrator.</p>
+            <p className="text-lg">
+              No privacy policy content has been configured.
+            </p>
+            <p className="text-sm mt-2">
+              Please contact the site administrator.
+            </p>
           </div>
         )}
       </div>

@@ -114,7 +114,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         name: `User ${user?.name} gave feedback`,
         description: `User ${user?.name} with id ${user?.id} as interviewee ${data.interviewee} gave feedback to prototype ${prototype?.name} within model ${model?.name}`,
         type: 'create-feedback',
-        create_by: user?.id!,
+        create_by: user?.id as string,
         ref_id: feedback.id,
         ref_type: 'feedback',
         parent_id: prototype.id,
@@ -133,13 +133,12 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
   }
 
   return (
-    <form
-      onSubmit={submitFeedback}
-      className="flex flex-col bg-background"
-    >
+    <form onSubmit={submitFeedback} className="flex flex-col bg-background">
       <div className="flex flex-col gap-4">
         <div className="flex flex-col">
-          <Label className="mb-2">Interviewee <span className="text-red-500">*</span></Label>
+          <Label className="mb-2">
+            Interviewee <span className="text-red-500">*</span>
+          </Label>
           <Input
             name="interviewee"
             value={data.interviewee}
@@ -151,7 +150,9 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         </div>
 
         <div className="flex flex-col">
-          <Label className="mb-2">From organization <span className="text-red-500">*</span></Label>
+          <Label className="mb-2">
+            From organization <span className="text-red-500">*</span>
+          </Label>
           <Input
             name="organization"
             value={data.organization}
@@ -164,7 +165,9 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
 
         {/* Star ratings for Needs Addressed, Relevance, and Ease of Use */}
         <div className="flex items-center">
-          <p className="text-base font-medium w-44 shrink-0">Needs addressed <span className="text-red-500">*</span></p>
+          <p className="text-base font-medium w-44 shrink-0">
+            Needs addressed <span className="text-red-500">*</span>
+          </p>
           <DaStarsRating
             initialRating={data.needsAddressed}
             onChange={(value) => handleChange('needsAddressed', value)}
@@ -172,7 +175,9 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         </div>
 
         <div className="flex items-center">
-          <p className="text-base font-medium w-44 shrink-0">Relevance <span className="text-red-500">*</span></p>
+          <p className="text-base font-medium w-44 shrink-0">
+            Relevance <span className="text-red-500">*</span>
+          </p>
           <DaStarsRating
             initialRating={data.relevance}
             onChange={(value) => handleChange('relevance', value)}
@@ -180,7 +185,9 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         </div>
 
         <div className="flex items-center">
-          <p className="text-base font-medium w-44 shrink-0">Ease of use <span className="text-red-500">*</span></p>
+          <p className="text-base font-medium w-44 shrink-0">
+            Ease of use <span className="text-red-500">*</span>
+          </p>
           <DaStarsRating
             initialRating={data.easeOfUse}
             onChange={(value) => handleChange('easeOfUse', value)}

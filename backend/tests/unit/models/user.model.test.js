@@ -35,19 +35,23 @@ describe('User model', () => {
       await expect(new User(newUser).validate()).rejects.toThrow();
     });
 
-    test('should throw a validation error if password does not contain numbers', async () => {
+    // The model only enforces a minimum password length (8); letter/number complexity is not a rule any more.
+    test('should accept a password without numbers (only the minimum length is enforced)', async () => {
       newUser.password = 'password';
-      await expect(new User(newUser).validate()).rejects.toThrow();
+      await expect(new User(newUser).validate()).resolves.toBeUndefined();
     });
 
-    test('should throw a validation error if password does not contain letters', async () => {
+    test('should accept a password without letters (only the minimum length is enforced)', async () => {
       newUser.password = '11111111';
-      await expect(new User(newUser).validate()).rejects.toThrow();
+      await expect(new User(newUser).validate()).resolves.toBeUndefined();
     });
 
-    test('should throw a validation error if role is unknown', async () => {
+    // Roles are managed by RBAC (UserRole), not stored on the user document, so `role` is not part of the schema.
+    test('should not keep a role field on the user document', async () => {
       newUser.role = 'invalid';
-      await expect(new User(newUser).validate()).rejects.toThrow();
+      const user = new User(newUser);
+      await expect(user.validate()).resolves.toBeUndefined();
+      expect(user.role).toBeUndefined();
     });
   });
 

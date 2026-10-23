@@ -45,11 +45,18 @@ const ModelApiTabs: FC<ModelApiTabsProps> = ({
     return customApiSetIds
       .map((id: any) => {
         if (typeof id === 'string') return id
-        if (id && typeof id === 'object' && 'toString' in id) return id.toString()
+        if (id && typeof id === 'object' && 'toString' in id)
+          return id.toString()
         return String(id)
       })
       .filter((id): id is string => {
-        return !!id && typeof id === 'string' && id !== '[object Object]' && id !== 'undefined' && id !== 'null'
+        return (
+          !!id &&
+          typeof id === 'string' &&
+          id !== '[object Object]' &&
+          id !== 'undefined' &&
+          id !== 'null'
+        )
       })
   }, [customApiSetIds, enableCustomApiSets])
 
@@ -58,7 +65,7 @@ const ModelApiTabs: FC<ModelApiTabsProps> = ({
     queryKey: ['custom-api-sets', normalizedIds.join(',')], // Use string for query key
     queryFn: async () => {
       const sets = await Promise.all(
-        normalizedIds.map((id) => getCustomApiSetById(id))
+        normalizedIds.map((id) => getCustomApiSetById(id)),
       )
       return sets
     },
@@ -91,31 +98,32 @@ const ModelApiTabs: FC<ModelApiTabsProps> = ({
       {/* Dynamic set tabs */}
       {enableCustomApiSets &&
         sets.map((set) => {
-        // Ensure set.id is a string for comparison and navigation
-        const setId: any = set.id
-        const setIdString = typeof setId === 'string' 
-          ? setId 
-          : (setId && typeof setId === 'object' && 'toString' in setId)
-          ? setId.toString()
-          : String(setId)
-        
-        const isActive = instance_id === setIdString
-        const itemCount = set.data?.items?.length || 0
-        return (
-          <DaTabItem
-            key={`set-${setIdString}`}
-            active={isActive}
-            to={`/model/${model_id}/api/${setIdString}`}
-          >
-            {set.name}
-            {itemCount > 0 && (
-              <div className="flex min-w-5 px-1.5 py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
-                {itemCount}
-              </div>
-            )}
-          </DaTabItem>
-        )
-      })}
+          // Ensure set.id is a string for comparison and navigation
+          const setId: any = set.id
+          const setIdString =
+            typeof setId === 'string'
+              ? setId
+              : setId && typeof setId === 'object' && 'toString' in setId
+                ? setId.toString()
+                : String(setId)
+
+          const isActive = instance_id === setIdString
+          const itemCount = set.data?.items?.length || 0
+          return (
+            <DaTabItem
+              key={`set-${setIdString}`}
+              active={isActive}
+              to={`/model/${model_id}/api/${setIdString}`}
+            >
+              {set.name}
+              {itemCount > 0 && (
+                <div className="flex min-w-5 px-1.5 py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
+                  {itemCount}
+                </div>
+              )}
+            </DaTabItem>
+          )
+        })}
 
       {/* Plugin tabs */}
       {plugins.map((p) => (
@@ -147,4 +155,3 @@ const ModelApiTabs: FC<ModelApiTabsProps> = ({
 }
 
 export default ModelApiTabs
-

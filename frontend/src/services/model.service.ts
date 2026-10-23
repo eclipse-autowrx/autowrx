@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -138,7 +138,9 @@ export const getModel = async (model_id: string) => {
   return (await serverAxios.get<Model>(`/models/${model_id}`)).data
 }
 
-export const createModelService = async (model: ModelCreate): Promise<string> => {
+export const createModelService = async (
+  model: ModelCreate,
+): Promise<string> => {
   const { data } = await serverAxios.post<Model>('/models', model)
   return data.id
 }
@@ -182,10 +184,9 @@ export const getComputedAPIs = async (model_id: string) => {
 }
 
 export const getModelStatsByIds = async (ids: string[]) => {
-  const { data } = await serverAxios.post<{ statsById: Record<string, ModelLite['stats']> }>(
-    '/models/stats',
-    { ids },
-  )
+  const { data } = await serverAxios.post<{
+    statsById: Record<string, ModelLite['stats']>
+  }>('/models/stats', { ids })
   return data.statsById
 }
 

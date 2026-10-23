@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { List } from '@/types/common.type'
-import { serverAxios, cacheAxios } from './base'
+import { serverAxios } from './base'
 import { Prototype } from '@/types/model.type'
 
 export const PROTOTYPE_LIST_CARD_FIELDS = [
@@ -202,10 +202,10 @@ export const deletePrototypeService = async (prototype_id: string) => {
 }
 
 export const saveRecentPrototype = async (
-  userId: string,
-  referenceId: string,
-  type: string,
-  page: string,
+  _userId: string,
+  _referenceId: string,
+  _type: string,
+  _page: string,
 ) => {
   // return cacheAxios.post('/save-to-db', {
   //   userId,

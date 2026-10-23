@@ -141,9 +141,12 @@ const EmailConfigSection: React.FC = () => {
           : undefined
 
       if (response.results && response.results.length > 0) {
-        await configManagementService.updateConfigById(response.results[0].id!, {
-          value: config,
-        })
+        await configManagementService.updateConfigById(
+          response.results[0].id!,
+          {
+            value: config,
+          },
+        )
       } else {
         await configManagementService.createConfig({
           key: EMAIL_CONFIG_KEY,
@@ -200,7 +203,9 @@ const EmailConfigSection: React.FC = () => {
     } catch (error: any) {
       toast({
         title: 'Test failed',
-        description: error?.response?.data?.message || 'Failed to send test email. Make sure you save the config first.',
+        description:
+          error?.response?.data?.message ||
+          'Failed to send test email. Make sure you save the config first.',
         variant: 'destructive',
       })
     } finally {
@@ -219,7 +224,9 @@ const EmailConfigSection: React.FC = () => {
   if (!user) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">Please sign in to manage email configuration.</p>
+        <p className="text-muted-foreground">
+          Please sign in to manage email configuration.
+        </p>
       </div>
     )
   }
@@ -228,9 +235,12 @@ const EmailConfigSection: React.FC = () => {
     <>
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
         <div className="flex flex-col">
-          <h2 className="text-lg font-semibold text-foreground">Email Configuration</h2>
+          <h2 className="text-lg font-semibold text-foreground">
+            Email Configuration
+          </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Configure email service for sending transactional emails (welcome, password reset, etc.)
+            Configure email service for sending transactional emails (welcome,
+            password reset, etc.)
           </p>
         </div>
         <Button size="sm" onClick={handleSave} disabled={isSaving}>
@@ -284,14 +294,18 @@ const EmailConfigSection: React.FC = () => {
           <>
             {/* Common Fields */}
             <div className="border-t border-border pt-6 space-y-4">
-              <h3 className="text-sm font-semibold text-foreground">Sender Information</h3>
+              <h3 className="text-sm font-semibold text-foreground">
+                Sender Information
+              </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="fromName">From Name</Label>
                   <Input
                     id="fromName"
                     value={config.fromName}
-                    onChange={(e) => setConfig({ ...config, fromName: e.target.value })}
+                    onChange={(e) =>
+                      setConfig({ ...config, fromName: e.target.value })
+                    }
                     placeholder="e.g., My App"
                   />
                 </div>
@@ -301,12 +315,23 @@ const EmailConfigSection: React.FC = () => {
                     id="fromEmail"
                     type="email"
                     value={config.fromEmail}
-                    onChange={(e) => setConfig({ ...config, fromEmail: e.target.value })}
-                    placeholder={config.provider === 'resend' ? 'onboarding@resend.dev' : 'e.g., noreply@example.com'}
+                    onChange={(e) =>
+                      setConfig({ ...config, fromEmail: e.target.value })
+                    }
+                    placeholder={
+                      config.provider === 'resend'
+                        ? 'onboarding@resend.dev'
+                        : 'e.g., noreply@example.com'
+                    }
                   />
                   {config.provider === 'resend' && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      Use <code className="text-xs bg-muted px-1 rounded">onboarding@resend.dev</code> for testing. For production, verify your domain at resend.com/domains.
+                      Use{' '}
+                      <code className="text-xs bg-muted px-1 rounded">
+                        onboarding@resend.dev
+                      </code>{' '}
+                      for testing. For production, verify your domain at
+                      resend.com/domains.
                     </p>
                   )}
                 </div>
@@ -316,7 +341,9 @@ const EmailConfigSection: React.FC = () => {
             {/* Resend Config */}
             {config.provider === 'resend' && (
               <div className="border-t border-border pt-6 space-y-4">
-                <h3 className="text-sm font-semibold text-foreground">Resend Configuration</h3>
+                <h3 className="text-sm font-semibold text-foreground">
+                  Resend Configuration
+                </h3>
                 <div>
                   <Label htmlFor="apiKey">API Key *</Label>
                   <div className="relative">
@@ -324,7 +351,9 @@ const EmailConfigSection: React.FC = () => {
                       id="apiKey"
                       type={showApiKey ? 'text' : 'password'}
                       value={config.apiKey}
-                      onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
+                      onChange={(e) =>
+                        setConfig({ ...config, apiKey: e.target.value })
+                      }
                       placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                       className="font-mono text-sm pr-10"
                     />
@@ -333,7 +362,11 @@ const EmailConfigSection: React.FC = () => {
                       onClick={() => setShowApiKey(!showApiKey)}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
-                      {showApiKey ? <TbEyeOff size={18} /> : <TbEye size={18} />}
+                      {showApiKey ? (
+                        <TbEyeOff size={18} />
+                      ) : (
+                        <TbEye size={18} />
+                      )}
                     </button>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -355,7 +388,9 @@ const EmailConfigSection: React.FC = () => {
             {/* SMTP Config */}
             {config.provider === 'smtp' && (
               <div className="border-t border-border pt-6 space-y-4">
-                <h3 className="text-sm font-semibold text-foreground">SMTP Configuration</h3>
+                <h3 className="text-sm font-semibold text-foreground">
+                  SMTP Configuration
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="smtpHost">SMTP Host *</Label>
@@ -365,7 +400,10 @@ const EmailConfigSection: React.FC = () => {
                       onChange={(e) =>
                         setConfig({
                           ...config,
-                          smtpConfig: { ...config.smtpConfig, host: e.target.value },
+                          smtpConfig: {
+                            ...config.smtpConfig,
+                            host: e.target.value,
+                          },
                         })
                       }
                       placeholder="e.g., smtp.gmail.com"
@@ -381,7 +419,10 @@ const EmailConfigSection: React.FC = () => {
                       onChange={(e) =>
                         setConfig({
                           ...config,
-                          smtpConfig: { ...config.smtpConfig, port: parseInt(e.target.value) || 587 },
+                          smtpConfig: {
+                            ...config.smtpConfig,
+                            port: parseInt(e.target.value) || 587,
+                          },
                         })
                       }
                       placeholder="587"
@@ -398,7 +439,10 @@ const EmailConfigSection: React.FC = () => {
                       onChange={(e) =>
                         setConfig({
                           ...config,
-                          smtpConfig: { ...config.smtpConfig, user: e.target.value },
+                          smtpConfig: {
+                            ...config.smtpConfig,
+                            user: e.target.value,
+                          },
                         })
                       }
                       placeholder="username or email"
@@ -415,7 +459,10 @@ const EmailConfigSection: React.FC = () => {
                         onChange={(e) =>
                           setConfig({
                             ...config,
-                            smtpConfig: { ...config.smtpConfig, pass: e.target.value },
+                            smtpConfig: {
+                              ...config.smtpConfig,
+                              pass: e.target.value,
+                            },
                           })
                         }
                         placeholder="SMTP password or app password"
@@ -426,7 +473,11 @@ const EmailConfigSection: React.FC = () => {
                         onClick={() => setShowSmtpPass(!showSmtpPass)}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
-                        {showSmtpPass ? <TbEyeOff size={18} /> : <TbEye size={18} />}
+                        {showSmtpPass ? (
+                          <TbEyeOff size={18} />
+                        ) : (
+                          <TbEye size={18} />
+                        )}
                       </button>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -442,7 +493,10 @@ const EmailConfigSection: React.FC = () => {
                     onChange={(e) =>
                       setConfig({
                         ...config,
-                        smtpConfig: { ...config.smtpConfig, secure: e.target.checked },
+                        smtpConfig: {
+                          ...config.smtpConfig,
+                          secure: e.target.checked,
+                        },
                       })
                     }
                     className="rounded"
@@ -461,7 +515,8 @@ const EmailConfigSection: React.FC = () => {
                 Send Test Email
               </h3>
               <p className="text-xs text-muted-foreground">
-                Save your configuration first, then send a test email to verify it works.
+                Save your configuration first, then send a test email to verify
+                it works.
               </p>
               <div className="flex gap-2">
                 <Input
@@ -477,7 +532,11 @@ const EmailConfigSection: React.FC = () => {
                   onClick={handleSendTestEmail}
                   disabled={isTesting || !testEmail}
                 >
-                  {isTesting ? <Spinner className="mr-2" size={16} /> : <TbSend className="mr-2" size={16} />}
+                  {isTesting ? (
+                    <Spinner className="mr-2" size={16} />
+                  ) : (
+                    <TbSend className="mr-2" size={16} />
+                  )}
                   Send Test
                 </Button>
               </div>

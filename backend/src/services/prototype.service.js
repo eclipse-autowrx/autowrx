@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,15 +7,15 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
+const { default: axios, isAxiosError } = require('axios');
+const _ = require('lodash');
 const { Prototype } = require('../models');
 const ApiError = require('../utils/ApiError');
 const permissionService = require('./permission.service');
 const { PERMISSIONS } = require('../config/roles');
-const { default: axios, isAxiosError } = require('axios');
 const config = require('../config/config');
 const logger = require('../config/logger');
 const modelService = require('./model.service');
-const _ = require('lodash');
 const { publiclyVisibleVisibilities } = require('../config/enums');
 
 /**
@@ -29,15 +29,17 @@ const stripTrailingNumber = (name) => {
 };
 
 /**
- * Generate up to 1 available prototype name suggestion for a model.  
+ * Generate up to 1 available prototype name suggestion for a model.
  * @param {string} modelId
  * @param {string} baseName
  * @returns {Promise<string[]>}
  */
 const getSuggestedNames = async (modelId, baseName) => {
   // Try clean sequential names first (user-friendly)
-  for (let counter = 1; counter <= 50; counter++) {
+  for (let counter = 1; counter <= 50; counter += 1) {
     const candidateName = `${baseName}_${counter}`;
+    // Sequential on purpose: return the first free name, stop querying once found.
+    // eslint-disable-next-line no-await-in-loop
     const exists = await Prototype.existsPrototypeInModel(modelId, candidateName);
     if (!exists) {
       return [candidateName];
@@ -60,7 +62,7 @@ const throwDuplicateNameError = async (modelId, prototypeName, userId) => {
   const suggestions = await getSuggestedNames(modelId, baseName);
   throw new ApiError(
     httpStatus.BAD_REQUEST,
-    `The prototype name '${prototypeName}' is already in use for model '${model.name}'. Please choose another name like: ${suggestions.join(', ')}.`
+    `The prototype name '${prototypeName}' is already in use for model '${model.name}'. Please choose another name like: ${suggestions.join(', ')}.`,
   );
 };
 
@@ -108,7 +110,10 @@ const createPrototype = async (userId, prototypeBody) => {
  */
 const bulkCreatePrototypes = async (userId, prototypes) => {
   for (const prototype of prototypes) {
+    // Sequential on purpose: report the first duplicate in input order.
+    // eslint-disable-next-line no-await-in-loop
     if (await Prototype.existsPrototypeInModel(prototype.model_id, prototype.name)) {
+      // eslint-disable-next-line no-await-in-loop
       await throwDuplicateNameError(prototype.model_id, prototype.name, userId);
     }
   }
@@ -117,7 +122,7 @@ const bulkCreatePrototypes = async (userId, prototypes) => {
     prototypes.map((prototype) => ({
       ...prototype,
       created_by: userId,
-    }))
+    })),
   );
   return data.map((item) => item._id);
 };
@@ -143,15 +148,12 @@ const queryPrototypes = async (filter, options) => {
     : [];
   const nameSort = requestedParts.find((part) => part.startsWith('name:'));
 
-  const resolvedSort = nameSort
-    ? [
-        nameSort,
-        ...defaultSort.split(','),
-        ...requestedParts.filter((part) => part !== nameSort),
-      ].join(',')
-    : requestedSort
-      ? [defaultSort, requestedSort].join(',')
-      : defaultSort;
+  let resolvedSort = defaultSort;
+  if (nameSort) {
+    resolvedSort = [nameSort, ...defaultSort.split(','), ...requestedParts.filter((part) => part !== nameSort)].join(',');
+  } else if (requestedSort) {
+    resolvedSort = [defaultSort, requestedSort].join(',');
+  }
 
   const prototypes = await Prototype.paginate(filter, {
     ...options,
@@ -309,7 +311,7 @@ const listRecentPrototypes = async (userId) => {
  * @param {Object} [body]
  * @returns {Promise<void>}
  */
-const executeCode = async (id, _) => {
+const executeCode = async (id, _body) => {
   const prototype = await Prototype.findById(id);
   prototype.executed_turns += 1;
   await prototype.save();
@@ -350,7 +352,7 @@ const deleteMany = async (filter, actionOwner) => {
     prototypes.map(async (prototype) => {
       prototype.action_owner = actionOwner;
       await prototype.deleteOne();
-    })
+    }),
   );
 };
 

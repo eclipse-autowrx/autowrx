@@ -11,7 +11,6 @@ import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import { Spinner } from '@/components/atoms/spinner'
 import { loginService } from '@/services/auth.service'
-import { addLog } from '@/services/log.service'
 import { isAxiosError } from 'axios'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -137,7 +136,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
           {authConfigs.SELF_REGISTRATION && (
             <div className="mt-4 flex w-full justify-center items-center">
               <p className="text-sm text-muted-foreground">
-                Don't have an account?
+                Don&apos;t have an account?
               </p>
               <Button
                 type="button"
@@ -167,16 +166,20 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
 
       {ssoProviders.map((provider) => (
         <div key={provider.id} className="mt-2">
-          <SSOHandler 
+          <SSOHandler
             provider={provider}
-            setSSOLoading={(isLoading) => setSSOLoading(isLoading ? provider.id : null)}
+            setSSOLoading={(isLoading) =>
+              setSSOLoading(isLoading ? provider.id : null)
+            }
           >
             <Button
               variant="outline"
               className="w-full"
               disabled={loading || ssoLoading !== null}
             >
-              {ssoLoading === provider.id && <Spinner className="mr-2" size={16} />}
+              {ssoLoading === provider.id && (
+                <Spinner className="mr-2" size={16} />
+              )}
               Sign in with {provider.name}
             </Button>
           </SSOHandler>

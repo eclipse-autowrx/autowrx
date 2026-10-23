@@ -8,14 +8,21 @@
 
 import { ModelVisibility } from '@/types/model.type'
 
-const MODEL_TEMPLATE_VISIBILITIES = new Set<ModelVisibility>(['public', 'private', 'editable'])
+const MODEL_TEMPLATE_VISIBILITIES = new Set<ModelVisibility>([
+  'public',
+  'private',
+  'editable',
+])
 
 /** Map a model template's visibility to a valid model visibility (defaults to private). */
 export const visibilityFromModelTemplate = (
   template?: { visibility?: string } | null,
 ): ModelVisibility => {
   const visibility = template?.visibility
-  if (visibility && MODEL_TEMPLATE_VISIBILITIES.has(visibility as ModelVisibility)) {
+  if (
+    visibility &&
+    MODEL_TEMPLATE_VISIBILITIES.has(visibility as ModelVisibility)
+  ) {
     return visibility as ModelVisibility
   }
   return 'private'
@@ -34,12 +41,14 @@ export const MODEL_VISIBILITY_OPTIONS: {
   {
     value: 'public',
     label: 'Public',
-    description: 'Anyone can view; only you and contributors can add prototypes.',
+    description:
+      'Anyone can view; only you and contributors can add prototypes.',
   },
   {
     value: 'editable',
     label: 'Editable',
-    description: 'Anyone can view; signed-in users can create prototypes on this model.',
+    description:
+      'Anyone can view; signed-in users can create prototypes on this model.',
   },
 ]
 

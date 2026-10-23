@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -52,7 +52,10 @@ export const getPluginBySlug = (slug: string): Promise<Plugin> =>
 export const createPlugin = (data: Partial<Plugin>): Promise<Plugin> =>
   serverAxios.post('/system/plugin', data).then((r) => r.data)
 
-export const updatePlugin = (id: string, data: Partial<Plugin>): Promise<Plugin> =>
+export const updatePlugin = (
+  id: string,
+  data: Partial<Plugin>,
+): Promise<Plugin> =>
   serverAxios.put(`/system/plugin/${id}`, data).then((r) => r.data)
 
 export const deletePlugin = (id: string): Promise<void> =>
@@ -64,11 +67,11 @@ export const uploadInternalZip = (
 ): Promise<{ url: string; plugin: Plugin }> => {
   const fd = new FormData()
   fd.append('file', file)
-  return serverAxios
-    // IMPORTANT: do not set Content-Type manually for FormData in the browser.
-    // Axios will set the correct multipart boundary; overriding can cause intermittent failures.
-    .post(`/system/plugin/upload/${slug}`, fd)
-    .then((r) => r.data)
+  return (
+    serverAxios
+      // IMPORTANT: do not set Content-Type manually for FormData in the browser.
+      // Axios will set the correct multipart boundary; overriding can cause intermittent failures.
+      .post(`/system/plugin/upload/${slug}`, fd)
+      .then((r) => r.data)
+  )
 }
-
-

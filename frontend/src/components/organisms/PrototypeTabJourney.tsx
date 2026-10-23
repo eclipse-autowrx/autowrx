@@ -9,10 +9,7 @@
 import React, { useState } from 'react'
 import { Prototype } from '@/types/model.type'
 import { updatePrototypeService } from '@/services/prototype.service'
-import {
-  TbEdit,
-  TbLoader,
-} from 'react-icons/tb'
+import { TbEdit, TbLoader } from 'react-icons/tb'
 import DaTableEditor from '../molecules/DaCustomerJourneyTable'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
@@ -63,7 +60,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
         name: `User ${currentUser?.email} updated prototype ${localPrototype.name}`,
         description: `User ${currentUser?.email} updated Prototype ${localPrototype.name} with id ${localPrototype?.id} of model ${localPrototype.model_id}`,
         type: 'update-prototype',
-        create_by: currentUser?.id!,
+        create_by: currentUser?.id as string,
         parent_id: localPrototype.model_id,
         ref_id: localPrototype.id,
         ref_type: 'prototype',
@@ -104,7 +101,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 </h2>
                 <div className="flex space-x-2">
                   <Button
-                    data-id='prototype-cancel-button'
+                    data-id="prototype-cancel-button"
                     variant="outline"
                     onClick={handleCancel}
                     size="sm"
@@ -132,7 +129,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                       onClick={() => setIsEditing(true)}
                       variant="outline"
                       size="sm"
-                      data-id='prototype-edit-button'
+                      data-id="prototype-edit-button"
                     >
                       {isSaving ? (
                         <>

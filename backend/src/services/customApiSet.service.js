@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,10 +7,9 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
-const { CustomApiSet, CustomApiSchema } = require('../models');
+const { CustomApiSet, Model } = require('../models');
 const ApiError = require('../utils/ApiError');
 const customApiSchemaService = require('./customApiSchema.service');
-const logger = require('../config/logger');
 
 /**
  * Create a CustomApiSet
@@ -63,23 +62,18 @@ const querySets = async (filter, options, userId) => {
       filter.scope = 'system';
     }
     // If scope is 'system', keep it as is
-  } else {
+  } else if (filter.scope === 'system') {
     // Authenticated users: filter by scope as before
-    if (filter.scope === 'system') {
-      // Explicitly filter for system scope only
-      filter.scope = 'system';
-    } else if (filter.scope === 'user') {
-      // Filter for user scope, but only show instances owned by the current user
-      filter.owner = userId;
-    } else {
-      // No scope filter specified: show system-scoped OR user-scoped (owned by current user)
-      filter.$or = [
-        { scope: 'system' },
-        { scope: 'user', owner: userId },
-      ];
-      // Remove scope from filter since we're using $or
-      delete filter.scope;
-    }
+    // Explicitly filter for system scope only
+    filter.scope = 'system';
+  } else if (filter.scope === 'user') {
+    // Filter for user scope, but only show instances owned by the current user
+    filter.owner = userId;
+  } else {
+    // No scope filter specified: show system-scoped OR user-scoped (owned by current user)
+    filter.$or = [{ scope: 'system' }, { scope: 'user', owner: userId }];
+    // Remove scope from filter since we're using $or
+    delete filter.scope;
   }
 
   const sets = await CustomApiSet.paginate(filter, options);
@@ -104,11 +98,9 @@ const getSetById = async (id, userId) => {
     if (set.scope !== 'system') {
       throw new ApiError(httpStatus.FORBIDDEN, 'Access denied to this set');
     }
-  } else {
+  } else if (set.scope === 'user' && set.owner.toString() !== userId.toString()) {
     // Authenticated users: user-scoped sets are only accessible by owner
-    if (set.scope === 'user' && set.owner.toString() !== userId.toString()) {
-      throw new ApiError(httpStatus.FORBIDDEN, 'Access denied to this set');
-    }
+    throw new ApiError(httpStatus.FORBIDDEN, 'Access denied to this set');
   }
 
   return set;
@@ -140,7 +132,7 @@ const updateSetById = async (id, updateBody, userId) => {
 
   Object.assign(set, updateBody);
   set.updated_by = userId;
-  
+
   // Mark data field as modified if it was updated
   if (updateBody.data) {
     set.markModified('data');
@@ -148,7 +140,7 @@ const updateSetById = async (id, updateBody, userId) => {
       set.markModified('data.items');
     }
   }
-  
+
   await set.save();
   return set;
 };
@@ -186,8 +178,8 @@ const addSetItem = async (id, item, userId) => {
   }
 
   // Validate item
-  const customApiSchema = await customApiSchemaService.getCustomApiSchemaById(set.custom_api_schema);
-  
+  await customApiSchemaService.getCustomApiSchemaById(set.custom_api_schema);
+
   // Check if item id already exists
   if (set.data.items.some((existingItem) => existingItem.id === item.id)) {
     throw new ApiError(httpStatus.BAD_REQUEST, `Item with id '${item.id}' already exists`);
@@ -231,18 +223,18 @@ const updateSetItem = async (id, itemId, itemUpdate, userId) => {
   if (!updateData || Object.keys(updateData).length === 0) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Update data cannot be empty');
   }
-  
+
   // Update the item directly in the array - convert to plain objects first
   const itemsArray = set.data.items.map((item) => (item.toObject ? item.toObject() : { ...item }));
   Object.assign(itemsArray[itemIndex], updateData);
   set.data.items = itemsArray;
-  
+
   set.updated_by = userId;
   set.markModified('data.items'); // Mark array as modified for Mongoose
   await set.save();
-  
+
   // Reload to get fresh data
-  return await getSetById(id, userId);
+  return getSetById(id, userId);
 };
 
 /**
@@ -277,7 +269,6 @@ const removeSetItem = async (id, itemId, userId) => {
  * @returns {Promise<CustomApiSet[]>}
  */
 const getSetsByModel = async (modelId) => {
-  const { Model } = require('../models');
   const model = await Model.findById(modelId).populate('custom_api_sets');
   if (!model) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Model not found');
@@ -296,4 +287,3 @@ module.exports = {
   removeSetItem,
   getSetsByModel,
 };
-

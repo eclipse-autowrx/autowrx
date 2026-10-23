@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -11,7 +11,7 @@ import DaDashboard from '../molecules/dashboard/DaDashboard'
 import { cn } from '@/lib/utils'
 import { useSystemUI } from '@/hooks/useSystemUI'
 
-const PrototypeTabDashboard: FC = ({}) => {
+const PrototypeTabDashboard: FC = () => {
   const { showPrototypeDashboardFullScreen } = useSystemUI()
 
   return (

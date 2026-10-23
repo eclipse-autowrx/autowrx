@@ -14,7 +14,6 @@ import { registerService } from '@/services/auth.service'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { usePolicy } from '@/hooks/useInstanceCfg'
-import { addLog } from '@/services/log.service'
 import { useQueryClient } from '@tanstack/react-query'
 import useAuthStore from '@/stores/authStore'
 
@@ -122,6 +121,7 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
             href={policy_url}
             target="_blank"
             className="ml-2 cursor-pointer hover:text-primary"
+            rel="noreferrer"
           >
             <u>Privacy Policy</u>
           </a>

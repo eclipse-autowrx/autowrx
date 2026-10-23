@@ -23,7 +23,9 @@ function storageKey(section: string): string {
 }
 
 // Get the 5 most recent edit entries for a given section (tab).
-export function getSiteConfigEditHistory(section: string): SiteConfigEditEntry[] {
+export function getSiteConfigEditHistory(
+  section: string,
+): SiteConfigEditEntry[] {
   try {
     const raw = localStorage.getItem(storageKey(section))
     if (!raw) return []
@@ -53,7 +55,9 @@ export function pushSiteConfigEdit(entry: {
   const next = [newEntry, ...list].slice(0, MAX_HISTORY_PER_SECTION)
   try {
     localStorage.setItem(storageKey(section), JSON.stringify(next))
-    window.dispatchEvent(new CustomEvent('site-config-history-updated', { detail: { section } }))
+    window.dispatchEvent(
+      new CustomEvent('site-config-history-updated', { detail: { section } }),
+    )
   } catch {
     // ignore quota or parse errors
   }

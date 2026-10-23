@@ -159,12 +159,7 @@ const DaSelectUserPopup = ({
                     {user.email && (
                       <div className="text-sm italic text-muted-foreground">
                         {user?.email ?? ''}{' '}
-                        {user.provider && (
-                          <span>
-                            {' '}
-                            via @{user.provider}
-                          </span>
-                        )}
+                        {user.provider && <span> via @{user.provider}</span>}
                       </div>
                     )}
                   </div>
@@ -190,4 +185,3 @@ const DaSelectUserPopup = ({
 }
 
 export default DaSelectUserPopup
-

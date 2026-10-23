@@ -33,7 +33,7 @@ const DaManageUserAction = ({
   const deleteUser = async () => {
     try {
       await deleteUserService(user.id)
-      onUpdateList && (await onUpdateList())
+      if (onUpdateList) await onUpdateList()
       setOpenDelete(false)
       toast({
         title: 'Success',
@@ -43,7 +43,7 @@ const DaManageUserAction = ({
       toast({
         title: 'Error',
         description: isAxiosError(error)
-          ? error.response?.data?.message ?? 'Something went wrong'
+          ? (error.response?.data?.message ?? 'Something went wrong')
           : 'Something went wrong',
         variant: 'destructive',
       })
@@ -88,4 +88,3 @@ const DaManageUserAction = ({
 }
 
 export default DaManageUserAction
-

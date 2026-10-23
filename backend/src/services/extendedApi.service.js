@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,11 +7,11 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
+const Joi = require('joi');
 const { ExtendedApi } = require('../models');
 const ApiError = require('../utils/ApiError');
 const permissionService = require('./permission.service');
 const { PERMISSIONS } = require('../config/roles');
-const Joi = require('joi');
 const { extendedApiValidation } = require('../validations');
 
 /**

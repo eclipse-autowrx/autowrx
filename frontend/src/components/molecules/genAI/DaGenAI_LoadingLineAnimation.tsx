@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -25,7 +25,7 @@ const DaGenAI_LoadingLineAnimation = ({
     if (loading && maxLeft > 0) {
       const interval = setInterval(() => {
         setLinePosition((prevPosition) => {
-          let newPosition = prevPosition + 2 * direction
+          const newPosition = prevPosition + 2 * direction
           if (newPosition >= maxLeft - 2) {
             setDirection(-1)
             return maxLeft - 2

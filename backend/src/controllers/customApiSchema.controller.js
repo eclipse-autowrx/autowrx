@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -29,7 +29,11 @@ const getCustomApiSchema = catchAsync(async (req, res) => {
 });
 
 const updateCustomApiSchema = catchAsync(async (req, res) => {
-  const customApiSchema = await customApiSchemaService.updateCustomApiSchemaById(req.params.customApiSchemaId, req.body, req.user.id);
+  const customApiSchema = await customApiSchemaService.updateCustomApiSchemaById(
+    req.params.customApiSchemaId,
+    req.body,
+    req.user.id,
+  );
   res.send(customApiSchema);
 });
 
@@ -45,4 +49,3 @@ module.exports = {
   updateCustomApiSchema,
   deleteCustomApiSchema,
 };
-

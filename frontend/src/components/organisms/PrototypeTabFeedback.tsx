@@ -61,7 +61,7 @@ const PrototypeTabFeedback = () => {
       name: `User ${profile?.name} deleted feedback`,
       description: `User ${profile?.name} with id ${profile?.id} deleted feedback with id ${id} from prototype ${prototype?.name}`,
       type: 'delete-feedback',
-      create_by: profile?.id!,
+      create_by: profile?.id as string,
       ref_id: id,
       ref_type: 'feedback',
       parent_id: prototype?.id,
@@ -97,11 +97,7 @@ const PrototypeTabFeedback = () => {
                 open={isOpenPopup}
                 onOpenChange={setIsOpenPopup}
                 dialogTitle="Add Feedback"
-                trigger={
-                  <Button size="sm">
-                    + Add Feedback
-                  </Button>
-                }
+                trigger={<Button size="sm">+ Add Feedback</Button>}
               >
                 <FeedbackForm
                   onClose={() => {
@@ -233,7 +229,7 @@ const PrototypeTabFeedback = () => {
           </DaLoadingWrapper>
         </div>
       </div>
-    </div >
+    </div>
   )
 }
 

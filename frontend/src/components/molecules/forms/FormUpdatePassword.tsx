@@ -16,7 +16,7 @@ import { TbCircleCheckFilled, TbLock } from 'react-icons/tb'
 import { partialUpdateUserService } from '@/services/user.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
-const FormUpdatePassword = ({}) => {
+const FormUpdatePassword = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [changed, setChanged] = useState(false)
@@ -49,7 +49,6 @@ const FormUpdatePassword = ({}) => {
       setError('')
       await new Promise(() =>
         setTimeout(() => {
-          // eslint-disable-next-line no-self-assign
           window.location.href = '/'
         }, 3000),
       )
@@ -65,10 +64,7 @@ const FormUpdatePassword = ({}) => {
   }
 
   return (
-    <form
-      onSubmit={resetPassword}
-      className="flex flex-col bg-background"
-    >
+    <form onSubmit={resetPassword} className="flex flex-col bg-background">
       {changed ? (
         <>
           <p className="text-base mt-4">

@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -17,7 +17,7 @@ const { Model } = require('mongoose');
  */
 function getValueByPath(obj, path) {
   let current = obj;
-  for (let i = 0; i < path.length; i++) {
+  for (let i = 0; i < path.length; i += 1) {
     // Check if current level is valid before accessing the next key
     if (!current || typeof current !== 'object') {
       const parentPath = path.slice(0, i).join('.');
@@ -39,7 +39,7 @@ function getValueByPath(obj, path) {
 function setValueByPath(obj, path, value) {
   let current = obj;
   // Iterate up to the second-to-last key to ensure the parent exists
-  for (let i = 0; i < path.length - 1; i++) {
+  for (let i = 0; i < path.length - 1; i += 1) {
     // Check if current level is valid before accessing the next key
     if (!current || typeof current !== 'object') {
       const parentPath = path.slice(0, i).join('.');
@@ -92,7 +92,7 @@ class ParsedJsonPropertiesMongooseDecorator {
     // Note: _doc might not reflect deeply nested structures initially if not populated/accessed.
     if (!data._doc) {
       throw new Error(
-        'Error initializing parser: Data does not appear to be a Mongoose Document. _doc property is missing.'
+        'Error initializing parser: Data does not appear to be a Mongoose Document. _doc property is missing.',
       );
     }
 
@@ -105,7 +105,7 @@ class ParsedJsonPropertiesMongooseDecorator {
     fields.forEach((field, index) => {
       if (!field || typeof field !== 'string' || field.trim() === '') {
         throw new Error(
-          `Error initializing parser: Invalid field name at index ${index}. All field names must be non-empty strings.`
+          `Error initializing parser: Invalid field name at index ${index}. All field names must be non-empty strings.`,
         );
       }
     });
@@ -132,7 +132,7 @@ class ParsedJsonPropertiesMongooseDecorator {
         // Handle empty strings before parsing
         if (fieldData.trim() === '') {
           throw new Error(
-            `Error parsing JSON data: Field path "${field}" contains an empty or whitespace-only string, which is not valid JSON.`
+            `Error parsing JSON data: Field path "${field}" contains an empty or whitespace-only string, which is not valid JSON.`,
           );
         }
         try {

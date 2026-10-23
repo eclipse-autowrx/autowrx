@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -11,8 +11,7 @@ export const models = [
     id: '1231',
     cvi: 'ACME Car (ICE) v0.1',
     main_api: 'main_api_endpoint',
-    model_home_image_file:
-      '/imgs/car_full_ed.PNG',
+    model_home_image_file: '/imgs/car_full_ed.PNG',
     name: 'ACME Car (ICE) v0.1',
     visibility: 'public',
     tenant_id: 'tenant_123',
@@ -33,8 +32,7 @@ export const models = [
     id: '1232',
     cvi: 'AUTOCRYPT',
     main_api: 'main_api_endpoint',
-    model_home_image_file:
-      '/ref/car_full_ed.PNG',
+    model_home_image_file: '/ref/car_full_ed.PNG',
     name: 'AUTOCRYPT',
     visibility: 'public',
     tenant_id: 'tenant_123',
@@ -47,8 +45,7 @@ export const models = [
     id: '1233',
     cvi: 'Basic Actuators with COVESA',
     main_api: 'main_api_endpoint',
-    model_home_image_file:
-      '/ref/car_full_ed.PNG',
+    model_home_image_file: '/ref/car_full_ed.PNG',
     name: 'Basic Actuators with COVESA',
     visibility: 'public',
     tenant_id: 'tenant_123',
@@ -61,8 +58,7 @@ export const models = [
     id: '1234',
     cvi: 'BCW24_digital_auto_cool_SBSBM',
     main_api: 'main_api_endpoint',
-    model_home_image_file:
-      '/ref/car_full_ed.PNG',
+    model_home_image_file: '/ref/car_full_ed.PNG',
     name: 'BCW24_digital_auto_cool_SBSBM',
     visibility: 'public',
     tenant_id: 'tenant_123',

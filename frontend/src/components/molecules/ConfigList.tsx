@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useMemo, useState } from 'react'
+import React, { useState } from 'react'
 import {
   Config,
   configManagementService,
@@ -48,7 +48,6 @@ interface ConfigListProps {
 
 const ConfigList: React.FC<ConfigListProps> = ({
   configs,
-  onEdit,
   onDelete,
   isLoading = false,
   onUpdated,
@@ -133,8 +132,14 @@ const ConfigList: React.FC<ConfigListProps> = ({
       const candidate = overrideValue !== undefined ? overrideValue : editValue
 
       // For secret fields, skip update when value is empty (keep current)
-      if (config.secret && (candidate === '' || candidate === null || candidate === undefined)) {
-        toast({ title: 'No changes', description: 'Enter a new value to update a secret config.' })
+      if (
+        config.secret &&
+        (candidate === '' || candidate === null || candidate === undefined)
+      ) {
+        toast({
+          title: 'No changes',
+          description: 'Enter a new value to update a secret config.',
+        })
         cancelEdit()
         return
       }
@@ -173,13 +178,6 @@ const ConfigList: React.FC<ConfigListProps> = ({
     } finally {
       setSavingKey(null)
     }
-  }
-
-  const getValueTypeVariant = (valueType: string): 'default' | 'secondary' => {
-    // Use secondary for special types, default for common ones
-    return ['object', 'array', 'color', 'image_url'].includes(valueType)
-      ? 'secondary'
-      : 'default'
   }
 
   // Delete is hidden by default; only shown when showDelete=true
@@ -346,9 +344,7 @@ const ConfigList: React.FC<ConfigListProps> = ({
                         <button
                           type="button"
                           className="cursor-pointer select-none"
-                          onClick={() =>
-                            setEditValue(!Boolean(editValue))
-                          }
+                          onClick={() => setEditValue(!editValue)}
                         >
                           <Label className="cursor-pointer">
                             {String(Boolean(editValue))}
@@ -373,28 +369,28 @@ const ConfigList: React.FC<ConfigListProps> = ({
                     )}
                     {(config.valueType === 'string' ||
                       config.valueType === 'color') && (
-                        <Input
-                          type={config.secret ? 'password' : 'text'}
-                          className="w-full text-sm"
-                          value={editValue ?? ''}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          placeholder={undefined}
-                          autoFocus
-                        />
-                      )}
+                      <Input
+                        type={config.secret ? 'password' : 'text'}
+                        className="w-full text-sm"
+                        value={editValue ?? ''}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        placeholder={undefined}
+                        autoFocus
+                      />
+                    )}
                     {(config.valueType === 'object' ||
                       config.valueType === 'array') && (
-                        <Textarea
-                          className="w-full font-mono text-sm bg-white"
-                          rows={3}
-                          value={
-                            typeof editValue === 'string'
-                              ? editValue
-                              : JSON.stringify(editValue, null, 2)
-                          }
-                          onChange={(e) => setEditValue(e.target.value)}
-                        />
-                      )}
+                      <Textarea
+                        className="w-full font-mono text-sm bg-white"
+                        rows={3}
+                        value={
+                          typeof editValue === 'string'
+                            ? editValue
+                            : JSON.stringify(editValue, null, 2)
+                        }
+                        onChange={(e) => setEditValue(e.target.value)}
+                      />
+                    )}
                     {/* For non-image types, keep actions directly under the editor */}
                     {config.valueType !== 'image_url' && (
                       <div className="flex items-center gap-2">
@@ -426,7 +422,9 @@ const ConfigList: React.FC<ConfigListProps> = ({
                   <div>
                     {config.secret ? (
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-mono text-muted-foreground tracking-widest">••••••••</span>
+                        <span className="text-sm font-mono text-muted-foreground tracking-widest">
+                          ••••••••
+                        </span>
                       </div>
                     ) : config.valueType === 'color' ? (
                       <div className="flex items-center space-x-2">
@@ -453,7 +451,9 @@ const ConfigList: React.FC<ConfigListProps> = ({
                           <p
                             className="text-sm font-mono truncate"
                             title={
-                              (typeof (localValues[config.key] ?? config.value) === 'string'
+                              (typeof (
+                                localValues[config.key] ?? config.value
+                              ) === 'string'
                                 ? (localValues[config.key] ?? config.value)
                                 : '') || undefined
                             }
@@ -521,7 +521,8 @@ const ConfigList: React.FC<ConfigListProps> = ({
                           </div>
                         </div>
                       </div>
-                    ) : config.valueType === 'object' || config.valueType === 'array' ? (
+                    ) : config.valueType === 'object' ||
+                      config.valueType === 'array' ? (
                       <p
                         className="text-sm text-foreground font-mono line-clamp-3 overflow-hidden"
                         title={formatValue(

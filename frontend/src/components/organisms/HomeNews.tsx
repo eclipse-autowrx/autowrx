@@ -8,11 +8,7 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from '@/components/atoms/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/atoms/dialog'
 
 type HomeNewsProps = {
   title?: string
@@ -71,7 +67,9 @@ const isVideoURL = (url: string | undefined): boolean => {
 const isImageURL = (url: string | undefined): boolean => {
   if (!url) return false
   const ext = getFileExtension(url)
-  return ['gif', 'png', 'jpg', 'jpeg', 'webp', 'svg', 'bmp', 'ico'].includes(ext)
+  return ['gif', 'png', 'jpg', 'jpeg', 'webp', 'svg', 'bmp', 'ico'].includes(
+    ext,
+  )
 }
 
 // Get MIME type for video based on extension
@@ -202,7 +200,10 @@ const HomeNews = ({ title, items }: HomeNewsProps) => {
     type: 'video' | 'image'
   } | null>(null)
 
-  const handleItemClick = (url: string | undefined, itemTitle: string | undefined) => {
+  const handleItemClick = (
+    url: string | undefined,
+    itemTitle: string | undefined,
+  ) => {
     if (!url) return
 
     if (isVideoURL(url)) {
@@ -230,7 +231,11 @@ const HomeNews = ({ title, items }: HomeNewsProps) => {
             {/* For small screens, display a grid of 2 columns with LargeCards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 xl:hidden">
               {items.slice(0, 4).map((item, index) => (
-                <LargeCard key={index} item={item} onItemClick={handleItemClick} />
+                <LargeCard
+                  key={index}
+                  item={item}
+                  onItemClick={handleItemClick}
+                />
               ))}
             </div>
             {/* For xl screens and above, display the original layout */}
@@ -240,7 +245,11 @@ const HomeNews = ({ title, items }: HomeNewsProps) => {
               </div>
               <div className="w-1/2 flex flex-col space-y-8">
                 {items.slice(1).map((item, index) => (
-                  <SmallCard key={index} item={item} onItemClick={handleItemClick} />
+                  <SmallCard
+                    key={index}
+                    item={item}
+                    onItemClick={handleItemClick}
+                  />
                 ))}
               </div>
             </div>
@@ -264,7 +273,10 @@ const HomeNews = ({ title, items }: HomeNewsProps) => {
                   autoPlay
                   className="w-full h-full max-w-full max-h-full object-contain"
                 >
-                  <source src={modalContent.url} type={getVideoMimeType(modalContent.url)} />
+                  <source
+                    src={modalContent.url}
+                    type={getVideoMimeType(modalContent.url)}
+                  />
                   Your browser does not support the video tag.
                 </video>
               ) : (

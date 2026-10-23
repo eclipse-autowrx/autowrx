@@ -35,7 +35,7 @@ async function checkMongoDB() {
 // Check JWT sign/verify cycle
 async function checkJWT() {
   try {
-    const secret = config.jwt.secret;
+    const { secret } = config.jwt;
     if (!secret) return { status: STATUS.SKIPPED, message: 'JWT_SECRET not configured' };
     const token = jwt.sign({ test: true }, secret, { expiresIn: '1m' });
     const decoded = jwt.verify(token, secret);
@@ -91,10 +91,13 @@ async function checkRuntimeServer() {
     // Try to get from site config in DB
     let runtimeUrl = process.env.RUNTIME_SERVER_URL || 'https://kit.digitalauto.tech';
     try {
+      // eslint-disable-next-line global-require -- lazy load keeps the model out of the health module's import graph
       const SiteConfig = require('../models/siteConfig.model');
       const cfg = await SiteConfig.findOne({ key: 'RUNTIME_SERVER_URL', scope: 'site' });
       if (cfg?.value) runtimeUrl = cfg.value;
-    } catch (_) {}
+    } catch (_) {
+      // Site config is optional; fall back to the env/default URL.
+    }
 
     if (!runtimeUrl) return { status: STATUS.SKIPPED, message: 'RUNTIME_SERVER_URL not configured' };
 
@@ -167,10 +170,10 @@ async function runHealthCheck() {
 
   const services = { mongodb, jwt: jwtCheck, auth, upload, runtimeServer, sso };
 
-  const statuses = Object.values(services).map(s => s.status);
+  const statuses = Object.values(services).map((s) => s.status);
   let overallStatus = STATUS.OK;
-  if (statuses.some(s => s === STATUS.ERROR)) overallStatus = STATUS.ERROR;
-  else if (statuses.some(s => s === STATUS.SKIPPED)) overallStatus = 'degraded';
+  if (statuses.some((s) => s === STATUS.ERROR)) overallStatus = STATUS.ERROR;
+  else if (statuses.some((s) => s === STATUS.SKIPPED)) overallStatus = 'degraded';
 
   return {
     status: overallStatus,

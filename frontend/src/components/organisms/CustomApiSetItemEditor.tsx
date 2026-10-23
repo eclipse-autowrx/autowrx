@@ -7,7 +7,12 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/atoms/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/atoms/dialog'
 import { Button } from '@/components/atoms/button'
 import CodeEditor from '@/components/molecules/CodeEditor'
 import { TbDownload, TbUpload } from 'react-icons/tb'
@@ -20,14 +25,16 @@ import {
   updateSetItem,
   removeSetItem,
   updateCustomApiSet,
-  type CustomApiSet,
   type CustomApiSetItem,
 } from '@/services/customApiSet.service'
-import { getCustomApiSchemaById, type CustomApiSchema } from '@/services/customApiSchema.service'
+import { getCustomApiSchemaById } from '@/services/customApiSchema.service'
 import { Spinner } from '@/components/atoms/spinner'
 import DaImportFile from '@/components/atoms/DaImportFile'
-import DynamicSchemaForm from '@/components/molecules/DynamicSchemaForm'
-import { generateItemId, extractIdFormat, generateIdFromTemplate } from '@/utils/idTemplate'
+import {
+  generateItemId,
+  extractIdFormat,
+  generateIdFromTemplate,
+} from '@/utils/idTemplate'
 import CustomAPIList from '@/components/organisms/CustomAPIList'
 import CustomAPIView from '@/components/organisms/CustomAPIView'
 import CustomAPIEdit from '@/components/organisms/CustomAPIEdit'
@@ -60,10 +67,12 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
   })
 
   // Extract custom_api_schema ID - handle both populated object and string ID
-  const customApiSchemaId = set?.custom_api_schema 
-    ? (typeof set.custom_api_schema === 'string' 
-        ? set.custom_api_schema 
-        : (set.custom_api_schema as any).id || (set.custom_api_schema as any)._id || set.custom_api_schema)
+  const customApiSchemaId = set?.custom_api_schema
+    ? typeof set.custom_api_schema === 'string'
+      ? set.custom_api_schema
+      : (set.custom_api_schema as any).id ||
+        (set.custom_api_schema as any)._id ||
+        set.custom_api_schema
     : null
 
   const { data: customApiSchema, isLoading: isLoadingSchema } = useQuery({
@@ -73,7 +82,9 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
   })
 
   const items = set?.data?.items || []
-  const selectedItem = selectedItemId ? items.find((item) => item.id === selectedItemId) : null
+  const selectedItem = selectedItemId
+    ? items.find((item) => item.id === selectedItemId)
+    : null
 
   // Initialize form when selecting an item
   useEffect(() => {
@@ -108,13 +119,13 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
     setSelectedItemId(null)
     setIsNewItem(true)
     setIsEditMode(true) // Start in edit mode for new items
-    
+
     // Initialize with empty data
     const newItem: Partial<CustomApiSetItem> = {
       id: '',
       relationships: [],
     }
-    
+
     // Try to generate ID from schema format if available
     if (customApiSchema?.schema) {
       const idFormat = extractIdFormat(customApiSchema.schema)
@@ -126,7 +137,7 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
         }
       }
     }
-    
+
     setFormData(newItem)
   }
 
@@ -142,30 +153,9 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
     setIsEditMode(false)
   }
 
-  const handleFormChange = (field: string, value: any) => {
-    const newFormData = { ...formData, [field]: value }
-    
-    // Auto-generate ID if id_format is defined in schema and ID is empty or being edited
-    if (customApiSchema?.schema && (!formData.id || field !== 'id' || isNewItem)) {
-      const idFormat = extractIdFormat(customApiSchema.schema)
-      if (idFormat) {
-        const generatedId = generateIdFromTemplate(idFormat, newFormData)
-        if (generatedId) {
-          // Only auto-update ID if it's a new item or ID is currently empty
-          if (isNewItem || !formData.id) {
-            newFormData.id = generatedId
-          }
-        }
-      }
-    }
-    
-    setFormData(newFormData)
-  }
-
-
   const validateItem = (): boolean => {
     // Auto-generate ID if it's empty and we have id_format
-    let finalFormData = { ...formData }
+    const finalFormData = { ...formData }
     if (!finalFormData.id?.trim() && customApiSchema?.schema) {
       const idFormat = extractIdFormat(customApiSchema.schema)
       if (idFormat) {
@@ -180,7 +170,8 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
     if (!finalFormData.id?.trim()) {
       toast({
         title: 'Validation failed',
-        description: 'ID is required. Please fill in required fields to generate ID.',
+        description:
+          'ID is required. Please fill in required fields to generate ID.',
         variant: 'destructive',
       })
       return false
@@ -209,7 +200,7 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
 
   const handleSaveItem = async () => {
     // Auto-generate ID if it's empty and we have id_format
-    let finalFormData = { ...formData }
+    const finalFormData = { ...formData }
     if (!finalFormData.id?.trim() && customApiSchema?.schema) {
       const idFormat = extractIdFormat(customApiSchema.schema)
       if (idFormat) {
@@ -228,7 +219,8 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
     try {
       setIsSaving(true)
       // Use finalFormData which may have auto-generated ID
-      const dataToSave = finalFormData.id !== formData.id ? finalFormData : formData
+      const dataToSave =
+        finalFormData.id !== formData.id ? finalFormData : formData
       if (isNewItem) {
         await addSetItem(instanceId, dataToSave as CustomApiSetItem)
         toast({
@@ -242,14 +234,19 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
           description: 'Item updated successfully',
         })
       }
-      queryClient.invalidateQueries({ queryKey: ['custom-api-set', instanceId] })
+      queryClient.invalidateQueries({
+        queryKey: ['custom-api-set', instanceId],
+      })
       queryClient.invalidateQueries({ queryKey: ['custom-api-sets'] })
       setIsNewItem(false)
       setSelectedItemId(dataToSave.id as string)
     } catch (error: any) {
       toast({
         title: isNewItem ? 'Add failed' : 'Update failed',
-        description: error?.response?.data?.message || error?.message || 'Failed to save item',
+        description:
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to save item',
         variant: 'destructive',
       })
     } finally {
@@ -267,7 +264,9 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
         title: 'Deleted',
         description: 'Item deleted successfully',
       })
-      queryClient.invalidateQueries({ queryKey: ['custom-api-set', instanceId] })
+      queryClient.invalidateQueries({
+        queryKey: ['custom-api-set', instanceId],
+      })
       queryClient.invalidateQueries({ queryKey: ['custom-api-sets'] })
       if (selectedItemId === itemId) {
         setSelectedItemId(null)
@@ -276,7 +275,10 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
     } catch (error: any) {
       toast({
         title: 'Delete failed',
-        description: error?.response?.data?.message || error?.message || 'Failed to delete item',
+        description:
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to delete item',
         variant: 'destructive',
       })
     } finally {
@@ -311,7 +313,6 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
     })
   }
 
-
   const handleImportItems = async (file: File) => {
     try {
       const text = await file.text()
@@ -327,11 +328,16 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
       }
 
       // Get existing IDs from current instance to check for duplicates
-      const existingIds = new Set<string>(items.map(item => item.id))
-      
+      const existingIds = new Set<string>(items.map((item) => item.id))
+
       // Auto-generate IDs for items that don't have them, using schema id_format
       const itemsWithIds = parsed.map((item, index) => {
-        const generatedId = generateItemId(item, index, existingIds, customApiSchema?.schema)
+        const generatedId = generateItemId(
+          item,
+          index,
+          existingIds,
+          customApiSchema?.schema,
+        )
         existingIds.add(generatedId) // Add to set to ensure uniqueness within import batch
         return { ...item, id: generatedId }
       })
@@ -345,13 +351,17 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
         title: 'Imported',
         description: `Imported ${itemsWithIds.length} item(s) successfully`,
       })
-      queryClient.invalidateQueries({ queryKey: ['custom-api-set', instanceId] })
+      queryClient.invalidateQueries({
+        queryKey: ['custom-api-set', instanceId],
+      })
       queryClient.invalidateQueries({ queryKey: ['custom-api-sets'] })
     } catch (error: any) {
       console.error('Import error:', error)
       toast({
         title: 'Import failed',
-        description: error?.message || 'Failed to import items. Please check the JSON format.',
+        description:
+          error?.message ||
+          'Failed to import items. Please check the JSON format.',
         variant: 'destructive',
       })
     }
@@ -361,18 +371,20 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
   const getMethodOptions = (): string[] => {
     if (!customApiSchema?.schema) return []
     try {
-      const schemaObj = typeof customApiSchema.schema === 'string' 
-        ? JSON.parse(customApiSchema.schema) 
-        : customApiSchema.schema
-      
+      const schemaObj =
+        typeof customApiSchema.schema === 'string'
+          ? JSON.parse(customApiSchema.schema)
+          : customApiSchema.schema
+
       // Handle array schema
-      const itemSchema = schemaObj.type === 'array' ? schemaObj.items : schemaObj
+      const itemSchema =
+        schemaObj.type === 'array' ? schemaObj.items : schemaObj
       const methodProperty = itemSchema?.properties?.method
-      
+
       if (methodProperty?.enum) {
         return methodProperty.enum
       }
-      
+
       return []
     } catch {
       return []
@@ -404,10 +416,15 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
 
     // Get existing IDs to check for duplicates
     const existingIds = new Set<string>()
-    
+
     // Auto-generate IDs for items that don't have them, using schema id_format
     const itemsWithIds = jsonItems.map((item, index) => {
-      const generatedId = generateItemId(item, index, existingIds, customApiSchema?.schema)
+      const generatedId = generateItemId(
+        item,
+        index,
+        existingIds,
+        customApiSchema?.schema,
+      )
       existingIds.add(generatedId)
       return { ...item, id: generatedId }
     })
@@ -421,17 +438,22 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
           metadata: set?.data?.metadata || {},
         },
       })
-      
+
       toast({
         title: 'Updated',
         description: `Updated ${itemsWithIds.length} item(s)`,
       })
-      queryClient.invalidateQueries({ queryKey: ['custom-api-set', instanceId] })
+      queryClient.invalidateQueries({
+        queryKey: ['custom-api-set', instanceId],
+      })
       queryClient.invalidateQueries({ queryKey: ['custom-api-sets'] })
     } catch (error: any) {
       toast({
         title: 'Update failed',
-        description: error?.response?.data?.message || error?.message || 'Failed to update items',
+        description:
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to update items',
         variant: 'destructive',
       })
     } finally {
@@ -459,9 +481,7 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="w-[90vw] h-[90vh] max-w-none max-h-none flex flex-col">
         <DialogHeader className="shrink-0">
-          <DialogTitle>
-            Edit Child APIs - {set.name}
-          </DialogTitle>
+          <DialogTitle>Edit Child APIs - {set.name}</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
@@ -545,7 +565,9 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
                     <CustomAPIEdit
                       item={formData}
                       schema={customApiSchema.schema}
-                      itemId={isNewItem ? 'New API' : selectedItem?.id || 'No ID'}
+                      itemId={
+                        isNewItem ? 'New API' : selectedItem?.id || 'No ID'
+                      }
                       onChange={setFormData}
                       onSave={handleSaveItem}
                       onCancel={isNewItem ? undefined : handleCancelEdit}
@@ -587,7 +609,7 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
                       try {
                         const formatted = JSON.stringify(jsonItems, null, 2)
                         setJsonItems(JSON.parse(formatted))
-                      } catch (error) {
+                      } catch {
                         // Ignore formatting errors
                       }
                     }}
@@ -605,7 +627,7 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
                       if (Array.isArray(parsed)) {
                         handleJsonChange(parsed)
                       }
-                    } catch (error) {
+                    } catch {
                       // Allow invalid JSON during editing
                     }
                   }}
@@ -622,7 +644,7 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
                           variant: 'destructive',
                         })
                       }
-                    } catch (error) {
+                    } catch {
                       toast({
                         title: 'Invalid JSON',
                         description: 'Please check your JSON syntax',
@@ -641,4 +663,3 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
 }
 
 export default CustomApiSetItemEditor
-

@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { Link, useMatch } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,15 +14,12 @@ import {
   DropdownMenuTrigger,
 } from '../atoms/dropdown-menu'
 import DaNavUser from '../molecules/DaNavUser'
-import { HiMenu } from 'react-icons/hi'
 import {
   TbUsers,
   TbZoom,
   TbStack2,
   TbBuildingWarehouse,
-  TbCar,
   TbSettings,
-  TbMenu2,
   TbPalette,
   TbApps,
   TbFileCode,
@@ -32,7 +29,6 @@ import { PERMISSIONS } from '@/data/permission'
 import DaGlobalSearch from '../molecules/DaGlobalSearch'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 // import useCurrentModel from '@/hooks/useCurrentModel'
-import { IoIosHelpBuoy } from 'react-icons/io'
 import config from '@/configs/config'
 import LearningIntegration from './LearningIntegration'
 
@@ -61,24 +57,27 @@ const SimpleSwitch = ({
 }) => (
   <button
     type="button"
-    className={`${checked ? 'bg-blue-600' : 'bg-gray-200'
-      } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+    className={`${
+      checked ? 'bg-blue-600' : 'bg-gray-200'
+    } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
     role="switch"
     aria-checked={checked}
     onClick={() => onChange(!checked)}
   >
     <span
       aria-hidden="true"
-      className={`${checked ? 'translate-x-5' : 'translate-x-0'
-        } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+      className={`${
+        checked ? 'translate-x-5' : 'translate-x-0'
+      } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
     />
   </button>
 )
 
-const NavigationBar = ({ }) => {
+const NavigationBar = () => {
   const { data: user, isLoading, isFetching } = useSelfProfileQuery()
   const authBootstrapped = useAuthStore((state) => state.authBootstrapped)
-  const isResolvingAuth = !authBootstrapped || (!user && (isLoading || isFetching))
+  const isResolvingAuth =
+    !authBootstrapped || (!user && (isLoading || isFetching))
   // const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.ADMIN])
   const [learningMode, setIsLearningMode] = useState(false)
@@ -87,7 +86,8 @@ const NavigationBar = ({ }) => {
   const enableLearningMode = useSiteConfig('ENABLE_LEARNING_MODE', false)
   const navBarActions = useSiteConfig('NAV_BAR_ACTIONS', [])
   const { left: leftNavBarActions, right: rightNavBarActions } = useMemo(
-    () => partitionNavBarActions(Array.isArray(navBarActions) ? navBarActions : []),
+    () =>
+      partitionNavBarActions(Array.isArray(navBarActions) ? navBarActions : []),
     [navBarActions],
   )
   const enableModelCustomization = useSiteConfig(
@@ -102,8 +102,16 @@ const NavigationBar = ({ }) => {
         { to: '/admin/site-config', icon: TbSettings, label: 'Site Config' },
         { to: '/admin/plugins', icon: TbApps, label: 'Plugins' },
         { to: '/admin/templates', icon: TbPalette, label: 'Model Templates' },
-        { to: '/admin/dashboard-templates', icon: TbBuildingWarehouse, label: 'Dashboard Templates' },
-        { to: '/admin/project-templates', icon: TbFileCode, label: 'Prototype Templates' },
+        {
+          to: '/admin/dashboard-templates',
+          icon: TbBuildingWarehouse,
+          label: 'Dashboard Templates',
+        },
+        {
+          to: '/admin/project-templates',
+          icon: TbFileCode,
+          label: 'Prototype Templates',
+        },
       ]
     }
     if (enableModelCustomization) {
@@ -137,8 +145,8 @@ const NavigationBar = ({ }) => {
                 <div
                   dangerouslySetInnerHTML={{
                     __html: DOMPurify.sanitize(action.icon, {
-                      USE_PROFILES: { svg: true, svgFilters: true }
-                    })
+                      USE_PROFILES: { svg: true, svgFilters: true },
+                    }),
                   }}
                   className="size-5 flex items-center justify-center"
                 />
@@ -171,14 +179,16 @@ const NavigationBar = ({ }) => {
           <div
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(action.icon, {
-                USE_PROFILES: { svg: true, svgFilters: true }
-              })
+                USE_PROFILES: { svg: true, svgFilters: true },
+              }),
             }}
             className="w-6 h-6 flex items-center justify-center"
           />
         )}
         {action.label && (
-          <span className={action.icon ? 'ml-1' : undefined}>{action.label}</span>
+          <span className={action.icon ? 'ml-1' : undefined}>
+            {action.label}
+          </span>
         )}
       </a>
     )
@@ -252,10 +262,7 @@ const NavigationBar = ({ }) => {
           {toolsMenuItems.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="da-primary-nav-action"
-                >
+                <Button variant="ghost" className="da-primary-nav-action">
                   <Wrench />
                   {isAuthorized ? 'Admin Tools' : 'Tools'}
                 </Button>
@@ -302,8 +309,14 @@ const NavigationBar = ({ }) => {
         </div>
       )}
 
-      {learningMode && <LearningIntegration requestClose={() => setIsLearningMode(false)} />}
-      {(isResolvingAuth || !user) && <div className="shrink-0"><DaNavUser /></div>}
+      {learningMode && (
+        <LearningIntegration requestClose={() => setIsLearningMode(false)} />
+      )}
+      {(isResolvingAuth || !user) && (
+        <div className="shrink-0">
+          <DaNavUser />
+        </div>
+      )}
     </header>
   )
 }

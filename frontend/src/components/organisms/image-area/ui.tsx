@@ -24,8 +24,7 @@ export const useOutsideClose = (
     let startedWithin = false
     const onPointerDown = (e: MouseEvent | TouchEvent) => {
       started = !!ref.current
-      startedWithin =
-        !!ref.current && ref.current.contains(e.target as Node)
+      startedWithin = !!ref.current && ref.current.contains(e.target as Node)
     }
     const onClick = (e: MouseEvent) => {
       if (
@@ -263,7 +262,10 @@ export const ConfirmDialog = ({
       }}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="mb-2.5 text-black" style={{ fontSize: 20, fontWeight: 'bold' }}>
+      <div
+        className="mb-2.5 text-black"
+        style={{ fontSize: 20, fontWeight: 'bold' }}
+      >
         {title}
       </div>
       <div className="mb-[15px] text-black">{content}</div>

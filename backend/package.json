@@ -92,6 +92,7 @@
     "yauzl": "^3.4.0"
   },
   "devDependencies": {
+    "@babel/plugin-transform-modules-commonjs": "^7.27.1",
     "@faker-js/faker": "^10.6.0",
     "@types/lodash": "^4.17.12",
     "@types/mongoose": "^5.11.97",

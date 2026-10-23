@@ -7,6 +7,10 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
+const mongoose = require('mongoose');
+const _ = require('lodash');
+const fs = require('fs');
+const path = require('path');
 const { userService } = require('.');
 const prototypeService = require('./prototype.service');
 const extendedApiService = require('./extendedApi.service');
@@ -17,13 +21,9 @@ const { Model, Role, UserRole, Prototype, ModelTemplate, CustomApiSet } = requir
 const ApiError = require('../utils/ApiError');
 const { PERMISSIONS } = require('../config/roles');
 const { publiclyVisibleVisibilities, visibilityTypes } = require('../config/enums');
-const mongoose = require('mongoose');
 const logger = require('../config/logger');
-const _ = require('lodash');
 const config = require('../config/config');
 const customApiSetService = require('./customApiSet.service');
-const fs = require('fs');
-const path = require('path');
 
 /**
  *
@@ -690,12 +690,66 @@ const traverse = (api, callback, prefix = '') => {
 };
 
 /**
+ * Validate that an api_data_url is safe for the backend to fetch.
+ * Only relative paths (served by this app) and https URLs from the
+ * configured allowlist are permitted. Blocks internal/private targets.
+ * @param {string} url
+ * @returns {string} the validated URL
+ */
+const validateApiDataUrl = (url) => {
+  if (!url || typeof url !== 'string') {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'api_data_url must be a non-empty string');
+  }
+
+  // Relative paths are always safe (resolved to this app's own static files)
+  if (url.startsWith('/')) return url;
+
+  // Absolute URLs: must be https and from the allowlist
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'api_data_url must be a valid URL or relative path');
+  }
+  if (parsed.protocol !== 'https:') {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'api_data_url must use https for external URLs');
+  }
+
+  const allowlist = (process.env.VSS_DATA_URL_ALLOWLIST || '')
+    .split(',')
+    .map((d) => d.trim().toLowerCase())
+    .filter(Boolean);
+  const hostname = parsed.hostname.toLowerCase();
+  const isAllowed = allowlist.some((d) => hostname === d || hostname.endsWith(`.${d}`));
+  if (!isAllowed) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      'External api_data_url is not allowlisted; use a relative path or configure VSS_DATA_URL_ALLOWLIST'
+    );
+  }
+
+  // Defense-in-depth: block internal/private addresses even if somehow allowlisted
+  const blocked = [
+    /^localhost$/i, /^127\./, /^10\./, /^192\.168\./, /^172\.(1[6-9]|2\d|3[01])\./,
+    /^169\.254\./, /^0\./, /^\[::1\]$/, /^fe80:/i, /^fc00:/i, /^fd/i,
+  ];
+  if (blocked.some((p) => p.test(hostname))) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'api_data_url cannot target internal network addresses');
+  }
+
+  return url;
+};
+
+/**
  *
  * @param {string} apiDataUrl
  * @returns {Promise<{main_api: string; api_version: string; extended_apis: any[]} | undefined>}
  */
 const processApiDataUrl = async (apiDataUrl) => {
   try {
+    // Validate before fetching: only relative paths or allowlisted https URLs
+    // (blocks SSRF against internal services and cloud metadata endpoints)
+    apiDataUrl = validateApiDataUrl(apiDataUrl);
     // resolve the correct url incase the apiDataUrl is relative. Eg. /api/v2/data/vehicle.json
     const resolvedUrl = fileService.resolveUrl(apiDataUrl);
     logger.debug(`Processing API data from URL: ${resolvedUrl}`);
@@ -743,6 +797,8 @@ const processApiDataUrl = async (apiDataUrl) => {
         // No standard VSS files available, treat as custom
         logger.debug('vss.json not found, treating uploaded file as custom');
       } else {
+        // Intentional require(): loads and caches the JSON index of standard VSS versions.
+        // eslint-disable-next-line global-require
         const versionList = require('../../data/vss.json');
         if (!versionList || versionList.length === 0) {
           // No versions to check, treat as custom
@@ -775,6 +831,8 @@ const processApiDataUrl = async (apiDataUrl) => {
               }
 
               // Size is similar, do deep comparison
+              // Intentional require(): loads and caches the (large) standard VSS file for comparison.
+              // eslint-disable-next-line global-require, import/no-dynamic-require
               const file = require(`../../data/${version.name}.json`);
               const fileKeys = Object.keys(file);
 
@@ -863,7 +921,7 @@ const addCustomApiSet = async (modelId, setId, userId) => {
   const model = await getModelById(modelId, userId);
 
   // Verify set exists and user has access
-  const set = await customApiSetService.getSetById(setId, userId);
+  await customApiSetService.getSetById(setId, userId);
 
   if (!model.custom_api_sets) {
     model.custom_api_sets = [];

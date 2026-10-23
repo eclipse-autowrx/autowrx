@@ -8,11 +8,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { DismissableLayerBranch } from '@radix-ui/react-dismissable-layer'
-import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from '@/components/atoms/dialog'
+import { Dialog, DialogContent, DialogTrigger } from '@/components/atoms/dialog'
 import { cn } from '@/lib/utils'
 import { TbX } from 'react-icons/tb'
 import { dismissAllOpenSelects } from '@/lib/selectDismiss'
@@ -183,7 +179,11 @@ const DaDialog = ({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       {trigger && (
         <DialogTrigger asChild disabled={disabled}>
-          <div className={cn(disabled && 'opacity-50 cursor-not-allowed pointer-events-none')}>
+          <div
+            className={cn(
+              disabled && 'opacity-50 cursor-not-allowed pointer-events-none',
+            )}
+          >
             {trigger}
           </div>
         </DialogTrigger>
@@ -225,18 +225,20 @@ const DaDialog = ({
           >
             <div className="flex flex-col gap-0.5 min-w-0">
               {dialogTitle && (
-                <DialogTitle className="text-lg font-semibold text-primary leading-tight">{dialogTitle}</DialogTitle>
+                <DialogTitle className="text-lg font-semibold text-primary leading-tight">
+                  {dialogTitle}
+                </DialogTitle>
               )}
               {description && (
-                <p className="text-sm text-muted-foreground leading-snug">{description}</p>
+                <p className="text-sm text-muted-foreground leading-snug">
+                  {description}
+                </p>
               )}
             </div>
-            {canClose &&
-              renderCloseButton('relative z-[60] shrink-0')}
+            {canClose && renderCloseButton('relative z-[60] shrink-0')}
           </div>
         ) : (
-          canClose &&
-          renderCloseButton('absolute right-4 top-4 z-[60]')
+          canClose && renderCloseButton('absolute right-4 top-4 z-[60]')
         )}
 
         <div className="flex-1 min-h-0 overflow-y-auto">

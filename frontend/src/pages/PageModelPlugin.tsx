@@ -12,9 +12,7 @@ import PluginPageRender from '@/components/organisms/PluginPageRender'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { Spinner } from '@/components/atoms/spinner'
 
-interface PageModelPluginProps {}
-
-const PageModelPlugin: FC<PageModelPluginProps> = () => {
+const PageModelPlugin: FC = () => {
   const { data: model, isLoading: isModelLoading } = useCurrentModel()
   const [searchParams] = useSearchParams()
   const pluginId = searchParams.get('plugid')

@@ -21,6 +21,7 @@ const logger = require('../config/logger');
  */
 const getEmailConfig = async () => {
   try {
+    // eslint-disable-next-line global-require -- lazy import avoids circular dependency with siteConfig.service
     const { SiteConfig } = require('../models');
     const configDoc = await SiteConfig.findOne({ key: 'EMAIL_CONFIG', scope: 'site' });
     if (!configDoc || !configDoc.value || configDoc.value.provider === 'none') {
@@ -52,31 +53,10 @@ const getEmailConfig = async () => {
 };
 
 /**
- * Send an email using site-config-based provider (Resend or SMTP).
- * Falls back to legacy env-based config if site-config is not set.
- * @param {string} to - Recipient email
- * @param {string} subject - Email subject
- * @param {string} html - HTML content
- * @returns {Promise}
- */
-const sendEmail = async (to, subject, html) => {
-  const emailCfg = await getEmailConfig();
-
-  if (emailCfg) {
-    return sendWithSiteConfig(emailCfg, to, subject, html);
-  }
-
-  // Fallback to legacy env-based config
-  return sendWithLegacyConfig(to, subject, html);
-};
-
-/**
  * Send email using site-config provider
  */
 const sendWithSiteConfig = async (emailCfg, to, subject, html) => {
-  const from = emailCfg.fromName
-    ? `${emailCfg.fromName} <${emailCfg.fromEmail}>`
-    : emailCfg.fromEmail;
+  const from = emailCfg.fromName ? `${emailCfg.fromName} <${emailCfg.fromEmail}>` : emailCfg.fromEmail;
 
   if (emailCfg.provider === 'resend') {
     const resend = new Resend(emailCfg.apiKey);
@@ -99,10 +79,12 @@ const sendWithSiteConfig = async (emailCfg, to, subject, html) => {
       host: smtpCfg.host,
       port: smtpCfg.port || 587,
       secure: smtpCfg.secure || false,
-      auth: smtpCfg.user ? {
-        user: smtpCfg.user,
-        pass: smtpCfg.pass,
-      } : undefined,
+      auth: smtpCfg.user
+        ? {
+            user: smtpCfg.user,
+            pass: smtpCfg.pass,
+          }
+        : undefined,
     });
 
     await transporter.sendMail({
@@ -142,22 +124,40 @@ const sendWithLegacyConfig = async (to, subject, html) => {
         headers: {
           'api-key': config.services.email.apiKey,
         },
-      }
-    );
-  else
-    return axios.post(
-      `${config.services.email.url}`,
-      {
-        to,
-        subject,
-        html,
       },
-      {
-        headers: {
-          'api-key': config.services.email.apiKey,
-        },
-      }
     );
+  return axios.post(
+    `${config.services.email.url}`,
+    {
+      to,
+      subject,
+      html,
+    },
+    {
+      headers: {
+        'api-key': config.services.email.apiKey,
+      },
+    },
+  );
+};
+
+/**
+ * Send an email using site-config-based provider (Resend or SMTP).
+ * Falls back to legacy env-based config if site-config is not set.
+ * @param {string} to - Recipient email
+ * @param {string} subject - Email subject
+ * @param {string} html - HTML content
+ * @returns {Promise}
+ */
+const sendEmail = async (to, subject, html) => {
+  const emailCfg = await getEmailConfig();
+
+  if (emailCfg) {
+    return sendWithSiteConfig(emailCfg, to, subject, html);
+  }
+
+  // Fallback to legacy env-based config
+  return sendWithLegacyConfig(to, subject, html);
 };
 
 /**
@@ -253,7 +253,7 @@ const sendTestEmail = async (to) => {
         <p>This is a test email to confirm that your email service is configured correctly.</p>
         <table style="width:100%;border-collapse:collapse;margin:16px 0;">
           <tr><td style="padding:8px;border:1px solid #eee;font-weight:600;">Provider</td><td style="padding:8px;border:1px solid #eee;">${emailCfg.provider}</td></tr>
-          <tr><td style="padding:8px;border:1px solid #eee;font-weight:600;">From</td><td style="padding:8px;border:1px solid #eee;">${emailCfg.fromName ? emailCfg.fromName + ' &lt;' + emailCfg.fromEmail + '&gt;' : emailCfg.fromEmail}</td></tr>
+          <tr><td style="padding:8px;border:1px solid #eee;font-weight:600;">From</td><td style="padding:8px;border:1px solid #eee;">${emailCfg.fromName ? `${emailCfg.fromName} &lt;${emailCfg.fromEmail}&gt;` : emailCfg.fromEmail}</td></tr>
         </table>
         <p style="color:#666;font-size:0.875rem;">If you received this email, your configuration is working correctly.</p>
       </td>

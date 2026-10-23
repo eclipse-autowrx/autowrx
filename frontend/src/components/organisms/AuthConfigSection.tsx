@@ -7,14 +7,19 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState, useEffect } from 'react'
-import { configManagementService, Config } from '@/services/configManagement.service'
+import {
+  configManagementService,
+  Config,
+} from '@/services/configManagement.service'
 import { Button } from '@/components/atoms/button'
 import { Checkbox } from '@/components/atoms/checkbox'
-import { Label } from '@/components/atoms/label'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import { PREDEFINED_AUTH_CONFIGS, isSupportedSiteConfigKey } from '@/pages/SiteConfigManagement'
+import {
+  PREDEFINED_AUTH_CONFIGS,
+  isSupportedSiteConfigKey,
+} from '@/pages/SiteConfigManagement'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import { reloadSoon, restoreConfigsFromSnapshot } from '@/utils/siteConfigAdmin'
 
@@ -44,11 +49,11 @@ const AuthConfigSection: React.FC = () => {
       })
 
       const existingConfigs = res.results || []
-      const existingKeys = new Set(existingConfigs.map(config => config.key))
+      const existingKeys = new Set(existingConfigs.map((config) => config.key))
 
       // Find missing predefined auth configs and create them
       const missingConfigs = PREDEFINED_AUTH_CONFIGS.filter(
-        config => !existingKeys.has(config.key)
+        (config) => !existingKeys.has(config.key),
       )
 
       if (missingConfigs.length > 0) {
@@ -64,14 +69,21 @@ const AuthConfigSection: React.FC = () => {
           limit: 100,
         })
 
-        setConfigs((updatedRes.results || []).filter((c) => isSupportedSiteConfigKey(c.key)))
+        setConfigs(
+          (updatedRes.results || []).filter((c) =>
+            isSupportedSiteConfigKey(c.key),
+          ),
+        )
       } else {
-        setConfigs(existingConfigs.filter((c) => isSupportedSiteConfigKey(c.key)))
+        setConfigs(
+          existingConfigs.filter((c) => isSupportedSiteConfigKey(c.key)),
+        )
       }
     } catch (err) {
       toast({
         title: 'Load failed',
-        description: err instanceof Error ? err.message : 'Failed to load auth configs',
+        description:
+          err instanceof Error ? err.message : 'Failed to load auth configs',
         variant: 'destructive',
       })
     } finally {
@@ -102,13 +114,14 @@ const AuthConfigSection: React.FC = () => {
 
         // Force hard reload to clear all caches including auth config cache
         setTimeout(() => {
-          window.location.href = window.location.href
+          window.location.assign(window.location.href)
         }, 800)
       }
     } catch (err) {
       toast({
         title: 'Update failed',
-        description: err instanceof Error ? err.message : 'Failed to update config',
+        description:
+          err instanceof Error ? err.message : 'Failed to update config',
         variant: 'destructive',
       })
       setIsSaving(false)
@@ -118,7 +131,7 @@ const AuthConfigSection: React.FC = () => {
   const handleFactoryReset = async () => {
     if (
       !window.confirm(
-        'Restore all auth configs to the deployment snapshot? This will reset authentication settings to their deployed values.'
+        'Restore all auth configs to the deployment snapshot? This will reset authentication settings to their deployed values.',
       )
     )
       return
@@ -130,14 +143,16 @@ const AuthConfigSection: React.FC = () => {
 
       toast({
         title: 'Restored',
-        description: 'Auth configs restored from deployment snapshot. Reloading page...',
+        description:
+          'Auth configs restored from deployment snapshot. Reloading page...',
       })
 
       reloadSoon()
     } catch (err) {
       toast({
         title: 'Reset failed',
-        description: err instanceof Error ? err.message : 'Failed to reset configs',
+        description:
+          err instanceof Error ? err.message : 'Failed to reset configs',
         variant: 'destructive',
       })
       setIsLoading(false)
@@ -145,7 +160,7 @@ const AuthConfigSection: React.FC = () => {
   }
 
   const getConfigInfo = (key: string) => {
-    return PREDEFINED_AUTH_CONFIGS.find(c => c.key === key)
+    return PREDEFINED_AUTH_CONFIGS.find((c) => c.key === key)
   }
 
   return (
@@ -187,7 +202,9 @@ const AuthConfigSection: React.FC = () => {
                 >
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-foreground">{config.key}</h3>
+                      <h3 className="font-medium text-foreground">
+                        {config.key}
+                      </h3>
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full ${
                           config.value
@@ -199,7 +216,9 @@ const AuthConfigSection: React.FC = () => {
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {info?.description || config.description || 'No description available'}
+                      {info?.description ||
+                        config.description ||
+                        'No description available'}
                     </p>
                   </div>
                   <div className="ml-4 flex items-center">
@@ -227,4 +246,3 @@ const AuthConfigSection: React.FC = () => {
 }
 
 export default AuthConfigSection
-

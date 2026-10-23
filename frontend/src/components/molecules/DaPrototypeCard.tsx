@@ -45,7 +45,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../atoms/dropdown-menu'
-import { updatePrototypeService, deletePrototypeService } from '@/services/prototype.service'
+import {
+  updatePrototypeService,
+  deletePrototypeService,
+} from '@/services/prototype.service'
 import { invalidatePrototypeListQueries } from '@/hooks/usePrototypeQueries'
 import { uploadFileService } from '@/services/upload.service'
 import { downloadPrototypeZip } from '@/lib/zipUtils'
@@ -104,7 +107,8 @@ export const DaPrototypeCard = ({
 
   const menuTooltipMessage = useMemo(() => {
     if (!user) return 'Sign in to manage prototype'
-    if (!canEditPrototype) return 'You do not have permission to edit this prototype'
+    if (!canEditPrototype)
+      return 'You do not have permission to edit this prototype'
     return 'Menu'
   }, [user, canEditPrototype])
 
@@ -224,8 +228,7 @@ export const DaPrototypeCard = ({
   const handleDelete = async () => {
     try {
       await deletePrototype.mutateAsync(prototype.id)
-      if (variant !== 'home')
-        navigate(`/model/${prototype.model_id}/library`)
+      if (variant !== 'home') navigate(`/model/${prototype.model_id}/library`)
     } catch (error) {
       console.error('Failed to delete prototype:', error)
     }
@@ -344,8 +347,9 @@ export const DaPrototypeCard = ({
                       <Avatar className="h-7 w-7 bg-black/20 backdrop-blur">
                         <AvatarImage src={prototype.created_by.image_file} />
                         <AvatarFallback>
-                          {prototype.created_by.name?.charAt(0)?.toUpperCase() ||
-                            'U'}
+                          {prototype.created_by.name
+                            ?.charAt(0)
+                            ?.toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="line-clamp-1 text-xs mt-1">
@@ -408,7 +412,10 @@ export const DaPrototypeCard = ({
                 </span>
               </DaTooltip>
               <DropdownMenu open={dotsMenuOpen} onOpenChange={setDotsMenuOpen}>
-                <DaTooltip tooltipMessage={menuTooltipMessage} tooltipDelay={300}>
+                <DaTooltip
+                  tooltipMessage={menuTooltipMessage}
+                  tooltipDelay={300}
+                >
                   <span className="inline-flex">
                     <DropdownMenuTrigger asChild disabled={!isPrototypeOwner}>
                       <button
@@ -447,8 +454,7 @@ export const DaPrototypeCard = ({
     </div>
   )
 
-  const isAnyDialogOpen =
-    renameOpen || deleteOpen || deployOpen || dotsMenuOpen
+  const isAnyDialogOpen = renameOpen || deleteOpen || deployOpen || dotsMenuOpen
 
   if (!user) {
     return cardContent

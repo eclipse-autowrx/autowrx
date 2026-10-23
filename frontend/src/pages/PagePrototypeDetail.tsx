@@ -79,7 +79,7 @@ interface ViewPrototypeProps {
   display?: 'tree' | 'list'
 }
 
-const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
+const PagePrototypeDetail: FC<ViewPrototypeProps> = () => {
   const { model_id, prototype_id, tab } = useParams()
   const [searchParams] = useSearchParams()
   const pluginId = searchParams.get('plugid')
@@ -123,7 +123,8 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   const queryClient = useQueryClient()
   const [openSaveProjectTemplate, setOpenSaveProjectTemplate] = useState(false)
   const [projectTemplateName, setProjectTemplateName] = useState('')
-  const [projectTemplateDescription, setProjectTemplateDescription] = useState('')
+  const [projectTemplateDescription, setProjectTemplateDescription] =
+    useState('')
   const [projectTemplateVisibility, setProjectTemplateVisibility] = useState<
     'public' | 'private'
   >('public')
@@ -152,7 +153,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           })
           setStagingPlugins(allPlugins)
         }
-      } catch (error) {
+      } catch {
         // Silently fail - staging config might not exist or user might not have access
         setStagingPlugins([])
       }
@@ -265,10 +266,9 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
       prototype &&
       !hasPrototypeCode(prototype.code)
     ) {
-      navigate(
-        `/model/${model_id}/library/prototype/${prototype_id}/code`,
-        { replace: true },
-      )
+      navigate(`/model/${model_id}/library/prototype/${prototype_id}/code`, {
+        replace: true,
+      })
     }
   }, [tab, model_id, prototype_id, prototype, isPrototypeLoading, navigate])
 

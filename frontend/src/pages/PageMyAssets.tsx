@@ -9,7 +9,13 @@
 import { useEffect, useState } from 'react'
 import { useAssets } from '@/hooks/useAssets.ts'
 import { useSiteConfig } from '@/utils/siteConfig'
-import { TbTrash, TbPencil, TbShare, TbPlus, TbDeviceDesktopCog } from 'react-icons/tb'
+import {
+  TbTrash,
+  TbPencil,
+  TbShare,
+  TbPlus,
+  TbDeviceDesktopCog,
+} from 'react-icons/tb'
 import FormHardwareKitManager from '@/components/organisms/FormHardwareKitManager'
 import DaDialog from '@/components/molecules/DaDialog'
 import DaConfirmPopup from '@/components/molecules/DaConfirmPopup'
@@ -23,7 +29,6 @@ import {
   SelectValue,
 } from '@/components/atoms/select'
 import { useToast } from '@/components/molecules/toaster/use-toast'
-import { IoAddCircleOutline } from 'react-icons/io5'
 import ShareAssetPanel from '@/components/molecules/ShareAssetPanel'
 import { Textarea } from '@/components/atoms/textarea'
 
@@ -82,13 +87,15 @@ const PythonGenAIEditor = ({ dataStr, onDataChange }: iPropGenAIPython) => {
 
   useEffect(() => {
     try {
-      let data = JSON.parse(dataStr || JSON.stringify(sampleDataStr))
+      const data = JSON.parse(dataStr || JSON.stringify(sampleDataStr))
       setRequestField(data.requestField || '')
       setResponseField(data.responseField || '')
       setMethod(data.method || '')
       setUrl(data.url || '')
       setAccessToken(data.accessToken || '')
-    } catch (e) { }
+    } catch {
+      // ignore: invalid JSON leaves the fields unchanged
+    }
   }, [dataStr])
 
   const onUrlChange = (value: string) => {
@@ -242,9 +249,13 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
   const [dataStr, setDataStr] = useState<any>('')
   const { createAsset, updateAsset } = useAssets()
   const { toast } = useToast()
-  const enabledAssetTypes = useSiteConfig('USER_ASSET_TYPES', ['CLOUD_RUNTIME', 'HARDWARE_KIT', 'GENAI-PYTHON']) as string[]
-  const visibleBareTypes = ASSET_BARE_TYPES.filter(
-    (t) => enabledAssetTypes.includes(t.value),
+  const enabledAssetTypes = useSiteConfig('USER_ASSET_TYPES', [
+    'CLOUD_RUNTIME',
+    'HARDWARE_KIT',
+    'GENAI-PYTHON',
+  ]) as string[]
+  const visibleBareTypes = ASSET_BARE_TYPES.filter((t) =>
+    enabledAssetTypes.includes(t.value),
   )
 
   // const [readOnlyUsers, setReadOnlyUsers] = useState<any[]>([])
@@ -336,7 +347,7 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
                   title: `Invalid info`,
                   description: (
                     <span className="text-sm flex items-center text-red-500">
-                      Missing "name", please enter name and try again!
+                      Missing &quot;name&quot;, please enter name and try again!
                     </span>
                   ),
                   duration: 3000,
@@ -363,7 +374,7 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
               if (onDone) {
                 onDone()
               }
-            } catch (e) {
+            } catch {
               toast({
                 title: `Save error`,
                 description: (
@@ -396,7 +407,11 @@ const PageMyAssets = () => {
   const isDeleting = deleteAsset.isPending
   const actionsDisabled = isDeleting || confirmDeleteOpen
 
-  const enabledAssetTypes = useSiteConfig('USER_ASSET_TYPES', ['CLOUD_RUNTIME', 'HARDWARE_KIT', 'GENAI-PYTHON']) as string[]
+  const enabledAssetTypes = useSiteConfig('USER_ASSET_TYPES', [
+    'CLOUD_RUNTIME',
+    'HARDWARE_KIT',
+    'GENAI-PYTHON',
+  ]) as string[]
   const visibleAssetTypes = ASSET_TYPES.filter(
     (t) => t.value === 'all' || enabledAssetTypes.includes(t.value),
   )
@@ -409,7 +424,7 @@ const PageMyAssets = () => {
       setFilteredAssets([])
       return
     }
-    let tmpAssets = JSON.parse(JSON.stringify(assets))
+    const tmpAssets = JSON.parse(JSON.stringify(assets))
     if (activeTab === 'all') {
       setFilteredAssets(tmpAssets)
       return
@@ -568,10 +583,11 @@ const PageMyAssets = () => {
                         key={type.value}
                         className={`
                                     px-4 py-2 cursor-pointer text-lg font-semibold
-                                    ${activeTab === type.value
-                            ? 'border-b-2 border-primary text-primary'
-                            : 'text-foreground hover:text-primary/80'
-                          }
+                                    ${
+                                      activeTab === type.value
+                                        ? 'border-b-2 border-primary text-primary'
+                                        : 'text-foreground hover:text-primary/80'
+                                    }
                                 `}
                         onClick={() => setActiveTab(type.value)}
                       >

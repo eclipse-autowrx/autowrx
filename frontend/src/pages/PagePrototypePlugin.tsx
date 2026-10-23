@@ -21,9 +21,14 @@ interface PagePrototypePluginProps {
   onNotifyTab?: (tab: string, pluginSlug?: string) => void
 }
 
-const PagePrototypePlugin: FC<PagePrototypePluginProps> = ({ pluginSlug, onSetActiveTab, onNotifyTab }) => {
+const PagePrototypePlugin: FC<PagePrototypePluginProps> = ({
+  pluginSlug,
+  onSetActiveTab,
+  onNotifyTab,
+}) => {
   const { data: model, isLoading: isModelLoading } = useCurrentModel()
-  const { data: prototype, isLoading: isPrototypeLoading } = useCurrentPrototype()
+  const { data: prototype, isLoading: isPrototypeLoading } =
+    useCurrentPrototype()
   const [searchParams] = useSearchParams()
   // Use pluginSlug prop if provided, otherwise fall back to URL param (for backward compatibility)
   const pluginId = pluginSlug || searchParams.get('plugid')

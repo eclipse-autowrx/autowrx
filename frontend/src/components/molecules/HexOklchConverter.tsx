@@ -28,10 +28,15 @@ function normalizeHexInput(s: string): string {
 }
 
 // Format oklch color for CSS: rounded values, hue 0 when chroma is 0 (avoid "none")
-function formatOklchCss(c: { l?: number; c?: number; h?: number; alpha?: number }): string {
+function formatOklchCss(c: {
+  l?: number
+  c?: number
+  h?: number
+  alpha?: number
+}): string {
   const L = c.l !== undefined ? Number(c.l.toFixed(4)) : 0
   const C = c.c !== undefined ? Number(c.c.toFixed(4)) : 0
-  const H = C === 0 ? 0 : (c.h !== undefined ? Number(c.h.toFixed(2)) : 0)
+  const H = C === 0 ? 0 : c.h !== undefined ? Number(c.h.toFixed(2)) : 0
   const alpha =
     c.alpha !== undefined && c.alpha < 1
       ? Number(c.alpha.toFixed(4))
@@ -59,7 +64,11 @@ function CopyButton({ value }: { value: string }) {
       className="inline-flex items-center justify-center w-8 h-8 rounded border border-border text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors shrink-0"
       title="Copy"
     >
-      {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+      {copied ? (
+        <Check className="w-3.5 h-3.5 text-green-500" />
+      ) : (
+        <Copy className="w-3.5 h-3.5" />
+      )}
     </button>
   )
 }
@@ -140,7 +149,12 @@ const HexOklchConverter: React.FC = () => {
           />
           <CopyButton value={hex} />
         </div>
-        <Button type="button" size="sm" onClick={handleConvert} className="shrink-0">
+        <Button
+          type="button"
+          size="sm"
+          onClick={handleConvert}
+          className="shrink-0"
+        >
           <ArrowRightIcon className="w-4 h-4" />
           Convert
         </Button>
@@ -157,7 +171,8 @@ const HexOklchConverter: React.FC = () => {
         </div>
       </div>
       <p className="text-[11px] text-muted-foreground/60 italic">
-        Fill either field and click Convert (or press Enter). Supports bidirectional conversion.
+        Fill either field and click Convert (or press Enter). Supports
+        bidirectional conversion.
       </p>
     </div>
   )

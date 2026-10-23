@@ -45,4 +45,3 @@ const DaUserListItem = ({ user }: { user: User }) => {
 }
 
 export default DaUserListItem
-

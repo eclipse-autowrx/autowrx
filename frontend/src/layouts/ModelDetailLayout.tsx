@@ -28,7 +28,9 @@ import DaDialog from '@/components/molecules/DaDialog'
 import { TbPlus, TbDotsVertical, TbSettings } from 'react-icons/tb'
 import { GiSaveArrow } from 'react-icons/gi'
 import AddonSelect from '@/components/molecules/AddonSelect'
-import CustomTabEditor, { TabConfig } from '@/components/organisms/CustomTabEditor'
+import CustomTabEditor, {
+  TabConfig,
+} from '@/components/organisms/CustomTabEditor'
 import TemplateForm from '@/components/organisms/TemplateForm'
 import { getTabConfig } from '@/components/molecules/PrototypeTabs'
 import {
@@ -54,9 +56,7 @@ const ModelDetailLayout = () => {
     state.setActiveModel,
   ])
   const location = useLocation()
-  const { data: prototypeCount } = useModelPrototypeTotal(
-    model ? model.id : '',
-  )
+  const { data: prototypeCount } = useModelPrototypeTotal(model ? model.id : '')
   const [activeModelApis] = useModelStore((state) => [state.activeModelApis])
 
   const { setLastAccessedModel } = useLastAccessedModel()
@@ -87,10 +87,7 @@ const ModelDetailLayout = () => {
     'ENABLE_MODEL_CUSTOMIZATION',
     true,
   )
-  const disableCustomApiSets = useSiteConfig(
-    'DISABLE_CUSTOM_API_SETS',
-    false,
-  )
+  const disableCustomApiSets = useSiteConfig('DISABLE_CUSTOM_API_SETS', false)
 
   // Update store when model is fetched
   useEffect(() => {
@@ -109,10 +106,9 @@ const ModelDetailLayout = () => {
   // Check if current user is model owner
   useEffect(() => {
     setIsModelOwner(
-      !!(user && model?.created_by && user.id === model.created_by.id)
+      !!(user && model?.created_by && user.id === model.created_by.id),
     )
   }, [user, model])
-
 
   const modelTabConfigs = getModelTabConfig(model?.custom_template?.model_tabs)
 
@@ -127,7 +123,7 @@ const ModelDetailLayout = () => {
       const currentTabs = getModelTabConfig(model?.custom_template?.model_tabs)
 
       const pluginExists = currentTabs.some(
-        (tab: TabConfig) => tab.type === 'custom' && tab.plugin === plugin.slug
+        (tab: TabConfig) => tab.type === 'custom' && tab.plugin === plugin.slug,
       )
 
       if (pluginExists) {
@@ -185,7 +181,8 @@ const ModelDetailLayout = () => {
 
   // Use actual model loading state
   const isLoading = isModelLoading || !model
-  const canManageModelUI = (isModelOwner || hasWritePermission) && !!enableModelCustomization
+  const canManageModelUI =
+    (isModelOwner || hasWritePermission) && !!enableModelCustomization
   // The site config is a hard switch: when disabled nobody sees the menu, admins included.
   const canOpenModelMoreMenu =
     !!enableModelCustomization &&
@@ -258,9 +255,7 @@ const ModelDetailLayout = () => {
 
   return (
     <div className="flex flex-col w-full h-full rounded-md bg-muted da-model-detail-layout">
-      <div
-        className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background da-model-detail-tab-bar"
-      >
+      <div className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background da-model-detail-tab-bar">
         <div className="flex w-fit">
           {model ? (
             <>
@@ -315,14 +310,21 @@ const ModelDetailLayout = () => {
                 onClick={() => {
                   setMoreMenuOpen(false)
                   if (model) {
-                    const normalizedPrototypeTabs = getTabConfig(model.custom_template?.prototype_tabs)
-                    const normalizedModelTabs = getModelTabConfig(model.custom_template?.model_tabs)
+                    const normalizedPrototypeTabs = getTabConfig(
+                      model.custom_template?.prototype_tabs,
+                    )
+                    const normalizedModelTabs = getModelTabConfig(
+                      model.custom_template?.model_tabs,
+                    )
                     setTemplateInitialData({
                       name: model.name || '',
                       description: '',
                       image: model.model_home_image_file || '',
                       visibility: model.visibility || 'public',
-                      config: { ...model.custom_template, prototype_tabs: normalizedPrototypeTabs },
+                      config: {
+                        ...model.custom_template,
+                        prototype_tabs: normalizedPrototypeTabs,
+                      },
                       model_tabs: normalizedModelTabs,
                       prototype_tabs: normalizedPrototypeTabs,
                     })

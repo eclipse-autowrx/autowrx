@@ -39,15 +39,15 @@ const DaRelatedPrototypes = ({ signal }: DaRelatedPrototypesProps) => {
 
   return (
     <div className="mt-2">
-      <div className="text-sm font-medium text-foreground">
-        Dependencies
-      </div>
+      <div className="text-sm font-medium text-foreground">Dependencies</div>
       {prototypes &&
       prototypes.length > 0 &&
       truncatedPrototypes &&
       truncatedPrototypes.length > 0 ? (
         <>
-          <div className="text-sm font-medium text-muted-foreground">Used by these vehicle app</div>
+          <div className="text-sm font-medium text-muted-foreground">
+            Used by these vehicle app
+          </div>
           <div
             className="autofill mt-2 gap-4"
             style={

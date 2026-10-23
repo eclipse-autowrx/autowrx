@@ -34,8 +34,7 @@ const PrototypeRightAction = ({
   return (
     <>
       {actions?.map((action) => {
-        if (action.openMode === 'page' || action.builtin === 'copy')
-          return null
+        if (action.openMode === 'page' || action.builtin === 'copy') return null
         const dialogKey = JSON.stringify(action)
         return (
           <DaDialog

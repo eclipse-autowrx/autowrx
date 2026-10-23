@@ -64,7 +64,9 @@ const DaMultiUsersInput = ({
                 title={user.name}
                 className="flex cursor-default items-center rounded border border-muted-foreground/50 px-1 py-0.5 shrink-0"
               >
-                <span className="text-sm text-foreground max-w-60 overflow-hidden text-ellipsis whitespace-nowrap">{user.name}</span>
+                <span className="text-sm text-foreground max-w-60 overflow-hidden text-ellipsis whitespace-nowrap">
+                  {user.name}
+                </span>
                 <button
                   className="-m-0.5 ml-1 p-0.5"
                   onClick={() => onRemoveUser(user)}

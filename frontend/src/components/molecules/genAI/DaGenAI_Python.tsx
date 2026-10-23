@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -114,7 +114,7 @@ const DaGenAI_Python = ({
           ) : (
             <LoadingLineAnimation
               loading={loading}
-              content={loading ? "Generating code..." : "There's no code here"}
+              content={loading ? 'Generating code...' : "There's no code here"}
             />
           )}
         </div>
@@ -124,7 +124,7 @@ const DaGenAI_Python = ({
             variant="outline"
             className="h-8 w-full"
             onClick={() => {
-              onCodeChanged ? onCodeChanged(genCode) : null
+              onCodeChanged?.(genCode)
             }}
             disabled={!(genCode && genCode.length > 0) || !isFinished}
           >

@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 const express = require('express');
+const httpStatus = require('http-status');
 const validate = require('../../../middlewares/validate');
 const authValidation = require('../../../validations/auth.validation');
 const authController = require('../../../controllers/auth.controller');
@@ -22,7 +23,6 @@ const {
   ssoLimiter,
 } = require('../../../middlewares/rateLimiter');
 const ApiError = require('../../../utils/ApiError');
-const httpStatus = require('http-status');
 
 const router = express.Router();
 
@@ -37,7 +37,8 @@ router.get('/github-sso/callback', authController.githubSsoCallback);
 router.post('/sso', ssoLimiter, validate(authValidation.sso), authController.sso);
 
 // Registration endpoint - always registered but checks SELF_REGISTRATION config
-router.post('/register', 
+router.post(
+  '/register',
   (req, res, next) => {
     // Check if self-registration is enabled
     if (!req.authConfig.SELF_REGISTRATION) {
@@ -46,8 +47,8 @@ router.post('/register',
     next();
   },
   registerLimiter,
-  validate(authValidation.register), 
-  authController.register
+  validate(authValidation.register),
+  authController.register,
 );
 
 router.post('/login', authIpLimiter, loginLimiter, validate(authValidation.login), authController.login);

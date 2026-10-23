@@ -1,3 +1,11 @@
+// Copyright (c) 2026 Eclipse Foundation.
+//
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { useEffect, useRef, useState } from 'react'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useSiteConfig } from '@/utils/siteConfig'
@@ -16,13 +24,7 @@ const LearningIntegration = ({ requestClose }: LearningIntegrationProps) => {
   const [isMinimized, setIsMinimized] = useState(false)
   const learningUrl = useSiteConfig('LEARNING_MODE_URL', '')
 
-  const [
-    isShowedAutomationControl,
-    automationSequence,
-    setIsShowedAutomationControl,
-    setAutomationSequence,
-    setAutomationSequenceActionAt,
-  ] = useGlobalStore(
+  const [isShowedAutomationControl, automationSequence] = useGlobalStore(
     (state) => [
       state.isShowedAutomationControl,
       state.automationSequence,
@@ -30,7 +32,7 @@ const LearningIntegration = ({ requestClose }: LearningIntegrationProps) => {
       state.setAutomationSequence,
       state.setAutomationSequenceActionAt,
     ],
-    shallow
+    shallow,
   )
 
   const startListeningForAutomationControl = () => {
@@ -60,7 +62,7 @@ const LearningIntegration = ({ requestClose }: LearningIntegrationProps) => {
           isShowedAutomationControl: isShowedAutomationControl,
           automationSequence: automationSequence,
         }),
-        '*'
+        '*',
       )
     }
     if (!isShowedAutomationControl) {
@@ -81,7 +83,7 @@ const LearningIntegration = ({ requestClose }: LearningIntegrationProps) => {
         <iframe
           ref={frameLearning}
           src={`${learningUrl}?user_id=${encodeURIComponent(
-            user?.id || ''
+            user?.id || '',
           )}&token=${encodeURIComponent(access?.token || '')}`}
           className="m-0 h-full w-full inset-0 shadow-[4px_4px_6px_rgba(0,0,0,0.3)] bg-white rounded-lg"
           allow="camera;microphone"
@@ -93,4 +95,3 @@ const LearningIntegration = ({ requestClose }: LearningIntegrationProps) => {
 }
 
 export default LearningIntegration
-

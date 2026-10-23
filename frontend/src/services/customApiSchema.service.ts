@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -59,18 +59,24 @@ export interface ListCustomApiSchemaParams {
   page?: number
 }
 
-export const listCustomApiSchemas = (params?: ListCustomApiSchemaParams): Promise<Paged<CustomApiSchema>> =>
+export const listCustomApiSchemas = (
+  params?: ListCustomApiSchemaParams,
+): Promise<Paged<CustomApiSchema>> =>
   serverAxios.get('/system/custom-api-schema', { params }).then((r) => r.data)
 
 export const getCustomApiSchemaById = (id: string): Promise<CustomApiSchema> =>
   serverAxios.get(`/system/custom-api-schema/${id}`).then((r) => r.data)
 
-export const createCustomApiSchema = (data: Partial<CustomApiSchema>): Promise<CustomApiSchema> =>
+export const createCustomApiSchema = (
+  data: Partial<CustomApiSchema>,
+): Promise<CustomApiSchema> =>
   serverAxios.post('/system/custom-api-schema', data).then((r) => r.data)
 
-export const updateCustomApiSchema = (id: string, data: Partial<CustomApiSchema>): Promise<CustomApiSchema> =>
+export const updateCustomApiSchema = (
+  id: string,
+  data: Partial<CustomApiSchema>,
+): Promise<CustomApiSchema> =>
   serverAxios.patch(`/system/custom-api-schema/${id}`, data).then((r) => r.data)
 
 export const deleteCustomApiSchema = (id: string): Promise<void> =>
   serverAxios.delete(`/system/custom-api-schema/${id}`).then(() => {})
-

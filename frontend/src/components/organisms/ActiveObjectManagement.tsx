@@ -1,36 +1,36 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
 
-import useModelStore from "@/stores/modelStore"
-import { shallow } from "zustand/shallow";
-import useGetModel from "@/hooks/useGetModel";
-import useGetPrototype from "@/hooks/useGetPrototype";
-import { useEffect, FC } from "react";
-import { Model, Prototype } from "@/types/model.type";
-import { useParams } from "react-router-dom";
+import useModelStore from '@/stores/modelStore'
+import { shallow } from 'zustand/shallow'
+import useGetModel from '@/hooks/useGetModel'
+import useGetPrototype from '@/hooks/useGetPrototype'
+import { useEffect, FC } from 'react'
+import { Model, Prototype } from '@/types/model.type'
+import { useParams } from 'react-router-dom'
 
-const ActiveObjectManagement : FC = () => {
-    const { model_id = "", prototype_id= "" } = useParams();
-    const [setActiveModel, setActivePrototype] = useModelStore(
-        (state) => [state.setActiveModel, state.setActivePrototype],
-        shallow
-    );
+const ActiveObjectManagement: FC = () => {
+  const { model_id = '', prototype_id = '' } = useParams()
+  const [setActiveModel, setActivePrototype] = useModelStore(
+    (state) => [state.setActiveModel, state.setActivePrototype],
+    shallow,
+  )
 
-    const { data: fetchedModel } = useGetModel(model_id || '');
-    const { data: fetchedPrototype } = useGetPrototype(prototype_id || '');
+  const { data: fetchedModel } = useGetModel(model_id || '')
+  const { data: fetchedPrototype } = useGetPrototype(prototype_id || '')
 
-    useEffect(() => {
-        setActiveModel(fetchedModel as Model)
-    }, [fetchedModel])
+  useEffect(() => {
+    setActiveModel(fetchedModel as Model)
+  }, [fetchedModel])
 
-    useEffect(() => {
-        setActivePrototype(fetchedPrototype as Prototype)
-    }, [fetchedPrototype])
+  useEffect(() => {
+    setActivePrototype(fetchedPrototype as Prototype)
+  }, [fetchedPrototype])
 
   return <span></span>
 }

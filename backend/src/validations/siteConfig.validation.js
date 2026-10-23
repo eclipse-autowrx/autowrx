@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -120,7 +120,7 @@ const bulkUpsertSiteConfigs = {
           secret: Joi.boolean().default(false),
           description: Joi.string().trim().max(500).allow(''),
           category: Joi.string().trim().max(100).default('general'),
-        })
+        }),
       )
       .min(1)
       .required(),
