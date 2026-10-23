@@ -42,6 +42,7 @@ import {
 } from '@/services/model.service'
 import { listModelTemplates } from '@/services/modelTemplate.service'
 import { visibilityFromModelTemplate } from '@/utils/modelVisibility'
+import { getConfig } from '@/utils/siteConfig'
 import { createPrototypeService } from '@/services/prototype.service'
 import { ModelLite, Prototype } from '@/types/model.type'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -345,6 +346,13 @@ const FormNewPrototype = ({
         modelId = selectedModelId
       }
 
+      const defaultPrototypeImage = await getConfig(
+        'DEFAULT_PROTOTYPE_IMAGE',
+        'site',
+        undefined,
+        '/imgs/default_prototype_cover.jpg',
+      )
+
       const selectedTemplate = templateOptions.find(
         (t) => t.id === selectedTemplateId,
       )
@@ -361,7 +369,8 @@ const FormNewPrototype = ({
           ? selectedTemplate.customer_journey
           : default_journey,
         description: { problem: '', says_who: '', solution: '', status: '' },
-        image_file: '/imgs/default_prototype_cover.jpg',
+        image_file:
+          defaultPrototypeImage || '/imgs/default_prototype_cover.jpg',
         skeleton: '{}',
         tags: [],
         widget_config:

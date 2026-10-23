@@ -17,6 +17,7 @@ import { Spinner } from '../atoms/spinner'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import { uploadFileService } from '@/services/upload.service'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
+import { clearCache } from '@/utils/siteConfig'
 import { Input } from '../atoms/input'
 import { Textarea } from '../atoms/textarea'
 import { Checkbox } from '../atoms/checkbox'
@@ -154,6 +155,7 @@ const ConfigList: React.FC<ConfigListProps> = ({
           value: newValue,
         })
       }
+      clearCache()
       if (!config.secret) {
         setLocalValues((prev) => ({ ...prev, [config.key]: newValue }))
       }
