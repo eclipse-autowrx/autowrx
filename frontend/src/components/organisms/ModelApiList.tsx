@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useLocation, useParams, useNavigate } from 'react-router-dom'
 import { DaApiList } from '../molecules/DaApiList'
 import { Input } from '@/components/atoms/input'
@@ -44,20 +44,41 @@ const ModelApiList = ({
     (state) => [state.activeModelApis, state.model],
     shallow,
   )
-  const activeModelApis =
-    storeApis && storeApis.length > 0 ? storeApis : (fallbackApis ?? [])
+  const activeModelApis = useMemo(
+    () =>
+      storeApis && storeApis.length > 0 ? storeApis : (fallbackApis ?? []),
+    [storeApis, fallbackApis],
+  )
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredApiList, setFilteredApiList] = useState<
     VehicleApi[] | undefined
   >(undefined)
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([
-    'default',
-    'wishlist',
-    'branch',
-    'sensor',
-    'actuator',
-    'attribute',
-  ])
+  const typeOptions = useMemo(() => {
+    const types = new Set(
+      activeModelApis
+        .map((api) => api.type?.toLowerCase().trim())
+        .filter(Boolean),
+    )
+    const knownTypes = ['branch', 'sensor', 'actuator', 'attribute']
+    return [
+      ...knownTypes.filter((type) => types.has(type)),
+      ...Array.from(types)
+        .filter((type) => !knownTypes.includes(type))
+        .sort(),
+    ]
+  }, [activeModelApis])
+  const filterKey = JSON.stringify(typeOptions)
+  const [filterSelection, setFilterSelection] = useState<{
+    key: string
+    values: string[]
+  }>()
+  const selectedFilters = useMemo(
+    () =>
+      filterSelection?.key === filterKey
+        ? filterSelection.values
+        : ['default', 'wishlist', ...typeOptions],
+    [filterSelection, filterKey, typeOptions],
+  )
   const [selectedApi, setSelectedApi] = useState<VehicleApi>()
   const [isOpenPopup, setIsOpenPopup] = useState(false)
   const { data: model } = useCurrentModel()
@@ -106,20 +127,18 @@ const ModelApiList = ({
             apiItem.name.toLowerCase().includes(searchTerm.toLowerCase()),
           ) || []
 
-        if (selectedFilters.length > 0) {
-          filteredList = filteredList.filter((apiItem: any) => {
-            const isDefault = !apiItem.isWishlist
-            const isWishlist = !!apiItem.isWishlist
-            return (
-              (selectedFilters.includes('default') && isDefault) ||
-              (selectedFilters.includes('wishlist') && isWishlist)
-            )
-          })
-
-          filteredList = filteredList.filter((apiItem: any) =>
-            selectedFilters.includes(apiItem.type?.toLowerCase()),
+        filteredList = filteredList.filter((apiItem: any) => {
+          const isDefault = !apiItem.isWishlist
+          const isWishlist = !!apiItem.isWishlist
+          return (
+            (selectedFilters.includes('default') && isDefault) ||
+            (selectedFilters.includes('wishlist') && isWishlist)
           )
-        }
+        })
+
+        filteredList = filteredList.filter((apiItem: any) =>
+          selectedFilters.includes(apiItem.type?.toLowerCase().trim()),
+        )
 
         setFilteredApiList(filteredList)
       },
@@ -150,7 +169,7 @@ const ModelApiList = ({
 
   const handleFilterChange = (selectedOptions: string[]) => {
     const updatedFilters = selectedOptions.map((option) => option.toLowerCase())
-    setSelectedFilters(updatedFilters)
+    setFilterSelection({ key: filterKey, values: updatedFilters })
   }
 
   return (
@@ -168,9 +187,14 @@ const ModelApiList = ({
         </div>
         {viewMode !== 'hierarchical' && (
           <DaFilter
+            key={filterKey}
             categories={{
               Signal: ['Default', 'Wishlist'],
-              Type: ['Branch', 'Sensor', 'Actuator', 'Attribute'],
+              Type: typeOptions.map((type) =>
+                ['branch', 'sensor', 'actuator', 'attribute'].includes(type)
+                  ? type[0].toUpperCase() + type.slice(1)
+                  : type,
+              ),
             }}
             onChange={handleFilterChange}
             className="w-full"

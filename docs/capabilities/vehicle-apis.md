@@ -127,7 +127,9 @@ Model owners (define the signal set); end users (consume signals in dashboards/c
 ### API contract
 
 - `POST /v2/apis` (auth) → `201` the new API; `GET /v2/apis/:id` → `200`; `PATCH` → `200`; `DELETE` → `204`; `GET /v2/apis/model_id/:modelId` → `200` the model's API.
-- `GET /v2/models/:id/api` (optional auth) → `200` the computed CVI (VSS + extended merged); `GET /v2/models/:id/api/:apiName` → `200` one API's detail (`name`, `datatype`, `type`, `unit?`, `min?`, `max?`, `description?`).
+- `GET /v2/models/:id/api` (optional auth) → `200` the computed CVI (standard VSS or stored custom VSS + extended merged); `GET /v2/models/:id/api/:apiName` → `200` one API's detail (`name`, `datatype`, `type`, `unit?`, `min?`, `max?`, `description?`).
+- `GET /v2/models/:id/api?raw=true` uses the same model-access check and skips UI refinement and sorting. Unmodified custom imports retain their original fields, empty objects, and JSON key order; extended nodes are overlaid unless their names collide with a base node. Without `raw=true`, names, IDs, and defaults are still added for UI consumers.
+- Custom imports made before `custom_vss` storage was introduced remain lossy because their original trees were not retained.
 
 ### Quality control
 
@@ -175,7 +177,7 @@ API definitions are stored linked to the model and the creating user.
 ### Test coverage
 - **E2E (Playwright):** 2 test case(s) in `vehicle-api.spec.ts` — SITEMAP: ✅
 - **Estimated coverage:** ≈45% (est.) — 2 E2E cases cover computed-tree read; ~6 acceptance paths; CRUD, `model_id/:modelId`, and detail-by-name paths uncovered.
-- **Unit (Jest):** none
+- **Unit (Jest):** `backend/tests/unit/app/model.api.test.js` covers custom create/replace/raw export, wishlist overlays, standard-version switching, validation, and access checks.
 
 ## CAP-VAPI-03 — Replace APIs from a VSS spec
 
@@ -200,7 +202,7 @@ Model owners (swap the signal set to a new VSS version).
 
 ### API contract
 
-- `POST /v2/models/:id/replace-api {api_data_url}` (requires `WRITE_MODEL`) → `200`; if `api_data_url` is missing, it returns `400`. ⚠️ This is destructive — it replaces all APIs.
+- `POST /v2/models/:id/replace-api {api_data_url}` (requires `WRITE_MODEL`) → `200`; missing URLs or VSS data larger than 10 MiB return `400`. Matching standard imports store `api_version` and clear `custom_vss`; custom imports store the tree in `custom_vss` and wishlist nodes as ExtendedApi rows. This replaces the previous base and extended APIs.
 
 ### Quality control
 
@@ -255,7 +257,7 @@ Calling replace overwrites the model's API document; the old set is lost (no und
 ### Test coverage
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
 - **Estimated coverage:** ≈0% (est.) — no E2E spec.
-- **Unit (Jest):** none
+- **Unit (Jest):** `backend/tests/unit/app/model.api.test.js` covers custom create/replace/raw export, wishlist overlays, standard-version switching, validation, and access checks.
 
 ## CAP-VAPI-04 — Vehicle API view (List / Tree / Hierarchical / Compare)
 

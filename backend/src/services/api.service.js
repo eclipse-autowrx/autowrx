@@ -217,10 +217,14 @@ const ensureParentApiHierarchy = (root, api) => {
   for (const currentApi of api.split('.')) {
     parentNode.children ??= {};
 
-    parentNode.children[currentApi] ??= {
-      type: 'branch',
-      children: {},
-    };
+    if (!Object.prototype.hasOwnProperty.call(parentNode.children, currentApi)) {
+      Object.defineProperty(parentNode.children, currentApi, {
+        value: { type: 'branch', children: {} },
+        enumerable: true,
+        configurable: true,
+        writable: true,
+      });
+    }
     parentNode = parentNode.children[currentApi];
   }
 
@@ -243,7 +247,7 @@ const traverse = (api, callback, prefix = '') => {
  *
  * @param {string} modelId
  */
-const computeVSSApi = async (modelId) => {
+const computeVSSApi = async (modelId, { raw = false } = {}) => {
   const model = await Model.findById(modelId);
   if (!model) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Model not found');
@@ -252,7 +256,9 @@ const computeVSSApi = async (modelId) => {
 
   const mainApi = model.main_api || 'Vehicle';
   const apiVersion = model.api_version;
-  if (!apiVersion) {
+  if (model.custom_vss) {
+    ret = _.cloneDeep(model.custom_vss);
+  } else if (!apiVersion) {
     ret = {
       [mainApi]: {
         description: mainApi,
@@ -274,47 +280,38 @@ const computeVSSApi = async (modelId) => {
 
       // Only add the extended API if it doesn't exist in the current CVI
       const keys = name.split('.');
-      let current = ret[mainApi].children;
-      for (const key of keys) {
-        if (!current || !current[key]) {
-          const jsonExtendedApi = extendedApi.toJSON();
-          delete jsonExtendedApi._id;
-          delete jsonExtendedApi.tags;
-          delete jsonExtendedApi.skeleton;
-          delete jsonExtendedApi.model;
-          delete jsonExtendedApi.created_at;
-          ret[mainApi].children[name] = jsonExtendedApi;
-          break;
-        }
-        current = current[key].children;
-      }
+      let current = ret[mainApi];
+      const exists = keys.every((key) => {
+        if (!current.children || !Object.prototype.hasOwnProperty.call(current.children, key)) return false;
+        current = current.children[key];
+        return true;
+      });
+      if (exists) return;
+
+      const jsonExtendedApi = extendedApi.toJSON();
+      delete jsonExtendedApi._id;
+      delete jsonExtendedApi.tags;
+      delete jsonExtendedApi.skeleton;
+      delete jsonExtendedApi.model;
+      delete jsonExtendedApi.created_at;
+      const parentNode = ensureParentApiHierarchy(ret[mainApi], keys.slice(0, -1).join('.'));
+      Object.defineProperty(parentNode.children, keys.at(-1), {
+        value: jsonExtendedApi,
+        enumerable: true,
+        configurable: true,
+        writable: true,
+      });
     } catch (error) {
       logger.warn(`Error while processing extended API ${extendedApi._id} with name ${extendedApi.apiName}: ${error}`);
     }
   });
 
+  if (raw) return ret;
+
   try {
     ret[mainApi].children = sortObject(ret[mainApi].children);
   } catch (error) {
     logger.warn(`Error while sorting object: ${error}`);
-  }
-
-  // Nest parent/children apis
-  const keys = Object.keys(ret[mainApi]?.children || {}).filter((key) => key.includes('.'));
-
-  for (const key of keys) {
-    const parts = key.split('.');
-    const parent = parts.slice(0, -1).join('.');
-    const childKey = parts[parts.length - 1];
-
-    const parentNode = ensureParentApiHierarchy(ret[mainApi], parent);
-
-    parentNode.children[childKey] = {
-      ...ret[mainApi].children[key],
-      children: ret[mainApi].children[key].children || {},
-    };
-
-    delete ret[mainApi].children[key];
   }
 
   // Refine tree
