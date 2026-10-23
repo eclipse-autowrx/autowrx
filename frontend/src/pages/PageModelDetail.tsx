@@ -437,7 +437,7 @@ const PageModelDetail = () => {
                 if (!model) return
                 setIsDownloading(true)
                 try {
-                  const data = await getComputedAPIs(model.id)
+                  const data = await getComputedAPIs(model.id, true)
                   const link = document.createElement('a')
                   link.href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 4))}`
                   link.download = `${model.name}_vss.json`

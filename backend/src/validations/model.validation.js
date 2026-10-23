@@ -17,7 +17,9 @@ const createModel = {
     // null = custom model (no COVESA base); omit field or pass null
     api_version: Joi.string().allow(null),
     api_data_url: Joi.string(),
-    cvi: Joi.string().custom(jsonString),
+    cvi: Joi.string()
+      .max(10 * 1024 * 1024)
+      .custom(jsonString),
     extended_apis: Joi.array().items(Joi.any()),
     main_api: Joi.string().required().max(255),
     model_home_image_file: Joi.string().allow('').default('/imgs/default-model-image.png'),
@@ -156,6 +158,9 @@ const deleteAuthorizedUser = {
 };
 
 const getApiByModelId = {
+  query: Joi.object().keys({
+    raw: Joi.boolean().default(false),
+  }),
   params: Joi.object().keys({
     id: Joi.string().custom(objectId),
   }),

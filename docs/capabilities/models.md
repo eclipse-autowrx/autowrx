@@ -65,7 +65,7 @@ End users (discover models); model owners (create/import); the wider community (
 - `GET /v2/models` (optional auth via `PUBLIC_VIEWING`) → `200` paginated list; filters: `name`, `visibility` (one value or comma-separated list, e.g. `public,editable`), `state`, `tenant_id`, `vehicle_category`, `main_api`, `id`, `created_by`, `is_contributor`, `include_stats`, `sortBy`, `page`, `limit`, `fields`.
 - `GET /v2/models/all` → expanded/unpaginated aggregation of owned + contributed + public-released models (optional auth via `PUBLIC_VIEWING`; owned/contributed only populated for authenticated users).
 - `POST /v2/models` (auth) → `201` new model. `POST /v2/models/stats` (optional auth) → `200 { statsById: { [modelId]: {...} } }` for the body `ids`.
-- Import from ZIP creates a model from the archive contents.
+- Import from ZIP creates a model from the archive contents. `POST /v2/models` accepts the JSON string `cvi` when no `api_version` is supplied; custom trees are stored privately in `custom_vss` and wishlist nodes become ExtendedApi rows. URL and `cvi` imports reject VSS data larger than 10 MiB with `400`. Model lists omit `custom_vss`; use `GET /v2/models/:id/api?raw=true` to export the tree.
 - Signed-out with `PUBLIC_VIEWING=false` → `401` on list.
 
 ### Quality control
@@ -117,7 +117,7 @@ Model metadata (name, description, visibility, state, images, tags) stored in th
 ### Test coverage
 - **E2E (Playwright):** 4 test case(s) in `vehicle-models.spec.ts` — SITEMAP: ✅
 - **Estimated coverage:** ≈55% (est.) — 4 E2E cases cover list/create/import; ~7 acceptance paths; detail image/description paths uncovered.
-- **Unit (Jest):** none
+- **Unit (Jest):** `backend/tests/unit/app/model.api.test.js` covers URL and ZIP `cvi` imports, raw round trips, size validation, and exclusion of the custom tree from model responses.
 
 ## CAP-MODEL-02 — Model detail / edit
 

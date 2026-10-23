@@ -8,6 +8,7 @@
 
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import { getTypeColor } from '@/utils/typeColors'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -53,7 +54,7 @@ export const getCSSVariable = (variableName: string): string => {
 }
 
 export const getApiTypeClasses = (type: string) => {
-  switch (type) {
+  switch (type?.toLowerCase().trim()) {
     case 'branch':
       return { bgClass: 'bg-purple-500', textClass: 'text-purple-500' }
     case 'actuator':
@@ -62,12 +63,30 @@ export const getApiTypeClasses = (type: string) => {
       return { bgClass: 'bg-emerald-500', textClass: 'text-emerald-500' }
     case 'attribute':
       return { bgClass: 'bg-sky-500', textClass: 'text-sky-500' }
-    case 'Atomic Service':
+    case 'atomic service':
       return { bgClass: 'bg-purple-500', textClass: 'text-purple-500' }
-    case 'Basic Service':
+    case 'basic service':
       return { bgClass: 'bg-emerald-500', textClass: 'text-emerald-500' }
-    default:
-      return { bgClass: 'bg-gray-500', textClass: 'text-gray-500' }
+    default: {
+      const colorClasses: Record<
+        string,
+        { bgClass: string; textClass: string }
+      > = {
+        '#a855f7': { bgClass: 'bg-purple-500', textClass: 'text-purple-500' },
+        '#0ea5e9': { bgClass: 'bg-sky-500', textClass: 'text-sky-500' },
+        '#3b82f6': { bgClass: 'bg-blue-500', textClass: 'text-blue-500' },
+        '#10b981': { bgClass: 'bg-emerald-500', textClass: 'text-emerald-500' },
+        '#f59e0b': { bgClass: 'bg-amber-500', textClass: 'text-amber-500' },
+        '#ef4444': { bgClass: 'bg-red-500', textClass: 'text-red-500' },
+        '#8b5cf6': { bgClass: 'bg-violet-500', textClass: 'text-violet-500' },
+        '#06b6d4': { bgClass: 'bg-cyan-500', textClass: 'text-cyan-500' },
+        '#eab308': { bgClass: 'bg-yellow-500', textClass: 'text-yellow-500' },
+        '#f97316': { bgClass: 'bg-orange-500', textClass: 'text-orange-500' },
+        '#ec4899': { bgClass: 'bg-pink-500', textClass: 'text-pink-500' },
+        '#6366f1': { bgClass: 'bg-indigo-500', textClass: 'text-indigo-500' },
+      }
+      return colorClasses[getTypeColor(type)] || colorClasses['#3b82f6']
+    }
   }
 }
 

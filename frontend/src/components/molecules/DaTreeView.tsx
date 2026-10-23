@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { Branch, LeafTypes } from '@/types/api.type'
+import { AnyNode } from '@/types/api.type'
 import Tree from 'react-d3-tree'
 import { PathFunction } from 'react-d3-tree'
 import { useNavigate } from 'react-router-dom'
@@ -16,29 +16,36 @@ import { CustomNodeElementProps } from 'react-d3-tree'
 import { NavigateFunction } from 'react-router-dom'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import useCurrentModelApi from '@/hooks/useCurrentModelApi'
+import { getTypeColor } from '@/utils/typeColors'
 
 export interface TreeNode {
   name: string
-  type: 'branch' | 'sensor' | 'actuator'
+  type: string
   path: string
   children: TreeNode[]
 }
 
-const buildTreeNode = (name: string, path: string, node: Branch): TreeNode => {
-  const children = node.children
-    ? Object.entries(node.children)
-        // Include branches, sensors, and actuators (exclude attributes)
-        .filter(([_sub_node_name, node]) =>
-          ['branch', 'sensor', 'actuator'].includes(node.type),
+const buildTreeNode = (name: string, path: string, node: AnyNode): TreeNode => {
+  const nodeChildren = 'children' in node ? node.children : undefined
+  const children = nodeChildren
+    ? Object.entries(nodeChildren)
+        // Keep attributes hidden, but include custom element types.
+        .filter(
+          ([_sub_node_name, node]) =>
+            node.type?.toLowerCase().trim() !== 'attribute',
         )
         // Sort: branches first, then sensors/actuators, both alphabetically within their group
         .sort(([nameA, nodeA], [nameB, nodeB]) => {
-          const typeA = nodeA.type || 'branch'
-          const typeB = nodeB.type || 'branch'
+          const branchA =
+            nodeA.type?.toLowerCase().trim() === 'branch' ||
+            ('children' in nodeA && !!nodeA.children)
+          const branchB =
+            nodeB.type?.toLowerCase().trim() === 'branch' ||
+            ('children' in nodeB && !!nodeB.children)
 
           // Branches come first
-          if (typeA === 'branch' && typeB !== 'branch') return -1
-          if (typeA !== 'branch' && typeB === 'branch') return 1
+          if (branchA && !branchB) return -1
+          if (!branchA && branchB) return 1
 
           // Within same type group, sort alphabetically
           return nameA.localeCompare(nameB)
@@ -47,14 +54,14 @@ const buildTreeNode = (name: string, path: string, node: Branch): TreeNode => {
           buildTreeNode(
             sub_node_name,
             path === '' ? name : `${path}.${name}`,
-            node as Branch,
+            node,
           ),
         )
     : []
 
   return {
     name,
-    type: node.type || 'branch',
+    type: node.type?.toLowerCase().trim() || 'branch',
     path,
     children,
   }
@@ -70,9 +77,7 @@ const RenderRectSvgNode = (
   const node = nodeDatum as unknown as TreeNode
   const collapsed = nodeDatum.__rd3t.collapsed
 
-  const COLORS: {
-    [key in LeafTypes | 'aiot-blue' | 'aiot-green']: string
-  } = {
+  const COLORS: Record<string, string> = {
     sensor: '#10b981',
     branch: '#7c3aed',
     actuator: '#eab308',
@@ -81,22 +86,21 @@ const RenderRectSvgNode = (
     'aiot-green': '#aebd38',
   }
 
-  // Calculate width accounting for " >" indicator on branches (only if branch has children)
+  const nodeColor = COLORS[node.type] || getTypeColor(node.type)
+
+  // Account for the expand indicator on nodes with children.
   const nameWidth = 8 * node.name.length
   const hasChildren = node.children && node.children.length > 0
-  const indicatorWidth = node.type === 'branch' && hasChildren ? 15 : 0
+  const indicatorWidth = hasChildren ? 15 : 0
   const nodeWidth = nameWidth + indicatorWidth + 45
 
   return (
     <g>
       <g
         onClick={() => {
-          // Only toggle expand/collapse, don't navigate for sensors/actuators
-          // Branches can be clicked to navigate via the green circle button
-          if (node.type === 'branch') {
+          if (hasChildren) {
             toggleNode()
           }
-          // Sensors and actuators don't navigate - they're leaf nodes
         }}
       >
         {
@@ -110,11 +114,11 @@ const RenderRectSvgNode = (
               strokeWidth="0"
               style={{
                 fill:
-                  collapsed && node.type !== 'branch'
-                    ? COLORS[node.type]
+                  collapsed && !hasChildren
+                    ? nodeColor
                     : collapsed
                       ? 'white'
-                      : COLORS[node.type],
+                      : nodeColor,
               }}
             />
             <foreignObject width={nodeWidth} height={40} y={-20} x={-50}>
@@ -126,7 +130,7 @@ const RenderRectSvgNode = (
                   height: '100%',
                   width: '100%',
                   color:
-                    collapsed && node.type !== 'branch'
+                    collapsed && !hasChildren
                       ? 'white'
                       : collapsed
                         ? 'rgb(131 148 154)'
@@ -134,37 +138,35 @@ const RenderRectSvgNode = (
                 }}
               >
                 {node.name}
-                {node.type === 'branch' &&
-                  node.children &&
-                  node.children.length > 0 &&
-                  ' >'}
+                {hasChildren && ' >'}
               </div>
             </foreignObject>
           </>
         }
       </g>
-      {node.type === 'branch' && !collapsed && (
-        <circle
-          cx={-50}
-          cy={20}
-          fill={COLORS['aiot-green']}
-          r={12}
-          strokeWidth={3}
-          stroke={'white'}
-          onClick={() => {
-            // Use correct path with /api/covesa/ prefix
-            const apiPath =
-              node.path === '' ? node.name : `${node.path}.${node.name}`
-            const fullLink =
-              prototype_id === ''
-                ? `/model/${model.id}/api/covesa/${apiPath}`
-                : `/model/${model.id}/library/prototype/${prototype_id}/view/api/${apiPath}/`
+      {(hasChildren || !['sensor', 'actuator'].includes(node.type)) &&
+        (!hasChildren || !collapsed) && (
+          <circle
+            cx={-50}
+            cy={20}
+            fill={COLORS['aiot-green']}
+            r={12}
+            strokeWidth={3}
+            stroke={'white'}
+            onClick={() => {
+              // Use correct path with /api/covesa/ prefix
+              const apiPath =
+                node.path === '' ? node.name : `${node.path}.${node.name}`
+              const fullLink =
+                prototype_id === ''
+                  ? `/model/${model.id}/api/covesa/${apiPath}`
+                  : `/model/${model.id}/library/prototype/${prototype_id}/view/api/${apiPath}/`
 
-            navigate(fullLink)
-            onNodeClick?.()
-          }}
-        />
-      )}
+              navigate(fullLink)
+              onNodeClick?.()
+            }}
+          />
+        )}
     </g>
   )
 }
@@ -205,7 +207,7 @@ const getDynamicPathClass: PathFunction = ({ target }, _orientation) => {
         }
 
       default:
-        return 'Node selected'
+        return 'Node'
     }
   }
 

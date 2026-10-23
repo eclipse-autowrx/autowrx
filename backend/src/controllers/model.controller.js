@@ -84,12 +84,21 @@ const createModel = catchAsync(async (req, res) => {
   const { cvi, custom_apis, api_data_url, extended_apis: initialExtendedApis, ...reqBody } = req.body;
   let extended_apis = initialExtendedApis;
 
-  if (api_data_url) {
-    const result = await modelService.processApiDataUrl(api_data_url);
+  if (api_data_url || (cvi && !reqBody.api_version)) {
+    const result = api_data_url
+      ? await modelService.processApiDataUrl(api_data_url)
+      : modelService.processApiData(JSON.parse(cvi));
     if (result) {
-      extended_apis = result.extended_apis;
+      extended_apis = api_data_url
+        ? result.extended_apis
+        : (initialExtendedApis || []).concat(
+            (result.extended_apis || []).filter(
+              (api) => !initialExtendedApis?.some((existing) => existing.apiName === api.apiName),
+            ),
+          );
       reqBody.api_version = result.api_version;
       reqBody.main_api = result.main_api;
+      reqBody.custom_vss = result.custom_vss || null;
     }
   }
 
@@ -354,7 +363,7 @@ const getComputedVSSApi = catchAsync(async (req, res) => {
   if (!(await permissionService.canAccessModel(req.user?.id, req.params.id))) {
     throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
   }
-  const data = await apiService.computeVSSApi(req.params.id);
+  const data = await apiService.computeVSSApi(req.params.id, { raw: req.query.raw === true });
   res.send(data);
 });
 
@@ -382,11 +391,13 @@ const replaceApi = catchAsync(async (req, res) => {
   let extended_apis;
   let api_version;
   let main_api;
+  let custom_vss;
   try {
     const result = await modelService.processApiDataUrl(apiDataUrl);
     extended_apis = result.extended_apis;
     api_version = result.api_version;
     main_api = result.main_api;
+    custom_vss = result.custom_vss;
   } catch (error) {
     logger.error(`Error processing API data URL: ${error.message}`);
     logger.error(error);
@@ -400,6 +411,7 @@ const replaceApi = catchAsync(async (req, res) => {
     custom_apis: [], // Remove all custom_apis
     main_api,
     api_version: null,
+    custom_vss: custom_vss || null,
   };
   if (api_version) {
     updateBody.api_version = api_version;
