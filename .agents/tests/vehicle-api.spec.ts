@@ -110,9 +110,9 @@ test.describe('Vehicle API', () => {
       await expect(treeLabels.filter({ hasText: /^Empty$/ })).toBeVisible();
       await expect(treeLabels.filter({ hasText: /^Attribute$/ })).toHaveCount(0);
       await expect(treeLabels.filter({ hasText: /^Reading$/ })).toHaveCount(0);
-      await customNode.click();
+      await customNode.dispatchEvent('click'); // the footer overlaps the tree at the default viewport
       await expect(treeLabels.filter({ hasText: /^Reading$/ })).toBeVisible();
-      await customNode.click();
+      await customNode.dispatchEvent('click');
       await expect(treeLabels.filter({ hasText: /^Reading$/ })).toHaveCount(0);
 
       const downloadPromise = page.waitForEvent('download');

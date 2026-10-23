@@ -24,6 +24,8 @@
 | Layout (logged in) | Navbar with admin tools | ✅ `layout.spec.ts` |
 | Full HD (1920×1080) | Responsive at large viewport | ✅ `layout.spec.ts` |
 | Delete → recreate same-name model | Delete via home card menu, recreate same name in "Create New Model" dialog without reload — no duplicate-name error | ✅ `model-delete-recreate-and-prototype-rename.spec.ts` |
+| Model ZIP import / export | Home card export and import round-trip | ✅ `import-export.spec.ts` |
+| Custom VSS ZIP round-trip | Exported VSS, imported list and raw API preserve custom elements, sibling order and empty children | 🚧 `import-export.spec.ts` (written, not yet run) |
 
 ---
 
@@ -84,6 +86,7 @@
 | Rename prototype | Via API (context menu requires site config) | ✅ `prototype.spec.ts` |
 | Rename prototype updates immediately | Card context menu rename → card name and prototype header/breadcrumb update without reload | ✅ `model-delete-recreate-and-prototype-rename.spec.ts` |
 | Delete prototype | Via API, card removed from UI | ✅ `prototype.spec.ts` |
+| Prototype ZIP import / export | Library card export and import round-trip | ✅ `import-export.spec.ts` |
 | Copy prototype (menu entry) | `Copy Prototype` shown in card context / ⋮ menu | ✅ `prototype-copy.spec.ts` |
 | Copy prototype (full flow) | Routes to `/new-prototype?prototype_id=…`, copies code / widget config / image, drops `dashboard_template_id` | ✅ `prototype-copy.spec.ts` |
 | Search / filter | Filter prototypes by name | ✅ `prototype-extended.spec.ts` |

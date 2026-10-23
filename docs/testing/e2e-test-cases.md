@@ -159,6 +159,7 @@ in everyday words, what each one checks. No technical background needed.
 | Test case | What it checks |
 |---|---|
 | Export and import model round-trip | Downloading a model as a file and importing it again produces a working copy. |
+| ZIP round-trip keeps custom VSS elements | Custom signal types, metadata, empty children and sibling order survive model export and import. |
 | Export and import prototype round-trip | Same for prototypes via the library page. |
 
 ## 12. Prototypes — create, view, change, delete

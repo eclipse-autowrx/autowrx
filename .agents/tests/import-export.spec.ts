@@ -1,6 +1,18 @@
-import { dirname } from 'path';
+// Copyright (c) 2026 Eclipse Foundation.
+//
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
+import { readFile } from 'fs/promises';
+import { dirname, join } from 'path';
 import { test, expect } from '@playwright/test';
 import {
+  API_URL,
+  getAuthToken,
+  goToVehicleApiTab,
   loginAsAdmin,
   saveScreenshot,
   createTestModelViaApi,
@@ -20,6 +32,11 @@ import {
   waitForModelInHomeList,
   getHomeModelListSection,
 } from './helpers';
+
+// Reuse Playwright's bundled ZIP extractor without adding a dependency.
+const { extract } = require('playwright-core/lib/zipBundle') as {
+  extract: (zipPath: string, options: { dir: string }) => Promise<void>;
+};
 
 test.describe.configure({ mode: 'serial' });
 
@@ -103,6 +120,71 @@ test.describe('Import / Export - Model & Prototype', () => {
     });
 
     await saveScreenshot(page, 'import-export-model-roundtrip');
+  });
+
+  test('ZIP round-trip keeps custom VSS elements', async ({ page }) => {
+    const modelName = `E2E_CustomVssZip_${Date.now()}`;
+    const fixturePath = join(__dirname, 'fixtures', 'custom-vss.json');
+    const fixture = JSON.parse(await readFile(fixturePath, 'utf8'));
+    const modelId = await createTestModelViaApi(page, modelName, 'private');
+    createdModelIds.push(modelId);
+    let zipPath: string | undefined;
+
+    try {
+      await goToVehicleApiTab(page, modelId);
+      await page.getByRole('link', { name: 'Replace Vehicle API', exact: true }).click();
+      const dialog = page.getByRole('dialog');
+      await dialog.locator('input[type="file"]').setInputFiles(fixturePath);
+      const replaceButton = dialog.getByRole('button', { name: 'Replace Vehicle API', exact: true });
+      await expect(replaceButton).toBeEnabled();
+      const replaceResponse = page.waitForResponse((response) =>
+        response.url().endsWith(`/models/${modelId}/replace-api`) && response.request().method() === 'POST',
+      );
+      await replaceButton.click();
+      expect((await replaceResponse).ok()).toBeTruthy();
+      await expect(dialog).not.toBeVisible();
+
+      await waitForModelInHomeList(page, modelName);
+      const section = getHomeModelListSection(page);
+      await openModelContextMenu(page, modelName, section);
+      zipPath = await downloadViaContextMenuItem(page, 'Export Model');
+      expect(zipPath).toMatch(/model_.*\.zip$/i);
+
+      const extractedDir = join(dirname(zipPath), 'extracted');
+      await extract(zipPath, { dir: extractedDir });
+      const exportedVss = JSON.parse(await readFile(join(extractedDir, 'vss.json'), 'utf8'));
+      expect(exportedVss).toEqual(fixture);
+      expect(Object.keys(exportedVss.Vehicle.children)).toEqual(Object.keys(fixture.Vehicle.children));
+
+      // Remove the source so the home import does not prompt for a duplicate name.
+      // Keep its ID registered for afterEach cleanup if anything fails.
+      await deleteModelViaApi(page, modelId);
+      await page.goto('/');
+      await importModelZipOnHome(page, zipPath);
+      const importedModelId = new URL(page.url()).pathname.split('/')[2];
+      expect(importedModelId).toBeTruthy();
+      createdModelIds.push(importedModelId);
+      expect(importedModelId).not.toBe(modelId);
+      await expect(page.getByRole('heading', { name: modelName })).toBeVisible({ timeout: 20000 });
+
+      await goToVehicleApiTab(page, importedModelId);
+      const signals = page.locator('.signal-list-item-name');
+      await expect(signals.filter({ hasText: /^Vehicle\.Custom$/ })).toBeVisible({ timeout: 20000 });
+      await expect(signals.filter({ hasText: /^Vehicle\.Empty$/ })).toBeVisible();
+
+      const token = await getAuthToken(page);
+      const rawResponse = await page.request.get(`${API_URL}/v2/models/${importedModelId}/api?raw=true`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      expect(rawResponse.ok()).toBeTruthy();
+      const importedVss = await rawResponse.json();
+      expect(importedVss).toEqual(fixture);
+      expect(Object.keys(importedVss.Vehicle.children)).toEqual(Object.keys(fixture.Vehicle.children));
+    } finally {
+      if (zipPath) {
+        await removeTempDownloadDir(dirname(zipPath));
+      }
+    }
   });
 
   test('export and import prototype round-trip via library page', async ({ page }) => {
