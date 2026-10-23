@@ -16,10 +16,10 @@ const prototypeService = require('./prototype.service');
 const extendedApiService = require('./extendedApi.service');
 const apiService = require('./api.service');
 const permissionService = require('./permission.service');
-const fileService = require('./file.service');
 const { Model, Role, UserRole, Prototype, ModelTemplate, CustomApiSet } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { PERMISSIONS } = require('../config/roles');
+const { createExtendedApi } = require('../validations/extendedApi.validation');
 const { publiclyVisibleVisibilities, visibilityTypes } = require('../config/enums');
 const logger = require('../config/logger');
 const config = require('../config/config');
@@ -417,6 +417,9 @@ const queryModels = async (filter, options, advanced, userId) => {
     pipeline.push({ $project: fields.split(',').reduce((acc, field) => ({ ...acc, [field]: 1 }), {}) });
   }
 
+  // Aggregation bypasses the private-field transform in toJSON.
+  pipeline.push({ $project: { custom_vss: 0 } });
+
   const totalResults = await Model.aggregate([...pipeline, { $count: 'count' }]).exec();
 
   if (sortBy) {
@@ -681,6 +684,12 @@ const convertToExtendedApiFormat = (api) => {
 };
 
 const traverse = (api, callback, prefix = '') => {
+  if (!api || typeof api !== 'object' || Array.isArray(api)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'VSS nodes must be objects');
+  }
+  if (api.children && (typeof api.children !== 'object' || Array.isArray(api.children))) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'VSS children must be an object');
+  }
   if (api.children) {
     for (const [key, child] of Object.entries(api.children)) {
       traverse(child, callback, `${prefix}.${key}`);
@@ -690,19 +699,29 @@ const traverse = (api, callback, prefix = '') => {
 };
 
 /**
- * Validate that an api_data_url is safe for the backend to fetch.
+ * Validate and build an api_data_url for the backend to fetch.
  * Only relative paths (served by this app) and https URLs from the
- * configured allowlist are permitted. Blocks internal/private targets.
+ * configured allowlist are permitted. External hostnames must match exactly;
+ * subdomains need their own allowlist entries. Blocks internal/private targets.
+ * Build the request hostname from config, never from the user-provided hostname.
  * @param {string} url
- * @returns {string} the validated URL
+ * @returns {string} the resolved URL with a trusted hostname
  */
 const validateApiDataUrl = (url) => {
   if (!url || typeof url !== 'string') {
     throw new ApiError(httpStatus.BAD_REQUEST, 'api_data_url must be a non-empty string');
   }
 
-  // Relative paths are always safe (resolved to this app's own static files)
-  if (url.startsWith('/')) return url;
+  if (url.startsWith('/')) {
+    if (url.startsWith('//') || url.includes('..') || url.includes('\\') || url.includes('@')) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'api_data_url must be a safe relative path');
+    }
+    const local = new URL(`http://localhost:${config.port}`);
+    const relative = new URL(url, 'http://localhost');
+    local.pathname = relative.pathname;
+    local.search = relative.search;
+    return local.href;
+  }
 
   // Absolute URLs: must be https and from the allowlist
   let parsed;
@@ -720,8 +739,8 @@ const validateApiDataUrl = (url) => {
     .map((d) => d.trim().toLowerCase())
     .filter(Boolean);
   const hostname = parsed.hostname.toLowerCase();
-  const isAllowed = allowlist.some((d) => hostname === d || hostname.endsWith(`.${d}`));
-  if (!isAllowed) {
+  const allowedHost = allowlist.find((d) => hostname === d);
+  if (!allowedHost) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
       'External api_data_url is not allowlisted; use a relative path or configure VSS_DATA_URL_ALLOWLIST',
@@ -746,21 +765,141 @@ const validateApiDataUrl = (url) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'api_data_url cannot target internal network addresses');
   }
 
-  return url;
+  const port = parsed.port ? `:${parsed.port}` : '';
+  return `https://${allowedHost}${port}${parsed.pathname}${parsed.search}`;
+};
+
+const MAX_CUSTOM_VSS_BYTES = 10 * 1024 * 1024;
+
+const processApiData = (data) => {
+  if (!data || typeof data !== 'object' || Array.isArray(data) || Object.keys(data).length === 0) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'VSS data must be a non-empty object');
+  }
+  if (Buffer.byteLength(JSON.stringify(data), 'utf8') > MAX_CUSTOM_VSS_BYTES) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'VSS data must not exceed 10 MB');
+  }
+
+  const extendedApis = [];
+
+  const mainApi = Object.keys(data).at(0);
+  if (!data[mainApi] || typeof data[mainApi] !== 'object' || Array.isArray(data[mainApi])) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'VSS root must be an object');
+  }
+
+  // Detached wishlist APIs
+  traverse(
+    data[mainApi],
+    (api, prefix) => {
+      for (const [key, value] of Object.entries(api.children || {})) {
+        if (value.isWishlist) {
+          const name = value?.name || `${prefix}.${key}`;
+          extendedApis.push(
+            convertToExtendedApiFormat({
+              ...value,
+              name,
+            }),
+          );
+          delete api.children[key];
+        }
+      }
+    },
+    mainApi,
+  );
+
+  const result = {
+    main_api: mainApi,
+  };
+
+  // Check if this is a COVESA VSS version (only for standard versions, skip for custom files)
+  // Quick optimization: Only check if we have standard VSS files available
+  // Custom uploaded files don't need version detection - they're already custom
+  try {
+    const vssJsonPath = path.join(__dirname, '../../data/vss.json');
+    if (!fs.existsSync(vssJsonPath)) {
+      // No standard VSS files available, treat as custom
+      logger.debug('vss.json not found, treating uploaded file as custom');
+    } else {
+      // Intentional require(): loads and caches the JSON index of standard VSS versions.
+      // eslint-disable-next-line global-require
+      const versionList = require('../../data/vss.json');
+      if (!versionList || versionList.length === 0) {
+        // No versions to check, treat as custom
+        logger.debug('No VSS versions available, treating uploaded file as custom');
+      } else {
+        // Compare root keys before checking each standard version.
+        const dataKeys = Object.keys(data);
+
+        // Only check versions that actually exist on disk
+        let matched = false;
+        for (const version of versionList) {
+          const versionFilePath = path.join(__dirname, `../../data/${version.name}.json`);
+          if (!fs.existsSync(versionFilePath)) {
+            logger.debug(`Version file ${version.name}.json not found on disk, skipping`);
+            continue;
+          }
+
+          try {
+            // Intentional require(): loads and caches the (large) standard VSS file for comparison.
+            // eslint-disable-next-line global-require, import/no-dynamic-require
+            const file = require(`../../data/${version.name}.json`);
+            const fileKeys = Object.keys(file);
+
+            // Quick key check before expensive deep comparison
+            if (dataKeys.length !== fileKeys.length) {
+              continue;
+            }
+
+            const isEqual = _.isEqual(file, data);
+            if (isEqual) {
+              result.api_version = version.name;
+              matched = true;
+              logger.debug(`Matched uploaded file to standard VSS version: ${version.name}`);
+              break;
+            }
+          } catch (fileError) {
+            // Skip if file can't be loaded (corrupted, etc.)
+            logger.debug(`Error loading version file ${version.name}.json: ${fileError.message}`);
+            continue;
+          }
+        }
+
+        if (!matched) {
+          logger.debug('Uploaded file does not match any standard VSS version, treating as custom');
+        }
+      }
+    }
+  } catch (vssError) {
+    // If vss.json can't be loaded, treat as custom file (no version detection)
+    logger.debug(`Error loading vss.json: ${vssError.message}, treating uploaded file as custom`);
+  }
+
+  if (!result.api_version) {
+    result.custom_vss = data;
+  }
+
+  for (const api of extendedApis) {
+    const { error } = createExtendedApi.body
+      .fork('model', (schema) => schema.optional())
+      .unknown()
+      .validate(api);
+    if (error) {
+      throw new ApiError(httpStatus.BAD_REQUEST, `Invalid wishlist API ${api.apiName}: ${error.message}`);
+    }
+  }
+  if (extendedApis.length > 0) {
+    result.extended_apis = extendedApis;
+  }
+
+  return result;
 };
 
 /**
- *
  * @param {string} apiDataUrl
- * @returns {Promise<{main_api: string; api_version: string; extended_apis: any[]} | undefined>}
+ * @returns {Promise<object>}
  */
 const processApiDataUrl = async (apiDataUrl) => {
   try {
-    // Validate before fetching: only relative paths or allowlisted https URLs
-    // (blocks SSRF against internal services and cloud metadata endpoints)
-    const validatedUrl = validateApiDataUrl(apiDataUrl);
-    // resolve the correct url incase the apiDataUrl is relative. Eg. /api/v2/data/vehicle.json
-    const resolvedUrl = fileService.resolveUrl(validatedUrl);
+    const resolvedUrl = validateApiDataUrl(apiDataUrl);
     logger.debug(`Processing API data from URL: ${resolvedUrl}`);
     const response = await fetch(resolvedUrl);
 
@@ -768,137 +907,7 @@ const processApiDataUrl = async (apiDataUrl) => {
       throw new Error(`Failed to fetch API data: HTTP ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
-    const extendedApis = [];
-
-    const mainApi = Object.keys(data).at(0) || 'Vehicle';
-
-    // Detached wishlist APIs
-    traverse(
-      data[mainApi],
-      (api, prefix) => {
-        for (const [key, value] of Object.entries(api.children || {})) {
-          if (value.isWishlist) {
-            const name = value?.name || `${prefix}.${key}`;
-            extendedApis.push(
-              convertToExtendedApiFormat({
-                ...value,
-                name,
-              }),
-            );
-            delete api.children[key];
-          }
-        }
-      },
-      mainApi,
-    );
-
-    const result = {
-      main_api: mainApi,
-    };
-
-    // Check if this is a COVESA VSS version (only for standard versions, skip for custom files)
-    // Quick optimization: Only check if we have standard VSS files available
-    // Custom uploaded files don't need version detection - they're already custom
-    try {
-      const vssJsonPath = path.join(__dirname, '../../data/vss.json');
-      if (!fs.existsSync(vssJsonPath)) {
-        // No standard VSS files available, treat as custom
-        logger.debug('vss.json not found, treating uploaded file as custom');
-      } else {
-        // Intentional require(): loads and caches the JSON index of standard VSS versions.
-        // eslint-disable-next-line global-require
-        const versionList = require('../../data/vss.json');
-        if (!versionList || versionList.length === 0) {
-          // No versions to check, treat as custom
-          logger.debug('No VSS versions available, treating uploaded file as custom');
-        } else {
-          // Quick check: compare data size/structure first to avoid expensive deep comparison
-          const dataKeys = Object.keys(data);
-          const dataSize = JSON.stringify(data).length;
-
-          // Only check versions that actually exist on disk
-          let matched = false;
-          for (const version of versionList) {
-            const versionFilePath = path.join(__dirname, `../../data/${version.name}.json`);
-            if (!fs.existsSync(versionFilePath)) {
-              logger.debug(`Version file ${version.name}.json not found on disk, skipping`);
-              continue;
-            }
-
-            try {
-              // Quick size check first (much faster than deep comparison)
-              const versionFileStats = fs.statSync(versionFilePath);
-              const versionFileSize = versionFileStats.size;
-
-              // If sizes are very different, skip deep comparison (likely custom file)
-              const sizeDiff = Math.abs(dataSize - versionFileSize);
-              const sizeDiffPercent = (sizeDiff / Math.max(dataSize, versionFileSize)) * 100;
-              if (sizeDiffPercent > 5) {
-                // More than 5% size difference, likely custom, skip
-                continue;
-              }
-
-              // Size is similar, do deep comparison
-              // Intentional require(): loads and caches the (large) standard VSS file for comparison.
-              // eslint-disable-next-line global-require, import/no-dynamic-require
-              const file = require(`../../data/${version.name}.json`);
-              const fileKeys = Object.keys(file);
-
-              // Quick key check before expensive deep comparison
-              if (dataKeys.length !== fileKeys.length) {
-                continue;
-              }
-
-              const isEqual = _.isEqual(file, data);
-              if (isEqual) {
-                result.api_version = version.name;
-                matched = true;
-                logger.debug(`Matched uploaded file to standard VSS version: ${version.name}`);
-                break;
-              }
-            } catch (fileError) {
-              // Skip if file can't be loaded (corrupted, etc.)
-              logger.debug(`Error loading version file ${version.name}.json: ${fileError.message}`);
-              continue;
-            }
-          }
-
-          if (!matched) {
-            logger.debug('Uploaded file does not match any standard VSS version, treating as custom');
-          }
-        }
-      }
-    } catch (vssError) {
-      // If vss.json can't be loaded, treat as custom file (no version detection)
-      logger.debug(`Error loading vss.json: ${vssError.message}, treating uploaded file as custom`);
-    }
-
-    // If not COVESA VSS version, then add the rest APIs
-    if (!result.api_version) {
-      traverse(
-        data[mainApi],
-        (api, prefix) => {
-          for (const [key, value] of Object.entries(api.children || {})) {
-            const name = value?.name || `${prefix}.${key}`;
-            extendedApis.push(
-              convertToExtendedApiFormat({
-                ...value,
-                name,
-              }),
-            );
-            delete api.children[key];
-          }
-        },
-        mainApi,
-      );
-    }
-
-    if (extendedApis.length > 0) {
-      result.extended_apis = extendedApis;
-    }
-
-    return result;
+    return processApiData(await response.json());
   } catch (error) {
     logger.error(`Error in processing api data: ${error.message || error}`);
     logger.error(error.stack);
@@ -979,6 +988,7 @@ module.exports.addAuthorizedUser = addAuthorizedUser;
 module.exports.deleteAuthorizedUser = deleteAuthorizedUser;
 module.exports.getAccessibleModels = getAccessibleModels;
 module.exports.processApiDataUrl = processApiDataUrl;
+module.exports.processApiData = processApiData;
 module.exports.getModelStats = getModelStats;
 module.exports.getModelStatsSummaryByIds = getModelStatsSummaryByIds;
 module.exports.addCustomApiSet = addCustomApiSet;

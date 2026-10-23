@@ -317,8 +317,12 @@ export const getTypeColor = (
     return WELL_KNOWN_TYPE_COLORS[firstWord]
   }
 
-  // Default fallback - use first color from palette
-  return DEFAULT_COLOR_PALETTE[0]
+  // Keep unknown types stable across views, independent of item order.
+  const hash = Array.from(normalizedType).reduce(
+    (value, character) => (value * 31 + character.charCodeAt(0)) >>> 0,
+    0,
+  )
+  return DEFAULT_COLOR_PALETTE[hash % DEFAULT_COLOR_PALETTE.length]
 }
 
 /**

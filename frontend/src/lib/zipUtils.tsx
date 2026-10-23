@@ -222,7 +222,7 @@ export const downloadModelZip = async (model: Model) => {
   if (!model) return
 
   const extended_apis = await listAllExtendedApis(model.id)
-  const computedApis = await getComputedAPIs(model.id)
+  const computedApis = await getComputedAPIs(model.id, true)
 
   const zip = new JSZip()
   const zipFilename = `model_${removeSpecialCharacters(model.name)}.zip`

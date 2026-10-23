@@ -1,0 +1,34 @@
+{
+  "Vehicle": {
+    "type": "branch",
+    "description": "Custom VSS round-trip fixture",
+    "x-vendor": "root metadata",
+    "children": {
+      "Custom": {
+        "type": "x-custom",
+        "description": "Vendor-specific container",
+        "uuid": "e2e-custom-uuid",
+        "default": false,
+        "deprecation": "Vendor lifecycle notice",
+        "x-vendor": { "feature": "custom-metadata", "revision": 2 },
+        "children": {
+          "Reading": {
+            "type": "sensor",
+            "datatype": "float",
+            "description": "Nested sensor"
+          }
+        }
+      },
+      "Empty": {
+        "type": "X-CUSTOM",
+        "description": "Custom leaf with empty children",
+        "children": {}
+      },
+      "Attribute": {
+        "type": "attribute",
+        "datatype": "string",
+        "description": "Attribute stays hidden in the tree"
+      }
+    }
+  }
+}

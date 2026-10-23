@@ -32,7 +32,7 @@ export type CVI = {
   created_at: string
 }
 
-export type LeafTypes = 'actuator' | 'sensor' | 'attribute' | 'branch'
+export type LeafTypes = string
 
 export type DataTypeNum =
   | 'uint8'
@@ -82,7 +82,13 @@ type Attribute = AnyLeafNode<'attribute'> & {
 }
 
 export type LeafNodes = Actuator | Sensor | Attribute
-export type AnyNode = Branch | LeafNodes
+export type AnyNode = Branch | LeafNodes | CustomNode
+
+export interface CustomNode {
+  type: string
+  children?: Record<string, AnyNode>
+  [key: string]: unknown
+}
 
 export interface Branch {
   type: 'branch'

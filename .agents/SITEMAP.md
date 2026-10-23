@@ -24,6 +24,8 @@
 | Layout (logged in) | Navbar with admin tools | ✅ `layout.spec.ts` |
 | Full HD (1920×1080) | Responsive at large viewport | ✅ `layout.spec.ts` |
 | Delete → recreate same-name model | Delete via home card menu, recreate same name in "Create New Model" dialog without reload — no duplicate-name error | ✅ `model-delete-recreate-and-prototype-rename.spec.ts` |
+| Model ZIP import / export | Home card export and import round-trip | ✅ `import-export.spec.ts` |
+| Custom VSS ZIP round-trip | Exported VSS, imported list and raw API preserve custom elements, sibling order and empty children | 🚧 `import-export.spec.ts` (written, not yet run) |
 
 ---
 
@@ -84,6 +86,7 @@
 | Rename prototype | Via API (context menu requires site config) | ✅ `prototype.spec.ts` |
 | Rename prototype updates immediately | Card context menu rename → card name and prototype header/breadcrumb update without reload | ✅ `model-delete-recreate-and-prototype-rename.spec.ts` |
 | Delete prototype | Via API, card removed from UI | ✅ `prototype.spec.ts` |
+| Prototype ZIP import / export | Library card export and import round-trip | ✅ `import-export.spec.ts` |
 | Copy prototype (menu entry) | `Copy Prototype` shown in card context / ⋮ menu | ✅ `prototype-copy.spec.ts` |
 | Copy prototype (full flow) | Routes to `/new-prototype?prototype_id=…`, copies code / widget config / image, drops `dashboard_template_id` | ✅ `prototype-copy.spec.ts` |
 | Search / filter | Filter prototypes by name | ✅ `prototype-extended.spec.ts` |
@@ -146,6 +149,7 @@
 | Page loads | Form renders | ✅ `prototype.spec.ts` |
 | Name input visible | Prototype name field | ✅ `prototype.spec.ts` |
 | Create flow | Fill form, submit, and open prototype detail | ✅ `prototype.spec.ts` |
+| Configured default image | New prototype persists `DEFAULT_PROTOTYPE_IMAGE` as `image_file` | ✅ `new-prototype-default-image.spec.ts` |
 
 ---
 
@@ -196,6 +200,7 @@
 | Unauthenticated access blocked | Redirect / deny for guests | ✅ `admin.spec.ts` |
 | Site config form | Settings form renders | ✅ `admin.spec.ts` |
 | Site config permission guard | Non-admins and guests see no settings content, admin fetches, or Forbidden toast; admins wait for permissions without a denial flash | ⚠️ `admin.spec.ts` added/strengthened; run pending |
+| Default prototype image cache | Model & Prototype save takes effect in `/new-prototype` without reloading the app | ✅ `new-prototype-default-image.spec.ts` |
 | Site config section visibility | Build time clean mode or hidden section list filters sidebar and URL selection | ⚠️ `admin-visibility.spec.ts` added; guarded run pending |
 | Restore default (public config) | Factory reset reverts modified public configs | ✅ `site-config-restore-default.spec.ts` |
 | Navigation bar actions editor | Configure left/right navbar links and search | ✅ `nav-bar-actions.spec.ts` |
@@ -233,7 +238,9 @@
 |---------|-------------|-------------|
 | API list loads | Signal tree renders | ✅ `vehicle-api.spec.ts` |
 | Search signal | Filter by name | ✅ `vehicle-api.spec.ts` |
-| Signal detail | View signal metadata | ❌ |
+| Signal detail | Fixed and custom VSS metadata, including UUID, default, deprecation, and vendor fields | ✅ `vehicle-api.spec.ts` (custom VSS execution pending) |
+| Custom signal types | List visibility and Type filter, case normalization, Tree View visibility and custom container expansion; attributes stay hidden in tree | ✅ `vehicle-api.spec.ts` (execution pending) |
+| Replace API / JSON download | Replace with custom VSS and deep-equal JSON download, preserving sibling order and empty children | ✅ `vehicle-api.spec.ts` (execution pending) |
 | API architecture diagram | Edit skeleton: draw rectangle + hover message, bg color/image, save + preview persistence | ✅ `api-architecture.spec.ts` |
 
 ---

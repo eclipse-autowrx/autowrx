@@ -92,6 +92,11 @@ const modelSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+    custom_vss: {
+      type: mongoose.SchemaTypes.Mixed,
+      default: null,
+      private: true,
+    },
     model_template_id: {
       type: mongoose.SchemaTypes.ObjectId,
       ref: 'ModelTemplate',
@@ -109,6 +114,8 @@ const modelSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    // Imported VSS trees may contain empty children and vendor metadata objects.
+    minimize: false,
   },
 );
 

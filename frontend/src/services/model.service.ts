@@ -179,8 +179,10 @@ export const deleteModelService = async (model_id: string) => {
   return await serverAxios.delete(`/models/${model_id}`)
 }
 
-export const getComputedAPIs = async (model_id: string) => {
-  return (await serverAxios.get(`/models/${model_id}/api`)).data
+export const getComputedAPIs = async (model_id: string, raw = false) => {
+  return (
+    await serverAxios.get(`/models/${model_id}/api${raw ? '?raw=true' : ''}`)
+  ).data
 }
 
 export const getModelStatsByIds = async (ids: string[]) => {

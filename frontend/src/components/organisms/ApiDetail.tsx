@@ -172,6 +172,38 @@ const ApiDetail = ({
     },
     apiDetails.comment && { name: 'Comment', value: apiDetails.comment },
   ].filter(Boolean)
+  const displayedFields = new Set([
+    'name',
+    'uuid',
+    'type',
+    'description',
+    'datatype',
+    'unit',
+    'max',
+    'min',
+    'allowed',
+    'comment',
+    'children',
+    'id',
+    '_id',
+    'isWishlist',
+    'shortName',
+    'parent',
+    'model',
+    'apiName',
+    'skeleton',
+    'created_at',
+    'updated_at',
+    'custom_properties',
+    'supportedHardware',
+    'keystakeHolder',
+  ])
+  const additionalProperties = Object.entries(apiDetails)
+    .filter(([key, value]) => !displayedFields.has(key) && value !== undefined)
+    .map(([name, value]) => ({
+      name,
+      value: typeof value === 'string' ? value : JSON.stringify(value, null, 2),
+    }))
   const translatedDiffDetail = diffDetail
     ? {
         Signal: diffDetail.name,
@@ -294,7 +326,11 @@ const ApiDetail = ({
         ) : (
           <DaTableProperty
             diffDetail={translatedDiffDetail}
-            properties={[...vssSpecificationProperties, ...customProperties]}
+            properties={[
+              ...vssSpecificationProperties,
+              ...additionalProperties,
+              ...customProperties,
+            ]}
             syncHeight={syncHeight}
           />
         )}

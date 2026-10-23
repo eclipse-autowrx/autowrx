@@ -5,7 +5,7 @@ in everyday words, what each one checks. No technical background needed.
 
 - **What is an E2E test?** A robot opens the website in a real browser, clicks
   around like a human, and checks that the right thing appears on screen.
-- **How many are there?** 155 tests in 40 groups.
+- **How many are there?** 158 tests in 40 groups.
 - **How do I run them?** One command (`yarn test` inside the `.agents` folder).
   The system prepares everything by itself: it starts the website and its
   backend if they are not running, signs in as the test administrator, and
@@ -159,6 +159,7 @@ in everyday words, what each one checks. No technical background needed.
 | Test case | What it checks |
 |---|---|
 | Export and import model round-trip | Downloading a model as a file and importing it again produces a working copy. |
+| ZIP round-trip keeps custom VSS elements | Custom signal types, metadata, empty children and sibling order survive model export and import. |
 | Export and import prototype round-trip | Same for prototypes via the library page. |
 
 ## 12. Prototypes — create, view, change, delete
@@ -166,6 +167,8 @@ in everyday words, what each one checks. No technical background needed.
 | Test case | What it checks |
 |---|---|
 | Go to new prototype page | The new-prototype page opens. |
+| New-prototype UI saves the configured default image_file | Creating a prototype saves the configured default image URL on the new prototype. |
+| Site Config UI save invalidates cached default image without a reload | Changing the default image in Model & Prototype settings takes effect on the next prototype immediately, without refreshing the app. |
 | Create prototype from model library | Creating a prototype from a model works. |
 | Prototype library shows created prototype | New prototypes appear in the library list. |
 | Prototype detail page loads | The prototype page opens. |
