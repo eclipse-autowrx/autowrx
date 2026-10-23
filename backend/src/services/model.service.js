@@ -16,6 +16,7 @@ const prototypeService = require('./prototype.service');
 const extendedApiService = require('./extendedApi.service');
 const apiService = require('./api.service');
 const permissionService = require('./permission.service');
+const fileService = require('./file.service');
 const { Model, Role, UserRole, Prototype, ModelTemplate, CustomApiSet } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { PERMISSIONS } = require('../config/roles');
@@ -699,25 +700,19 @@ const traverse = (api, callback, prefix = '') => {
 };
 
 /**
- * Validate and build an api_data_url for the backend to fetch.
+ * Validate that an api_data_url is safe for the backend to fetch.
  * Only relative paths (served by this app) and https URLs from the
- * configured allowlist are permitted. External hostnames must match exactly;
- * subdomains need their own allowlist entries. Blocks internal/private targets.
- * Build the request hostname from config, never from the user-provided hostname.
+ * configured allowlist are permitted. Blocks internal/private targets.
  * @param {string} url
- * @returns {string} the resolved URL with a trusted hostname
+ * @returns {string} the validated URL
  */
 const validateApiDataUrl = (url) => {
   if (!url || typeof url !== 'string') {
     throw new ApiError(httpStatus.BAD_REQUEST, 'api_data_url must be a non-empty string');
   }
 
-  if (url.startsWith('/')) {
-    if (url.startsWith('//') || url.includes('..') || url.includes('\\') || url.includes('@')) {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'api_data_url must be a safe relative path');
-    }
-    return `http://localhost:${config.port}/${url.slice(1)}`;
-  }
+  // Relative paths are always safe (resolved to this app's own static files)
+  if (url.startsWith('/')) return url;
 
   // Absolute URLs: must be https and from the allowlist
   let parsed;
@@ -735,8 +730,8 @@ const validateApiDataUrl = (url) => {
     .map((d) => d.trim().toLowerCase())
     .filter(Boolean);
   const hostname = parsed.hostname.toLowerCase();
-  const allowedHost = allowlist.find((d) => hostname === d);
-  if (!allowedHost) {
+  const isAllowed = allowlist.some((d) => hostname === d || hostname.endsWith(`.${d}`));
+  if (!isAllowed) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
       'External api_data_url is not allowlisted; use a relative path or configure VSS_DATA_URL_ALLOWLIST',
@@ -761,8 +756,7 @@ const validateApiDataUrl = (url) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'api_data_url cannot target internal network addresses');
   }
 
-  const port = parsed.port ? `:${parsed.port}` : '';
-  return `https://${allowedHost}${port}${parsed.pathname}${parsed.search}`;
+  return url;
 };
 
 const MAX_CUSTOM_VSS_BYTES = 10 * 1024 * 1024;
@@ -895,7 +889,9 @@ const processApiData = (data) => {
  */
 const processApiDataUrl = async (apiDataUrl) => {
   try {
-    const resolvedUrl = validateApiDataUrl(apiDataUrl);
+    // Validate before fetching to preserve the existing SSRF restrictions.
+    const validatedUrl = validateApiDataUrl(apiDataUrl);
+    const resolvedUrl = fileService.resolveUrl(validatedUrl);
     logger.debug(`Processing API data from URL: ${resolvedUrl}`);
     const response = await fetch(resolvedUrl);
 
