@@ -110,7 +110,22 @@ const listVSSVersions = async () => {
  * @returns {Promise<object>}
  */
 const getVSSVersion = async (name) => {
-  const filePath = path.join(__dirname, `../../data/${name}.json`);
+  // VSS version names are simple identifiers (e.g. "v4.1", "v6.0"). Reject
+  // anything containing path separators or traversal sequences before it
+  // reaches path.join — prevents reading arbitrary JSON files from the
+  // filesystem via crafted api_version values.
+  if (!name || typeof name !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid VSS version name');
+  }
+
+  const dataDir = path.resolve(__dirname, '../../data');
+  const filePath = path.resolve(dataDir, `${name}.json`);
+
+  // Defense-in-depth: the resolved path must stay inside the data directory
+  if (!filePath.startsWith(dataDir + path.sep)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid VSS version name');
+  }
+
   if (!fs.existsSync(filePath)) {
     throw new ApiError(httpStatus.NOT_FOUND, 'VSS version not found');
   }
