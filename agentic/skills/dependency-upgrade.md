@@ -39,7 +39,7 @@
 - Don't upgrade a dep and skip verification because "it's just a patch" — still run the relevant suite + lint.
 - Don't edit `package.json` in the wrong workspace (backend vs frontend).
 - Don't commit lockfile drift unrelated to the upgrade.
-- PR CI runs the **ECA check only** (no test CI on PRs) — local verification is mandatory and must be stated in the PR body.
+- PR CI blocks backend `prettier` + ESLint and frontend build; backend Jest and frontend ESLint are advisory and `security.yml` (`yarn audit`) is advisory — local verification is mandatory and must be stated in the PR body.
 
 ## Exit criteria
 - The dep is bumped in the correct manifest, lockfile updated, and the affected suites (backend Jest / frontend build+lint / Playwright if relevant) are green with commands cited.

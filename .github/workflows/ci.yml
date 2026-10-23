@@ -1,0 +1,134 @@
+name: ci
+
+# Quality gates. BLOCKING (mark as required checks in branch protection):
+# `backend-format`, `backend-lint`, `frontend-build`. ADVISORY jobs run their
+# check with step-level continue-on-error: the job stays green and a warning
+# annotation reports failures that already exist on main. Drop it once fixed.
+# Node 22 + yarn --frozen-lockfile match backend/Dockerfile.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: backend/yarn.lock
+      - run: yarn install --frozen-lockfile
+      - name: Prettier
+        run: yarn prettier
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      # Dummy build-time values; nothing is deployed from this job.
+      VITE_SERVER_BASE_URL: http://localhost:3200
+      VITE_SERVER_VERSION: v2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+      - run: yarn install --frozen-lockfile
+      - name: Build (tsc + vite)
+        run: yarn build
+
+  backend-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: backend/yarn.lock
+      - run: yarn install --frozen-lockfile
+      - name: ESLint
+        run: yarn lint
+
+  # advisory until the legacy /v1 auth and user integration tests are rewritten (#642 follow-up)
+  backend-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      # Jest integration tests need a real MongoDB (no in-memory server).
+      mongo:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      MONGODB_URL: mongodb://localhost:27017/autowrx
+      JWT_SECRET: ci-only-dummy-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: backend/yarn.lock
+      - run: yarn install --frozen-lockfile
+      - name: Jest
+        id: jest
+        continue-on-error: true
+        run: yarn test
+      - if: steps.jest.outcome == 'failure'
+        run: echo "::warning title=backend-test (advisory)::Jest failures exist on main (legacy /v1 auth and user integration tests); see the Jest step log"
+
+  # advisory until the remaining no-explicit-any and jsx-a11y errors are fixed (#642 follow-up)
+  frontend-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+      - run: yarn install --frozen-lockfile
+      - name: ESLint
+        id: eslint
+        continue-on-error: true
+        run: yarn lint
+      - if: steps.eslint.outcome == 'failure'
+        run: echo "::warning title=frontend-lint (advisory)::ESLint errors exist on main (no-explicit-any, jsx-a11y); see the ESLint step log"

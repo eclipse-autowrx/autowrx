@@ -22,7 +22,7 @@ Starting points for this stack — refine as we learn. Each entry has a `Last re
 - Source: [`agentic/CONVENTIONS.md`](../CONVENTIONS.md), `frontend/src/components/`
 - `atoms` → `molecules` → `organisms` → `pages`; don't put page-level data fetching inside an atom.
 - State in Zustand stores (`stores/`); permissions via `hooks/usePermissionHook.ts`; routing in `configs/routes.tsx`.
-- `npm run build` runs `tsc && vite build`, so type errors fail CI — treat the build as a typecheck gate.
+- `npm run build` runs `tsc && vite build`, so type errors fail CI (`ci.yml` `frontend-build` is blocking) — treat the build as a typecheck gate.
 
 ## Playwright flakiness hygiene
 
