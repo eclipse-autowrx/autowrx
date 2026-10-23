@@ -9,6 +9,8 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAdminUiConfig } from '@/hooks/useAdminUiConfig'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 import type { AdminUiConfig } from '@/configs/config'
 import PublicConfigSection from '@/components/organisms/PublicConfigSection'
 import SecretConfigSection from '@/components/organisms/SecretConfigSection'
@@ -480,7 +482,25 @@ const SiteConfigManagementContent: React.FC<{ adminUi: AdminUiConfig }> = ({
 // sidebar and active tab are resolved once instead of flashing from the
 // build-time fallback to the backend values.
 const SiteConfigManagement: React.FC = () => {
+  const permissions = usePermissionHook([PERMISSIONS.ADMIN])
   const { adminUi, loading } = useAdminUiConfig()
+
+  if (!permissions.isResolved) return null
+
+  if (!permissions[0]) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold text-foreground">
+            Access denied
+          </h1>
+          <p className="mt-2 text-base text-muted-foreground">
+            You do not have permission to manage site configurations.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
