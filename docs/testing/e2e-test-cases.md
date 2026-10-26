@@ -308,8 +308,10 @@ The current status: **151 of 155 pass** (1 is intentionally skipped; 3 were
 fixed on the `fix/project-editor-regressions` branch and verified — update
 this line when you re-run).
 
-### VSS validation — ETAS #403
+## 24. VSS validation — ETAS #403
 
-- Anonymous validation is rejected; signed-in users receive a path-specific error or a successful preflight.
-- Replacing a model API with an empty VSS branch shows the invalid path and preserves the existing specification.
-- Built-in Play and rebuild show the invalid VSS path and send no generation or run commands. This case requires a disposable runtime server.
+| Test case | What it checks |
+|---|---|
+| VSS preflight requires authentication and reports invalid paths | Anonymous requests are rejected; signed-in users receive the failing path for invalid data and successful preflight for valid data. |
+| Invalid VSS replacement shows its path and preserves the existing model | Replacing a model API with an empty VSS branch shows an actionable error and leaves the existing specification unchanged. |
+| Built-in Play and rebuild reject invalid VSS before sending runtime commands | Both actions show the invalid path and send no generation or run commands; this case requires a disposable runtime server. |
