@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { cn } from '@/lib/utils'
-import { useState } from 'react'
+import { ComponentType, useState } from 'react'
 import { HiStar } from 'react-icons/hi'
 import Rating from 'react-rating'
 
@@ -25,7 +25,9 @@ const DaStarsRating = ({
   className,
 }: DaStarsRatingProps) => {
   const [rating, setRating] = useState(initialRating)
-  const RatingComponent = Rating as any
+  const RatingComponent = Rating as unknown as ComponentType<
+    Record<string, unknown>
+  >
 
   const handleRatingChange = (value: number) => {
     if (value !== rating) {
@@ -39,7 +41,7 @@ const DaStarsRating = ({
 
   return (
     <RatingComponent
-      className={cn('h-6 mx-2', className)}
+      className={cn('h-6 mx-2 whitespace-nowrap shrink-0', className)}
       readonly={readonly}
       emptySymbol={<HiStar className="text-gray-300" size={24} />}
       initialRating={initialRating} // Set only on initial load

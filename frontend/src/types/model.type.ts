@@ -212,7 +212,14 @@ export interface Feedback {
     need_address?: number
     relevance?: number
   }
-  created_by: string
+  created_by:
+    | string
+    | {
+        id?: string
+        _id?: string
+        name?: string
+        image_file?: string
+      }
   created_at: Date
   avg_score: number
 }

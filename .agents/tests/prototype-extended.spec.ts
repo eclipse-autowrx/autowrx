@@ -166,44 +166,50 @@ test.describe('Prototype Extended', () => {
   });
 
   test('prototype feedback tab loads', async ({ page }) => {
-    const modelId = await goToFirstModelLibrary(page);
+    const timestamp = Date.now();
+    const protoName = `E2E_Feedback_${timestamp}`;
+    const { modelId, prototypeId } = await createTestPrototype(page, protoName);
 
-    // Get first prototype link
-    const protoHref = await getFirstPrototypeHref(page);
-    console.log('First prototype href:', protoHref);
-
-    if (!protoHref) {
-      console.log('No prototype found in library — skipping feedback tab test');
-      await saveScreenshot(page, 'proto-no-prototypes-found');
-      return;
-    }
-
-    // Navigate to the prototype detail first
-    await page.goto(protoHref);
-    await page.waitForTimeout(5000);
-    await saveScreenshot(page, 'proto-detail-loaded');
-
-    // Build feedback URL by replacing/appending the tab
-    const baseProtoUrl = protoHref.replace(/\/[^/]+$/, '');
-    const feedbackUrl = protoHref.includes('/view')
-      ? protoHref.replace('/view', '/feedback')
-      : protoHref.replace(/\/[^/]*$/, '/feedback');
-
+    const feedbackUrl = `/model/${modelId}/library/prototype/${prototypeId}/feedback`;
     await page.goto(feedbackUrl);
-    await page.waitForTimeout(5000);
+    await expect(page.getByText('End-User Feedback')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Overall:')).toBeVisible();
+    await expect(page.getByText('(0)')).toBeVisible();
+
     await saveScreenshot(page, 'proto-feedback-tab');
     await checkLayoutAnomalies(page, 'proto-feedback');
 
-    // Check the page loaded something
-    const hasError = await page.locator('text=404, text=Not Found').count();
-    expect(hasError).toBe(0);
+    // Open Add Feedback dialog and submit ratings (5, 4, 3 -> average 4.00)
+    await page.getByRole('button', { name: '+ Add Feedback' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
 
-    const currentUrl = page.url();
-    console.log('Feedback tab URL:', currentUrl);
+    await dialog.locator('input[name="interviewee"]').fill('E2E Reviewer');
+    await dialog.locator('input[name="organization"]').fill('AutoWRX QA');
 
-    // Page should have content
-    const hasContent = await page.locator('button, input, form, h1, h2, [class*="feedback" i], p').count();
-    expect(hasContent).toBeGreaterThan(0);
+    const needsRow = dialog.locator('div.flex.items-center', { hasText: 'Needs addressed' });
+    const relevanceRow = dialog.locator('div.flex.items-center', { hasText: 'Relevance' });
+    const easeRow = dialog.locator('div.flex.items-center', { hasText: 'Ease of use' });
+
+    await needsRow.locator('span[style*="cursor: pointer"]').nth(4).click();
+    await relevanceRow.locator('span[style*="cursor: pointer"]').nth(3).click();
+    await easeRow.locator('span[style*="cursor: pointer"]').nth(2).click();
+
+    await dialog.getByRole('button', { name: 'Submit' }).click();
+    await expect(dialog).toBeHidden({ timeout: 10000 });
+
+    // Verify feedback entry appears and Overall average updates immediately without reload
+    await expect(page.getByText('E2E Reviewer')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('(4.00)')).toBeVisible({ timeout: 10000 });
+
+    // Author can delete their own feedback and Overall resets
+    const deleteBtn = page.getByRole('button', { name: /Delete Your Feedback/i });
+    await expect(deleteBtn).toBeVisible();
+    await deleteBtn.click();
+    await page.getByRole('button', { name: 'Confirm' }).click();
+
+    await expect(page.getByText('No feedback found.')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('(0)')).toBeVisible({ timeout: 10000 });
   });
 
   test('share button visible on prototype detail', async ({ page }) => {

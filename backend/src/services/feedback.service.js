@@ -10,9 +10,37 @@ const httpStatus = require('http-status');
 const Feedback = require('../models/feedback.model');
 const ApiError = require('../utils/ApiError');
 
+const scoreAverage = (score) => {
+  if (!score) {
+    return 0;
+  }
+  const values = [score.easy_to_use, score.need_address, score.relevance].filter(
+    (value) => typeof value === 'number' && value > 0,
+  );
+  if (!values.length) {
+    return 0;
+  }
+  const total = values.reduce((acc, cur) => acc + cur, 0);
+  return total / values.length;
+};
+
+const resolveFeedbackAvgScore = (feedback) => {
+  if (typeof feedback?.avg_score === 'number' && !Number.isNaN(feedback.avg_score)) {
+    return feedback.avg_score;
+  }
+  return scoreAverage(feedback?.score);
+};
+
 const calcAvgScoreOfPrototype = async (prototype) => {
-  const feedbacks = await Feedback.find({ ref: prototype.id });
-  const total = feedbacks.reduce((acc, cur) => acc + cur.avg_score, 0);
+  const prototypeId = prototype?.id || prototype?._id;
+  if (!prototypeId) {
+    return null;
+  }
+  const feedbacks = await Feedback.find({ ref: prototypeId });
+  if (!feedbacks.length) {
+    return null;
+  }
+  const total = feedbacks.reduce((acc, cur) => acc + resolveFeedbackAvgScore(cur), 0);
   return total / feedbacks.length;
 };
 
@@ -28,12 +56,13 @@ const calcAvgScoreOfPrototypes = async (prototypeIds) => {
     },
   });
   const result = feedbacks.reduce((acc, cur) => {
+    const avgScore = resolveFeedbackAvgScore(cur);
     if (acc[cur.ref]) {
-      acc[cur.ref].total += cur.avg_score;
+      acc[cur.ref].total += avgScore;
       acc[cur.ref].count += 1;
     } else {
       acc[cur.ref] = {
-        total: cur.avg_score,
+        total: avgScore,
         count: 1,
       };
     }
@@ -51,12 +80,7 @@ const calcAvgScoreOfPrototypes = async (prototypeIds) => {
  * @param {Feedback.Score} score
  */
 const calcAvgScore = async (score) => {
-  if (!score) {
-    return 0;
-  }
-  const total = Object.values(score).reduce((acc, cur) => acc + cur, 0);
-  const count = Object.values(score).filter((value) => value > 0).length;
-  return total / count;
+  return scoreAverage(score);
 };
 
 /**
@@ -140,6 +164,7 @@ module.exports = {
   queryFeedbacks,
   updateFeedbackById,
   deleteFeedbackById,
+  calcAvgScore,
   calcAvgScoreOfPrototype,
   calcAvgScoreOfPrototypes,
 };

@@ -12,6 +12,7 @@ import { Label } from '@/components/atoms/label'
 import DaStarsRating from '@/components/atoms/DaStarsRating'
 import DaTooltip from '@/components/molecules/DaTooltip'
 import { FormEvent, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { TbLoader } from 'react-icons/tb'
 import { createFeedback } from '@/services/feedback.service'
 import { FeedbackCreate } from '@/types/model.type'
@@ -38,7 +39,8 @@ interface FeedbackFormProps {
 }
 
 const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
-  const { data: prototype } = useCurrentPrototype()
+  const queryClient = useQueryClient()
+  const { data: prototype, refetch: refetchPrototype } = useCurrentPrototype()
   const { data: model } = useCurrentModel()
   const { refetch } = useListPrototypeFeedback(prototype?.id || '')
 
@@ -109,7 +111,16 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
       }
 
       const feedback = await createFeedback(payload)
-      await refetch()
+      await Promise.all([
+        refetch(),
+        refetchPrototype(),
+        queryClient.invalidateQueries({
+          queryKey: ['listPrototypeFeedback', prototype.id],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['listModelPrototypes'],
+        }),
+      ])
       addLog({
         name: `User ${user?.name} gave feedback`,
         description: `User ${user?.name} with id ${user?.id} as interviewee ${data.interviewee} gave feedback to prototype ${prototype?.name} within model ${model?.name}`,
@@ -120,6 +131,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         parent_id: prototype.id,
       })
       setData(initialState)
+      onClose()
     } catch (error) {
       if (isAxiosError(error)) {
         setError(error.response?.data?.message ?? 'Something went wrong')
@@ -128,7 +140,6 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
       setError('Something went wrong')
     } finally {
       setLoading(false)
-      onClose()
     }
   }
 
