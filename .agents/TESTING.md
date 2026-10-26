@@ -79,6 +79,7 @@ npx playwright test tests/model-editable-visibility.spec.ts
 | `tests/prototype-dashboard-remount.spec.ts` | Applying a dashboard template delivers new widget options to mounted widgets |
 | `tests/admin.spec.ts` | Admin panel: user management, site config |
 | `tests/site-config-restore-default.spec.ts` | Public config restore default (accept + cancel) |
+| `tests/vss-validation.spec.ts` | VSS preflight authentication, invalid replacement preserves data, built-in Play/rebuild guard (requires runtime server) |
 | `tests/import-export.spec.ts` | Model/prototype export and import round-trips |
 | `tests/prototype-context-menu.spec.ts` | Admin delete prototype via context menu |
 | `tests/home-model-list.spec.ts` | Home model-list: guest visibility, logged-in UI, category filters, all 6 sort options, rename, My Contributions contributor/reader |

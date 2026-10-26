@@ -81,7 +81,7 @@ const request = () => {
       },
     };
   };
-  return { get: (url) => build('GET', url), post: (url) => build('POST', url) };
+  return { get: (url) => build('GET', url), post: (url) => build('POST', url), patch: (url) => build('PATCH', url) };
 };
 
 const fixture = {
@@ -94,7 +94,7 @@ const fixture = {
       Zebra: { uuid: 'custom-uuid', type: 'x-custom', 'x-vendor': 'retained', comment: '', children: {} },
       Alpha: { type: 'sensor', datatype: 'float', description: 'Alpha' },
       'Dotted.Name': { type: 'x-custom', instances: ['one', 'two'] },
-      Empty: { type: 'branch', children: {} },
+      Empty: { type: 'branch', children: { Value: { type: 'sensor', datatype: 'float' } } },
     },
   },
 };
@@ -272,7 +272,7 @@ describe('lossless custom VSS import/export', () => {
       description: 'nan',
       datatype: 'string',
     });
-    expect(exported.body.Vehicle.children.Empty).not.toHaveProperty('children');
+    expect(exported.body.Vehicle.children.Empty.children.Value).toMatchObject({ datatype: 'float' });
     await expectRawExport(response.body.id);
   });
 
@@ -286,14 +286,11 @@ describe('lossless custom VSS import/export', () => {
     expect(storedModel.custom_vss).toEqual(fixture);
   });
 
-  test('wishlist overlay works when the custom root has no children property', async () => {
-    const data = { Vehicle: { type: 'branch', uuid: 'root' } };
-    fetch.mockResolvedValue({ ok: true, json: async () => clone(data) });
-    const response = await request().post('/models').send(modelBody).expect(201);
-    await expectRawExport(response.body.id, data);
-    await extendedApiService.createExtendedApi({ ...wishlist, model: response.body.id });
-    const exported = await request().get(`/models/${response.body.id}/api?raw=true`).expect(200);
-    expect(exported.body.Vehicle.children.New.children.Wanted.isWishlist).toBe(true);
+  test('empty branches are rejected before creating a model', async () => {
+    fetch.mockResolvedValue({ ok: true, json: async () => ({ Vehicle: { type: 'branch' } }) });
+    const response = await request().post('/models').send(modelBody).expect(400);
+    expect(response.body.message).toContain('Vehicle: branch must contain children');
+    expect(Model.create).not.toHaveBeenCalled();
   });
 
   test('imported wishlist nodes become validated ExtendedApi rows', async () => {
@@ -384,5 +381,55 @@ describe('lossless custom VSS import/export', () => {
       .send({ name: 'ZIP VSS', main_api: 'Vehicle', cvi: JSON.stringify(data) })
       .expect(400);
     expect(Model.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('VSS preflight and write validation', () => {
+  test('preflight accepts valid objects and strings without writes', async () => {
+    await request().post('/models/validate-vss').send({ spec: fixture }).expect(204);
+    await request()
+      .post('/models/validate-vss')
+      .send({ spec: JSON.stringify(fixture) })
+      .expect(204);
+    expect(Model.create).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  test('preflight reports the failing path', async () => {
+    const response = await request()
+      .post('/models/validate-vss')
+      .send({ spec: { Vehicle: { type: 'branch', children: { Cabin: { type: 'branch' } } } } })
+      .expect(400);
+    expect(response.body.message).toBe('Invalid VSS at Vehicle.Cabin: branch must contain children.');
+  });
+  test('inline data cannot bypass validation using api_version', async () => {
+    await request()
+      .post('/models')
+      .send({ name: 'Bad', main_api: 'Vehicle', api_version: 'v6.0', cvi: JSON.stringify({ Vehicle: { type: 'branch' } }) })
+      .expect(400);
+    expect(Model.create).not.toHaveBeenCalled();
+  });
+  test('failed replacement preserves model and API rows', async () => {
+    const response = await request().post('/models').send(modelBody).expect(201);
+    await extendedApiService.createExtendedApi({ ...wishlist, model: response.body.id });
+    const previousModel = clone(storedModel);
+    const previousApis = clone(storedApis);
+    fetch.mockResolvedValue({ ok: true, json: async () => ({ Vehicle: { type: 'branch' } }) });
+    const rejected = await request()
+      .post(`/models/${response.body.id}/replace-api`)
+      .send({ api_data_url: '/bad.json' })
+      .expect(400);
+    expect(rejected.body.message).toBe('Invalid VSS at Vehicle: branch must contain children.');
+    expect(clone(storedModel)).toEqual(previousModel);
+    expect(clone(storedApis)).toEqual(previousApis);
+    expect(ExtendedApi.deleteMany).not.toHaveBeenCalled();
+  });
+  test('failed full-spec update preserves the model', async () => {
+    const response = await request().post('/models').send(modelBody).expect(201);
+    const previous = clone(storedModel);
+    await request()
+      .patch(`/models/${response.body.id}`)
+      .send({ cvi: JSON.stringify({ Vehicle: { type: 'branch' } }) })
+      .expect(400);
+    expect(clone(storedModel)).toEqual(previous);
   });
 });

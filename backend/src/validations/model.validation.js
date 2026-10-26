@@ -175,7 +175,12 @@ const replaceApi = {
   }),
 };
 
+const validateVssSpec = {
+  body: Joi.object().keys({ spec: Joi.any().required() }),
+};
+
 module.exports = {
+  validateVssSpec,
   createModel,
   listModels,
   updateModel,

@@ -19,6 +19,7 @@ const config = require('../config/config');
 const syncService = require('../sync');
 const { maskUserEmail } = require('../utils/maskEmail');
 const { publiclyVisibleVisibilities } = require('../config/enums');
+const { validateVss } = require('../services/vssValidation.service');
 
 const listAllModels = catchAsync(async (req, res) => {
   const options = pick(req.query, ['fields']);
@@ -83,6 +84,8 @@ const listAllModels = catchAsync(async (req, res) => {
 const createModel = catchAsync(async (req, res) => {
   const { cvi, custom_apis, api_data_url, extended_apis: initialExtendedApis, ...reqBody } = req.body;
   let extended_apis = initialExtendedApis;
+  // Validate explicit VSS even when an api_version is also supplied.
+  if (cvi !== undefined) validateVss(cvi);
 
   if (api_data_url || (cvi && !reqBody.api_version)) {
     const result = api_data_url
@@ -378,6 +381,11 @@ const getApiDetail = catchAsync(async (req, res) => {
   res.send(api);
 });
 
+const validateVssSpec = catchAsync(async (req, res) => {
+  validateVss(req.body.spec);
+  res.status(httpStatus.NO_CONTENT).send();
+});
+
 const replaceApi = catchAsync(async (req, res) => {
   const modelId = req.params.id;
   const apiDataUrl = req.body.api_data_url;
@@ -400,10 +408,11 @@ const replaceApi = catchAsync(async (req, res) => {
     custom_vss = result.custom_vss;
   } catch (error) {
     logger.error(`Error processing API data URL: ${error.message}`);
-    logger.error(error);
+    // Log the stack as text: the logger mutates Error.message when given an Error object.
+    logger.error(error.stack);
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      `Failed to process API data: ${error.message || 'Invalid API data URL or file format'}`,
+      error.message || 'Unable to read the VSS file. Check the file and try again.',
     );
   }
 
@@ -473,6 +482,7 @@ const replaceApi = catchAsync(async (req, res) => {
 });
 
 module.exports = {
+  validateVssSpec,
   createModel,
   listModels,
   getModel,
