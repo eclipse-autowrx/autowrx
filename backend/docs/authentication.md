@@ -93,7 +93,6 @@ AUTH_PLATFORM_HEADERS={"id":"x-calponia-user-id","email":"x-calponia-user-email"
 
 - File: `src/routes/v2/user-management/auth.route.js`
 - Authenticate: `POST /v2/auth/authenticate` — requires bearer; returns `{ user }` from middleware.
-- Authorize (internal): `POST /v2/auth/authorize` — internal permission checks, not public.
 - Register (if `SELF_REGISTRATION` enabled): `POST /v2/auth/register` — creates user, sets refresh cookie, returns `{ user, tokens }` (without refresh token body).
 - Login: `POST /v2/auth/login` — validates credentials, sets refresh cookie, returns `{ user, tokens }` (without refresh token body).
 - Logout: `POST /v2/auth/logout` — revokes refresh token and clears refresh cookie.
@@ -101,6 +100,8 @@ AUTH_PLATFORM_HEADERS={"id":"x-calponia-user-id","email":"x-calponia-user-email"
 - Forgot/Reset password: issues and validates reset tokens.
 - Email verification: issues verify token and validates it.
 - SSO: `POST /v2/auth/sso` — accepts `{ providerId, idToken }` (an OpenID ID token, not a Microsoft access token), validates the provider via `sso.service`, decodes the ID token with `parseIdToken`, creates/updates the user, issues tokens and sets the refresh cookie. (`callMsGraph` is deprecated.) Also: GitHub SSO via `GET /v2/auth/github-sso/start` and `GET /v2/auth/github-sso/callback`.
+
+The former `POST /v2/auth/authorize` endpoint was removed to eliminate unauthenticated authorization queries (#630). Requests now return `404 Not found`; external integrations must stop calling it. Casbin permission checks remain internal service functions. See [Authorization / RBAC](../../docs/architecture/auth-security.md#4-authorization-rbac) for the remaining permission APIs and service model.
 
 ### Token Service
 

@@ -15,12 +15,12 @@ flowchart TD
     end
     subgraph AuthZ[Authorization]
         RBAC1["RBAC v1<br/>checkPermission · usePermissionHook"]
-        RBAC2["Casbin RBAC v2<br/>/authorize (partial)"]
+        RBAC2["Casbin RBAC v2<br/>internal service (partial)"]
+        INTERNAL["Backend caller"] --> RBAC2
         RBAC1 -->|owner bypass| OWN["resource owner"]
         RBAC1 -->|ref-scoped| UR["UserRole (user, role, ref)"]
     end
     AT -->|bearer| RBAC1
-    AT -->|bearer| RBAC2
     UM["User management (admin)"] -->|MANAGE_USERS| UR
     UM --> U[("users collection")]
     subgraph Flags[Site auth flags]
@@ -699,60 +699,59 @@ Assign/remove require `MANAGE_USERS`; `has-permission` requires me to be signed 
 
 | Actor | Where | Personal data | E2E coverage |
 |---|---|---|---|
-| user / admin | Global middleware (no page) | ✅ Yes — subject/user identifiers | ❌ 0 cases, ≈0% (est.) |
+| backend integrator | Internal service (no page or HTTP endpoint) | ✅ Yes — subject/user identifiers | ❌ 0 cases, ≈0% (est.) |
 
 ### Description
 
-As a user/admin, my permissions are additionally checked against a second-generation (Casbin) policy so that the system can decide whether a subject may perform an action on an object; this is a partial, internal path that coexists with the primary RBAC and is not directly surfaced as a dedicated screen in the UI — I observe it only through whether my actions are allowed or denied.
+As a backend integrator, I can evaluate or assign second-generation (Casbin) policies through internal permission-service functions. These functions coexist with the primary RBAC but have no dedicated UI or HTTP endpoint.
 
 ### Who uses it / value
 
-Integrators building programmatic auth checks; future migration target.
+Backend integrators building programmatic authorization checks; future migration target.
 
 ### Acceptance criteria
 
-- When a **user** performs an action routed through the v2 policy via **Global middleware (no page)**, they experience the same allow/deny outcome as a permission check: permitted actions succeed, denied actions are blocked.
-- When an **admin** makes policy assignments via the v2 path at **Global middleware (no page)**, they take effect for the subject on subsequent actions.
-- Because v1 remains the primary path for most resource checks, a **user** may see allow/deny outcomes driven by v1 for some resources and v2 for others during the partial migration at **Global middleware (no page)** — the system does not expose which path was used.
-- No dedicated user/admin UI screen is provided for the v2 authorize decision at **Global middleware (no page)**; a **user** observes it only via the allow/deny outcome of their actions.
+- An internal caller can evaluate a subject/action/object query with `hasPermissionV2` and receive Casbin's boolean decision.
+- An internal caller can add a policy with `assignRoleToUserV2`; the caller must enforce authorization before making assignments.
+- HTTP callers cannot evaluate policies through the removed `POST /v2/auth/authorize` endpoint, with or without an Authorization header.
 
 ### API contract
 
-- `POST /v2/auth/authorize` (internal; no auth barrier on the route) → `200 { message: 'Authorized' }` on success, `403` on denial.
-- `hasPermissionV2` / `assignRoleToUserV2` are available in `permission.service`.
+- `POST /v2/auth/authorize` has been removed (#630); requests receive `404 Not found`. External integrations must stop calling this endpoint.
+- `hasPermissionV2({ sub, act, obj })` / `assignRoleToUserV2({ sub, act, obj })` remain internal functions in `permission.service`. No replacement HTTP endpoint is provided.
 
 ### Quality control
 
-As an integrator, I call `/authorize` with a permitted subject/action/object → `true`; with a denied one → `false`.
+Regression tests send legacy permission queries, Casbin queries, user-ID-only payloads and empty bodies to the removed endpoint. Each receives `404`, anonymously and with an Authorization header, without invoking either permission service.
 
 ```mermaid
 flowchart TD
-    C([Caller]) -->|"POST /v2/auth/authorize {sub,act,obj}"| A["enforce(sub,act,obj)"]
+    C([Internal backend caller]) -->|"hasPermissionV2({sub,act,obj})"| A["enforce(sub,act,obj)"]
     A --> P[("Casbin policies (mongoose adapter)")]
     P -->|owner/writer/reader groups| R{allowed?}
-    R -->|yes| OK["200 Authorized"]
-    R -->|no| N1["403"]
+    R -->|yes| OK["true"]
+    R -->|no| N1["false"]
 ```
 
 ### Security
 
-Auth is required; policy assignment is admin-only. **Partial** — v1 remains the primary path for most resource checks.
+No HTTP authorization oracle is exposed. Internal callers are responsible for authenticating subjects and authorizing policy assignments. **Partial** — v1 remains the primary path for most resource checks.
 
 **Coverage:**
-- **Auth:** `POST /v2/auth/authorize` has **no auth barrier** on the route (marked INTERNAL ONLY by comment); only input validation is applied. `hasPermissionV2`/`assignRoleToUserV2` are internal service calls.
-- **Authorization:** The system decides via Casbin `enforce(sub, act, obj)`; policy assignment (`assignRoleToUserV2`) is admin-controlled. v1 remains the primary path for most resource checks.
-- **Input validation:** My input is validated (`permissions`/`permissionQuery`/`userId`, min 1 key).
-- **Rate limiting:** not applied.
+- **Auth:** the `/v2/auth/authorize` route is removed. `hasPermissionV2`/`assignRoleToUserV2` are internal service calls without their own authentication barrier.
+- **Authorization:** Casbin evaluates `enforce(sub, act, obj)`; internal callers must authorize policy assignments. v1 remains the primary path for most resource checks.
+- **Input validation:** no HTTP request schema remains for this endpoint; internal callers supply the service arguments.
+- **Rate limiting:** not applicable to the removed endpoint.
 - **Secrets:** none — Casbin policies carry no credentials.
 
 **Risks:**
-- **Unauthenticated authorize endpoint:** `POST /v2/auth/authorize` has no auth barrier on the route, so an internal caller that reaches it can probe authorization decisions for arbitrary `(sub, act, obj)` — an oracle to enumerate who can do what. *Mitigation:* none currently — restrict the route to internal callers (loopback/service mesh) or require a service token.
+- **Unauthenticated authorization oracle (#630):** the former endpoint allowed arbitrary Casbin subject queries. *Mitigation:* the HTTP route, controller and validator are removed; regression tests assert `404` without policy evaluation.
 - **Dual-RBAC drift:** v1 and v2 coexist; a resource check routed through v1 may diverge from v2's policy, leaving gaps where one says allow and the other deny — easy to mis-configure during partial migration. *Mitigation:* none currently — pick one path per resource and add a drift test asserting v1/v2 agreement.
-- **Policy-tamper via admin grant:** `assignRoleToUserV2` is admin-controlled; a compromised admin can rewrite Casbin policies to grant themselves `owner` on every object. *Mitigation:* none currently — audit policy mutations and require a second admin to confirm bulk grants.
+- **Unauthorized internal policy assignment:** `assignRoleToUserV2` has no built-in caller authorization. *Mitigation:* internal callers must enforce authorization before assigning policies; no assignment HTTP endpoint is introduced here.
 
 ### Personal data processing
 
-✅ Yes — subject/user identifiers embedded in Casbin policies. Collected from admins via `assignRoleToUserV2`; stored in the policy store (owner/writer/reader grouping policies binding subjects to objects); retained indefinitely until rewritten; encrypted — none (no secrets stored); accessible to admins and to the internal `/authorize` caller.
+✅ Yes — subject/user identifiers embedded in Casbin policies. Supplied by internal callers via `assignRoleToUserV2`; stored in the policy store (owner/writer/reader grouping policies binding subjects to objects); retained indefinitely until rewritten; encrypted — none (no secrets stored); accessible to internal backend code and database operators. The removed `/authorize` endpoint no longer exposes policy decisions to HTTP callers.
 
 **Risks:**
 - **Subject enumeration via policy read:** the policy store encodes which user can do what on which object; a read (via a backup leak or admin API) reveals the full capability graph keyed by user id.
@@ -773,9 +772,9 @@ Casbin policies are the operational v2 capability graph; no secrets are stored.
 - **Silent policy drift:** partial adoption means v2 policies may be stale or inconsistent with v1, so a "denied" decision can flip to "allowed" (or vice versa) on a policy reload with no audit signal.
 
 ### Test coverage
-- **E2E (Playwright):** 0 — not covered (no `/v2/auth/authorize` spec) — SITEMAP: ❌
+- **E2E (Playwright):** 0 — internal service behavior is not covered — SITEMAP: ❌
 - **Estimated coverage:** ≈0% (est.) — no E2E spec
-- **Unit (Jest):** none
+- **Unit (Jest):** 8 route regression cases in `backend/tests/unit/app/authRoute.authorizeRemoved.test.js` verify removal of the HTTP endpoint; internal Casbin policy behavior is not covered by these tests.
 
 ## CAP-IDENTITY-09 — Manage Users & Manage Features (admin)
 

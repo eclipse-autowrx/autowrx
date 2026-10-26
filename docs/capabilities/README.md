@@ -137,7 +137,7 @@ Each cluster has an ID prefix (`CAP-<CODE>-NN`).
 | `READ_ASSET` / `WRITE_ASSET` | `readAsset` / `writeAsset` |
 | `DEPLOY_HARDWARE` | `deployHardware` |
 
-A second Casbin-based RBAC (v2) is wired through the internal `POST /v2/auth/authorize` endpoint but v1 remains the primary path for resource checks.
+A second Casbin-based RBAC (v2) is available through internal permission-service functions; v1 remains the primary path for resource checks. The unauthenticated `POST /v2/auth/authorize` endpoint was removed (#630).
 
 ## Global feature flags
 

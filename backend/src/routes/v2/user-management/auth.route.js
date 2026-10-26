@@ -28,8 +28,6 @@ const router = express.Router();
 
 // This route is used to authenticate the user
 router.post('/authenticate', auth(), authController.authenticate);
-// This route is INTERNAL ONLY. DO NOT EXPOSE THIS ENDPOINT TO THE PUBLIC. This is used to authorize user.
-router.post('/authorize', validate(authValidation.authorize), authController.authorize);
 
 router.get('/github/callback', authController.githubCallback);
 router.get('/github-sso/start', ssoLimiter, authController.githubSsoStart);
