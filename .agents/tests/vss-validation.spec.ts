@@ -37,7 +37,10 @@ test('invalid VSS replacement shows its path and preserves the existing model', 
     const response = page.waitForResponse(r => r.url().endsWith(`/models/${modelId}/replace-api`) && r.request().method() === 'POST');
     await dialog.getByRole('button', { name: 'Replace Vehicle API', exact: true }).click();
     expect((await response).status()).toBe(400);
-    await expect(page.getByText(/Invalid VSS at Vehicle.Cabin/).first()).toBeVisible();
+    const alert = page.getByRole('alert').filter({ hasText: 'Unable to import VSS' });
+    await expect(alert).toBeVisible();
+    await expect(alert).toContainText('Vehicle.Cabin is an empty branch. Add at least one signal, then upload the file again.');
+    await expect(alert).not.toContainText(/Error:|\bat Object\.|node:internal|model\.service\.js|model\.controller\.js/);
     const after = await (await page.request.get(`${API_URL}/v2/models/${modelId}/api?raw=true`, { headers })).json();
     expect(after).toEqual(before);
   } finally {

@@ -408,10 +408,11 @@ const replaceApi = catchAsync(async (req, res) => {
     custom_vss = result.custom_vss;
   } catch (error) {
     logger.error(`Error processing API data URL: ${error.message}`);
-    logger.error(error);
+    // Log the stack as text: the logger mutates Error.message when given an Error object.
+    logger.error(error.stack);
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      `Failed to process API data: ${error.message || 'Invalid API data URL or file format'}`,
+      error.message || 'Unable to read the VSS file. Check the file and try again.',
     );
   }
 

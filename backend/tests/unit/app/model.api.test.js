@@ -414,7 +414,11 @@ describe('VSS preflight and write validation', () => {
     const previousModel = clone(storedModel);
     const previousApis = clone(storedApis);
     fetch.mockResolvedValue({ ok: true, json: async () => ({ Vehicle: { type: 'branch' } }) });
-    await request().post(`/models/${response.body.id}/replace-api`).send({ api_data_url: '/bad.json' }).expect(400);
+    const rejected = await request()
+      .post(`/models/${response.body.id}/replace-api`)
+      .send({ api_data_url: '/bad.json' })
+      .expect(400);
+    expect(rejected.body.message).toBe('Invalid VSS at Vehicle: branch must contain children.');
     expect(clone(storedModel)).toEqual(previousModel);
     expect(clone(storedApis)).toEqual(previousApis);
     expect(ExtendedApi.deleteMany).not.toHaveBeenCalled();
