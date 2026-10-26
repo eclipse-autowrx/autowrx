@@ -7,10 +7,11 @@
 // SPDX-License-Identifier: MIT
 
 import { useState, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import FeedbackForm from '../molecules/forms/FormFeedback'
 import { DaText } from '@/components/atoms/DaText'
 import DaStarsRating from '@/components/atoms/DaStarsRating'
-import { Prototype } from '@/types/model.type'
+import { Feedback, Prototype } from '@/types/model.type'
 import DaDialog from '@/components/molecules/DaDialog'
 import { DaButton } from '../atoms/DaButton'
 import useListPrototypeFeedback from '@/hooks/useListPrototypeFeedback'
@@ -38,8 +39,9 @@ const PrototypeTabFeedback = () => {
     const hash = window.location.hash.substring(1)
     return hash ? parseInt(hash, 10) : 1
   })
+  const queryClient = useQueryClient()
   const { data: profile } = useSelfProfileQuery()
-  const { data: prototype } = useCurrentPrototype()
+  const { data: prototype, refetch: refetchPrototype } = useCurrentPrototype()
   const { model_id } = useParams()
   const {
     data: prototypeFeedbacks,
@@ -52,11 +54,20 @@ const PrototypeTabFeedback = () => {
     const newPage = parseInt(window.location.hash.substring(1), 10)
     setCurrentPage(newPage)
     refetch()
-  }, [currentPage])
+  }, [currentPage, refetch])
 
   const handleDeleteFeedback = async (id: string) => {
     await deleteFeedback(id)
-    await refetch()
+    await Promise.all([
+      refetch(),
+      refetchPrototype(),
+      queryClient.invalidateQueries({
+        queryKey: ['listPrototypeFeedback', prototype?.id],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ['listModelPrototypes'],
+      }),
+    ])
     addLog({
       name: `User ${profile?.name} deleted feedback`,
       description: `User ${profile?.name} with id ${profile?.id} deleted feedback with id ${id} from prototype ${prototype?.name}`,
@@ -117,82 +128,94 @@ const PrototypeTabFeedback = () => {
           >
             {prototypeFeedbacks && prototypeFeedbacks.results.length > 0 && (
               <div className="mt-8 w-full">
-                {prototypeFeedbacks.results.map((feedback: any) => (
-                  <div key={feedback.id} className="border p-4 mb-4 rounded-lg">
-                    <div className="flex w-full">
-                      <div className="space-x-6">
-                        <DaText
-                          variant="sub-title"
-                          className="text-da-primary-500"
-                        >
-                          {feedback.interviewee.name}
-                        </DaText>
-                        <DaText variant="small" className="ml-auto">
-                          Organization: {feedback.interviewee.organization}
-                        </DaText>
-                      </div>
-                      {profile && profile?.id === feedback.created_by && (
-                        <DaConfirmPopup
-                          title="Delete Feedback"
-                          onConfirm={() => handleDeleteFeedback(feedback.id)}
-                          label="Are you sure you want to delete this feedback?"
-                        >
-                          <DaButton
-                            variant="destructive"
-                            size="sm"
-                            className="ml-auto"
+                {prototypeFeedbacks.results.map((feedback: Feedback) => {
+                  const feedbackCreatorId =
+                    typeof feedback.created_by === 'object' &&
+                    feedback.created_by !== null
+                      ? feedback.created_by.id || feedback.created_by._id
+                      : feedback.created_by
+                  return (
+                    <div
+                      key={feedback.id}
+                      className="border p-4 mb-4 rounded-lg"
+                    >
+                      <div className="flex w-full">
+                        <div className="space-x-6">
+                          <DaText
+                            variant="sub-title"
+                            className="text-da-primary-500"
                           >
-                            <TbTrash className="w-4 h-4 mr-1" /> Delete Your
-                            Feedback
-                          </DaButton>
-                        </DaConfirmPopup>
-                      )}
-                    </div>
-                    <div className="flex w-full">
-                      <div className="flex-1">
-                        <div className="mt-2 flex items-center">
-                          <DaText variant="regular-bold">
-                            Needs addressed:
+                            {feedback.interviewee.name}
                           </DaText>
-                          <DaStarsRating
-                            readonly
-                            initialRating={feedback.score.need_address || 0}
-                          />
+                          <DaText variant="small" className="ml-auto">
+                            Organization: {feedback.interviewee.organization}
+                          </DaText>
                         </div>
-                        <div className="mt-2 flex items-center">
-                          <DaText variant="regular-bold">Relevance:</DaText>
-                          <DaStarsRating
-                            readonly
-                            initialRating={feedback.score.relevance || 0}
-                          />
+                        {profile && profile?.id === feedbackCreatorId && (
+                          <DaConfirmPopup
+                            title="Delete Feedback"
+                            onConfirm={() => handleDeleteFeedback(feedback.id)}
+                            label="Are you sure you want to delete this feedback?"
+                          >
+                            <DaButton
+                              variant="destructive"
+                              size="sm"
+                              className="ml-auto"
+                            >
+                              <TbTrash className="w-4 h-4 mr-1" /> Delete Your
+                              Feedback
+                            </DaButton>
+                          </DaConfirmPopup>
+                        )}
+                      </div>
+                      <div className="flex w-full">
+                        <div className="flex-1">
+                          <div className="mt-2 flex items-center">
+                            <DaText variant="regular-bold">
+                              Needs addressed:
+                            </DaText>
+                            <DaStarsRating
+                              readonly
+                              initialRating={feedback.score.need_address || 0}
+                            />
+                          </div>
+                          <div className="mt-2 flex items-center">
+                            <DaText variant="regular-bold">Relevance:</DaText>
+                            <DaStarsRating
+                              readonly
+                              initialRating={feedback.score.relevance || 0}
+                            />
+                          </div>
+                          <div className="mt-2 flex items-center">
+                            <DaText variant="regular-bold">Ease of use:</DaText>
+                            <DaStarsRating
+                              readonly
+                              initialRating={feedback.score.easy_to_use || 0}
+                            />
+                          </div>
                         </div>
-                        <div className="mt-2 flex items-center">
-                          <DaText variant="regular-bold">Ease of use:</DaText>
-                          <DaStarsRating
-                            readonly
-                            initialRating={feedback.score.easy_to_use || 0}
-                          />
+                        <div className="flex-1">
+                          <div className="mt-2">
+                            <DaText variant="regular-bold" className="mr-2">
+                              Questions:
+                            </DaText>
+                            <DaText variant="regular">
+                              {feedback.question}
+                            </DaText>
+                          </div>
+                          <div className="mt-2">
+                            <DaText variant="regular-bold" className="mr-2">
+                              Recommendations:
+                            </DaText>
+                            <DaText variant="regular">
+                              {feedback.recommendation}
+                            </DaText>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex-1">
-                        <div className="mt-2">
-                          <DaText variant="regular-bold" className="mr-2">
-                            Questions:
-                          </DaText>
-                          <DaText variant="regular">{feedback.question}</DaText>
-                        </div>
-                        <div className="mt-2">
-                          <DaText variant="regular-bold" className="mr-2">
-                            Recommendations:
-                          </DaText>
-                          <DaText variant="regular">
-                            {feedback.recommendation}
-                          </DaText>
-                        </div>
-                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
                 <DaPaging className="pt-3 pb-6">
                   <DaPaginationContent>
                     <DaPaginationItem>
