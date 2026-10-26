@@ -307,3 +307,9 @@ in everyday words, what each one checks. No technical background needed.
 The current status: **151 of 155 pass** (1 is intentionally skipped; 3 were
 fixed on the `fix/project-editor-regressions` branch and verified — update
 this line when you re-run).
+
+### VSS validation — ETAS #403
+
+- Anonymous validation is rejected; signed-in users receive a path-specific error or a successful preflight.
+- Replacing a model API with an empty VSS branch shows the invalid path and preserves the existing specification.
+- Built-in Play and rebuild show the invalid VSS path and send no generation or run commands. This case requires a disposable runtime server.

@@ -35,7 +35,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/atoms/dropdown-menu'
-import { getComputedAPIs } from '@/services/model.service'
+import { getComputedAPIs, validateVss } from '@/services/model.service'
 import RuntimeAssetManager from '@/components/organisms/RuntimeAssetManager'
 import DaDialog from '@/components/molecules/DaDialog'
 import { countCodeExecution } from '@/services/prototype.service'
@@ -163,10 +163,20 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
     }
   }, [prototype?.code, prototype?.id])
 
-  const handleRun = () => {
+  const handleRun = async () => {
     if (unknownApis.length) {
       toast.error(
         `Unknown signals: ${unknownApis.join(', ')}. Fix them before deploying.`,
+      )
+      return
+    }
+
+    try {
+      if (!model) throw new Error('No model available for VSS validation')
+      await validateVss(await getComputedAPIs(model.id))
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Unable to validate VSS',
       )
       return
     }
@@ -690,12 +700,20 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
                           <DropdownMenuItem
                             onClick={async () => {
                               if (!model) return
-                              const vssJson = await getComputedAPIs(model.id)
-                              if (runTimeRef.current) {
-                                runTimeRef.current?.builldVehicleModel(vssJson)
-                              }
-                              if (runTimeRef1.current) {
-                                runTimeRef1.current?.builldVehicleModel(vssJson)
+                              try {
+                                const vssJson = await getComputedAPIs(model.id)
+                                await runTimeRef.current?.builldVehicleModel(
+                                  vssJson,
+                                )
+                                await runTimeRef1.current?.builldVehicleModel(
+                                  vssJson,
+                                )
+                              } catch (error) {
+                                toast.error(
+                                  error instanceof Error
+                                    ? error.message
+                                    : 'Unable to validate VSS',
+                                )
                               }
                             }}
                           >

@@ -559,3 +559,25 @@ Sets are stored with an `owner`/`created_by`; the entire API set lives in one do
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
 - **Estimated coverage:** ≈0% (est.) — no E2E spec.
 - **Unit (Jest):** none
+
+## VSS validation (ETAS #403)
+
+Full VSS imports and inline VSS saves reject malformed nodes, empty branches and
+standard signals without datatypes before persisting changes. Valid custom node
+types and vendor metadata are preserved. Blank models can still be created
+without supplying a VSS specification; their empty tree cannot be built.
+
+`POST /v2/models/validate-vss` requires authentication and accepts `{ spec }`,
+where `spec` is a VSS object or JSON string. It returns `204` when valid and
+`400` with a path-specific message when invalid; it performs no writes. Inputs
+are limited to 10 MB, 128 child levels and 100,000 nodes.
+
+The built-in runtime and host-managed device writes await validation before
+sending files or generation commands. The ETAS runtime-panel plugin uses
+`PluginAPI.validateVss` and stops Play after validation/fetch failures. Update
+the host before installing that plugin version; older hosts cannot validate
+its build requests. Existing stored models are not migrated or hidden.
+
+Verification coverage: `backend/tests/unit/services/vssValidation.service.test.js`,
+`backend/tests/unit/app/model.api.test.js`, `.agents/tests/vss-validation.spec.ts`,
+and the extensions repository's `e2e/tests/vss-validation.spec.ts`.

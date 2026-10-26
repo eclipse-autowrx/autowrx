@@ -87,6 +87,9 @@ export interface PluginAPI {
    */
   getComputedAPIs?: (model_id?: string) => Promise<CVI>
 
+  /** Reject malformed VSS before writing device files or generating a model. */
+  validateVss?: (spec: unknown) => Promise<void>
+
   /**
    * Get details for a specific vehicle API
    * @param api_name The API path (e.g., 'Vehicle.Speed')

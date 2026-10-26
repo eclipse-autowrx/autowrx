@@ -14,6 +14,7 @@ import { getPluginById, getPluginBySlug } from '@/services/plugin.service'
 import {
   updateModelService,
   getComputedAPIs,
+  validateVss,
   getApiDetailService,
   replaceAPIsService,
 } from '@/services/model.service'
@@ -623,7 +624,8 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({
   )
 
   const handleReplaceVss = useCallback(
-    (kitName: string, vssContent: string): Promise<void> => {
+    async (kitName: string, vssContent: string): Promise<void> => {
+      await validateVss(vssContent)
       return new Promise((resolve, reject) => {
         const socket = io(KIT_SERVER_URL)
         const kitId = kitName
@@ -678,6 +680,9 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({
   const handleReplaceSignalMapping = useCallback(
     async (kitName: string, fileContent: string): Promise<void> => {
       if (!model_id) throw new Error('No model available for VSS upload')
+      const vssData = await getComputedAPIs(model_id)
+      await validateVss(vssData)
+      const vssJson = JSON.stringify(vssData)
 
       return new Promise((resolve, reject) => {
         const socket = io(KIT_SERVER_URL)
@@ -709,10 +714,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({
               data: '',
             })
 
-            // 2. Fetch current model's VSS and write it
-            const vssData = await getComputedAPIs(model_id)
-            const vssJson = JSON.stringify(vssData)
-
+            // 2. Write the validated VSS
             socket.emit('messageToKit', {
               cmd: 'write-file',
               to_kit_id: kitId,
@@ -854,6 +856,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({
 
     // Vehicle API operations (read)
     getComputedAPIs: model_id ? handleGetComputedAPIs : undefined,
+    validateVss,
     getApiDetail: model_id ? handleGetApiDetail : undefined,
     listVSSVersions: handleListVSSVersions,
 

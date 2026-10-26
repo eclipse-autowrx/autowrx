@@ -10,8 +10,9 @@ interface PluginAPI {
   updateModel?: (updates: Partial<Model>) => Promise<Model>
   updatePrototype?: (updates: Partial<Prototype>, options?: { silent?: boolean }) => Promise<Prototype>
 
-  // Vehicle API (6)
+  // Vehicle API (7)
   getComputedAPIs?: (model_id?: string) => Promise<CVI>
+  validateVss?: (spec: unknown) => Promise<void>
   getApiDetail?: (api_name: string, model_id?: string) => Promise<VehicleAPI>
   listVSSVersions?: () => Promise<string[]>
   replaceAPIs?: (api_data_url: string, model_id?: string) => Promise<void>
@@ -62,6 +63,7 @@ interface PluginAPI {
 | Method | Description | Present when |
 |---|---|---|
 | `getComputedAPIs(model_id?): Promise<CVI>` | Full computed VSS API tree; `CVI = { [apiPath: string]: VehicleAPI }`. | `model_id` exists |
+| `validateVss(spec): Promise<void>` | Validate a VSS object or JSON string before runtime generation; rejects with the failing path. No writes. Requires authentication. | always |
 | `getApiDetail(api_name, model_id?): Promise<VehicleAPI>` | Detail for one API path (e.g. `'Vehicle.Speed'`). `VehicleAPI`: `name`, `datatype`, `type` (sensor/actuator/attribute), `unit?`, `min?`, `max?`, `description?`. | `model_id` exists |
 | `listVSSVersions(): Promise<string[]>` | Available VSS release versions (e.g. `['4.0', '3.1', ...]`). | always |
 | `replaceAPIs(api_data_url, model_id?): Promise<void>` | Replace **all** APIs for the model with a new VSS spec JSON at the given URL. ⚠️ destructive. | `model_id` exists |

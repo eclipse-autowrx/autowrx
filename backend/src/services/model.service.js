@@ -24,6 +24,7 @@ const { publiclyVisibleVisibilities, visibilityTypes } = require('../config/enum
 const logger = require('../config/logger');
 const config = require('../config/config');
 const customApiSetService = require('./customApiSet.service');
+const { validateVss } = require('./vssValidation.service');
 
 /**
  *
@@ -520,6 +521,7 @@ const getModelById = async (id, userId, includeCreatorFullDetails) => {
  * @returns {Promise<string>}
  */
 const updateModelById = async (id, updateBody, actionOwner) => {
+  if (updateBody.cvi !== undefined) validateVss(updateBody.cvi);
   const model = await getModelById(id, actionOwner);
   if (!model) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Model not found');
@@ -779,6 +781,7 @@ const processApiData = (data) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'VSS data must not exceed 10 MB');
   }
 
+  validateVss(data);
   const extendedApis = [];
 
   const mainApi = Object.keys(data).at(0);

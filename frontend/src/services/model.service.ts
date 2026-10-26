@@ -6,6 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
+import { isAxiosError } from 'axios'
 import { List } from '@/types/common.type'
 import { serverAxios } from './base'
 import { Model, ModelCreate, ModelLite } from '@/types/model.type'
@@ -177,6 +178,20 @@ export const updateModelService = async (
 
 export const deleteModelService = async (model_id: string) => {
   return await serverAxios.delete(`/models/${model_id}`)
+}
+
+export const validateVss = async (spec: unknown): Promise<void> => {
+  try {
+    await serverAxios.post('/models/validate-vss', { spec })
+  } catch (error) {
+    if (isAxiosError<{ message?: string }>(error)) {
+      throw new Error(
+        error.response?.data?.message ||
+          'Unable to validate VSS. Please try again.',
+      )
+    }
+    throw error
+  }
 }
 
 export const getComputedAPIs = async (model_id: string, raw = false) => {
