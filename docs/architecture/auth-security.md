@@ -138,9 +138,10 @@ Roles are stored per user, per resource, in the `userroles` collection (see
 ### The Casbin "v2" model (secondary — `config/rolesV2.js`)
 
 A newer **Casbin** enforcer (`casbin-mongoose-adapter`, model `rolesModel.conf`)
-seeds `owner/writer/reader → read/write` grouping policies and is reachable via
-`permissionService.hasPermissionV2` and the internal `/authorize` endpoint. The
-two systems coexist.
+seeds `owner/writer/reader → read/write` grouping policies and is available via
+the internal `permissionService.hasPermissionV2` service. The former
+`POST /v2/auth/authorize` endpoint was removed to eliminate unauthenticated
+authorization queries (#630). The two RBAC systems coexist.
 
 ### Frontend permission checks
 

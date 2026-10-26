@@ -8,11 +8,10 @@
 
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
-const { authService, userService, tokenService, emailService, logService, permissionService } = require('../services');
+const { authService, userService, tokenService, emailService, logService } = require('../services');
 const config = require('../config/config');
 const ApiError = require('../utils/ApiError');
 const logger = require('../config/logger');
-const pick = require('../utils/pick');
 const platformAuthService = require('../services/platformAuth.service');
 const ssoService = require('../services/sso.service');
 const { sanitizeUser } = require('../middlewares/auth');
@@ -25,36 +24,6 @@ const resolveRedirectOrigin = (origin) => (config.isAllowedOrigin(origin) ? orig
 const authenticate = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json({
     user: req.user,
-  });
-});
-
-// This controller is INTERNAL ONLY. DO NOT EXPOSE THIS ENDPOINT TO THE PUBLIC.
-const authorize = catchAsync(async (req, res) => {
-  const bodyData = pick(req.body, ['permissions', 'permissionQuery', 'userId']);
-
-  // Legacy permission check. This is permission check version 1 using self-implemented authorization
-  if (bodyData.permissions) {
-    const permissionQueries = bodyData.permissions.split(',').map((permission) => permission.split(':'));
-    const results = await Promise.all(
-      permissionQueries.map((query) => permissionService.hasPermission(req.user.id ?? bodyData.userId, query[0], query[1])),
-    );
-
-    if (!results.every(Boolean)) {
-      throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
-    }
-  }
-
-  // New permission check. This is permission check version 2 using casbin library. Only support 1 query for now.
-  if (bodyData.permissionQuery) {
-    const [sub, act, obj] = bodyData.permissionQuery.split('#');
-    const allowed = await permissionService.hasPermissionV2({ sub, act, obj });
-    if (!allowed) {
-      throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
-    }
-  }
-
-  res.status(httpStatus.OK).json({
-    message: 'Authorized',
   });
 });
 
@@ -335,7 +304,6 @@ const githubSsoCallback = catchAsync(async (req, res) => {
 
 module.exports = {
   authenticate,
-  authorize,
   register,
   login,
   logout,

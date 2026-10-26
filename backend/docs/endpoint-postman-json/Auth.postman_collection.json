@@ -15,14 +15,6 @@
       }
     },
     {
-      "name": "Authorize (internal)",
-      "request": {
-        "method": "POST",
-        "url": { "raw": "{{baseUrl}}/v2/auth/authorize", "host": ["{{baseUrl}}"], "path": ["v2","auth","authorize"] },
-        "body": { "mode": "raw", "raw": "{\n  \"permissions\": \"READ_MODEL:{{modelId}}\"\n}" }
-      }
-    },
-    {
       "name": "Register",
       "request": {
         "method": "POST",
@@ -87,7 +79,6 @@
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:8080" },
     { "key": "accessToken", "value": "" },
-    { "key": "modelId", "value": "" },
     { "key": "resetToken", "value": "" },
     { "key": "verifyToken", "value": "" }
   ]

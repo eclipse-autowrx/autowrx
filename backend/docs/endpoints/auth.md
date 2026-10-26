@@ -3,7 +3,6 @@
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | POST | /authenticate | Required | Validate bearer access token; returns user. |
-| POST | /authorize | None | Internal authorization check (do not expose publicly). |
 | GET | /github/callback | None | GitHub OAuth callback. |
 | GET | /github-sso/start | None | Start GitHub SSO flow. |
 | GET | /github-sso/callback | None | GitHub SSO callback. |
@@ -16,6 +15,8 @@
 | POST | /reset-password | None | Reset password — primary: `{ email, code, password }`; legacy: `?token` + `{ password }`. |
 | POST | /send-verification-email | Required | Send email verification to current user. |
 | POST | /verify-email | None | Verify email using token. |
+
+`POST /v2/auth/authorize` was removed (#630) and now returns `404 Not found`, with or without an Authorization header. External integrations must stop calling it; no replacement HTTP endpoint is provided. Internal Casbin permission-service functions remain available. See the [identity/access capability catalog](../../../docs/capabilities/identity-access.md#cap-identity-08--casbin-rbac-v2-partial).
 
 ### OpenAPI (Swagger)
 
@@ -35,19 +36,6 @@
               properties:
                 message:
                   type: string
-
-/v2/auth/authorize:
-  post:
-    summary: Internal authorization endpoint
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/AuthorizeRequest'
-    responses:
-      '200':
-        description: Authorized
 
 /v2/auth/github/callback:
   get:
