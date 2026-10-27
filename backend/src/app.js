@@ -31,12 +31,22 @@ const { createSecurityHeaders, cspNonce } = require('./middlewares/contentSecuri
 const cspReportRoute = require('./routes/v2/system/cspReport.route');
 
 const frontendDistPath = path.join(__dirname, '../static/frontend-dist');
+// Production assets are immutable until restart. Read the template once so
+// unauthenticated SPA navigation cannot trigger repeated filesystem reads.
+let frontendHtml;
+if (config.env !== 'development') {
+  try {
+    frontendHtml = fs.readFileSync(path.join(frontendDistPath, 'index.html'), 'utf8');
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+}
 const serveFrontend = (_req, res, next) => {
-  fs.readFile(path.join(frontendDistPath, 'index.html'), 'utf8', (err, html) => {
-    if (err) return next(err);
-    res.setHeader('Cache-Control', 'no-store');
-    return res.type('html').send(html.replace('<head>', `<head><meta name="csp-nonce" content="${res.locals.cspNonce}">`));
-  });
+  if (!frontendHtml) return next(new ApiError(httpStatus.NOT_FOUND, 'Frontend build not found'));
+  res.setHeader('Cache-Control', 'no-store');
+  return res
+    .type('html')
+    .send(frontendHtml.replace('<head>', `<head><meta name="csp-nonce" content="${res.locals.cspNonce}">`));
 };
 
 const app = express();

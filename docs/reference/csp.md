@@ -64,6 +64,7 @@ media allows self/blob; workers allow self. Objects are forbidden. Forms, base
 URLs and frame ancestors are restricted to self. Production upgrades insecure
 requests. Development retains a permissive HMR policy without HTTPS upgrades.
 
+The built SPA template is loaded once at backend startup (rebuild/restart to update it).
 SPA HTML is served with a fresh cryptographic nonce and `Cache-Control: no-store`.
 Reverse proxies must preserve CSP headers and must not cache/reuse SPA HTML.
 Opaque-origin plugin frames inherit that policy: their approved bootstrap and
