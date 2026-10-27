@@ -73,6 +73,8 @@ export async function loginAs(page: Page, email: string, password: string) {
   }
   if (await userProfile.isVisible().catch(() => false)) {
     await logout(page);
+    // Clear the previous page's in-memory auth state before setting up a new session.
+    await page.reload();
     await expect(signInBtn).toBeVisible({ timeout: 15000 });
   }
 
