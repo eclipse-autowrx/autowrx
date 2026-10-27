@@ -241,6 +241,7 @@
 | Signal detail | Fixed and custom VSS metadata, including UUID, default, deprecation, and vendor fields | ✅ `vehicle-api.spec.ts` (custom VSS execution pending) |
 | Custom signal types | List visibility and Type filter, case normalization, Tree View visibility and custom container expansion; attributes stay hidden in tree | ✅ `vehicle-api.spec.ts` (execution pending) |
 | Replace API / JSON download | Replace with custom VSS and deep-equal JSON download, preserving sibling order and empty children | ✅ `vehicle-api.spec.ts` (execution pending) |
+| VSS validation | Authenticated preflight, invalid replacement preserves data, built-in Play/rebuild emit no commands for invalid trees | ✅ `vss-validation.spec.ts` |
 | API architecture diagram | Edit skeleton: draw rectangle + hover message, bg color/image, save + preview persistence | ✅ `api-architecture.spec.ts` |
 
 ---

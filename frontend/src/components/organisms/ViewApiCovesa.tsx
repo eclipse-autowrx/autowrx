@@ -100,11 +100,26 @@ const ViewApiCovesa = () => {
       setShowUpload(false)
     } catch (error) {
       console.error(error)
-      if (isAxiosError(error)) {
-        toast.error(error.response?.data?.message || 'Failed to replace APIs')
-      } else {
-        toast.error('Failed to replace APIs')
-      }
+      const serverMessage = isAxiosError<{ message?: unknown }>(error)
+        ? error.response?.data?.message
+        : undefined
+      const summary =
+        typeof serverMessage === 'string'
+          ? serverMessage.split('\n')[0].trim()
+          : ''
+      const emptyBranch = summary.match(
+        /Invalid VSS at (.+?): branch must contain children\./,
+      )
+      const message = emptyBranch
+        ? `${emptyBranch[1]} is an empty branch. Add at least one signal, then upload the file again.`
+        : summary ||
+          'Check that the file contains valid VSS JSON and try again.'
+      toast.error(
+        <div>
+          <p className="font-medium">Unable to import VSS</p>
+          <p className="mt-1 text-sm">{message}</p>
+        </div>,
+      )
     } finally {
       setLoading(false)
     }

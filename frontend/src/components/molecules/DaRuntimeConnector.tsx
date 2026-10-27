@@ -21,6 +21,7 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useAssets } from '@/hooks/useAssets'
 
 import { io } from 'socket.io-client'
+import { validateVss } from '@/services/model.service'
 import { useSiteConfig } from '@/utils/siteConfig'
 import {
   parseReadFileReply,
@@ -363,7 +364,14 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       }
     }
 
-    const builldVehicleModel = (vss_json: string) => {
+    const builldVehicleModel = async (vss_json: unknown) => {
+      const targetRuntime = activeRtId
+      await validateVss(vss_json)
+      if (targetRuntime !== activeRtIdRef.current) {
+        throw new Error(
+          'Runtime changed during VSS validation. Please try again.',
+        )
+      }
       if (prototype && prototype.id && currentUser && vss_json) {
         socketio?.emit('messageToKit', {
           cmd: 'generate_vehicle_model',

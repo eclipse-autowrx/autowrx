@@ -43,6 +43,8 @@ router.route('/stats').post(
   modelController.listModelStatsByIds,
 );
 
+router.route('/validate-vss').post(auth(), validate(modelValidation.validateVssSpec), modelController.validateVssSpec);
+
 router
   .route('/:id')
   .get(

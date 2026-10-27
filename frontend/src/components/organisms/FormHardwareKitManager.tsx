@@ -14,6 +14,7 @@ import DaTabItem from '@/components/atoms/DaTabItem'
 import CodeEditor from '@/components/molecules/CodeEditor'
 import DaRuntimeConnector from '@/components/molecules/DaRuntimeConnector'
 import { toast } from 'react-toastify'
+import { validateVss } from '@/services/model.service'
 
 interface iPropTabConfig {
   hidden?: boolean
@@ -208,7 +209,9 @@ const FormHardwareKitManager = ({
 
   const triggerRebuildVehicleModel = (vss: string) => {
     console.log('triggerRebuildVehicleModel')
-    runTimeRef.current?.builldVehicleModel(vss)
+    void runTimeRef.current
+      ?.builldVehicleModel(vss)
+      .catch((error: Error) => toast.error(error.message))
   }
 
   const readFile = (filePath: string) => {
@@ -277,7 +280,17 @@ const FormHardwareKitManager = ({
         <TabVSS
           hidden={activeTab !== 'VSS'}
           edgeVss={edgeVss}
-          sendVssToDevice={(vss: string) => {
+          sendVssToDevice={async (vss: string) => {
+            try {
+              await validateVss(vss)
+            } catch (error) {
+              toast.error(
+                error instanceof Error
+                  ? error.message
+                  : 'Unable to validate VSS',
+              )
+              return
+            }
             writeFile(VSS_PATH, vss)
             setTimeout(() => {
               triggerRebuildVehicleModel(vss)
