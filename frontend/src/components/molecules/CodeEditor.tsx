@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import Editor from '@monaco-editor/react'
+import Editor from '@/lib/monaco'
 import clsx from 'clsx'
 import { Spinner } from '../atoms/spinner'
 import {
@@ -16,7 +16,7 @@ import {
   forwardRef,
   useState,
 } from 'react'
-import { useMonaco } from '@monaco-editor/react'
+import { useMonaco } from '@/lib/monaco'
 
 export interface CodeEditorProps {
   code: string
@@ -128,7 +128,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
               wordWrap: 'on',
               'semanticHighlighting.enabled': true,
               fontSize,
-              alwaysConsumeMouseWheel,
+              scrollbar: { alwaysConsumeMouseWheel },
               // lineNumbers: (num) => (num + 5).toString(),
             }}
             loading={

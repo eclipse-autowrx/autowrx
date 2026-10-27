@@ -5,7 +5,7 @@ in everyday words, what each one checks. No technical background needed.
 
 - **What is an E2E test?** A robot opens the website in a real browser, clicks
   around like a human, and checks that the right thing appears on screen.
-- **How many are there?** 158 tests in 40 groups.
+- **How many are there?** 171 test declarations across the suites.
 - **How do I run them?** One command (`yarn test` inside the `.agents` folder).
   The system prepares everything by itself: it starts the website and its
   backend if they are not running, signs in as the test administrator, and
@@ -243,6 +243,9 @@ in everyday words, what each one checks. No technical background needed.
 | updatePrototype: toast shows by default; hidden with silent mode | The plugin notification appears normally, and "silent" suppresses it. |
 | notifyTab flags the Code tab without navigating | A plugin can badge a tab for attention without jumping to it; opening clears the badge. |
 | notifyTab does nothing when already there | No error or double-badge when the tab is already open. |
+| Non-admin cannot upload ZIPs or register same-origin plugins | Rejects upload and registration attempts that would give untrusted code application-origin privileges. |
+| Admin-created plugin renders in-page | A trusted plugin still renders without an isolated frame. |
+| Non-admin plugin uses an isolated frame and restricted API | Host storage, cookies and DOM stay inaccessible, while allowed API calls work and denied methods remain unavailable. |
 | Create plugin via UI | The "My Plugins" page can create a plugin. |
 
 ## 19. Vehicle API (signals)
@@ -315,3 +318,14 @@ this line when you re-run).
 | VSS preflight requires authentication and reports invalid paths | Anonymous requests are rejected; signed-in users receive the failing path for invalid data and successful preflight for valid data. |
 | Invalid VSS replacement shows its path and preserves the existing model | Replacing a model API with an empty VSS branch shows an actionable error and leaves the existing specification unchanged. |
 | Built-in Play and rebuild reject invalid VSS before sending runtime commands | Both actions show the invalid path and send no generation or run commands; this case requires a disposable runtime server. |
+
+## 25. Production Content Security Policy
+
+Run these checks with `playwright.csp.config.ts` against an isolated backend
+serving the production build with `CSP_MODE=enforce`.
+
+| Test case | What it checks |
+|---|---|
+| Blocks injected scripts, eval and unapproved network destinations | The enforced browser policy prevents inline JavaScript, dynamic code evaluation and connections/scripts to unapproved origins. |
+| Loads the editor and language workers without vendor CDN requests | The code editor renders using local Monaco assets without CDN requests. |
+| Runs bundled widget scripts with no inline-script exemption | The shipped fan widget runs its local script under the strict policy. |

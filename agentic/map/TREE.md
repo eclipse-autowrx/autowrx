@@ -10,7 +10,7 @@ backend/src/                 Node/Express + MongoDB backend
   controllers/               thin request handlers (no business logic)
   decorators/                route/metadata decorators
   docs/                      backend-local API docs
-  middlewares/               auth, rateLimiter, error handlers
+  middlewares/               auth, rateLimiter, error handlers, contentSecurityPolicy
   models/                    Mongoose models (persistence layer)
   routes/v2/                 versioned API entry, grouped by domain:
     user-management/         auth, users, permissions, assets

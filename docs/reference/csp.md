@@ -1,190 +1,99 @@
-# Content Security Policy (CSP) Configuration
+# Content Security Policy rollout
 
-## Overview
-The application uses Helmet.js to set Content Security Policy headers that control which resources can be loaded by the browser. This helps prevent XSS attacks and other security vulnerabilities.
+Production security headers are configured by `backend/src/config/csp.js` and
+`backend/src/middlewares/contentSecurityPolicy.js`, mounted in `backend/src/app.js`.
 
-> ⚠️ **The shipped CSP is more permissive than Helmet's defaults.** The current
-> `backend/src/app.js` sets an effectively **wildcard** policy in both dev and
-> production (`defaultSrc ['*']`, `scriptSrc`/`connectSrc` including `'*'`). The
-> values documented below are what is actually shipped; a more restrictive,
-> per-origin policy is a future target, not the current state. See
-> [../architecture/auth-security.md](../architecture/auth-security.md) (§6).
+## Roll out in two stages
 
-## Location
-CSP configuration is in `backend/src/app.js` (lines 44-83)
+1. Deploy with `CSP_MODE=report-only` (the default). The browser receives
+   `Content-Security-Policy-Report-Only`; violations are reported but resources
+   are not blocked. **This stage does not provide enforced CSP protection.**
+2. Collect `CSP violation` events in the backend log pipeline for about seven
+   days. Retain these logs for the observation period. Exercise authentication,
+   Monaco editors, dashboards/widgets, trusted and sandboxed plugins, runtime
+   WebSockets, configured SSO, and deployment-specific integrations. Reports are
+   untrusted telemetry, not proof of an attack or a reason to auto-allow a host.
+3. Review blocked origins/directives and approve only the integrations the
+   deployment actually needs. Host changes require backend restart. Do not
+   restore wildcard sources or unsafe script execution to resolve a violation.
+4. Run the full browser suite against a disposable production-mode build with
+   the same approved hosts and `CSP_MODE=enforce`, using
+   `cd .agents && npx playwright test --config=playwright.csp.config.ts`.
+   Set `BASE_URL`, `API_URL`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` for that stack;
+   it must declare `E2E_TEST_ENABLED=true`. This config checks enforcement before
+   running and does not start Vite preview (preview omits production headers).
+5. After the observation period and compatibility review, set
+   `CSP_MODE=enforce` and restart the backend. The browser then receives an
+   enforced `Content-Security-Policy`. For a compatibility incident, revert to
+   `report-only`, retain reports, fix the affected flow, and repeat validation.
 
-## Shipped configuration
+Deployment and a week of production observation are operational steps; merging
+code or passing local tests does not complete them. No automatic timer switches
+production into enforcement without that review.
 
-`app.js` sets an effectively **wildcard** policy in both dev and production — not the restrictive policy Helmet defaults to. The only restrictive directive is `objectSrc: ['none']`. This is a known gap (see [../architecture/auth-security.md](../architecture/auth-security.md) §6); the per-origin allowlists (and the historical `cdn.jsdelivr.net` Monaco entry) that appeared in older revisions of this doc describe a **target policy, not what is shipped**.
+## Policy and configuration
 
-### Development (lines 44-63)
-```javascript
-defaultSrc: ["*"],
-scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "*"],
-scriptSrcElem: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "*"],
-styleSrc: ["'self'", "'unsafe-inline'", "*"],
-imgSrc: ["*", "data:", "blob:"],
-connectSrc: ["*", "ws:", "wss:"],
-fontSrc: ["*", "data:"],
-objectSrc: ["'none'"],
-mediaSrc: ["*"],
-frameSrc: ["*"],
-workerSrc: ["'self'", "blob:", "*"],
-upgradeInsecureRequests: null,   // disabled in dev
-```
+The production fallback is `default-src 'self'`. Scripts come only from the
+application origin, explicitly configured script origins, or a fresh response
+nonce used for the isolated plugin bootstrap. Script event attributes, arbitrary
+inline scripts, `eval`, and `new Function` are blocked. Monaco and its language
+workers are bundled locally, and bundled widget JavaScript uses external local
+files. Vendor CDNs are not needed for these components.
 
-### Production (lines 64-83)
-```javascript
-defaultSrc: ["*"],
-scriptSrc: ["'unsafe-inline'", "'unsafe-eval'", "*"],
-scriptSrcElem: ["'unsafe-inline'", "'unsafe-eval'", "*"],
-styleSrc: ["'unsafe-inline'", "*"],
-imgSrc: ["*", "data:", "blob:"],
-connectSrc: ["*"],
-fontSrc: ["*", "data:"],
-objectSrc: ["'none'"],
-mediaSrc: ["*"],
-frameSrc: ["*"],
-workerSrc: ["'self'", "blob:", "*"],
-```
+| Variable | Adds exact origins to | Default |
+|---|---|---|
+| `CSP_MODE` | `report-only` or `enforce` | `report-only` |
+| `CSP_SCRIPT_ORIGINS` | `script-src` (reviewed external plugin code only) | empty |
+| `CSP_CONNECT_ORIGINS` | `connect-src` (API, WebSocket, runtime, SSO integrations) | empty |
+| `CSP_FRAME_ORIGINS` | `frame-src` (embedded external widgets) | empty |
+| `CSP_IMAGE_ORIGINS` | `img-src` (external images/avatars) | empty |
+| `CSP_MEDIA_ORIGINS` | `media-src` | empty |
 
-## CSP Directives Explained
+Origin lists are comma-separated, such as
+`CSP_CONNECT_ORIGINS=https://kit.example.com,wss://kit.example.com`.
+Entries must be exact HTTPS origins (WSS is also allowed for connections), with
+no credentials, paths, queries, fragments or wildcards. Explicit HTTP/WS origins
+are accepted only for loopback (`localhost`, `127.0.0.1`, `[::1]`) test services.
+CORS configuration is separate: a regex CORS allowlist does not grant CSP access.
+Do not copy example hosts without reviewing deployment requirements.
 
-| Directive | Purpose | Shipped value |
-|-----------|---------|----------------|
-| `defaultSrc` | Fallback for other directives | `*` |
-| `scriptSrc` | JavaScript sources | `'self'` (dev), inline, eval, `*` |
-| `scriptSrcElem` | `<script>` element sources | `'self'` (dev), inline, eval, `*` |
-| `styleSrc` | CSS sources | `'self'` (dev), inline, `*` |
-| `imgSrc` | Image sources | `*`, `data:`, `blob:` |
-| `connectSrc` | XHR, fetch, WebSocket sources | `*`, `ws:`, `wss:` (dev) |
-| `fontSrc` | Font sources | `*`, `data:` |
-| `workerSrc` | Web Worker sources | `'self'`, `blob:`, `*` |
-| `objectSrc` | `<object>`, `<embed>` sources | `'none'` (blocked) |
-| `mediaSrc` | Audio/Video sources | `*` |
-| `frameSrc` | iframe sources | `*` |
+Styles allow `'self' 'unsafe-inline'` because React, Fluent UI and Monaco generate
+style elements and attributes. This is an explicit CSS exception; scripts have
+no unsafe execution exception. Fonts allow self/data; images allow self/data/blob;
+media allows self/blob; workers allow self. Objects are forbidden. Forms, base
+URLs and frame ancestors are restricted to self. Production upgrades insecure
+requests. Development retains a permissive HMR policy without HTTPS upgrades.
 
-## Adding New CDN Sources
+SPA HTML is served with a fresh cryptographic nonce and `Cache-Control: no-store`.
+Reverse proxies must preserve CSP headers and must not cache/reuse SPA HTML.
+Opaque-origin plugin frames inherit that policy: their approved bootstrap and
+host-delivered plugin script receive the containing document's nonce. Frames
+still omit `allow-same-origin`; plugin API restrictions are unchanged. Custom
+widget HTML containing inline script or event handlers must migrate to approved
+external script files before enforcement.
 
-> ℹ️ The shipped policy already allows `*` for script/style/connect/font/img
-> sources, so adding a specific CDN origin is only relevant **once the policy
-> is tightened** away from the wildcard. The examples below assume such a
-> restrictive policy.
+Existing uploaded-file CSP and plugin-bundle HTML sandbox headers remain
+independently enforced, including during report-only rollout.
 
-If you need to add another CDN (e.g., Google Fonts, other libraries), update the relevant directives in `backend/src/app.js`:
+## Violation collection
 
-### Example: Adding Google Fonts
-```javascript
-styleSrc: [
-  "'self'", 
-  "'unsafe-inline'", 
-  "https:", 
-  "https://cdn.jsdelivr.net",
-  "https://fonts.googleapis.com"  // Add this
-],
-fontSrc: [
-  "'self'", 
-  "https:", 
-  "data:", 
-  "https://cdn.jsdelivr.net",
-  "https://fonts.gstatic.com"  // Add this
-],
-```
+`POST /v2/security/csp-reports` is public because browser-generated reports cannot
+supply an application bearer token. It is mounted before authentication/database
+middleware and before the general 50 MB JSON parser. It accepts legacy
+`application/csp-report`, `application/reports+json` batches, and JSON. The policy
+advertises the backward-compatible `report-uri` directive.
 
-### Example: Adding Analytics
-```javascript
-scriptSrc: [
-  "'self'", 
-  "'unsafe-inline'", 
-  "'unsafe-eval'", 
-  "https://cdn.jsdelivr.net",
-  "https://www.googletagmanager.com"  // Add this
-],
-connectSrc: [
-  "'self'", 
-  "https://cdn.jsdelivr.net",
-  "https://www.google-analytics.com"  // Add this
-],
-```
+Limits: 16 KB per body, at most 20 reports per request, and 60 requests per minute
+per IP per backend process. Valid reports return `204`; malformed/excessive batches return `400`,
+oversized bodies `413`, and throttled requests `429`. The limiter remains active
+independently of auth rate-limit configuration. Set `TRUST_PROXY` to match the
+actual proxy topology.
 
-## Common CSP Error Messages
+Logs retain only directive, disposition and document/blocked/source **origins**
+(or `inline`/`eval` resource markers). Paths, queries, fragments, credentials,
+referrers, script samples, cookies and arbitrary body fields are discarded.
+No reports are persisted in MongoDB. Configure the deployment's log retention
+and aggregation to cover the observation period.
 
-### Script Loading Error
-```
-Refused to load the script 'https://example.com/script.js' because it violates the following Content Security Policy directive: "script-src 'self'"
-```
-**Fix**: Add the domain to `scriptSrc` and `scriptSrcElem`
-
-### Style Loading Error
-```
-Refused to apply inline style because it violates the following Content Security Policy directive: "style-src 'self'"
-```
-**Fix**: Add `'unsafe-inline'` to `styleSrc` or add the specific domain
-
-### WebSocket Connection Error
-```
-Refused to connect to 'wss://example.com/socket' because it violates the following Content Security Policy directive: "connect-src 'self'"
-```
-**Fix**: Add the domain or `wss:` to `connectSrc`
-
-### Font Loading Error
-```
-Refused to load the font 'https://example.com/font.woff2' because it violates the following Content Security Policy directive: "font-src 'self'"
-```
-**Fix**: Add the domain to `fontSrc`
-
-## Security Considerations
-
-### ⚠️ Unsafe Directives
-The following directives reduce security and should be avoided if possible:
-
-- `'unsafe-inline'` - Allows inline scripts/styles (required by some frameworks)
-- `'unsafe-eval'` - Allows eval() and similar functions (required by Monaco Editor)
-- `'unsafe-hashes'` - Allows specific inline scripts by hash
-
-**Current Usage**: We use `'unsafe-inline'` and `'unsafe-eval'` because:
-- Monaco Editor requires `eval()` for its functionality
-- React/Vite uses inline styles during development
-- Many UI libraries use inline styles
-
-### ✅ Best Practices
-1. **Be specific**: Use exact domains instead of wildcards when possible
-2. **Test thoroughly**: Changes to CSP can break functionality
-3. **Use https:**: Only allow HTTPS sources in production
-4. **Monitor violations**: Use CSP reporting to detect issues
-5. **Restart required**: CSP changes require backend restart
-
-## Testing CSP Changes
-
-1. **Update** the CSP configuration in `backend/src/app.js`
-2. **Restart** the backend server
-3. **Check** browser console for CSP violation errors
-4. **Verify** all resources load correctly
-
-### Browser Console
-CSP violations appear in the browser console with clear error messages showing:
-- What was blocked
-- Which directive blocked it
-- The full CSP that was violated
-
-## Restart After Changes
-```bash
-# Backend restart required (dev)
-cd backend && yarn dev
-
-# Or with PM2
-pm2 restart autowrx
-
-# Or with Docker
-docker compose -f ../instance-setup/docker-compose.prod.yml --env-file ../instance-setup/.env.prod restart autowrx
-```
-
-## Related Files
-- Configuration: `backend/src/app.js` (lines 44-83)
-- CORS Configuration: See [./cors.md](./cors.md)
-
-## Additional Resources
-- [MDN CSP Guide](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
-- [Helmet.js Documentation](https://helmetjs.github.io/)
-- [CSP Evaluator](https://csp-evaluator.withgoogle.com/)
-
+See the [Helmet reference](https://helmetjs.github.io/) and
+[MDN CSP guide](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP).

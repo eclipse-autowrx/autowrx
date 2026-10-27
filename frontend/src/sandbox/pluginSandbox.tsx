@@ -174,6 +174,9 @@ const handleInit = async (msg: any) => {
     // Install the same shims the trusted path uses, then load the plugin script
     await ensurePluginShims()
     const { registration } = await loadPluginRegistration({
+      scriptNonce: document.querySelector<HTMLMetaElement>(
+        'meta[name="csp-nonce"]',
+      )?.content,
       pluginId: msg.pluginUrl,
       pluginUrl: msg.pluginUrl,
       // Source fetched by the host (the sandbox itself has no cookies/network

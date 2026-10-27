@@ -272,3 +272,9 @@
 | Issue | Location | Severity | Status |
 |-------|----------|----------|--------|
 | Button "Add Runtime" zero-size | Prototype Detail → Dashboard tab | Medium | 🔴 Open |
+
+## Production security headers
+
+| Feature | Description | Test Status |
+|---|---|---|
+| Enforced CSP | Blocks injected inline/eval scripts and unapproved connections; local Monaco/workers and bundled widget still run | ✅ `csp.spec.ts` with `playwright.csp.config.ts` |

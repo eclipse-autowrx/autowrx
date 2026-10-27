@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useRef, useEffect, useState } from 'react'
-import Editor from '@monaco-editor/react'
+import Editor from '@/lib/monaco'
 import { File } from './types'
 import Introduction from './Introduction'
 import {
@@ -638,7 +638,7 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
               suggestOnTriggerCharacters: true,
               quickSuggestions: true,
               parameterHints: { enabled: true },
-              hover: { enabled: true },
+              hover: { enabled: 'on' },
               folding: true,
               foldingStrategy: 'indentation',
               showFoldingControls: 'always',

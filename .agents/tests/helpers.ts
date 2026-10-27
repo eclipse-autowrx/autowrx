@@ -564,7 +564,7 @@ export async function goToPrototypeCodeTab(page: Page, modelId: string, prototyp
   // Prefer the code editor itself; runtime panel may be collapsed or delayed.
   const monaco = page.locator('.monaco-editor').first();
   const runtimePanel = page.locator('[data-id="runtime-control-panel"]').first();
-  await expect(monaco.or(runtimePanel)).toBeVisible({ timeout: 30000 });
+  await expect(monaco.or(runtimePanel).first()).toBeVisible({ timeout: 30000 });
 }
 
 export async function isRuntimeServerReachable(page: Page): Promise<boolean> {
