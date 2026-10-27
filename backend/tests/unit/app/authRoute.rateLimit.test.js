@@ -21,60 +21,51 @@ jest.mock(
     ),
 );
 
-const express = require('express');
-const cookies = require('cookie-parser');
+const httpMocks = require('node-mocks-http');
+const { EventEmitter } = require('events');
 const httpStatus = require('http-status');
 const config = require('../../../src/config/config');
 const { RATE_LIMITS } = require('../../../src/middlewares/rateLimiter');
 const { errorConverter, errorHandler } = require('../../../src/middlewares/error');
 const authRoute = require('../../../src/routes/v2/user-management/auth.route');
 
-const app = express();
-app.use(express.json());
-app.use(cookies());
-app.use((req, res, next) => {
-  req.authConfig = { SELF_REGISTRATION: true };
-  next();
-});
-app.use('/auth', authRoute);
-app.use(errorConverter);
-app.use(errorHandler);
-
-// supertest can't load under this Jest config (ESM-only transitive dep), so
-// talk to a real ephemeral server with fetch instead.
-let server;
-let baseUrl;
 const originalEnabled = config.rateLimit.enabled;
-beforeAll(
-  () =>
-    new Promise((resolve) => {
-      config.rateLimit.enabled = true;
-      server = app.listen(0, () => {
-        baseUrl = `http://127.0.0.1:${server.address().port}`;
-        resolve();
-      });
-    }),
-);
-afterAll(
-  () =>
-    new Promise((resolve) => {
-      config.rateLimit.enabled = originalEnabled;
-      server.close(resolve);
-    }),
-);
+beforeAll(() => {
+  config.rateLimit.enabled = true;
+});
+afterAll(() => {
+  config.rateLimit.enabled = originalEnabled;
+});
 
-const post = (path, body = {}, headers = {}) =>
-  fetch(`${baseUrl}/auth${path}`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', ...headers },
-    body: JSON.stringify(body),
+// Exercise the actual router and limiters. Cookies are the parsed request input
+// supplied by middleware in production; cookie parsing is not under test here.
+const post = (path, body = {}, headers = {}, parsedCookies = {}) =>
+  new Promise((resolve, reject) => {
+    const parsed = new URL(path, 'http://localhost');
+    const req = httpMocks.createRequest({
+      method: 'POST',
+      url: parsed.pathname,
+      query: Object.fromEntries(parsed.searchParams),
+      body,
+      headers: { 'content-type': 'application/json', ...headers },
+    });
+    req.ip = '127.0.0.1';
+    req.app = { get: () => false };
+    req.cookies = parsedCookies;
+    req.authConfig = { SELF_REGISTRATION: true };
+    const res = httpMocks.createResponse({ eventEmitter: EventEmitter });
+    res.on('end', () => resolve({ status: res.statusCode }));
+    authRoute.handle(req, res, (error) => {
+      if (!error) return reject(new Error(`No auth route matched ${path}`));
+      return errorConverter(error, req, res, (converted) => errorHandler(converted, req, res, () => {}));
+    });
   });
 
-const statuses = async (count, path, body, headers) => {
+const statuses = async (count, path, body, headers, parsedCookies) => {
   const result = [];
   for (let i = 0; i < count; i += 1) {
     // eslint-disable-next-line no-await-in-loop
-    result.push((await post(path, body, headers)).status);
+    result.push((await post(path, body, headers, parsedCookies)).status);
   }
   return result;
 };
@@ -110,7 +101,12 @@ describe('auth route rate limits', () => {
     expect(probes.every((code) => code === httpStatus.UNAUTHORIZED)).toBe(true);
 
     const headers = { cookie: `${config.jwt.cookie.name}=refresh-token-value` };
-    const codes = await statuses(RATE_LIMITS.refresh.max + 1, '/refresh-tokens', {}, headers);
+    const unrelatedCookies = await statuses(RATE_LIMITS.refresh.max + 1, '/refresh-tokens', {}, {}, { unrelated: 'value' });
+    expect(unrelatedCookies.every((code) => code === httpStatus.UNAUTHORIZED)).toBe(true);
+
+    const codes = await statuses(RATE_LIMITS.refresh.max + 1, '/refresh-tokens', {}, headers, {
+      [config.jwt.cookie.name]: 'refresh-token-value',
+    });
     expect(codes[codes.length - 1]).toBe(httpStatus.TOO_MANY_REQUESTS);
   });
 

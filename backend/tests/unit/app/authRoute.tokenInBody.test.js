@@ -29,7 +29,6 @@ jest.mock('../../../src/services', () => ({
 jest.mock('../../../src/models', () => ({}));
 
 const express = require('express');
-const cookies = require('cookie-parser');
 const httpStatus = require('http-status');
 const config = require('../../../src/config/config');
 const { authService } = require('../../../src/services');
@@ -38,7 +37,6 @@ const authRoute = require('../../../src/routes/v2/user-management/auth.route');
 
 const app = express();
 app.use(express.json());
-app.use(cookies());
 app.use('/auth', authRoute);
 app.use(errorConverter);
 app.use(errorHandler);
