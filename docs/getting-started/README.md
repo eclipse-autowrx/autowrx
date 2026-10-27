@@ -40,13 +40,16 @@ docker run -d --name autowrx-mongodb -p 27017:27017 \
   -v autowrx-dev-dbdata:/data/db mongo:4.4.6-bionic
 
 # 2. Backend  → http://localhost:3200
-cd backend && yarn install && yarn dev
+cd backend && cp .env.example .env && yarn install && yarn dev
 
 # 3. Frontend → http://localhost:3210   (new terminal)
-cd frontend && yarn install && yarn dev
+cd frontend && cp .env.example .env && yarn install && yarn dev
 ```
 
 Open **http://localhost:3210**.
+
+> `backend/.env.example` sets `STRICT_AUTH=false` so self-registration and
+> public browsing work out of the box during local development.
 
 ---
 
