@@ -84,6 +84,14 @@ and how to verify your change locally.
 
 ---
 
+## Security
+
+Please **do not report security vulnerabilities in public issues**. See the
+**[Security Policy](SECURITY.md)** for how to report a vulnerability privately,
+what is in scope and how disclosure is handled.
+
+---
+
 ## License
 
 **License: [MIT](LICENSE)**
