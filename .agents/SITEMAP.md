@@ -78,6 +78,7 @@
 | Add plugin tab to model | Attach admin plugin via + button | ✅ `plugin-management.spec.ts` |
 | Model plugin detail page | Plugin renders on `/model/:id/plugin` | ✅ `plugin-management.spec.ts` |
 | More-actions menu | Kebab menu: Manage Addons, Save Model as Template | ✅ `model-customization-menu.spec.ts` |
+| Contributor/member masking | Owner sees contributors/readers with masked emails (API + Overview tabs); non-writers get no lists; names are still shown unmasked (#272, `test.fail`) | ✅ `member-email-masking.spec.ts` |
 | `ENABLE_MODEL_CUSTOMIZATION` gate | Flag off hides the kebab menu for everyone, admins included | ✅ `model-customization-menu.spec.ts` |
 | Empty code tab for new prototype (#262) | No stale code or used signals carried over from another prototype; Run-disabled-when-empty is not implemented | ✅ `prototype-regressions.spec.ts` (Run-disabled part `test.fixme`) |
 | Code autosave, no Save button (#214) | No Save/Update button; edits persist after reload | ✅ `prototype-regressions.spec.ts` |
