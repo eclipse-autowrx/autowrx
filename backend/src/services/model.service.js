@@ -521,7 +521,7 @@ const getModelById = async (id, userId, includeCreatorFullDetails) => {
  * @returns {Promise<string>}
  */
 const updateModelById = async (id, updateBody, actionOwner) => {
-  if (updateBody.cvi !== undefined) validateVss(updateBody.cvi);
+  if (updateBody.cvi !== undefined) validateVss(updateBody.cvi, { allowEmptyRoot: true });
   const model = await getModelById(id, actionOwner);
   if (!model) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Model not found');
@@ -781,7 +781,7 @@ const processApiData = (data) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'VSS data must not exceed 10 MB');
   }
 
-  validateVss(data);
+  validateVss(data, { allowEmptyRoot: true });
   const extendedApis = [];
 
   const mainApi = Object.keys(data).at(0);

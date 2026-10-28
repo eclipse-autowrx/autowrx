@@ -565,7 +565,11 @@ Sets are stored with an `owner`/`created_by`; the entire API set lives in one do
 Full VSS imports and inline VSS saves reject malformed nodes, empty branches and
 standard signals without datatypes before persisting changes. Valid custom node
 types and vendor metadata are preserved. Blank models can still be created
-without supplying a VSS specification; their empty tree cannot be built.
+without supplying a VSS specification; their empty tree cannot be built. Writes
+(create, `cvi` import/update, `replace-api`) accept that empty tree — a root
+branch with an explicit empty `children` object, as exported for a blank model —
+so a blank model's ZIP export re-imports; `validate-vss` and runtime preflight
+still reject it.
 
 `POST /v2/models/validate-vss` requires authentication and accepts `{ spec }`,
 where `spec` is a VSS object or JSON string. It returns `204` when valid and

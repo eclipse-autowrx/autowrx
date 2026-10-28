@@ -262,6 +262,18 @@ describe('lossless custom VSS import/export', () => {
     await expectRawExport(response.body.id);
   });
 
+  test('a model without signals exports a ZIP cvi that imports and exports identically', async () => {
+    const empty = await request().post('/models').send({ name: 'Empty', main_api: 'Vehicle' }).expect(201);
+    const exported = await request().get(`/models/${empty.body.id}/api?raw=true`).expect(200);
+    const response = await request()
+      .post('/models')
+      .send({ name: 'ZIP VSS', main_api: 'Vehicle', api_version: null, cvi: JSON.stringify(exported.body) })
+      .expect(201);
+    await expectRawExport(response.body.id, exported.body);
+    // The empty tree still cannot be built: runtime preflight rejects it.
+    await request().post('/models/validate-vss').send({ spec: exported.body }).expect(400);
+  });
+
   test('non-raw output still refines nodes without mutating the stored base', async () => {
     const response = await request().post('/models').send(modelBody).expect(201);
     const exported = await request().get(`/models/${response.body.id}/api`).expect(200);
