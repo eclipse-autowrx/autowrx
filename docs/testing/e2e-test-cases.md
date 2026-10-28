@@ -315,3 +315,16 @@ this line when you re-run).
 | VSS preflight requires authentication and reports invalid paths | Anonymous requests are rejected; signed-in users receive the failing path for invalid data and successful preflight for valid data. |
 | Invalid VSS replacement shows its path and preserves the existing model | Replacing a model API with an empty VSS branch shows an actionable error and leaves the existing specification unchanged. |
 | Built-in Play and rebuild reject invalid VSS before sending runtime commands | Both actions show the invalid path and send no generation or run commands; this case requires a disposable runtime server. |
+
+## 25. Home and navigation regressions
+
+| Test case | What it checks |
+|---|---|
+| Home banner survives in-app navigation (#264) | After moving through a model's pages and back to Home via the logo, the banner is still shown; "Load More Models" reveals older models. |
+| Deleted prototype disappears from Home (#345, #346) | A prototype deleted from its Home card menu is gone, and stays gone after leaving and returning to Home. |
+| Global search shows a hint (#281) | The search box says "Search Model or Prototype" and explains how to search. |
+| Breadcrumb names the model and prototype (#239) | A prototype page's breadcrumb reads Home › Vehicle Models › model › Prototypes › prototype. |
+| Privacy Policy is reachable (#249) | The footer link and the direct address both open the Privacy Policy page instead of an error. |
+| Portfolio View toggles with List View (#252) | Portfolio View draws the chart for rated prototypes, and List View brings the prototype list back. |
+| Logo stays visible in fullscreen dashboard (#248) | Switching the dashboard to fullscreen shows the site logo, fully loaded. |
+| Default model image loads from the app (#231) | A model without its own picture shows the default image, served by the app rather than an external site. |
