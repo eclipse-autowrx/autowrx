@@ -22,6 +22,7 @@ describe('VSS validation', () => {
     { Vehicle: { type: 'branch', children: [] } },
     { Vehicle: { type: 'branch' } },
     { Vehicle: { type: 'sensor' } },
+    { Vehicle: { type: 'branch', children: { Cabin: { type: 'branch', children: {} } } } },
   ])('rejects invalid input %#', (input) => {
     expect(() => validateVss(input)).toThrow();
   });
@@ -36,6 +37,14 @@ describe('VSS validation', () => {
   test('reports nested errors in sorted path order', () => {
     const input = { Vehicle: { type: 'branch', children: { Z: { type: 'branch' }, A: { type: 'branch' } } } };
     expect(() => validateVss(input)).toThrow('Invalid VSS at Vehicle.A: branch must contain children.');
+  });
+  test('accepts the empty root of a model without signals only when allowed', () => {
+    const empty = { Vehicle: { description: 'Vehicle', type: 'branch', children: {} } };
+    expect(() => validateVss(empty)).toThrow('Invalid VSS at Vehicle: branch must contain children.');
+    expect(() => validateVss(empty, { allowEmptyRoot: true })).not.toThrow();
+    expect(() => validateVss({ Vehicle: { type: 'branch' } }, { allowEmptyRoot: true })).toThrow();
+    const nested = { Vehicle: { type: 'branch', children: { Cabin: { type: 'branch', children: {} } } } };
+    expect(() => validateVss(nested, { allowEmptyRoot: true })).toThrow('Invalid VSS at Vehicle.Cabin');
   });
   test('accepts standard VSS', () => {
     expect(() => validateVss(standard)).not.toThrow();

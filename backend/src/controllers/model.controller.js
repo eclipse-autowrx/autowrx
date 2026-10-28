@@ -85,7 +85,7 @@ const createModel = catchAsync(async (req, res) => {
   const { cvi, custom_apis, api_data_url, extended_apis: initialExtendedApis, ...reqBody } = req.body;
   let extended_apis = initialExtendedApis;
   // Validate explicit VSS even when an api_version is also supplied.
-  if (cvi !== undefined) validateVss(cvi);
+  if (cvi !== undefined) validateVss(cvi, { allowEmptyRoot: true });
 
   if (api_data_url || (cvi && !reqBody.api_version)) {
     const result = api_data_url
