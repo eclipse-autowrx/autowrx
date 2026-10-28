@@ -1,0 +1,134 @@
+name: e2e
+
+# Playwright E2E (.agents/) against a disposable MongoDB + backend. Too slow
+# (~35 min) for every PR, so it is opt-in:
+# - PR author: tick `- [x] Run E2E` in the PR description (no repo permission
+#   needed). A maintainer can add the `e2e` label instead. Either way it re-runs
+#   on every push while opted in.
+# - Manual (write access): Actions > e2e > Run workflow, on a branch or PR number.
+# - Every push to main.
+# pull_request keeps fork code on a read-only token; do not switch this to
+# issue_comment or pull_request_target.
+
+on:
+  pull_request:
+    types: [opened, edited, labeled, synchronize, reopened]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: PR number to test (empty = the selected branch)
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    # On PRs, run only when opted in (checkbox or label). Unrelated label changes
+    # and description edits that do not newly tick the box are ignored.
+    if: >-
+      github.event_name != 'pull_request' ||
+      ((contains(github.event.pull_request.body, '- [x] Run E2E') ||
+      contains(github.event.pull_request.labels.*.name, 'e2e')) &&
+      (github.event.action != 'labeled' || github.event.label.name == 'e2e') &&
+      (github.event.action != 'edited' ||
+      (github.event.changes.body != null &&
+      contains(github.event.pull_request.body, '- [x] Run E2E') &&
+      !contains(github.event.changes.body.from, '- [x] Run E2E'))))
+    # Job-level, so skipped runs (unrelated edits/labels) never cancel a real one.
+    concurrency:
+      group: e2e-${{ github.event.pull_request.number || inputs.pr || github.ref }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    services:
+      # Disposable stack: E2E specs mutate site-config and create E2E_* data.
+      mongo:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Backend (assignAdmins() creates the admin on boot)
+      MONGODB_URL: mongodb://localhost:27017/autowrx
+      JWT_SECRET: ci-only-dummy-secret
+      ADMIN_EMAILS: e2e-admin@example.com
+      ADMIN_PASSWORD: ci-only-Passw0rd
+      RATE_LIMIT_ENABLED: false
+      # Frontend build (served by vite preview from playwright.config.ts)
+      VITE_SERVER_BASE_URL: http://localhost:3200
+      VITE_SERVER_VERSION: v2
+      # Playwright
+      BASE_URL: http://localhost:3213
+      API_URL: http://localhost:3200
+      ADMIN_EMAIL: e2e-admin@example.com
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.pr && format('refs/pull/{0}/merge', inputs.pr) || '' }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: |
+            backend/yarn.lock
+            frontend/yarn.lock
+      - name: Install backend
+        working-directory: backend
+        run: yarn install --frozen-lockfile
+      - name: Install frontend
+        working-directory: frontend
+        run: yarn install --frozen-lockfile
+      - name: Install E2E deps
+        working-directory: .agents
+        run: npm ci
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('.agents/package-lock.json') }}
+      - name: Install Chromium
+        working-directory: .agents
+        run: npx playwright install --with-deps chromium
+      - name: Start backend
+        working-directory: backend
+        # development, not production (secure cookies fail over http) or test (-test DB suffix)
+        run: NODE_ENV=development nohup node src/index.js > backend.log 2>&1 &
+      - name: Wait for backend
+        run: |
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:3200/v2/health/ready > /dev/null && exit 0
+            sleep 2
+          done
+          echo "::error::backend not ready after 120s"
+          tail -n 100 backend/backend.log
+          exit 1
+      - name: Opt the stack into E2E (E2E_TEST_ENABLED)
+        run: |
+          token=$(curl -sf -X POST http://localhost:3200/v2/auth/login \
+            -H 'Content-Type: application/json' \
+            -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}" | jq -r '.tokens.access.token')
+          curl -sf -X PATCH http://localhost:3200/v2/site-config/key/E2E_TEST_ENABLED \
+            -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+            -d '{"value":true}' > /dev/null
+          curl -sf 'http://localhost:3200/v2/site-config/public/E2E_TEST_ENABLED?scope=site' | jq -e '.value == true'
+      - name: Playwright
+        working-directory: .agents
+        run: npx playwright test
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          retention-days: 7
+          if-no-files-found: ignore
+          # .agents/ is a dot-directory; upload-artifact@v4 skips hidden paths by default
+          include-hidden-files: true
+          path: |
+            .agents/playwright-report/
+            .agents/test-results/
+            backend/backend.log

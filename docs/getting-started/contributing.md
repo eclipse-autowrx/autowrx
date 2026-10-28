@@ -64,14 +64,20 @@ Besides the Eclipse **ECA** check, PRs run:
   - `backend-format`: `yarn prettier`
   - `backend-lint`: `yarn lint` (ESLint, 0 errors)
   - `frontend-build`: `yarn build` (`tsc` + vite)
-  - `e2e`: the full Playwright suite (`.agents/`) against a disposable backend +
-    MongoDB; runtime specs skip (no kit-manager). The report, test results and
-    backend log are uploaded as the `e2e-report` artifact.
 - **Advisory, pending fix** (`ci.yml`, step-level `continue-on-error`: the job
   stays green and a warning annotation reports the failure):
   - `backend-test`: the legacy `/v1` `auth` and `user` integration tests still
     fail (31/33 suites pass).
   - `frontend-lint`: remaining `no-explicit-any` and `jsx-a11y` errors.
+- **E2E on demand** (`.github/workflows/e2e.yml`): the full Playwright suite
+  (`.agents/`, ~35 min) against a disposable backend + MongoDB. It runs on every
+  push to `main`, and on a PR only when opted in: the author ticks a
+  `- [x] Run E2E` line in the PR description (no repo permission needed), or a
+  maintainer adds the **`e2e`** label. It then re-runs on each push while opted
+  in. Users with write access can also start it from *Actions → e2e → Run
+  workflow* with a PR number. Any failing spec fails the job. Runtime specs skip
+  (no kit-manager). The report, test results and backend log are uploaded as the
+  `e2e-report` artifact. Opt in when a PR changes a user-facing flow.
 - **Advisory security scans** (`security.yml`, `image-scan.yml`): CodeQL,
   `yarn audit` (high+), TruffleHog (verified secrets only), Trivy on the backend
   image (when Dockerfile/dependency files change, and weekly). Findings go to the
