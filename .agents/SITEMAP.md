@@ -281,3 +281,9 @@
 | Issue | Location | Severity | Status |
 |-------|----------|----------|--------|
 | Button "Add Runtime" zero-size | Prototype Detail → Dashboard tab | Medium | 🔴 Open |
++| Empty code tab for new prototype (#262) | No stale code or used signals carried over from another prototype; Run-disabled-when-empty is not implemented | ✅ `prototype-regressions.spec.ts` (Run-disabled part `test.fixme`) |
++| Code autosave, no Save button (#214) | No Save/Update button; edits persist after reload | ✅ `prototype-regressions.spec.ts` |
++| Reopen code page (#308) | Navigate away/back and fresh load show code with no error toast or page error | ✅ `prototype-regressions.spec.ts` |
++| Feedback form required-field gating (#284) | Submit disabled until name, organization and all ratings are set | ✅ `prototype-regressions.spec.ts` |
++| Existing model selection (#283) | Picker lists owned/contributed models, hides another user's private model; creating with a chosen model lands under it | ✅ `prototype-regressions.spec.ts` |
++| Select API Set search (#269) | Dialog search filters sets by (exact) name; "+" and dialog absent when `DISABLE_CUSTOM_API_SETS` is on | ✅ `prototype-regressions.spec.ts` |
