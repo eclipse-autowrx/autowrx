@@ -54,7 +54,7 @@
 | Overview | `/model/:id/` | Model info, description | ✅ `vehicle-models.spec.ts` |
 | Vehicle API | `/model/:id/api` | Browse vehicle signal APIs | ✅ `vehicle-api.spec.ts` |
 | Prototype Library | `/model/:id/library/list` | List of prototypes for this model | ✅ `vehicle-models.spec.ts` |
-| Plugin | `/model/:id/plugin` | Model-level plugins | ✅ `plugin-management.spec.ts` |
+| Plugin | `/model/:id/plugin` | Model-level plugins; `replaceAPIs`/`uploadFile` work for writers and are rejected (403) for others (#365) | ✅ `plugin-management.spec.ts`, `plugin-api-assets-regressions.spec.ts` |
 
 ### Features
 
@@ -175,6 +175,7 @@
 | Page loads | Assets list renders | ✅ `my-assets.spec.ts` |
 | Filter by type | Model / prototype filter | ✅ `my-assets.spec.ts` (no filter tabs found) |
 | Create runtime asset | Create and delete via UI | ✅ `my-assets.spec.ts` |
+| Many assets (#382) | 12 assets all listed, list scrolls inside the page, no horizontal overflow | ✅ `plugin-api-assets-regressions.spec.ts` |
 
 ---
 
@@ -241,6 +242,7 @@
 | Signal detail | Fixed and custom VSS metadata, including UUID, default, deprecation, and vendor fields | ✅ `vehicle-api.spec.ts` (custom VSS execution pending) |
 | Custom signal types | List visibility and Type filter, case normalization, Tree View visibility and custom container expansion; attributes stay hidden in tree | ✅ `vehicle-api.spec.ts` (execution pending) |
 | Replace API / JSON download | Replace with custom VSS and deep-equal JSON download, preserving sibling order and empty children | ✅ `vehicle-api.spec.ts` (execution pending) |
+| Signal detail scrolling (#390) | Detail pane scrolls to its last content when taller than the panel (short viewport) | ✅ `plugin-api-assets-regressions.spec.ts` |
 | VSS validation | Authenticated preflight, invalid replacement preserves data, built-in Play/rebuild emit no commands for invalid trees | ✅ `vss-validation.spec.ts` |
 | API architecture diagram | Edit skeleton: draw rectangle + hover message, bg color/image, save + preview persistence | ✅ `api-architecture.spec.ts` |
 

@@ -315,3 +315,12 @@ this line when you re-run).
 | VSS preflight requires authentication and reports invalid paths | Anonymous requests are rejected; signed-in users receive the failing path for invalid data and successful preflight for valid data. |
 | Invalid VSS replacement shows its path and preserves the existing model | Replacing a model API with an empty VSS branch shows an actionable error and leaves the existing specification unchanged. |
 | Built-in Play and rebuild reject invalid VSS before sending runtime commands | Both actions show the invalid path and send no generation or run commands; this case requires a disposable runtime server. |
+
+## 27. Plugin API and asset regressions
+
+| Test case | What it checks |
+|---|---|
+| #365 model-level plugin replaces the Vehicle API of a model the user can write | A plugin opened on a model page (not inside a prototype) uploads a file and replaces the model's Vehicle API; the new signal shows in the API data and in the Vehicle API tab. |
+| #365 model-level plugin replaceAPIs is rejected for a user without model write access | A user who cannot edit the model gets a permission error from the same plugin call and the model's Vehicle API stays unchanged. |
+| #390 signal details view scrolls when its content is taller than the panel | On a short screen, opening a signal with a long description makes the details pane scrollable down to its last content. |
+| #382 My Assets lists all 12 assets without breaking the page layout | With 12 assets, every one appears in the list, the list scrolls inside the page, the header stays visible and the page has no sideways scrollbar. |
