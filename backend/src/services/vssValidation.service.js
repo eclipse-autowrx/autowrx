@@ -14,8 +14,13 @@ const invalid = (path, reason) => {
   throw new ApiError(httpStatus.BAD_REQUEST, `Invalid VSS at ${path}: ${reason}.`);
 };
 
-/** Validate without changing the input; return the parsed tree for JSON callers. */
-const validateVss = (spec) => {
+/**
+ * Validate without changing the input; return the parsed tree for JSON callers.
+ * allowEmptyRoot accepts a root branch with an explicit empty children object: the tree
+ * api.service.computeVSSApi exports for a model without signals. Persisting it recreates
+ * a blank model; runtime preflight leaves it off because an empty tree cannot be built.
+ */
+const validateVss = (spec, { allowEmptyRoot = false } = {}) => {
   let tree = spec;
   if (typeof tree === 'string') {
     if (Buffer.byteLength(tree, 'utf8') > 10 * 1024 * 1024) invalid('$', 'data must not exceed 10 MB');
@@ -41,7 +46,8 @@ const validateVss = (spec) => {
     const children = Object.keys(node.children || {})
       .sort()
       .reverse();
-    if (node.type === 'branch' && children.length === 0) invalid(path, 'branch must contain children');
+    const emptyRoot = allowEmptyRoot && depth === 0 && isObject(node.children);
+    if (node.type === 'branch' && children.length === 0 && !emptyRoot) invalid(path, 'branch must contain children');
     if (['sensor', 'actuator', 'attribute'].includes(node.type)) {
       if (typeof node.datatype !== 'string' || !node.datatype.trim()) invalid(path, 'signal datatype is required');
     }
