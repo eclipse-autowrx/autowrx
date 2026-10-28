@@ -345,3 +345,12 @@ this line when you re-run).
 | Model choice when creating a prototype (#283) | The new-prototype model list shows models you own or contribute to but not another user's private model, and creating a prototype with a chosen model puts it under that model. |
 | Feedback Submit button state (#284) | In the Add Feedback form, Submit stays disabled until name, organization and all three star ratings are filled, and becomes disabled again if a required field is cleared. |
 | Select API Set search (#269) | The Select API Set dialog narrows the list when a set name is searched, reports no match for an unknown name, and the "+" control and dialog do not exist when API sets are switched off. |
+
+## 27. Plugin API and asset regressions
+
+| Test case | What it checks |
+|---|---|
+| #365 model-level plugin replaces the Vehicle API of a model the user can write | A plugin opened on a model page (not inside a prototype) uploads a file and replaces the model's Vehicle API; the new signal shows in the API data and in the Vehicle API tab. |
+| #365 model-level plugin replaceAPIs is rejected for a user without model write access | A user who cannot edit the model gets a permission error from the same plugin call and the model's Vehicle API stays unchanged. |
+| #390 signal details view scrolls when its content is taller than the panel | On a short screen, opening a signal with a long description makes the details pane scrollable down to its last content. |
+| #382 My Assets lists all 12 assets without breaking the page layout | With 12 assets, every one appears in the list, the list scrolls inside the page, the header stays visible and the page has no sideways scrollbar. |
