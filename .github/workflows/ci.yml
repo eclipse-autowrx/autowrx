@@ -1,9 +1,10 @@
 name: ci
 
 # Quality gates. BLOCKING (mark as required checks in branch protection):
-# `backend-format`, `backend-lint`, `frontend-build`. ADVISORY jobs run their
-# check with step-level continue-on-error: the job stays green and a warning
-# annotation reports failures that already exist on main. Drop it once fixed.
+# `backend-format`, `backend-lint`, `frontend-build`. ADVISORY jobs (`backend-test`,
+# `frontend-lint`, `e2e`) run their check with step-level continue-on-error: the
+# job stays green and a warning annotation reports failures that already exist on
+# main. Drop it once fixed.
 # Node 22 + yarn --frozen-lockfile match backend/Dockerfile.
 
 on:
@@ -132,3 +133,97 @@ jobs:
         run: yarn lint
       - if: steps.eslint.outcome == 'failure'
         run: echo "::warning title=frontend-lint (advisory)::ESLint errors exist on main (no-explicit-any, jsx-a11y); see the ESLint step log"
+
+  # advisory until the Playwright suite has proven stable in CI
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    services:
+      # Disposable stack: E2E specs mutate site-config and create E2E_* data.
+      mongo:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Backend (assignAdmins() creates the admin on boot)
+      MONGODB_URL: mongodb://localhost:27017/autowrx
+      JWT_SECRET: ci-only-dummy-secret
+      ADMIN_EMAILS: e2e-admin@example.com
+      ADMIN_PASSWORD: ci-only-Passw0rd
+      RATE_LIMIT_ENABLED: false
+      # Frontend build (served by vite preview from playwright.config.ts)
+      VITE_SERVER_BASE_URL: http://localhost:3200
+      VITE_SERVER_VERSION: v2
+      # Playwright
+      BASE_URL: http://localhost:3213
+      API_URL: http://localhost:3200
+      ADMIN_EMAIL: e2e-admin@example.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: |
+            backend/yarn.lock
+            frontend/yarn.lock
+      - name: Install backend
+        working-directory: backend
+        run: yarn install --frozen-lockfile
+      - name: Install frontend
+        working-directory: frontend
+        run: yarn install --frozen-lockfile
+      - name: Install E2E deps
+        working-directory: .agents
+        run: npm ci
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('.agents/package-lock.json') }}
+      - name: Install Chromium
+        working-directory: .agents
+        run: npx playwright install --with-deps chromium
+      - name: Start backend
+        working-directory: backend
+        # development, not production (secure cookies fail over http) or test (-test DB suffix)
+        run: NODE_ENV=development nohup node src/index.js > backend.log 2>&1 &
+      - name: Wait for backend
+        run: |
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:3200/v2/health/ready > /dev/null && exit 0
+            sleep 2
+          done
+          echo "::error::backend not ready after 120s"
+          tail -n 100 backend/backend.log
+          exit 1
+      - name: Opt the stack into E2E (E2E_TEST_ENABLED)
+        run: |
+          token=$(curl -sf -X POST http://localhost:3200/v2/auth/login \
+            -H 'Content-Type: application/json' \
+            -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}" | jq -r '.tokens.access.token')
+          curl -sf -X PATCH http://localhost:3200/v2/site-config/key/E2E_TEST_ENABLED \
+            -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+            -d '{"value":true}' > /dev/null
+          curl -sf 'http://localhost:3200/v2/site-config/public/E2E_TEST_ENABLED?scope=site' | jq -e '.value == true'
+      - name: Playwright
+        id: e2e
+        continue-on-error: true
+        working-directory: .agents
+        run: npx playwright test
+      - if: steps.e2e.outcome == 'failure'
+        run: echo "::warning title=e2e (advisory)::Playwright E2E failures; see the Playwright step log and the e2e-report artifact"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          retention-days: 7
+          if-no-files-found: ignore
+          path: |
+            .agents/playwright-report/
+            .agents/test-results/
+            backend/backend.log

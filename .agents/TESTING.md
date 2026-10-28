@@ -105,6 +105,15 @@ free and keep the three `VITE_ADMIN_*` visibility variables out of
 `frontend/.env` while running it. The standard Playwright config excludes this
 suite because it requires these dedicated frontend variants.
 
+## CI
+
+The `e2e` job in `.github/workflows/ci.yml` runs the default suite on every PR
+and push to `main` (advisory: failures add a warning annotation, the job stays
+green). It boots a throwaway MongoDB + backend, seeds the admin via
+`ADMIN_EMAILS`/`ADMIN_PASSWORD`, sets `E2E_TEST_ENABLED=true`, then runs
+`npx playwright test`. Runtime specs skip (no kit-manager in CI). Download the
+`e2e-report` artifact for the HTML report, `test-results/`, and `backend.log`.
+
 ## Environment
 
 Copy `.env.example` to `.env` and fill in your values:

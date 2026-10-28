@@ -69,6 +69,9 @@ Besides the Eclipse **ECA** check, PRs run:
   - `backend-test`: the legacy `/v1` `auth` and `user` integration tests still
     fail (31/33 suites pass).
   - `frontend-lint`: remaining `no-explicit-any` and `jsx-a11y` errors.
+  - `e2e`: the full Playwright suite (`.agents/`) against a disposable backend +
+    MongoDB; runtime specs skip (no kit-manager). The report, test results and
+    backend log are uploaded as the `e2e-report` artifact.
 - **Advisory security scans** (`security.yml`, `image-scan.yml`): CodeQL,
   `yarn audit` (high+), TruffleHog (verified secrets only), Trivy on the backend
   image (when Dockerfile/dependency files change, and weekly). Findings go to the
