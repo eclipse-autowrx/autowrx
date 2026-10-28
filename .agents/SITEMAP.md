@@ -25,6 +25,12 @@
 | Full HD (1920×1080) | Responsive at large viewport | ✅ `layout.spec.ts` |
 | Delete → recreate same-name model | Delete via home card menu, recreate same name in "Create New Model" dialog without reload — no duplicate-name error | ✅ `model-delete-recreate-and-prototype-rename.spec.ts` |
 | Model ZIP import / export | Home card export and import round-trip | ✅ `import-export.spec.ts` |
+| Hero survives client-side navigation | Banner still shown after model → library → API → overview → logo; Load More Models | ✅ `home-navigation-regressions.spec.ts` |
+| Delete prototype from Home card | Card gone after delete and after navigating back | ✅ `home-navigation-regressions.spec.ts` |
+| Global search hint | Placeholder "Search Model or Prototype" + help text | ✅ `home-navigation-regressions.spec.ts` |
+| Privacy Policy | Footer link + `/privacy-policy` render the page | ✅ `home-navigation-regressions.spec.ts` |
+| Default model image | Model without image shows same-origin default | ✅ `home-navigation-regressions.spec.ts` |
+| Prototype breadcrumb, Portfolio View, fullscreen logo | Breadcrumb order; portfolio ↔ list toggle; logo in fullscreen dashboard | ✅ `home-navigation-regressions.spec.ts` |
 | Custom VSS ZIP round-trip | Exported VSS, imported list and raw API preserve custom elements, sibling order and empty children | 🚧 `import-export.spec.ts` (written, not yet run) |
 
 ---
