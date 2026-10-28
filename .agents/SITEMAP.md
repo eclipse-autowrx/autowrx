@@ -70,6 +70,10 @@
 | Model plugin detail page | Plugin renders on `/model/:id/plugin` | ✅ `plugin-management.spec.ts` |
 | More-actions menu | Kebab menu: Manage Addons, Save Model as Template | ✅ `model-customization-menu.spec.ts` |
 | `ENABLE_MODEL_CUSTOMIZATION` gate | Flag off hides the kebab menu for everyone, admins included | ✅ `model-customization-menu.spec.ts` |
+| Empty code tab for new prototype (#262) | No stale code or used signals carried over from another prototype; Run-disabled-when-empty is not implemented | ✅ `prototype-regressions.spec.ts` (Run-disabled part `test.fixme`) |
+| Code autosave, no Save button (#214) | No Save/Update button; edits persist after reload | ✅ `prototype-regressions.spec.ts` |
+| Reopen code page (#308) | Navigate away/back and fresh load show code with no error toast or page error | ✅ `prototype-regressions.spec.ts` |
+| Feedback form required-field gating (#284) | Submit disabled until name, organization and all ratings are set | ✅ `prototype-regressions.spec.ts` |
 
 ---
 
@@ -150,6 +154,7 @@
 | Name input visible | Prototype name field | ✅ `prototype.spec.ts` |
 | Create flow | Fill form, submit, and open prototype detail | ✅ `prototype.spec.ts` |
 | Configured default image | New prototype persists `DEFAULT_PROTOTYPE_IMAGE` as `image_file` | ✅ `new-prototype-default-image.spec.ts` |
+| Existing model selection (#283) | Picker lists owned/contributed models, hides another user's private model; creating with a chosen model lands under it | ✅ `prototype-regressions.spec.ts` |
 
 ---
 
@@ -243,6 +248,7 @@
 | Replace API / JSON download | Replace with custom VSS and deep-equal JSON download, preserving sibling order and empty children | ✅ `vehicle-api.spec.ts` (execution pending) |
 | VSS validation | Authenticated preflight, invalid replacement preserves data, built-in Play/rebuild emit no commands for invalid trees | ✅ `vss-validation.spec.ts` |
 | API architecture diagram | Edit skeleton: draw rectangle + hover message, bg color/image, save + preview persistence | ✅ `api-architecture.spec.ts` |
+| Select API Set search (#269) | Dialog search filters sets by (exact) name; "+" and dialog absent when `DISABLE_CUSTOM_API_SETS` is on | ✅ `prototype-regressions.spec.ts` |
 
 ---
 
