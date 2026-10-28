@@ -40,6 +40,9 @@
 | Create new model | Opens "Create New Model" dialog | ✅ `vehicle-models.spec.ts` |
 | Create model submit | Fills form and creates model | ✅ `vehicle-models.spec.ts` |
 | Search / filter | Filter models by name | ✅ `vehicle-models.spec.ts` (guest) |
+| Duplicate model name (create) | "A model with this name already exists" shown under the name input; submit disabled for empty/duplicate, enabled for unique | ✅ `name-validation.spec.ts` |
+| Duplicate model name (rename) | Home card Rename to an existing name is rejected (409); original name kept | ✅ `name-validation.spec.ts` |
+| Duplicate prototype name | Library "Create New Prototype" suggests `<name>_1`; applying it creates the prototype | ✅ `name-validation.spec.ts` |
 
 ---
 
