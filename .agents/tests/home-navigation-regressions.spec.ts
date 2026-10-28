@@ -385,9 +385,8 @@ test.describe('Home / navigation regressions', () => {
     createdModelIds.push(modelId);
 
     // Seed prototypes with feedback so the portfolio chart plots bubbles.
-    // Feedback-only prototypes are the only reliably plotted ones: the
-    // portfolio-field path computes r from portfolio.easy_to_use, which the
-    // backend schema does not have, so r is NaN and those items are dropped.
+    // Prototypes without feedback fall back to their portfolio fields, which
+    // default to 0 and are then not plotted.
     const positions = [
       { x: 2, y: 4 },
       { x: 3, y: 3 },
