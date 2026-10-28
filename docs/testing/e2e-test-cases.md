@@ -119,6 +119,11 @@ in everyday words, what each one checks. No technical background needed.
 |---|---|
 | Deleted model can be recreated with the same name | Deleting a model frees its name — no false "name already exists". |
 | Prototype rename updates header and card immediately | Renaming a prototype updates the page and the card straight away, without reloading. |
+| Duplicate model name is flagged when creating a model (#235, #268) | Typing an existing model's name shows "A model with this name already exists"; a unique name clears it and nothing is left over after creating. |
+| Create-model button only enabled for a valid name (#234) | The create button stays disabled for an empty or duplicate name and turns on for a new one. |
+| Duplicate-name error sits under the name box (#296) | The error message appears directly below the name field. |
+| Renaming a model to an existing name is refused (#236) | The rename is rejected and both models keep their names after reloading. |
+| Duplicate prototype name offers a free name (#55) | Reusing a prototype name suggests `<name>_1`; clicking it fills the field and the prototype is created. |
 
 ## 8. Home page — prototype list
 
@@ -315,6 +320,19 @@ this line when you re-run).
 | VSS preflight requires authentication and reports invalid paths | Anonymous requests are rejected; signed-in users receive the failing path for invalid data and successful preflight for valid data. |
 | Invalid VSS replacement shows its path and preserves the existing model | Replacing a model API with an empty VSS branch shows an actionable error and leaves the existing specification unchanged. |
 | Built-in Play and rebuild reject invalid VSS before sending runtime commands | Both actions show the invalid path and send no generation or run commands; this case requires a disposable runtime server. |
+
+## 25. Home and navigation regressions
+
+| Test case | What it checks |
+|---|---|
+| Home banner survives in-app navigation (#264) | After moving through a model's pages and back to Home via the logo, the banner is still shown; "Load More Models" reveals older models. |
+| Deleted prototype disappears from Home (#345, #346) | A prototype deleted from its Home card menu is gone, and stays gone after leaving and returning to Home. |
+| Global search shows a hint (#281) | The search box says "Search Model or Prototype" and explains how to search. |
+| Breadcrumb names the model and prototype (#239) | A prototype page's breadcrumb reads Home › Vehicle Models › model › Prototypes › prototype. |
+| Privacy Policy is reachable (#249) | The footer link and the direct address both open the Privacy Policy page instead of an error. |
+| Portfolio View toggles with List View (#252) | Portfolio View draws the chart for rated prototypes, and List View brings the prototype list back. |
+| Logo stays visible in fullscreen dashboard (#248) | Switching the dashboard to fullscreen shows the site logo, fully loaded. |
+| Default model image loads from the app (#231) | A model without its own picture shows the default image, served by the app rather than an external site. |
 
 ## 27. Plugin API and asset regressions
 
