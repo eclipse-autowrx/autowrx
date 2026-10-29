@@ -34,6 +34,8 @@ export interface LoadPluginRegistrationOptions {
    * that forbid blob: scripts); pluginUrl then only identifies the plugin.
    */
   pluginSource?: string
+  /** Nonce inherited by the opaque-origin sandbox; never supplied by plugin messages. */
+  scriptNonce?: string
   /** Called whenever a script element is injected (or cleared); caller owns removing it on unmount. */
   onScriptInjected?: (script: HTMLScriptElement | null) => void
   isCancelled?: () => boolean
@@ -131,6 +133,7 @@ export async function loadPluginRegistration(
     pluginId,
     pluginUrl: PLUGIN_URL,
     pluginSource,
+    scriptNonce,
     onScriptInjected,
     isCancelled,
   } = options
@@ -169,6 +172,7 @@ export async function loadPluginRegistration(
     })
 
     const script = document.createElement('script')
+    if (scriptNonce) script.nonce = scriptNonce
     if (isInline) {
       // sourceURL keeps stack traces / devtools pointing at the plugin URL
       script.textContent = `${pluginSource}\n//# sourceURL=${PLUGIN_URL}`

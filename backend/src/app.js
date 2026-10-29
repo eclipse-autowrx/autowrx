@@ -7,7 +7,6 @@
 // SPDX-License-Identifier: MIT
 
 const express = require('express');
-const helmet = require('helmet');
 const cookies = require('cookie-parser');
 const cors = require('cors');
 const mongoSanitize = require('express-mongo-sanitize');
@@ -28,6 +27,27 @@ const uploadStaticOptions = require('./utils/uploadStatic');
 const { setupProxy } = require('./config/proxyHandler');
 const { init: initSocketIO } = require('./config/socket');
 const auth = require('./middlewares/auth');
+const { createSecurityHeaders, cspNonce } = require('./middlewares/contentSecurityPolicy');
+const cspReportRoute = require('./routes/v2/system/cspReport.route');
+
+const frontendDistPath = path.join(__dirname, '../static/frontend-dist');
+// Production assets are immutable until restart. Read the template once so
+// unauthenticated SPA navigation cannot trigger repeated filesystem reads.
+let frontendHtml;
+if (config.env !== 'development') {
+  try {
+    frontendHtml = fs.readFileSync(path.join(frontendDistPath, 'index.html'), 'utf8');
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+}
+const serveFrontend = (_req, res, next) => {
+  if (!frontendHtml) return next(new ApiError(httpStatus.NOT_FOUND, 'Frontend build not found'));
+  res.setHeader('Cache-Control', 'no-store');
+  return res
+    .type('html')
+    .send(frontendHtml.replace('<head>', `<head><meta name="csp-nonce" content="${res.locals.cspNonce}">`));
+};
 
 const app = express();
 
@@ -44,51 +64,12 @@ if (config.env !== 'test') {
 // use cookies
 app.use(cookies());
 
-// set security HTTP headers
-if (config.env === 'development') {
-  // Permissive CSP for development — mirrors production
-  app.use(
-    helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ['*'],
-          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", '*'],
-          scriptSrcElem: ["'self'", "'unsafe-inline'", "'unsafe-eval'", '*'],
-          styleSrc: ["'self'", "'unsafe-inline'", '*'],
-          imgSrc: ['*', 'data:', 'blob:'],
-          connectSrc: ['*', 'ws:', 'wss:'],
-          fontSrc: ['*', 'data:'],
-          objectSrc: ["'none'"],
-          mediaSrc: ['*'],
-          frameSrc: ['*'],
-          workerSrc: ["'self'", 'blob:', '*'],
-          upgradeInsecureRequests: null, // Disable upgrade to HTTPS in development
-        },
-      },
-    }),
-  );
-} else {
-  // Production CSP - more restrictive but allows the frontend assets
-  app.use(
-    helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ['*'],
-          scriptSrc: ["'unsafe-inline'", "'unsafe-eval'", '*'],
-          scriptSrcElem: ["'unsafe-inline'", "'unsafe-eval'", '*'],
-          styleSrc: ["'unsafe-inline'", '*'],
-          imgSrc: ['*', 'data:', 'blob:'],
-          connectSrc: ['*', 'ws:', 'wss:'],
-          fontSrc: ['*', 'data:'],
-          objectSrc: ["'none'"],
-          mediaSrc: ['*'],
-          frameSrc: ['*'],
-          workerSrc: ["'self'", 'blob:', '*'],
-        },
-      },
-    }),
-  );
-}
+// Tightened production policy starts in report-only mode; CSP_MODE=enforce
+// enables blocking after the deployment observation period.
+app.use(cspNonce);
+app.use(createSecurityHeaders(config));
+// Browser reports must bypass authentication, DB middleware and the 50 MB parser.
+app.use('/v2/security/csp-reports', cspReportRoute);
 
 // parse json request body
 app.use(express.json({ limit: '50mb', strict: false }));
@@ -165,6 +146,9 @@ app.use('/d', express.static(uploadsDir, uploadStaticOptions));
 // Same hardening when reached through the generic /static mount below
 app.use('/static/uploads', express.static(uploadsDir, uploadStaticOptions));
 
+if (config.env !== 'development') {
+  app.get('/static/frontend-dist/index.html', serveFrontend);
+}
 app.use('/static', express.static(path.join(__dirname, '../static')));
 app.use('/builtin-widgets', express.static(path.join(__dirname, '../static/builtin-widgets')));
 app.use('/images', express.static(path.join(__dirname, '../static/images')));
@@ -451,10 +435,11 @@ if (config.env === 'development') {
 } else {
   // Serve frontend-dist directory as the root route
   // Explicitly set Content-Type headers to ensure correct MIME types in Docker/production
-  const frontendDistPath = path.join(__dirname, '../static/frontend-dist');
+  app.get('/index.html', serveFrontend);
   app.use(
     '/',
     express.static(frontendDistPath, {
+      index: false,
       setHeaders: (res, filePath) => {
         try {
           // Explicitly set Content-Type to prevent JSON responses for CSS/JS files
@@ -511,13 +496,8 @@ if (config.env === 'development') {
       return next();
     }
 
-    // Serve the index.html for all other routes to enable client-side routing
-    const indexPath = path.join(__dirname, '../static/frontend-dist/index.html');
-    res.sendFile(indexPath, (err) => {
-      if (err) {
-        next(err);
-      }
-    });
+    // A fresh nonce also authorizes the isolated srcdoc plugin bootstrap.
+    return serveFrontend(req, res, next);
   });
 }
 

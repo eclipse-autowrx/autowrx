@@ -6,36 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../tailwind.min.css">
     <link rel="stylesheet" href="../font-awesome.min.css">
-    <script>
-        let interval = null;
-
-        function onWidgetLoaded(options) {
-            console.log("On my widget loaded");
-
-            let speedValue = document.getElementById("speedValue");
-            let fan_icon = document.querySelector('.fan_icon');
-            let API_NAME = options.api;
-
-            interval = setInterval(() => {
-                if (speedValue && API_NAME) {
-                    let apiValueObject = getApiValue(API_NAME);
-                    let apiValue = apiValueObject?.value || 0;
-                    speedValue.innerText = apiValue;
-                    let duration = (-0.02 * apiValue) + 2.02;
-                    if (!apiValue || apiValue === 0) {
-                        fan_icon.style.animationDuration = "0s";
-                    } else {
-                        fan_icon.style.animationDuration = `${duration}s`;
-                    }
-                }
-            }, 500);
-        }
-
-        function onWidgetUnloaded(options) {
-            console.log("On my widget unloaded");
-            if (interval) clearInterval(interval);
-        }
-    </script>
+    <script src="widget.js"></script>
     <script defer src="/builtin-widgets/syncer.js"></script>
     <style>
         .fan_icon {

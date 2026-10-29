@@ -59,7 +59,7 @@ const inlineSandboxAssets = (): Plugin => ({
             )
           }
           // Re-added at the end of <body> so #root exists when the module runs.
-          const script = `<script type="module">${escapeScript(chunk.code)}</script>`
+          const script = `<script type="module" nonce="__AUTOWRX_CSP_NONCE__">${escapeScript(chunk.code)}</script>`
           html = html.replace('</body>', () => `${script}\n</body>`)
           inlined.push(key)
         } else if (key.endsWith('.css')) {

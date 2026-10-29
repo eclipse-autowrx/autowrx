@@ -952,7 +952,7 @@ flowchart TD
 
 ### Security
 
-Public; Helmet CSP applies (wildcard in both envs — known permissive).
+Public; production uses a strict report-only CSP by default and enforced CSP when `CSP_MODE=enforce`. See [CSP rollout](../reference/csp.md).
 
 **Coverage:**
 - **Auth:** Public — no auth on `/static`, `/d`, `/vss/:version/:filename`, or the SPA fallback.
@@ -962,7 +962,7 @@ Public; Helmet CSP applies (wildcard in both envs — known permissive).
 - **Secrets:** None.
 
 **Risks:**
-- **Permissive CSP:** wildcard-open CSP in both dev and prod allows broad script sources; combined with `/plugin` and `/builtin-widgets` static serving, it widens the XSS/plugin-injection attack surface. *Mitigation:* none currently — tighten CSP to an allowlist.
+- **Report-only rollout:** until deployment owners enable enforcement, CSP does not block unapproved resources. *Mitigation:* collect/review reports for about seven days, configure exact hosts, test, then enforce; uploads retain their independent restrictive CSP.
 - **Path traversal in static serving:** a misconfigured static root or lax path handling could let `/static`/`/d` resolve to files outside the asset directory. *Mitigation:* keep static roots pinned and reject `..` traversal.
 
 ### Personal data processing
@@ -990,84 +990,86 @@ Static assets only.
 
 | Actor | Where | Personal data | E2E coverage |
 |---|---|---|---|
-| user (observes) | Global middleware (no page) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+| user / operator | Global middleware; browser report collector | Origin-only telemetry | 3 CSP cases (`csp.spec.ts`) |
 
 ### Description
 
-As a user, every page I load is protected by security headers (CSP, HSTS) and cross-origin rules so my session is protected from inline-script injection and rogue sites.
+Users receive security headers on application responses. Operators can observe
+violations of a strict production CSP before enabling enforcement. CORS remains
+an independent server-side origin gate.
 
 ### Who uses it / value
 
-DevOps (deploy securely); the app (browser loading).
+Operators validate deployment-specific integrations before blocking unapproved
+scripts and network destinations. Users retain local editor and widget support.
 
 ### Acceptance criteria
 
-- When a **user** loads any page at **Global middleware (no page)**, the platform applies security headers (CSP, HSTS) on the response so their session is protected from inline-script injection.
-- When a **user**'s request comes from an origin not in the configured allowlist at **Global middleware (no page)**, the platform rejects the cross-origin request.
-- When a **user** loads the app and submits inputs at **Global middleware (no page)**, the inputs are sanitized so NoSQL-injection payloads are stripped before reaching the database.
+- Production defaults to `Content-Security-Policy-Report-Only`; `CSP_MODE=enforce`
+  emits the enforced header after approximately seven days of review.
+- Production script policy forbids unsafe inline scripts, event attributes and
+  eval; resources are self-hosted or use explicit configured origins.
+- Monaco and language workers load locally; sandboxed plugins retain their
+  opaque origin and restricted API bridge.
+- Browser reports are accepted before auth/database middleware and reduced to
+  bounded directive/origin summaries.
 
 ### API contract
 
-No HTTP surface — global middleware in `backend/src/app.js` (applied to all requests).
+`POST /v2/security/csp-reports` is public and accepts legacy CSP reports or
+Reporting API batches. Returns `204` for accepted reports, `400` for malformed
+or excessive batches, `413` for bodies over 16 KB, and `429` above 60 requests
+per minute per IP. Batches contain at most 20 entries.
 
-- CORS allowlist: `CORS_ORIGINS` env-driven regex (http/https auto-prefixed); rejects non-allowlisted origins.
-- Helmet CSP: wildcard-open (only `objectSrc` is `'none'`) — known permissive gap.
-- `mongo-sanitize` strips `$`/`.` keys from inputs; `cookie-parser` parses cookies; gzip compression applied.
-- `trust proxy` enabled.
-- `authLimiter` defined (15 min / 20 req, `skipSuccessful`) but NOT applied to any route — known gap.
+Global header and exact-origin configuration, policy exceptions and the rollout
+procedure are specified in [CSP rollout](../reference/csp.md). CORS still uses
+`CORS_ORIGINS`; `mongo-sanitize` strips `$`/`.` keys, cookies are parsed, and gzip
+compression applies. `TRUST_PROXY` controls proxy trust.
 
 ### Quality control
 
-I check response headers and CORS + CSP are present; cross-origin script loads with `crossOrigin=anonymous`.
-
-```mermaid
-flowchart LR
-    R[Incoming request] --> CP[cookie-parser]
-    CP --> MS[mongo-sanitize strips $/.]
-    MS --> GZ[gzip]
-    GZ --> H[Helmet CSP wildcard-open]
-    H --> TP[trust proxy]
-    TP --> A[App]
-    A -->|response| CO[CORS allowlist (CORS_ORIGINS)]
-```
+The CSP Playwright configuration refuses to run against missing/permissive or
+report-only headers, then runs the existing environment guard before the suite.
+Focused browser checks verify inline/eval/network blocking, local Monaco worker
+loading and the bundled fan widget. Plugin sandbox tests exercise the existing
+host isolation and API denylist under enforcement.
 
 ### Security
 
-⚠️ CSP is wildcard-open (not restrictive) — a known gap. `authLimiter` defined but unused. CORS is the real origin gate.
+Production has self-only defaults, response nonces for the isolated plugin
+bootstrap and operator-approved exact external origins. CSS retains an explicit
+inline-style exception for React/Fluent UI/Monaco. Development permits HMR.
 
 **Coverage:**
-- **Auth:** N/A — global middleware (not an endpoint).
-- **Authorization:** N/A — middleware applied to all requests.
-- **Input validation:** `mongo-sanitize` strips `$`/`.` keys from inputs; cookies parsed; gzip compression applied.
-- **Rate limiting:** `authLimiter` defined (15 min / 20 req, skipSuccessful) but NOT applied to any route — known gap.
-- **Secrets:** `CORS_ORIGINS` env-driven regex allowlist; no secrets in middleware.
+- **Auth:** report collection is deliberately public; browsers cannot provide bearer tokens. Existing API authentication is unchanged.
+- **Authorization:** reports cannot change policy, application data or permissions.
+- **Input validation:** validated origin configuration; report size/batch bounds and allowlisted summary fields.
+- **Rate limiting:** collector always limits requests independently of auth limiter settings; existing auth limits remain unchanged.
+- **Secrets:** report URL paths/queries/credentials, cookies, referrers and script samples are discarded.
 
 **Risks:**
-- **Permissive CSP allows injection:** wildcard-open CSP (only `objectSrc` restricted) lets injected or compromised scripts execute freely, weakening the only header-based XSS mitigation. *Mitigation:* none currently — tighten CSP to an allowlist.
-- **Unused rate limiter:** `authLimiter` defined but not applied; auth endpoints have no rate limiting, enabling credential-stuffing brute force. *Mitigation:* none currently — wire `authLimiter`.
-- **CORS origin regex bypass:** a regex CORS allowlist can be subverted (e.g. attacker origin matching a substring), allowing cross-origin credentialed requests from rogue sites. *Mitigation:* anchor CORS regexes (`^...$`) and test against rogue origins.
+- **Report-only window:** XSS protection is not enforced during observation. Mitigation: retain/review logs and explicitly enable enforcement after compatibility checks.
+- **Forged telemetry:** public reports can be fabricated. Mitigation: bounded payloads, per-IP limits and operator review; never auto-allow reported hosts.
+- **Incorrect allowlists:** an overbroad or compromised approved script origin weakens CSP. Mitigation: review exact hosts and prefer local bundles.
+- **Trusted plugins:** trusted same-origin code retains its existing privileges; CSP does not replace plugin authorization/isolation.
 
 ### Personal data processing
-❌ No — this capability does not process personal data.
-N/A.
-**Risks:**
-- none — no personal data processed.
+
+Only document/blocked/source origins, directive and disposition are retained.
+No URL paths, queries, script samples or cookie data are logged by the collector.
+
+**Risks:** origins can identify an integration; apply deployment log access and retention controls.
 
 ### AutoWRX data
-mongo-sanitize strips `$`/`.` keys from inputs; cookies httpOnly.
-**Coverage:**
-- **Stored data:** None — middleware only.
-- **Retention:** N/A — cookies per session/JWT expiry.
-- **Encryption:** Cookies httpOnly (no `secure` enforcement); `trust proxy` enabled; TLS handled at the edge.
-- **Logging:** morgan success/error handlers log HTTP requests (method/path/status); no body logging.
-**Risks:**
-- **NoSQL injection despite sanitize:** mongo-sanitize targets keys; operator injection via values or array payloads may still bypass it, risking data exfiltration or modification.
-- **Cookie leakage on non-TLS:** httpOnly cookies without `secure` enforcement over non-TLS connections can be sniffed; `trust proxy` must be correctly configured or the trust can be spoofed.
+
+No MongoDB writes for reports. Origin summaries go to the normal backend logger;
+operators must configure retention for the approximately seven-day observation
+period. SPA HTML uses a fresh nonce and `Cache-Control: no-store`.
 
 ### Test coverage
-- **E2E (Playwright):** 0 direct — not covered (`layout.spec.ts` checks layout, not CORS/CSP headers) — SITEMAP: ❌
-- **Estimated coverage:** ≈0% (est.) — no E2E spec
-- **Unit (Jest):** none
+
+- **E2E:** `.agents/tests/csp.spec.ts` plus existing auth/plugin flows under `playwright.csp.config.ts`.
+- **Jest:** `tests/unit/config/csp.test.js` and `tests/unit/app/csp.test.js` cover origin validation, header modes/nonces, report formats, redaction, size/batch limits and throttling.
 
 ## CAP-INTEG-14 — Socket.IO (realtime)
 
