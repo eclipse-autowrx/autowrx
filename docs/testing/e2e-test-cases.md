@@ -354,3 +354,12 @@ this line when you re-run).
 | #365 model-level plugin replaceAPIs is rejected for a user without model write access | A user who cannot edit the model gets a permission error from the same plugin call and the model's Vehicle API stays unchanged. |
 | #390 signal details view scrolls when its content is taller than the panel | On a short screen, opening a signal with a long description makes the details pane scrollable down to its last content. |
 | #382 My Assets lists all 12 assets without breaking the page layout | With 12 assets, every one appears in the list, the list scrolls inside the page, the header stays visible and the page has no sideways scrollbar. |
+
+## 28. Contributor and member masking
+
+| Test case | What it checks |
+|---|---|
+| #272 API as owner returns masked contributor and member emails and no full address | The owner's model response lists the contributor and the reader with their emails masked (first characters, then `***@domain`), the owner's own email is masked too, and no full address appears anywhere in the response. |
+| #272 API without write access (member and unrelated user) returns no contributor or member lists | A reader and an unrelated user get the model without any contributor or member lists and without any of those people's full email addresses. |
+| #272 UI as owner shows masked emails and never the full address | The model overview's Contributor and Reader tabs show the masked emails, and the full addresses appear nowhere in the page. |
+| #272 UI as owner shows contributor and member names masked | Known gap (expected to fail): the list prints each person's name unmasked next to the masked email, so names are not hidden. |
