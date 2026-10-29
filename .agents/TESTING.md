@@ -171,3 +171,13 @@ When running as an AI agent:
 2. Check `BASE_URL` is reachable
 3. After test run, send screenshots of any FAILs to Theo via Telegram
 4. PASS = silent, FAIL = notify immediately
+
+### Enforced CSP
+
+Bootstrap a disposable production-mode backend serving the built frontend,
+configure its approved `CSP_*_ORIGINS`, set `CSP_MODE=enforce`, and set the usual
+`BASE_URL`, `API_URL` and test-admin credentials. Run the complete standard suite
+with `npx playwright test --config=playwright.csp.config.ts`. The config verifies
+strict enforced headers before any mutating test and uses the existing
+environment guard. It does not start Vite preview. See
+[`docs/reference/csp.md`](../docs/reference/csp.md) for rollout details.

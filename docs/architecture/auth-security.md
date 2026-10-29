@@ -182,14 +182,14 @@ back to the `STRICT_AUTH` env — `STRICT_AUTH=false` opens all flags,
   against a **regex allowlist** built from `CORS_ORIGINS` (auto-prefixed
   `http`/`https`); `credentials: true` for the cross-site refresh cookie. Matches
   [CORS configuration](../reference/cors.md).
-- **Helmet / CSP** — set in `app.js` for both dev and prod. **⚠️ Reality check:**
-  the shipped CSP is effectively **wildcard-open** (`defaultSrc ['*']`,
-  `scriptSrc [... '*']`, `connectSrc ['*']`); only `objectSrc: 'none'` is
-  meaningfully restrictive. This **contradicts
-  [CSP_CONFIGURATION.md](../reference/csp.md)**, which describes a tight,
-  CDN-allowlisted policy. The doc is aspirational; today CSP provides limited XSS
-  mitigation. *(Flagged for follow-up — tightening the real CSP is worth a
-  dedicated task.)*
+- **Helmet / CSP** — production starts with a strict report-only policy;
+  `CSP_MODE=enforce` enables blocking after an approximately seven-day reporting
+  period and compatibility review. Defaults are self-only with explicit origin
+  settings, response nonces for the plugin sandbox, no unsafe script execution,
+  and locally bundled Monaco/workers. CSS retains an inline-style exception.
+  Public, size-bounded, rate-limited reports log directive/origin summaries;
+  deployment log retention supplies the observation history. See
+  [CSP rollout](../reference/csp.md).
 - **`express-mongo-sanitize`** strips `$`/`.` keys (Mongo operator injection).
 - Body parsers capped at 50 MB; central `errorConverter` + `errorHandler`.
   > Note: an `authLimiter` (20 req / 15 min) is *defined* in
@@ -202,7 +202,7 @@ back to the `STRICT_AUTH` env — `STRICT_AUTH=false` opens all flags,
 
 Called out honestly so newcomers don't assume more hardening than exists:
 
-- **CSP is wildcard-open** despite the restrictive doc (§6).
+- **CSP starts in report-only mode**; deployment owners must collect/review reports and opt into enforcement (§6).
 - **Plugins run same-origin, unsandboxed** (see
   [plugin-system.md](./plugin-system.md)) — iframe isolation is future work.
 - The **internal-plugin upload** route's admin permission check is currently

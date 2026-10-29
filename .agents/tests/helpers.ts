@@ -73,6 +73,8 @@ export async function loginAs(page: Page, email: string, password: string) {
   }
   if (await userProfile.isVisible().catch(() => false)) {
     await logout(page);
+    // Clear the previous page's in-memory auth state before setting up a new session.
+    await page.reload();
     await expect(signInBtn).toBeVisible({ timeout: 15000 });
   }
 
@@ -564,7 +566,7 @@ export async function goToPrototypeCodeTab(page: Page, modelId: string, prototyp
   // Prefer the code editor itself; runtime panel may be collapsed or delayed.
   const monaco = page.locator('.monaco-editor').first();
   const runtimePanel = page.locator('[data-id="runtime-control-panel"]').first();
-  await expect(monaco.or(runtimePanel)).toBeVisible({ timeout: 30000 });
+  await expect(monaco.or(runtimePanel).first()).toBeVisible({ timeout: 30000 });
 }
 
 export async function isRuntimeServerReachable(page: Page): Promise<boolean> {

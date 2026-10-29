@@ -10,3 +10,5 @@ Repo-resident knowledge base. Each entry is a short, durable, non-obvious fact �
 - [Commit identity](commit-identity.md) — explicit user override: keep the configured identity and do not ask again about the known ECA mismatch.
 
 Update rule: propose changes via PR (see [`../skills/learn-and-update.md`](../skills/learn-and-update.md)). Never edit rules to "fix" a memory fact — fix the code, then update memory.
+
+- [CSP rollout](csp-rollout.md) — report-only observation precedes explicit enforcement; verify with the Express-served build, including inherited plugin-frame CSP.

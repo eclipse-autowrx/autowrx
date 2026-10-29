@@ -243,7 +243,7 @@ flowchart TD
 
 ### Security
 
-Trusted (admin-created) plugins run same-origin with full DOM/window access. Untrusted plugins run in an opaque-origin sandboxed iframe: no access to host cookies, `localStorage`, DOM or globals; PluginAPI calls are proxied over postMessage, only accepted from the frame's own `contentWindow`, and `shareAsset`, `removeAssetAccess`, `searchUserByEmail`, `getAssetUsers`, `replaceAPIs`, `replaceVss`, `replaceSignalMapping` are denied (`UNTRUSTED_PLUGIN_API_DENYLIST`). Only public site configs surfaced. `editable` from `WRITE_MODEL` permission; advisory only.
+Trusted (admin-created) plugins run same-origin with full DOM/window access. Under enforced production CSP, external plugin origins must be explicitly approved; the opaque-origin bootstrap and host-delivered plugin script use the containing page nonce. See [CSP rollout](../reference/csp.md). Untrusted plugins run in an opaque-origin sandboxed iframe: no access to host cookies, `localStorage`, DOM or globals; PluginAPI calls are proxied over postMessage, only accepted from the frame's own `contentWindow`, and `shareAsset`, `removeAssetAccess`, `searchUserByEmail`, `getAssetUsers`, `replaceAPIs`, `replaceVss`, `replaceSignalMapping` are denied (`UNTRUSTED_PLUGIN_API_DENYLIST`). Only public site configs surfaced. `editable` from `WRITE_MODEL` permission; advisory only.
 
 **Coverage:**
 - **Auth:** N/A — tab access follows the model's read-access gating; the loader itself adds no auth.

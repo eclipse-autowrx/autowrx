@@ -39,48 +39,7 @@
     <p>
     <div id="bottom"></div>
   </div>
-  <script>
-    let btnClear = null;
-    let container = null;
-    let bottom = null;
-    let logs = ""
-    const appendLog = (log) => {
-      if (!log) return;
-      logs += log + (log.endsWith('\r\n') ? '' : '\r\n')
-      if (container) {
-        container.innerText = logs
-        bottom.scrollIntoView()
-      }
-    }
-    const clearLog = () => {
-      logs = ""
-      if (container) {
-        container.innerText = logs
-        bottom.scrollIntoView()
-      }
-    }
-    /*
-      window.onload = () => {
-        console.log("On window loaded")
-        btnClear = document.getElementById('btn-clear')
-        container = document.getElementById('container')
-        bottom = document.getElementById('bottom')
-        if(btnClear) {
-          btnClear.onclick = clearLog
-        }
-      }
-      */
-
-    const onWidgetLoaded = (options) => {
-      //appendLog("On widget loaded")
-      btnClear = document.getElementById('btn-clear')
-      container = document.getElementById('container')
-      bottom = document.getElementById('bottom')
-      if (btnClear) {
-        btnClear.onclick = clearLog
-      }
-    }
-  </script>
+  <script src="widget.js"></script>
   <script src="index.js"></script>
 </body>
 

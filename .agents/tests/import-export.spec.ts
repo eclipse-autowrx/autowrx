@@ -86,6 +86,12 @@ test.describe('Import / Export - Model & Prototype', () => {
     await loginAsAdmin(page);
     const modelId = await createTestModelViaApi(page, modelName, 'private');
     createdModelIds.push(modelId);
+    // ZIP imports require a complete, valid VSS tree rather than a blank model.
+    const seeded = await page.request.patch(`${API_URL}/v2/models/${modelId}`, {
+      headers: { Authorization: `Bearer ${await getAuthToken(page)}` },
+      data: { api_version: 'v5.0' },
+    });
+    expect(seeded.ok()).toBeTruthy();
     await createTestPrototype(page, protoName, modelId);
 
     await waitForModelInHomeList(page, modelName);

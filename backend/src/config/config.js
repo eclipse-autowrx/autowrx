@@ -9,6 +9,7 @@
 const dotenv = require('dotenv');
 const path = require('path');
 const Joi = require('joi');
+const { createCspConfig } = require('./csp');
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
@@ -20,6 +21,12 @@ const envVarsSchema = Joi.object()
     CORS_ORIGINS: Joi.string()
       .default('localhost:\\d+,127\\.0\\.0\\.1:\\d+')
       .description('Allowed CORS origins (comma-separated regex patterns)'),
+    CSP_MODE: Joi.string().valid('report-only', 'enforce').default('report-only'),
+    CSP_SCRIPT_ORIGINS: Joi.string().allow('').default(''),
+    CSP_CONNECT_ORIGINS: Joi.string().allow('').default(''),
+    CSP_FRAME_ORIGINS: Joi.string().allow('').default(''),
+    CSP_IMAGE_ORIGINS: Joi.string().allow('').default(''),
+    CSP_MEDIA_ORIGINS: Joi.string().allow('').default(''),
     // JWT
     JWT_SECRET: Joi.string().description('JWT secret key'),
     JWT_ACCESS_EXPIRATION_MINUTES: Joi.number().default(30).description('minutes after which access tokens expire'),
@@ -203,6 +210,7 @@ const isAllowedOrigin = (origin) => {
 const config = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
+  csp: createCspConfig(envVars),
   strictAuth: envVars.STRICT_AUTH,
   auth: {
     provider: envVars.AUTH_PROVIDER,

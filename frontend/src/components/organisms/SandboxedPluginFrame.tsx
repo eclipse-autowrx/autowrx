@@ -106,7 +106,16 @@ const loadSandboxPage = (): Promise<string> => {
             (css) => `<style>${css.replace(/<\/style/gi, '<\\/style')}</style>`,
           )
           .join('\n')
-        return html.replace(/<head[^>]*>/i, (head) => `${head}\n${styles}`)
+        const nonce =
+          document.querySelector<HTMLMetaElement>('meta[name="csp-nonce"]')
+            ?.content || ''
+        return html
+          .replaceAll('__AUTOWRX_CSP_NONCE__', nonce)
+          .replace(
+            /<head[^>]*>/i,
+            (head) =>
+              `${head}\n<meta name="csp-nonce" content="${nonce}">${styles}`,
+          )
       })
       .catch((e) => {
         sandboxPagePromise = null // allow a retry on the next mount
