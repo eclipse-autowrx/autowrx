@@ -75,7 +75,7 @@ jobs:
           fetch-depth: 0
       # PRs scan the PR range, pushes scan the pushed range, schedule scans
       # recent history. Only verified (live) secrets are reported.
-      - uses: trufflesecurity/trufflehog@v3.88.0
+      - uses: trufflesecurity/trufflehog@v3.99.7
         with:
           path: ./
           base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || (github.event_name == 'push' && github.event.before) || '' }}
