@@ -38,7 +38,7 @@
     "@tanstack/react-query": "^5.99.0",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.23",
-    "@xyflow/react": "^12.11.2",
+    "@xyflow/react": "^12.12.0",
     "ajv": "^8.20.0",
     "axios": "^1.15.1",
     "chart.js": "^4.4.3",
