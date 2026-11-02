@@ -100,6 +100,9 @@ const envVarsSchema = Joi.object()
     TRUST_PROXY: Joi.string().default('1').description('Express trust proxy setting: hop count, true/false, or subnet list'),
     // File upload settings
     MAX_IMAGE_DIMENSION: Joi.number().default(1024).description('Maximum image dimension in pixels'),
+    METRICS_PROMETHEUS_ENABLED: Joi.boolean()
+      .default(false)
+      .description('Allow GET /v2/metrics?format=prometheus (JSON is always available to admins)'),
   })
   .unknown();
 
@@ -224,6 +227,9 @@ const config = {
     options: {},
   },
   trustProxy: parseTrustProxy(envVars.TRUST_PROXY),
+  metrics: {
+    prometheusEnabled: envVars.METRICS_PROMETHEUS_ENABLED,
+  },
   rateLimit: {
     enabled: envVars.RATE_LIMIT_ENABLED ?? envVars.NODE_ENV !== 'test',
     overrides: authRateLimitOverrides,
