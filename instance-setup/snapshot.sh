@@ -28,8 +28,8 @@
 #
 # Overrides (mainly for scratch/test projects):
 #   SNAPSHOT_ENV_FILE      env file          (default: ./.env.prod next to this script)
-#   SNAPSHOT_COMPOSE_FILE  compose file      (default: ./docker-compose.prod.yml)
-#   SNAPSHOT_PROJECT       compose project   (default: compose's own default)
+#   SNAPSHOT_COMPOSE_FILE  compose file relative *_PATH_HOST values resolve against
+#                          (default: ./docker-compose.prod.yml)
 #   SNAPSHOT_OUT_DIR       output directory  (default: ./snapshots)
 #   WAIT_TIMEOUT           seconds to wait for the app to become healthy (default 180)
 
@@ -53,7 +53,6 @@ abs_from_invoke() { # abs_from_invoke <path>: resolve relative to where the user
 ENV_FILE=$(abs_from_invoke "${SNAPSHOT_ENV_FILE:-$SCRIPT_DIR/.env.prod}")
 COMPOSE_FILE=$(abs_from_invoke "${SNAPSHOT_COMPOSE_FILE:-$SCRIPT_DIR/docker-compose.prod.yml}")
 OUT_DIR=$(abs_from_invoke "${SNAPSHOT_OUT_DIR:-$SCRIPT_DIR/snapshots}")
-PROJECT="${SNAPSHOT_PROJECT:-}"
 WAIT_TIMEOUT="${WAIT_TIMEOUT:-180}"
 COMPOSE_DIR=$(dirname "$COMPOSE_FILE")
 
@@ -98,12 +97,20 @@ load_env() {
   )
 }
 
-compose() {
-  if [ -n "$PROJECT" ]; then
-    docker compose -p "$PROJECT" -f "$COMPOSE_FILE" --env-file "$ENV_FILE" "$@"
-  else
-    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" "$@"
-  fi
+# The app is stopped/started with plain docker, not `docker compose up`: compose
+# would recreate the container from only the files it is given here and drop
+# overlays the operator started it with (e.g. docker-compose.widgets.yml).
+wait_healthy() { # wait_healthy <container>: healthy (or running, if it has no healthcheck)
+  local deadline=$((SECONDS + WAIT_TIMEOUT)) status
+  while [ "$SECONDS" -lt "$deadline" ]; do
+    status=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$1" 2>/dev/null || echo missing)
+    case "$status" in
+      healthy|running) return 0 ;;
+      unhealthy|exited|dead|missing) return 1 ;;
+    esac
+    sleep 3
+  done
+  return 1
 }
 
 container_running() {
@@ -517,7 +524,7 @@ PY
   # ----- safety snapshot -----
   if [ "$safety" -eq 1 ]; then
     echo "[safety] exporting current state"
-    SNAPSHOT_ENV_FILE="$ENV_FILE" SNAPSHOT_COMPOSE_FILE="$COMPOSE_FILE" SNAPSHOT_PROJECT="$PROJECT" SNAPSHOT_OUT_DIR="$OUT_DIR" \
+    SNAPSHOT_ENV_FILE="$ENV_FILE" SNAPSHOT_COMPOSE_FILE="$COMPOSE_FILE" SNAPSHOT_OUT_DIR="$OUT_DIR" \
       "$SCRIPT_PATH" export -y --label pre-import | sed 's/^/[safety] /' \
       || die "safety snapshot failed — nothing was changed (use --no-safety-snapshot to skip)"
   fi
@@ -526,9 +533,9 @@ PY
   APP_WAS_RUNNING=$app_up
   if [ "$APP_WAS_RUNNING" -eq 1 ]; then
     echo "[app] stopping $APP_CONTAINER"
-    compose stop autowrx
+    docker stop "$APP_CONTAINER" >/dev/null
     # shellcheck disable=SC2064
-    trap "rm -rf '$BUNDLE_STAGE'; [ \"\$APP_WAS_RUNNING\" -eq 1 ] && compose up -d autowrx || true" EXIT
+    trap "rm -rf '$BUNDLE_STAGE'; [ \"\$APP_WAS_RUNNING\" -eq 1 ] && docker start '$APP_CONTAINER' >/dev/null || true" EXIT
   fi
 
   # ----- database -----
@@ -578,7 +585,8 @@ PY
   if [ "$APP_WAS_RUNNING" -eq 1 ]; then
     echo "[app] starting $APP_CONTAINER (waiting up to ${WAIT_TIMEOUT}s for healthy)"
     APP_WAS_RUNNING=0
-    compose up -d --wait --wait-timeout "$WAIT_TIMEOUT" autowrx || die "app did not become healthy — check: docker logs $APP_CONTAINER"
+    docker start "$APP_CONTAINER" >/dev/null
+    wait_healthy "$APP_CONTAINER" || die "app did not become healthy — check: docker logs $APP_CONTAINER"
   fi
   echo
   echo "Import complete into instance '$NAME' / database '$DB_NAME'."
