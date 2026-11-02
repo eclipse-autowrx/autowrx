@@ -8,12 +8,11 @@
 
 ## Steps
 1. **Locate the moving parts.**
-   - `instance-setup/coder/` — `autowrx-runner` (runner image), `coder-docker-compose.yml` (Coder control plane on `:7080`), `coder-entrypoint.sh` (workspace entrypoint), `terraform-provider-mirror`.
-   - `plans/` — Terraform templates: `docker-template.tf`, `docker-template.zip`, `k8s-template.tf`; `setup_coder_aks.sh`, `prepare-templates.sh`, `integration-plan.md`, `guide.md`, `cursor_webapp_and_coder_workspace_integ.md`.
+   - `plans/` — `coder-docker-compose.yml` (Coder control plane on `:7080` + `docker-socket-proxy`), `coder-entrypoint.sh`; Terraform templates: `docker-template.tf`, `docker-template.zip`, `k8s-template.tf`; `setup_coder_aks.sh`, `setup_coder_local.sh`, `prepare-templates.sh`, `integration-plan.md`, `guide.md`, `cursor_webapp_and_coder_workspace_integ.md`.
    - Backend side: the app reaches Coder at `host.docker.internal:7080` via the `CODER_URL` site config (set in the admin panel / DB siteconfig).
 2. **Understand the lifecycle.** Template (uploaded to Coder) → Workspace (created from template by a user) → workspace container bind-mounts the prototypes path so the editor sees the same tree the backend serves. The backend only talks to Coder's API; it does not manage workspace containers directly.
 3. **Reproduce the symptom.**
-   - Coder control plane down? `docker compose -f instance-setup/coder/coder-docker-compose.yml ps` and open `http://localhost:7080`.
+   - Coder control plane down? `docker compose -f plans/coder-docker-compose.yml ps` and open `http://localhost:7080`.
    - Workspace won't create? Check Coder dashboard logs and the template's Terraform (`plans/*.tf`).
    - Workspace opens but prototypes tree is empty/wrong → the workspace bind-mount and the backend bind-mount **must be the same `${PROTOTYPES_PATH}`** (commits d6807b4, 6bd6ccb). Compare `docker compose -f docker-compose.prod.yml config | grep -A3 prototypes` with the workspace template's mount block.
    - App's Coder tab / actions fail → backend can't reach Coder: confirm `extra_hosts: ["host.docker.internal:host-gateway"]` on the `autowrx` service and that `CODER_URL` siteconfig points at `http://host.docker.internal:7080`. See `troubleshoot-deploy.md`.
@@ -24,6 +23,7 @@
 ## Guardrails
 - Don't restart the `autowrx` (app) service for a Coder-only change if the backend is healthy — touch only the Coder control plane / templates / workspaces.
 - Keep the prototypes bind-mount identical between Coder workspaces and the `autowrx` backend; divergence silently breaks the tree view.
+- Coder reaches Docker only via `docker-socket-proxy` (allowlist in `plans/guide.md` → "Docker access via socket proxy"). Never re-add the host socket mount or `group_add: "0"`; if a template hits a 403, enable just the needed proxy section.
 - Never commit secrets (Coder admin password, tokens). `.env*` is gitignored.
 - Test workspace create **and** teardown — a broken teardown leaks containers/volumes.
 - Terraform template edits must be re-zipped and re-uploaded to Coder; an unzipped `.tf` alone does nothing.

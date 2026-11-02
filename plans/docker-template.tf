@@ -12,12 +12,14 @@ terraform {
 }
 
 provider "docker" {
-  # We connect to the same Docker socket that Coder is running on
-  host = "unix:///var/run/docker.sock"
+  # Docker API through the allowlisting socket proxy from coder-docker-compose.yml
+  # (Coder has no direct socket access). See guide.md "Docker access via socket proxy".
+  host = "tcp://docker-socket-proxy:2375"
 }
 
 provider "coder" {}
 
+data "coder_provisioner" "me" {}
 data "coder_workspace" "me" {}
 data "coder_workspace_owner" "me" {}
 
@@ -57,7 +59,7 @@ resource "docker_container" "workspace" {
   
   # Entrypoint: Use agent init script with URL replacements
   entrypoint = ["sh", "-c", <<EOT
-${replace(replace(coder_agent.main.init_script, "localhost:7080", "coder:7080"), "linux-amd64", "linux-arm64")}
+${replace(coder_agent.main.init_script, "localhost:7080", "coder:7080")}
   EOT
   ]
 
@@ -67,9 +69,9 @@ ${replace(replace(coder_agent.main.init_script, "localhost:7080", "coder:7080"),
     "CODER_AGENT_URL=http://coder:7080/"
   ]
   
-  # Connect to the same network as Coder (plans_default)
+  # Connect to the same network as Coder (fixed name in coder-docker-compose.yml)
   networks_advanced {
-    name = "plans_default"
+    name = "coder_network"
   }
   
   # Mount the persistent volume
@@ -87,7 +89,7 @@ ${replace(replace(coder_agent.main.init_script, "localhost:7080", "coder:7080"),
 
 # 4. The Agent (Connects container to Coder Dashboard)
 resource "coder_agent" "main" {
-  arch           = "arm64"  # ARM64 for Apple Silicon / aarch64
+  arch           = data.coder_provisioner.me.arch  # Matches the Docker host (amd64 or arm64)
   os             = "linux"
   startup_script = <<EOT
     #!/bin/bash
