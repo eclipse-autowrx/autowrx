@@ -2,17 +2,48 @@
 
 This guide helps you deploy a new AutoWRX production instance using Docker Compose.
 
-## Backup & restore utilities
+## Backup, restore & snapshots
 
-Two companion scripts live alongside `up.sh` / `down.sh`:
+Three companion scripts live alongside `up.sh` / `down.sh`:
 
-- **`./backup.sh`** — dumps the MongoDB database (`backups/mongo-<ts>.archive.gz`) and archives the upload/plugin data (`backups/data-<ts>.tar.gz`). Flags: `--db` / `--data` to scope, `-y` to skip the confirmation prompt. Backups are never auto-deleted.
-- **`./restore.sh`** — restores from those files (most recent by default, or `--mongo <file>` / `--data <file>`). The database is restored with `--drop`, the data directories are overwritten, the app container is stopped during restore and restarted after. Requires typing `RESTORE` in capitals to proceed.
+- **`./backup.sh`** — same-instance backup. Writes one zip, `backups/<NAME>-backup-<ts>.zip`, with `INFO.txt`, the instance `.env.prod`, the MongoDB dump and the upload/plugin data. Flags: `--db` / `--data` to scope, `-y` to skip the confirmation prompt. Backups are never auto-deleted.
+- **`./restore.sh`** — restores a `backup.sh` zip (most recent by default, or `--backup <file.zip>`) into the **same** instance; a zip from another instance/database is refused. The database is restored with `--drop`, data directories are overwritten, and the app container is stopped during restore and restarted after. You must type `RESTORE` three times.
+- **`./snapshot.sh`** — portable, versioned snapshot for **migration and environment cloning** (see below).
 
 Notes:
 
-- On MongoDB 7 images the database tools are not bundled — both scripts detect the tools mount (`/opt/dbtools`, see the commented volume in `docker-compose.prod.yml`) and explain the one-time setup if it is missing.
-- Restore replaces post-backup data. Take a fresh `./backup.sh` first if the current state matters.
+- `mongo:7.0` images ship `mongodump`/`mongorestore`. The scripts also accept tools mounted at `/opt/dbtools` (see the commented volume in `docker-compose.prod.yml`) for images that lack them.
+- Restore/import replaces post-backup data. Take a fresh backup or snapshot first if the current state matters (`snapshot.sh import` does this automatically).
+
+### Snapshot export / import
+
+```bash
+./snapshot.sh export [--out DIR] [--include-env] [-y]
+./snapshot.sh inspect snapshots/<NAME>-snapshot-<ts>.tar
+./snapshot.sh import  snapshots/<NAME>-snapshot-<ts>.tar --dry-run   # show the plan, change nothing
+./snapshot.sh import  snapshots/<NAME>-snapshot-<ts>.tar              # asks you to type the instance NAME
+```
+
+A bundle is a plain tar:
+
+| Member | Content |
+| --- | --- |
+| `manifest.json` | `format: "autowrx-snapshot"`, `formatVersion`, creation time, source instance/database/Mongo version, sha256 + size of every member, per-collection document counts, a fingerprint (not the value) of `JWT_SECRET` |
+| `mongo.archive.gz` | `mongodump --archive --gzip` of the instance database |
+| `data.tar.gz` | data directories stored by role (`upload/`, `plugin/`, and `builtin-widgets/` / `global.css` when present), not by host path |
+| `env.prod` | only with `--include-env` — contains secrets, the bundle is then written `chmod 600` |
+
+Import behaviour:
+
+- Validates the bundle first: known members only, supported `formatVersion` (newer is refused), checksums, gzip integrity, and safe paths inside `data.tar.gz`.
+- **Works across instances**: the source database is renamed to this instance's `MONGODB_DATABASE`, and data roles map to this instance's `*_PATH_HOST` values.
+- Replaces state exactly: collections are restored with `--drop`, collections that are not in the snapshot are dropped, and each data directory is replaced (extracted beside the old one, swapped in only after extraction succeeds).
+- Before changing anything it exports a **safety snapshot** (`snapshots/<NAME>-snapshot-pre-import-<ts>.tar`); skip with `--no-safety-snapshot`. `--db-only` / `--data-only` limit the scope.
+- Stops the app container during import and waits for it to be healthy again afterwards.
+- **`JWT_SECRET` must match the source instance** — it derives the at-rest encryption key. A fingerprint mismatch is shown in the plan, needs an extra `yes` interactively, and is refused under `-y` unless `--allow-secret-mismatch` is passed.
+- The bundle's `env.prod` is never applied; copy it by hand if you want it.
+
+Round-trip check (two throwaway MongoDB-only compose projects, cleaned up afterwards): `./tests/snapshot-roundtrip.sh`.
 
 ## Prerequisites
 
