@@ -113,6 +113,15 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
       'Custom JSON options passed to the Socket.IO client when connecting to the runtime server. Example: {"transports":["websocket"],"reconnectionAttempts":5}. Leave empty to use default Socket.IO options.',
   },
   {
+    key: 'KIT_SERVER_ALLOWLIST',
+    scope: 'site',
+    value: '',
+    secret: false,
+    valueType: 'string',
+    description:
+      'Comma- or newline-separated hostnames (host or host:port) that non-admin users may set as a custom runtime (kit) server. Leave empty to allow only admins to override the default server.',
+  },
+  {
     key: 'ALLOW_ADDING_FILES',
     scope: 'site',
     value: false,
