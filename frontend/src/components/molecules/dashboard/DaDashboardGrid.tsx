@@ -6,13 +6,18 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { FC, useEffect, useState, useRef, useMemo } from 'react'
+import { FC, useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import useRuntimeStore from '@/stores/runtimeStore'
 import useAuthStore from '@/stores/authStore'
 import { WidgetConfig } from '@/types/widget.type'
 import DaDialog from '@/components/molecules/DaDialog'
 import useCurrentModelApi from '@/hooks/useCurrentModelApi'
 import { calculateSpans } from '@/lib/utils'
+import {
+  DashboardModalPayload,
+  getFrameOrigin,
+  sanitizeModalPayload,
+} from '@/lib/dashboardModal'
 
 interface DaDashboardGridProps {
   widgetConfigs: any[]
@@ -28,6 +33,8 @@ interface PropsWidgetItem {
   isAppRunning?: boolean
   activeRuntimeName?: string
   isRuntimeBusyByOther?: boolean
+  registerFrame: (el: HTMLIFrameElement, url: string | undefined) => void
+  unregisterFrame: (el: HTMLIFrameElement) => void
 }
 
 const WidgetItem: FC<PropsWidgetItem> = ({
@@ -38,6 +45,8 @@ const WidgetItem: FC<PropsWidgetItem> = ({
   isAppRunning,
   activeRuntimeName,
   isRuntimeBusyByOther,
+  registerFrame,
+  unregisterFrame,
 }) => {
   const [rSpan, setRSpan] = useState<number>(0)
   const [cSpan, setCSpan] = useState<number>(0)
@@ -60,6 +69,13 @@ const WidgetItem: FC<PropsWidgetItem> = ({
       setUrl(url)
     }
   }, [widgetConfig?.url])
+
+  useEffect(() => {
+    const el = frameElement.current
+    if (!el || !url) return
+    registerFrame(el, url)
+    return () => unregisterFrame(el)
+  }, [url, registerFrame, unregisterFrame])
 
   useEffect(() => {
     if (!widgetConfig) return
@@ -210,7 +226,8 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({
   remountCountByWidgetConfig = 0,
 }) => {
   const [showModal, setShowModal] = useState(false)
-  const [payload, setPayload] = useState<any>()
+  const [payload, setPayload] = useState<DashboardModalPayload>()
+  const widgetFramesRef = useRef(new Map<HTMLIFrameElement, string>())
   const { data: cvi } = useCurrentModelApi()
 
   // Memoize VSS tree to prevent unnecessary re-renders with large data
@@ -251,16 +268,28 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({
 
   useEffect(() => {
     const onMessageFromIframe = (event: MessageEvent) => {
+      // Only accept messages from this grid's own widget iframes
+      let trusted = false
+      widgetFramesRef.current.forEach((origin, el) => {
+        if (el.contentWindow === event.source && event.origin === origin) {
+          trusted = true
+        }
+      })
+      if (!trusted) return
+
       let data = event.data || {}
       try {
         data = JSON.parse(event.data)
       } catch {
         // Do nothing
       }
+      if (typeof data !== 'object' || data === null) return
 
       if (data.action === 'open-modal') {
+        const safe = sanitizeModalPayload(data.payload)
+        if (!safe) return
+        setPayload(safe)
         setShowModal(true)
-        setPayload(data.payload)
       }
     }
 
@@ -268,6 +297,19 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({
     return () => {
       window.removeEventListener('message', onMessageFromIframe)
     }
+  }, [])
+
+  const registerFrame = useCallback(
+    (el: HTMLIFrameElement, url: string | undefined) => {
+      const origin = getFrameOrigin(url)
+      if (!origin) return
+      widgetFramesRef.current.set(el, origin)
+    },
+    [],
+  )
+
+  const unregisterFrame = useCallback((el: HTMLIFrameElement) => {
+    widgetFramesRef.current.delete(el)
   }, [])
 
   const CELLS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -304,7 +346,9 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({
           {payload?.type === 'iframe' && (
             <iframe
               className="h-[calc(100vh-200px)] w-[calc(100vw-200px)]"
-              srcDoc={`<div style="height:100%; width:100%">${payload?.html}</div>`}
+              sandbox="allow-scripts"
+              referrerPolicy="no-referrer"
+              srcDoc={`<div style="height:100%; width:100%">${payload.html}</div>`}
             ></iframe>
           )}
         </div>
@@ -329,6 +373,8 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({
                   isAppRunning={isAppRunning}
                   activeRuntimeName={activeRuntimeName}
                   isRuntimeBusyByOther={isRuntimeBusyByOther}
+                  registerFrame={registerFrame}
+                  unregisterFrame={unregisterFrame}
                 />
               )
             } else if (widgetIndex === -1) {
