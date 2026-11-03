@@ -2,7 +2,7 @@
 
 As a user, admin, or operator of AutoWRX, I can connect external services (GenAI code generation, GitHub login/sync, email, Web Studio widgets), discover content through search and discussions, send feedback, and rely on platform-wide health, file upload, audit, static/SPA/VSS serving, security headers, realtime updates, and log/cache forwarding.
 
-**Implementation:** `backend/src/routes/v2/system/` (genai, github, email, search, discussion, feedback, health, file, changeLog, static/vss routes), `backend/src/config/socket.js`, `backend/src/config/axios.js` (LOG_URL/CACHE_URL clients), `backend/src/app.js` (CORS/Helmet/static), `frontend/src/stores/githubAuthStore.ts`, `frontend/src/services/webStudio.service.ts`.
+**Implementation:** `backend/src/routes/v2/system/` (genai, github, email, search, discussion, feedback, health, metrics, file, changeLog, static/vss routes), `backend/src/config/socket.js`, `backend/src/config/axios.js` (LOG_URL/CACHE_URL clients), `backend/src/app.js` (CORS/Helmet/static), `frontend/src/stores/githubAuthStore.ts`, `frontend/src/services/webStudio.service.ts`.
 
 ```mermaid
 flowchart TD
@@ -56,6 +56,7 @@ flowchart TD
 | [CAP-INTEG-13](#cap-integ-13--cors--helmet-csp--security-middleware) | CORS / Helmet CSP / security middleware |
 | [CAP-INTEG-14](#cap-integ-14--socketio-realtime) | Socket.IO (realtime) |
 | [CAP-INTEG-15](#cap-integ-15--log--cache-service-clients) | Log / cache service clients |
+| [CAP-INTEG-16](#cap-integ-16--production-metrics) | Production metrics |
 
 
 ## CAP-INTEG-01 — SDV ProtoPilot (GenAI code generation)
@@ -1228,3 +1229,85 @@ Forwards event metadata (incl. email for forgot-password); respect target servic
 - **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
 - **Estimated coverage:** ≈0% (est.) — no E2E spec
 - **Unit (Jest):** none
+
+
+## CAP-INTEG-16 — Production metrics
+
+| Actor | Where | Personal data | E2E coverage |
+|---|---|---|---|
+| operator | Metrics endpoint (no UI) | ❌ No | ❌ 0 cases, ≈0% (est.) |
+
+### Description
+
+As an operator, I can fetch `GET /v2/metrics` to see request counts and latency per API route, MongoDB connection-pool usage and runtime-server reachability, as JSON or (when enabled) in Prometheus text format, so incidents are visible before users report them.
+
+### Who uses it / value
+
+DevOps/monitoring: alertable request-rate, error-rate and latency signals plus dependency health (issue #639). Grafana dashboards and OpenTelemetry export are out of scope.
+
+### Acceptance criteria
+
+- When an **admin** calls `GET /v2/metrics`, they get JSON with request counters and latency per route template, MongoDB pool stats and runtime-server status.
+- When an **admin** calls `GET /v2/metrics?format=prometheus` and `METRICS_PROMETHEUS_ENABLED=true`, they get Prometheus text exposition format; with the flag off they get `404`.
+- A non-admin gets `403`; an anonymous caller gets `401`.
+
+### API contract
+
+- `GET /v2/metrics` (auth + admin: `auth()` + `checkPermission(PERMISSIONS.ADMIN)`) → `200` JSON `{ collectedAt, uptimeSeconds, http: { totalRequests, routes: [{ method, route, status, count, latencyMs: { avg, max, sum, buckets } }] }, mongodb: { readyState, pool: { maxPoolSize, open, inUse, available, waitQueue, checkoutFailures } }, runtimeServer: { status, message, checkedAt, configuredMappings } }`; `401` anonymous, `403` non-admin; `Cache-Control: no-store`.
+- `GET /v2/metrics?format=prometheus` → `200` `text/plain; version=0.0.4` when `METRICS_PROMETHEUS_ENABLED=true` (Joi boolean, default `false`), otherwise `404 Prometheus format is disabled`. Same admin guard. Series: `autowrx_http_requests_total`, `autowrx_http_request_duration_seconds` (histogram, buckets 5ms–10s), `autowrx_mongodb_connected`, `autowrx_mongodb_pool_connections{state=open|in_use|available}`, `autowrx_mongodb_pool_wait_queue`, `autowrx_mongodb_pool_max_connections`, `autowrx_mongodb_pool_checkout_failures_total`, `autowrx_runtime_server_up`, `autowrx_process_uptime_seconds`. Prometheus scrapes with a bearer token (`authorization` in the scrape config).
+- Request metrics: `middlewares/requestMetrics.js` is mounted on `/v2` in `app.js` (before the CSP report route and health probes). Labels are method, **route template** (e.g. `/v2/model/:id`; `unmatched` when no route matched) and status class (`2xx`/`4xx`/`5xx`) — never raw URLs or ids. Static, plugin and SPA requests are not counted.
+- MongoDB pool: gauges are read from the driver's connection pools at request time (`services/metrics.service.js`); `checkoutFailures` counts `connectionCheckOutFailed` events since the monitor was attached in `index.js` after `mongoose.connect`. If the driver layout changes, pool gauges come back `null` instead of failing.
+- Runtime server: reuses `checkRuntimeServer()` from the health service (`RUNTIME_SERVER_URL` site config/env, 5s timeout), cached for 30s with in-flight de-duplication so frequent scrapes don't each make an outbound probe. `configuredMappings` is the count of `RUNTIME_SERVICE_MAPPINGS` entries (names not exposed).
+- Scope: counters are **per process** and reset on restart; pm2 runs one instance (`backend/ecosystem.config.json`).
+
+### Quality control
+
+As an admin I call `/v2/metrics` a few times after browsing the app and see `http.totalRequests` and per-route counts grow, the Mongo pool `open`/`inUse` numbers, and the runtime-server status. With `METRICS_PROMETHEUS_ENABLED=true`, `?format=prometheus` output passes `promtool check metrics`.
+
+```mermaid
+flowchart TD
+    REQ["Any /v2 request"] --> MW["requestMetrics middleware<br/>(route template, status class, latency)"]
+    MW --> STORE[(In-process counters)]
+    M["GET /v2/metrics (auth + admin)"] --> SNAP[getSnapshot]
+    SNAP --> STORE
+    SNAP --> POOL[(MongoDB driver pools)]
+    SNAP --> RT["Runtime server probe<br/>(30s cache)"]
+    SNAP -->|default| JSON["200 JSON + no-store"]
+    SNAP -->|"?format=prometheus + flag on"| PROM["200 text/plain 0.0.4"]
+    M -->|"?format=prometheus + flag off"| R404["404"]
+```
+
+### Security
+
+Admin-only endpoint; no public metrics surface.
+
+**Coverage:**
+- **Auth:** valid token required (`401` otherwise), including for the Prometheus format.
+- **Authorization:** `PERMISSIONS.ADMIN` required (`403` otherwise).
+- **Input validation:** only `format` is read; any value other than `prometheus` returns JSON.
+- **Rate limiting:** Not applied; the runtime probe is cached for 30s so scrapes can't amplify outbound calls.
+- **Secrets:** None exposed — route templates instead of URLs, mapping count instead of runtime names/targets.
+
+**Risks:**
+- **Topology disclosure:** route list, pool sizes and the runtime-server URL in `runtimeServer.message` reveal internals. *Mitigation:* admin guard; keep scrape tokens scoped to a dedicated admin service account.
+
+### Personal data processing
+❌ No — this capability does not process personal data.
+N/A.
+**Risks:**
+- none — no personal data processed.
+
+### AutoWRX data
+Aggregate counters only.
+**Coverage:**
+- **Stored data:** In memory only; nothing persisted.
+- **Retention:** Until process restart.
+- **Encryption:** In transit TLS; nothing at rest.
+- **Logging:** None beyond morgan request logs.
+**Risks:**
+- none — aggregates contain no user data or ids.
+
+### Test coverage
+- **E2E (Playwright):** 0 — not covered — SITEMAP: ❌
+- **Estimated coverage:** ≈0% (est.) — no E2E spec
+- **Unit (Jest):** 17 cases — `backend/tests/unit/services/metrics.service.test.js` (aggregation, pool gauges, runtime cache, Prometheus rendering/escaping), `backend/tests/unit/middlewares/requestMetrics.test.js` (route-template labels, error bubbling, unmatched, non-/v2 skipped), `backend/tests/unit/app/metrics.route.test.js` (401/403/200 JSON, Prometheus flag off/on, flag doesn't bypass admin)

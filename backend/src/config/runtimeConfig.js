@@ -69,6 +69,15 @@ function getRuntimeTarget(runtimeName) {
   return Object.hasOwn(runtimeMappings, runtimeName) ? runtimeMappings[runtimeName] : null;
 }
 
+/**
+ * Number of configured RUNTIME_SERVICE_MAPPINGS entries (names/targets stay private)
+ * @returns {number}
+ */
+function getRuntimeMappingCount() {
+  return Object.keys(runtimeMappings).length;
+}
+
 module.exports = {
   getRuntimeTarget,
+  getRuntimeMappingCount,
 };

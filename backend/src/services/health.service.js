@@ -182,4 +182,4 @@ async function runHealthCheck() {
   };
 }
 
-module.exports = { runHealthCheck, checkReadiness };
+module.exports = { runHealthCheck, checkReadiness, checkRuntimeServer };

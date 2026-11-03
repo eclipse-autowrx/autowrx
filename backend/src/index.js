@@ -52,6 +52,7 @@ const start = async () => {
     ...config.mongoose.options,
     serverSelectionTimeoutMS: 10000,
   });
+  require('./services/metrics.service').attachMongoPoolMonitor(mongoose.connection.getClient());
 
   // Load database-dependent modules only after MongoDB is connected.
   // Some modules initialize Casbin or Mongoose plugins during require().

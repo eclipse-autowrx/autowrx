@@ -29,6 +29,7 @@ const { init: initSocketIO } = require('./config/socket');
 const auth = require('./middlewares/auth');
 const { createSecurityHeaders, cspNonce } = require('./middlewares/contentSecurityPolicy');
 const cspReportRoute = require('./routes/v2/system/cspReport.route');
+const requestMetrics = require('./middlewares/requestMetrics');
 
 const frontendDistPath = path.join(__dirname, '../static/frontend-dist');
 // Production assets are immutable until restart. Read the template once so
@@ -60,6 +61,10 @@ if (config.env !== 'test') {
   app.use(morgan.successHandler);
   app.use(morgan.errorHandler);
 }
+
+// Count /v2 requests and latency by route template (GET /v2/metrics). Mounted
+// ahead of the CSP report route and health probes so those are counted too.
+app.use('/v2', requestMetrics);
 
 // use cookies
 app.use(cookies());
