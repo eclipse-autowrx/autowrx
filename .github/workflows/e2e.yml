@@ -41,7 +41,10 @@ jobs:
     concurrency:
       group: e2e-${{ github.event.pull_request.number || inputs.pr || github.ref }}
       cancel-in-progress: true
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moved to 26.04, where Playwright 1.58 cannot install
+    # Chromium's system deps ("does not support chromium on ubuntu26.04-x64").
+    # Unpin once .agents' @playwright/test supports 26.04.
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     services:
       # Disposable stack: E2E specs mutate site-config and create E2E_* data.
