@@ -18,7 +18,7 @@ const roleSchema = new mongoose.Schema({
     default: [],
     enums: ROLES_ENUM,
   },
-  ref: String,
+  ref: { type: String, unique: true, sparse: true },
   not_feature: Boolean,
 });
 
