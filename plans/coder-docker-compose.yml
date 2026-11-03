@@ -8,12 +8,39 @@ services:
     command: sh -c "mkdir -p /home/coder/.config && chown -R 1000:1000 /home/coder/.config && chmod -R 755 /home/coder/.config"
     restart: "no"
 
+  docker-socket-proxy:
+    # The only container that sees the host Docker socket. Coder reaches Docker
+    # through this allowlisting proxy instead of mounting the socket itself.
+    # Allowed API surface: see guide.md "Docker access via socket proxy".
+    image: tecnativa/docker-socket-proxy:v0.5.0
+    container_name: docker-socket-proxy
+    environment:
+      # Endpoint sections Coder's Docker template needs (everything else stays 0)
+      - CONTAINERS=1
+      - IMAGES=1
+      - VOLUMES=1
+      - NETWORKS=1
+      # Allow non-GET methods (create/start/stop/delete) on the sections above
+      - POST=1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    read_only: true
+    tmpfs:
+      - /run
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    networks:
+      - docker_proxy
+
   coder:
     # This is the Coder Control Plane
     image: ghcr.io/coder/coder:latest
     container_name: coder
     depends_on:
       - coder-init
+      - docker-socket-proxy
     environment:
       # The URL where users access the dashboard
       - CODER_ACCESS_URL=http://localhost:7080
@@ -21,18 +48,17 @@ services:
       - CODER_HTTP_ADDRESS=0.0.0.0:7080
       # Allow iframe embedding from your domain
       - CODER_BROWSER_ONLY=true
+      # Docker API via the socket proxy (no host socket mount, no root group)
+      - DOCKER_HOST=tcp://docker-socket-proxy:2375
     ports:
       - "7080:7080"
     volumes:
-      # Critical: Mount the docker socket so Coder can spawn sibling containers
-      - /var/run/docker.sock:/var/run/docker.sock
       # Persist Coder's internal database
       - coder_data:/home/coder/.config
-    group_add:
-      - "0" # Add root group for docker socket access
     restart: unless-stopped
     networks:
       - coder_network
+      - docker_proxy
 
   gitea:
     # Gitea Git server for internal repositories
@@ -65,4 +91,10 @@ volumes:
 
 networks:
   coder_network:
+    # Fixed name so docker-template.tf can attach workspaces to it
+    name: coder_network
     driver: bridge
+  docker_proxy:
+    # Internal-only: just coder <-> docker-socket-proxy. Workspaces are never
+    # attached here, so code inside a workspace cannot reach the Docker API.
+    internal: true
