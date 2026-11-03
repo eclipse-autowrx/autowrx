@@ -2,7 +2,43 @@
 
 The backend exposes GenAI endpoints under `/v2/genai/*` for the genai-wizard plugin and related integrations. These routes authenticate the caller with the normal backend JWT middleware, then call the external GenAI API directly using configurable credentials.
 
-This replaces the former **genai-proxy** sidecar. The Prototype tab SDV Copilot (`GENAI_SDV_APP_ENDPOINT` site config) is a separate flow and is not handled by these routes.
+This replaces the former **genai-proxy** sidecar. Prototype/Dashboard/Widget code generation (SDV Copilot, user assets, marketplace add-ons) goes through `POST /v2/genai/generate` (see [Code generation](#code-generation-post-v2genaigenerate)).
+
+## Authorization
+
+The whole `/v2/genai/*` router requires a valid JWT (`401` anonymous) **and** the `generativeAI` permission (`PERMISSIONS.GENERATIVE_AI`, `403` without it). The check is applied right after `auth()`, so it covers `GET /token`, `POST /generate` and the upstream catch-all.
+
+## Code generation (`POST /v2/genai/generate`)
+
+Resolves the upstream server-side, so it works even when `EXTERNAL_GENAI_URL` is not configured. The client never sends an URL, method or key.
+
+Body (unknown keys are rejected with `400`):
+
+| Field | Rule |
+|---|---|
+| `source` | `sdv-copilot` \| `asset` \| `marketplace`, required |
+| `assetId` | ObjectId; required when `source=asset`, forbidden otherwise |
+| `addonId` | string (max 200); required when `source=marketplace`, forbidden otherwise |
+| `type` | `GenAI_Python` \| `GenAI_Dashboard` \| `GenAI_Widget`, required |
+| `prompt` | trimmed string, 1–20000 chars, required |
+| `systemMessage` | string (may be empty, max 20000 chars), optional |
+| `modelId` | ObjectId, optional (CVI grounding) |
+
+Response: `200 { "content": "<generated code>" }`.
+
+Sources:
+
+| Source | Upstream |
+|---|---|
+| `sdv-copilot` | Site config `GENAI_SDV_APP_ENDPOINT` (`503` if empty). `POST { systemMessage, message: prompt }`; content is `content`, `data` or the JSON body |
+| `asset` | The caller's `GENAI-PYTHON` asset (`404` missing, `403` without `READ_ASSET` on it, `400` wrong type). `url`, `accessToken`, `method`, `requestField`, `responseField` are read from `asset.data` |
+| `marketplace` | `GENAI_MARKETPLACE_URL` (default `https://store-be.digitalauto.tech`, `404` if empty) `/package?type=…&exposeCredentials=true`, entry matched by `version._id === addonId` and `type` (`404` otherwise) |
+
+For `asset`/`marketplace`, `GET` calls `<url>?<requestField>=<prompt>`; `POST` sends `{ systemMessage, [requestField]: prompt }`, with `Authorization: <key>`. The answer is read from `responseField` (`502 Upstream returned an unexpected response format` if missing).
+
+**CVI grounding:** when `modelId` is given, the caller must be able to read the model (`modelService.getModelById`: `404` missing, `403` for a private model without `READ_MODEL`); then `apiService.computeVSSApi(modelId)` is flattened to leaf signal paths (capped at ~2000 entries / ~60k chars) and appended to the system message as `Vehicle API (VSS) available in this model:`.
+
+**Outbound hardening:** 60 s timeout, 5 MB response cap, no redirects; failures map to `502 GenAI upstream request failed` without leaking the upstream URL or key; logs use `redactUrl`. Every outbound URL (all three sources, including the marketplace listing) passes [`assertSafeOutboundUrl`](../src/utils/assertSafeOutboundUrl.js): only `http`/`https`, host resolved with `dns.promises.lookup({ all: true })`, and the request is rejected with `400 Generator endpoint is not allowed` if any address is loopback (`127.0.0.0/8`, `::1`), link-local (`169.254.0.0/16`, `fe80::/10`), unspecified (`0.0.0.0`, `::`) or an IPv4-mapped form of those. RFC1918 private ranges are allowed.
 
 ## Architecture
 

@@ -27,4 +27,6 @@ export interface AddOn {
   method?: string
   requestField?: string
   responseField?: string
+  source?: 'sdv-copilot' | 'asset' | 'marketplace'
+  assetId?: string
 }

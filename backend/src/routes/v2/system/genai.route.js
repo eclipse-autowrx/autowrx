@@ -12,6 +12,9 @@ const httpStatus = require('http-status');
 const config = require('../../../config/config');
 const { proxyHandler } = require('../../../config/proxyHandler');
 const auth = require('../../../middlewares/auth');
+const { checkPermission } = require('../../../middlewares/permission');
+const { PERMISSIONS } = require('../../../config/roles');
+const genaiController = require('../../../controllers/genai.controller');
 const logger = require('../../../config/logger');
 const { redactUrl } = require('../../../utils/redactUrl');
 const catchAsync = require('../../../utils/catchAsync');
@@ -23,6 +26,7 @@ const genaiValidation = require('../../../validations/genai.validation');
 const router = express.Router();
 
 router.use(auth());
+router.use(checkPermission(PERMISSIONS.GENERATIVE_AI));
 
 router.use((req, res, next) => {
   logger.info('[genai] %s %s configured=%s', req.method, redactUrl(req.originalUrl), genaiService.isConfigured());
@@ -85,6 +89,9 @@ const ensureGenAIAvailable = (req, res, next) => {
 
   return res.status(httpStatus.SERVICE_UNAVAILABLE).json({ message: 'GenAI service is not implemented' });
 };
+
+// Code generation resolves its own upstream server-side, so it works without EXTERNAL_GENAI_URL.
+router.post('/generate', validate(genaiValidation.generate), genaiController.generate);
 
 router.use(ensureGenAIAvailable);
 

@@ -16,9 +16,9 @@ import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import DaSectionTitle from '@/components/atoms/DaSectionTitle'
-import { getConfig } from '@/utils/siteConfig'
-import axios from 'axios'
 import { toast } from 'react-toastify'
+import { generateCode, GenAISource } from '@/services/genai.service'
+import useModelStore from '@/stores/modelStore'
 import default_generated_code from '@/data/default_generated_code'
 import { cn } from '@/lib/utils'
 import {
@@ -60,11 +60,12 @@ const DaGenAI_Base = ({
   const [hasGenAIAssets, setHasGenAIAssets] = useState(false)
   const timeouts = useRef<NodeJS.Timeout[]>([])
   const [copied, setCopied] = useState(false)
+  const model = useModelStore((state) => state.model)
 
   // Initialize built-in addons immediately for GenAI_Python
-  const [builtInAddOns, setBuiltInAddOns] = useState<AddOn[]>(() => {
+  const [builtInAddOns] = useState<AddOn[]>(() => {
     if (type === 'GenAI_Python') {
-      // Create default SDV Copilot immediately, endpoint will be loaded from GENAI_SDV_APP_ENDPOINT config
+      // SDV Copilot's endpoint (GENAI_SDV_APP_ENDPOINT) is resolved server-side by /v2/genai/generate
       return [
         {
           id: 'sdv-copilot-builtin',
@@ -72,11 +73,12 @@ const DaGenAI_Base = ({
           name: 'SDV Copilot',
           description: 'Support develop basic SDV Python App',
           apiKey: 'Empty',
-          endpointUrl: '', // Will be loaded from config
+          endpointUrl: '',
           customPayload: (prompt: string) => ({ prompt }),
           method: 'POST',
           requestField: 'prompt',
           responseField: 'data',
+          source: 'sdv-copilot' as const,
         },
       ]
     }
@@ -85,41 +87,6 @@ const DaGenAI_Base = ({
 
   const { useFetchAssets } = useAssets()
   const { data: assets } = useFetchAssets()
-
-  // Load built-in addons endpoint from site config and update
-  useEffect(() => {
-    const loadBuiltInAddOnsEndpoint = async () => {
-      try {
-        if (type === 'GenAI_Python') {
-          const endpointUrl = await getConfig(
-            'GENAI_SDV_APP_ENDPOINT',
-            'site',
-            undefined,
-            '', // No hardcoded fallback - use default from DEFAULT_SITE_CONFIGS or require admin configuration
-          )
-
-          // Update the endpoint URL from config
-          setBuiltInAddOns([
-            {
-              id: 'sdv-copilot-builtin',
-              type: 'GenAI_Python',
-              name: 'SDV Copilot',
-              description: 'Support develop basic SDV Python App',
-              apiKey: 'Empty',
-              endpointUrl: endpointUrl || '', // Use empty string if not configured
-              customPayload: (prompt: string) => ({ prompt }),
-              method: 'POST',
-              requestField: 'prompt',
-              responseField: 'data',
-            },
-          ])
-        }
-      } catch (err) {
-        console.error('Error loading built-in addons endpoint:', err)
-      }
-    }
-    loadBuiltInAddOnsEndpoint()
-  }, [type])
 
   const mergedBuiltInAddOns = useMemo(() => {
     return builtInAddOns.map((addOn: AddOn) => {
@@ -153,35 +120,18 @@ const DaGenAI_Base = ({
         (asset: any) => asset.type === 'GENAI-PYTHON',
       )
       setHasGenAIAssets(pythonGenAIs.length > 0)
-      const pythonAIAddons = pythonGenAIs.map((asset: any) => {
-        let url = ''
-        let accessToken = ''
-        let method = 'POST'
-        let requestField = ''
-        let responseField = ''
-        try {
-          const data = JSON.parse(asset.data)
-          url = data.url || ''
-          accessToken = data.accessToken || ''
-          method = data.method || 'POST'
-          requestField = data.requestField || 'prompt'
-          responseField = data.responseField || 'data'
-        } catch (err) {
-          console.log(err)
-        }
-        return {
-          id: asset.name + '-' + Math.random().toString(36).substring(2, 8),
-          type: 'GenAI_Python' as const,
-          name: asset.name || 'My python genAI',
-          description: '',
-          apiKey: accessToken,
-          endpointUrl: url,
-          method: method,
-          requestField: requestField,
-          responseField: responseField,
-          customPayload: (prompt: string) => ({ prompt }),
-        }
-      })
+      const pythonAIAddons = pythonGenAIs.map((asset: any) => ({
+        id: asset.name + '-' + Math.random().toString(36).substring(2, 8),
+        type: 'GenAI_Python' as const,
+        name: asset.name || 'My python genAI',
+        description: '',
+        // Credentials and endpoint stay server-side; the backend resolves them by assetId.
+        apiKey: '',
+        endpointUrl: '',
+        source: 'asset' as const,
+        assetId: asset.id || asset._id,
+        customPayload: (prompt: string) => ({ prompt }),
+      }))
       setUserAIAddOns(pythonAIAddons)
       return
     }
@@ -248,123 +198,36 @@ const DaGenAI_Base = ({
         return
       }
 
-      if (selectedAddOn.endpointUrl && selectedAddOn.name !== 'SDV Copilot') {
-        switch (selectedAddOn.method?.toLowerCase().trim()) {
-          case 'get':
-            try {
-              const response = await axios.get(
-                selectedAddOn.endpointUrl +
-                  `?${selectedAddOn.requestField || 'prompt'}=${encodeURIComponent(prompt)}`,
-                {
-                  headers: {
-                    Authorization: `${selectedAddOn.apiKey}`,
-                    'Content-Type': 'application/json',
-                  },
-                },
-              )
-              if (
-                response.data &&
-                response.data[selectedAddOn.responseField || 'data']
-              ) {
-                onCodeGenerated(
-                  response.data[selectedAddOn.responseField || 'data'],
-                )
-              } else {
-                onCodeGenerated(
-                  `Error: Receive incorrect format data\r\n${JSON.stringify(response.data, null, 4)}`,
-                )
-              }
-            } catch (err) {
-              console.log(err)
-            }
-            break
-          case 'post':
-            try {
-              const payload = {
-                systemMessage: selectedAddOn.samples || '',
-              } as any
-              payload[selectedAddOn.requestField || 'prompt'] = prompt
+      // Stale localStorage entries may lack `source`; infer it.
+      const source: GenAISource =
+        selectedAddOn.source ||
+        (selectedAddOn.name === 'SDV Copilot' ||
+        selectedAddOn.id === 'sdv-copilot-builtin'
+          ? 'sdv-copilot'
+          : 'marketplace')
 
-              const response = await axios.post(
-                selectedAddOn.endpointUrl,
-                payload,
-                {
-                  headers: {
-                    Authorization: `${selectedAddOn.apiKey}`,
-                    'Content-Type': 'application/json',
-                  },
-                },
-              )
-              if (
-                response.data &&
-                response.data[selectedAddOn.responseField || 'data']
-              ) {
-                onCodeGenerated(
-                  response.data[selectedAddOn.responseField || 'data'],
-                )
-              } else {
-                onCodeGenerated(
-                  `Error: Receive incorrect format data\r\n${JSON.stringify(response.data, null, 4)}`,
-                )
-              }
-            } catch (err) {
-              console.log(err)
-            }
-            break
-          default:
-            break
-        }
+      if (source === 'asset' && !selectedAddOn.assetId) {
+        toast.error('Please reselect your generator and try again')
         return
       }
 
-      // Use the SDV App endpoint for SDV Copilot
-      try {
-        const endpointUrl = await getConfig(
-          'GENAI_SDV_APP_ENDPOINT',
-          'site',
-          undefined,
-          '', // No hardcoded fallback - use default from DEFAULT_SITE_CONFIGS or require admin configuration
-        )
-
-        if (!endpointUrl) {
-          throw new Error(
-            'GENAI_SDV_APP_ENDPOINT is not configured. Please configure it in Site Management.',
-          )
-        }
-
-        const response = await axios.post(
-          endpointUrl,
-          {
-            systemMessage: selectedAddOn.samples || '',
-            message: prompt,
-          },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          },
-        )
-
-        // Parse the generated content from the response structure
-        onCodeGenerated(
-          response.data.content ||
-            response.data.data ||
-            JSON.stringify(response.data),
-        )
-      } catch (err) {
-        console.log(err)
-      }
+      const content = await generateCode({
+        source,
+        assetId: source === 'asset' ? selectedAddOn.assetId : undefined,
+        addonId: source === 'marketplace' ? selectedAddOn.id : undefined,
+        type,
+        prompt,
+        systemMessage: selectedAddOn.samples || '',
+        modelId: model?.id,
+      })
+      onCodeGenerated(content)
     } catch (error) {
       timeouts.current.forEach((timeout) => clearTimeout(timeout))
       timeouts.current = []
-      console.error('Error generating AI content:', error)
-      if (axios.isAxiosError(error)) {
-        toast.error(
-          error.response?.data?.message || 'Error generating AI content',
-        )
-      } else {
-        toast.error('Error generating AI content')
-      }
+      const serverMessage = (
+        error as { response?: { data?: { message?: string } } }
+      )?.response?.data?.message
+      toast.error(serverMessage || 'Error generating AI content')
     } finally {
       setLoading(false)
       onLoadingChange(false)
