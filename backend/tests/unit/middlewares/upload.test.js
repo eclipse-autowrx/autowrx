@@ -14,7 +14,7 @@ const path = require('path');
 const express = require('express');
 const multer = require('multer');
 const httpStatus = require('http-status');
-const { uploadAsset, uploadPluginZip } = require('../../../src/middlewares/upload');
+const { uploadAsset, uploadPluginZip, createUpload } = require('../../../src/middlewares/upload');
 const { errorConverter, errorHandler } = require('../../../src/middlewares/error');
 
 const uploadsDir = path.join(__dirname, '../../../static/uploads');
@@ -24,6 +24,9 @@ const listToday = () => (fs.existsSync(todayDir()) ? fs.readdirSync(todayDir()).
 const app = express();
 app.post('/asset', uploadAsset.single('file'), (req, res) => res.json({ filename: req.file.filename }));
 app.post('/zip', uploadPluginZip.single('file'), (req, res) => res.json({ filename: req.file.filename }));
+app.post('/png-only', createUpload({ extensions: ['.png'] }).single('file'), (req, res) =>
+  res.json({ filename: req.file.filename, destination: req.file.destination }),
+);
 app.use(errorConverter);
 app.use(errorHandler);
 
@@ -117,6 +120,43 @@ describe('uploadPluginZip middleware', () => {
     expect((await upload('/zip', 'plugin.png', 'image/png')).status).toBe(httpStatus.UNSUPPORTED_MEDIA_TYPE);
     expect((await upload('/zip', 'plugin.html', 'text/html')).status).toBe(httpStatus.UNSUPPORTED_MEDIA_TYPE);
     expect(listToday()).toEqual(before);
+  });
+});
+
+describe('upload edge cases (issue #641)', () => {
+  test.each([
+    ['notes.txt', 'application/octet-stream'],
+    ['table.csv', 'application/octet-stream'],
+    ['readme.md', 'application/octet-stream'],
+    ['table.csv', 'application/vnd.ms-excel'],
+    ['readme.md', 'text/x-markdown'],
+    ['pic.jpg', 'image/pjpeg'],
+  ])('accepts %s sent as %s', async (name, type) => {
+    expect((await upload('/asset', name, type)).status).toBe(httpStatus.OK);
+  });
+
+  test.each([
+    ['doc.pdf', 'application/octet-stream'],
+    ['pic.jpg', 'application/octet-stream'],
+    ['pic.jpg', 'image/png'],
+    ['data.json', 'text/plain'],
+  ])('rejects %s sent as %s', async (name, type) => {
+    expect((await upload('/asset', name, type)).status).toBe(httpStatus.UNSUPPORTED_MEDIA_TYPE);
+  });
+
+  test('createUpload enforces its own extension allowlist', async () => {
+    const before = listToday();
+    expect((await upload('/png-only', 'pic.jpg', 'image/jpeg')).status).toBe(httpStatus.UNSUPPORTED_MEDIA_TYPE);
+    expect((await upload('/png-only', 'data.json', 'application/json')).status).toBe(httpStatus.UNSUPPORTED_MEDIA_TYPE);
+    expect(listToday()).toEqual(before);
+  });
+
+  test('stores files under a dated directory with a generated name', async () => {
+    const res = await upload('/png-only', '../../escape.png', 'image/png');
+    expect(res.status).toBe(httpStatus.OK);
+    expect(res.body.destination).toBe(todayDir());
+    expect(res.body.filename).toMatch(/^file-\d+-\d+\.png$/);
+    expect(listToday()).toContain(res.body.filename);
   });
 });
 
