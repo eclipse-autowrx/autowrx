@@ -105,14 +105,14 @@ flowchart LR
 Gated by `USE_GEN_AI` permission + `SHOW_SDV_PROTOPILOT_BUTTON`. Backend proxy requires auth.
 
 **Coverage:**
-- **Auth:** Required — the `/v2/genai/*` proxy requires a JWT; the ProtoPilot UI is additionally gated by `USE_GEN_AI` permission + `SHOW_SDV_PROTOPILOT_BUTTON` flag.
-- **Authorization:** Only callers with `USE_GEN_AI` (`generativeAI`) can open the ProtoPilot UI; the `/v2/genai/*` proxy enforces JWT only — no server-side `USE_GEN_AI` check (risk noted).
-- **Input validation:** Not validated — prompts are forwarded to the GenAI endpoint without validation; generated code is applied to `prototype.code` without schema validation.
+- **Auth:** Required — the `/v2/genai/*` router requires a JWT; the ProtoPilot UI is additionally gated by `USE_GEN_AI` permission + `SHOW_SDV_PROTOPILOT_BUTTON` flag.
+- **Authorization:** The whole `/v2/genai/*` router enforces `generativeAI` server-side (`401` anonymous, `403` without it). Generation goes through `POST /v2/genai/generate` (`source` = `sdv-copilot` | `asset` | `marketplace`); the `asset` source additionally requires `READ_ASSET` on the asset.
+- **Input validation:** Joi-validated and size-limited — `prompt` 1–20000 chars, `systemMessage` ≤ 20000, unknown keys (e.g. endpoint URL/key) rejected; the endpoint and credentials are resolved server-side. Generated code is applied to `prototype.code` without schema validation.
 - **Rate limiting:** Not applied (`authLimiter` defined but unused).
-- **Secrets:** `GENAI_SDV_APP_ENDPOINT`/`GENAI_MARKETPLACE_URL` are env-driven; the caller handles no secrets here.
+- **Secrets:** `GENAI_SDV_APP_ENDPOINT`/`GENAI_MARKETPLACE_URL` are site configs read by the backend; asset/marketplace keys are used server-side for the upstream call. Outbound URLs pass an SSRF guard (loopback, link-local and unspecified addresses rejected; RFC1918 allowed). When `modelId` is sent and the caller can read that model (private models need `READ_MODEL`), the model's VSS signal paths are appended to the system message (CVI grounding).
 
 **Risks:**
-- **Permission gate bypass:** if `USE_GEN_AI` were not enforced server-side, any user could consume GenAI compute (cost abuse) and inject generated code into prototypes they don't own. *Mitigation:* enforce `USE_GEN_AI` server-side on `/v2/genai/*` before proxying.
+- **Permission gate bypass:** mitigated — `generativeAI` is enforced server-side on `/v2/genai/*`.
 - **Untrusted generated code:** generated code is applied directly to `prototype.code`; a malicious or compromised generator could plant backdoors/exploits that later run in the prototype runtime. *Mitigation:* sandbox the prototype runtime and review generated code before apply.
 
 ### Personal data processing

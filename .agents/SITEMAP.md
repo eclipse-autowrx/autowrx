@@ -132,6 +132,7 @@
 | Tab bar renders | All tabs visible | ✅ `prototype-tabs.spec.ts` |
 | Overview tab layout | No broken elements | ✅ `prototype-tabs.spec.ts` |
 | SDV Code tab layout | Editor loads | ✅ `prototype-tabs.spec.ts` |
+| SDV ProtoPilot generation via proxy (P-7a) | Generation calls only `POST /v2/genai/generate` (no endpoint/key from the browser); anonymous call gets 401 | ✅ `genai-protopilot-proxy.spec.ts` |
 | Dashboard tab layout | Dashboard area renders | ⚠️ `prototype-tabs.spec.ts` — "Add Runtime" button zero-size bug detected |
 | Journey tab layout | Journey content renders | ✅ `prototype-tabs.spec.ts` |
 | Journey edit matrix | Add row and save via UI | ✅ `prototype-journey.spec.ts` |
