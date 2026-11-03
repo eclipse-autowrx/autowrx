@@ -47,6 +47,11 @@ import { useSystemUI } from '@/hooks/useSystemUI'
 import { useUsedVehicleApis } from '@/hooks/useUsedVehicleApis'
 import { useUnknownVehicleApis } from '@/hooks/useUnknownVehicleApis'
 import { toast } from 'react-toastify'
+import {
+  getKitServerHost,
+  isKitServerAllowed,
+  parseKitServerAllowlist,
+} from '@/lib/kitServerPolicy'
 
 const AlwaysScrollToBottom = () => {
   const elementRef = useRef<HTMLDivElement>(null)
@@ -71,8 +76,16 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   )
   const { data: model } = useCurrentModel()
   usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+  const adminPermission = usePermissionHook([PERMISSIONS.ADMIN])
+  const [isAdmin] = adminPermission
   const runtimeServerUrl = useSiteConfig('RUNTIME_SERVER_URL')
   const runtimeServerConfigRaw = useSiteConfig('RUNTIME_SERVER_CONFIG', '')
+  const kitServerAllowlistRaw = useSiteConfig('KIT_SERVER_ALLOWLIST', '')
+  const kitServerAllowlist = useMemo(
+    () => parseKitServerAllowlist(kitServerAllowlistRaw),
+    [kitServerAllowlistRaw],
+  )
+  const canConfigureKitServer = isAdmin || kitServerAllowlist.length > 0
   const runtimeServerConfig = useMemo(() => {
     if (!runtimeServerConfigRaw) return {}
     try {
@@ -105,6 +118,18 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   const [tmpCustomKitServer, setTmpCustomKitServer] = useState<string>(
     localStorage.getItem('customKitServer') || '',
   )
+  const [kitServerError, setKitServerError] = useState<string>('')
+  const effectiveCustomKitServer = useMemo(() => {
+    const trimmed = customKitServer.trim()
+    if (
+      trimmed &&
+      isKitServerAllowed(trimmed, { isAdmin, allowlist: kitServerAllowlist })
+    ) {
+      return trimmed
+    }
+    return ''
+  }, [customKitServer, isAdmin, kitServerAllowlist])
+  const hasWarnedIgnoredKitServerRef = useRef<boolean>(false)
   const [showConfigDialog, setShowConfigDialog] = useState<boolean>(false)
   const [runtimeMenuOpen, setRuntimeMenuOpen] = useState(false)
   const [useRuntime, setUseRuntime] = useState<boolean>(true)
@@ -128,6 +153,21 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   useEffect(() => {
     localStorage.setItem('customKitServer', customKitServer.trim())
   }, [customKitServer])
+
+  useEffect(() => {
+    const trimmed = customKitServer.trim()
+    if (
+      adminPermission.isResolved &&
+      trimmed &&
+      !effectiveCustomKitServer &&
+      !hasWarnedIgnoredKitServerRef.current
+    ) {
+      hasWarnedIgnoredKitServerRef.current = true
+      console.warn(
+        `Ignoring disallowed customKitServer "${trimmed}" (not permitted by KIT_SERVER_ALLOWLIST).`,
+      )
+    }
+  }, [customKitServer, effectiveCustomKitServer, adminPermission.isResolved])
 
   useEffect(() => {
     setCurRuntimeInfo(null)
@@ -377,7 +417,12 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
       {/* Runtime Server Config Dialog */}
       <DaDialog
         open={showConfigDialog}
-        onOpenChange={setShowConfigDialog}
+        onOpenChange={(open) => {
+          setShowConfigDialog(open)
+          if (!open) {
+            setKitServerError('')
+          }
+        }}
         trigger={<span></span>}
         className="w-[600px] max-w-[90vw]"
         showCloseButton={false}
@@ -387,7 +432,8 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
             <Button
               variant="outline"
               onClick={() => {
-                setTmpCustomKitServer(customKitServer)
+                setTmpCustomKitServer(effectiveCustomKitServer)
+                setKitServerError('')
                 setShowConfigDialog(false)
               }}
             >
@@ -396,6 +442,23 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
             <Button
               onClick={() => {
                 const newServer = tmpCustomKitServer.trim()
+                if (
+                  newServer &&
+                  !isKitServerAllowed(newServer, {
+                    isAdmin,
+                    allowlist: kitServerAllowlist,
+                  })
+                ) {
+                  const allowedList =
+                    kitServerAllowlist.length > 0
+                      ? kitServerAllowlist.join(', ')
+                      : 'none'
+                  setKitServerError(
+                    `This server is not allowed. Only admins or allowlisted hosts (${allowedList}) can be used.`,
+                  )
+                  return
+                }
+                setKitServerError('')
                 localStorage.setItem('customKitServer', newServer)
                 setCustomKitServer(newServer)
                 setShowConfigDialog(false)
@@ -411,14 +474,36 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
           <p className="text-sm text-muted-foreground">
             Runtime server URL: leave empty to use default server
           </p>
+          {!isAdmin && kitServerAllowlist.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Allowed hosts: {kitServerAllowlist.join(', ')}
+            </p>
+          )}
           <Input
             className="w-full text-primary"
             value={tmpCustomKitServer}
             onChange={(e) => {
               setTmpCustomKitServer(e.target.value)
+              if (kitServerError) {
+                setKitServerError('')
+              }
             }}
             placeholder="Custom server URL"
           />
+          {kitServerError && (
+            <p
+              className="text-sm text-destructive"
+              data-testid="kit-server-error"
+            >
+              {kitServerError}
+            </p>
+          )}
+          {tmpCustomKitServer.trim().length > 0 && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              Your prototype code and signals will be sent to this server
+              instead of the default runtime server.
+            </p>
+          )}
         </div>
       </DaDialog>
 
@@ -432,10 +517,19 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
             >
               Runtime:
             </label>
-            {customKitServer && customKitServer.trim().length > 0 ? (
+            {effectiveCustomKitServer && (
+              <span
+                data-testid="custom-kit-server-warning"
+                title="Your prototype code and signals will be sent to this server instead of the default runtime server."
+                className="mr-2 rounded border border-amber-400/60 bg-amber-500/20 px-1.5 py-0.5 text-xs text-amber-300 truncate max-w-[160px]"
+              >
+                Custom server: {getKitServerHost(effectiveCustomKitServer)}
+              </span>
+            )}
+            {effectiveCustomKitServer ? (
               <DaRuntimeConnector
                 targetPrefix="runtime-"
-                kitServerUrl={customKitServer}
+                kitServerUrl={effectiveCustomKitServer}
                 socketIoConfig={runtimeServerConfig}
                 ref={runTimeRef}
                 usedAPIs={usedApis}
@@ -487,30 +581,36 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
           </Button>
         </div>
         <div className="grow" />
-        <DropdownMenu open={runtimeMenuOpen} onOpenChange={setRuntimeMenuOpen}>
-          <DropdownMenuTrigger asChild>
-            <div
-              className="cursor-pointer hover:bg-slate-500 p-2 rounded"
-              style={{ color: 'hsl(0, 0%, 100%)' }}
-            >
-              <SlOptionsVertical size={20} />
-            </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => {
-                setRuntimeMenuOpen(false)
-                setTmpCustomKitServer(customKitServer)
-                setShowConfigDialog(true)
-              }}
-            >
-              <div className="flex w-full items-center justify-between gap-2">
-                <TbSettings className="w-5 h-5" />
-                <span>Config Runtime Server</span>
+        {canConfigureKitServer && (
+          <DropdownMenu
+            open={runtimeMenuOpen}
+            onOpenChange={setRuntimeMenuOpen}
+          >
+            <DropdownMenuTrigger asChild>
+              <div
+                className="cursor-pointer hover:bg-slate-500 p-2 rounded"
+                style={{ color: 'hsl(0, 0%, 100%)' }}
+              >
+                <SlOptionsVertical size={20} />
               </div>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  setRuntimeMenuOpen(false)
+                  setTmpCustomKitServer(effectiveCustomKitServer)
+                  setKitServerError('')
+                  setShowConfigDialog(true)
+                }}
+              >
+                <div className="flex w-full items-center justify-between gap-2">
+                  <TbSettings className="w-5 h-5" />
+                  <span>Config Runtime Server</span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       {/* Play/Stop Controls */}
