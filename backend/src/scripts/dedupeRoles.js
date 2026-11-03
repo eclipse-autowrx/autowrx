@@ -9,7 +9,7 @@
 /* eslint-disable no-await-in-loop, no-restricted-syntax */
 
 /**
- * One-off cleanup for duplicate Role documents (same `ref`, different `_id`).
+ * Merges duplicate Role documents (same `ref`, different `_id`).
  *
  * For every duplicated `ref` the oldest role (lowest `_id`, the one
  * initializeRoles keeps updating) is kept. UserRole rows pointing at the
@@ -17,7 +17,10 @@
  * has the same assignment there. The duplicate roles are then removed and the
  * unique index on `ref` is built.
  *
- * Usage (from backend/):
+ * initializeRoles runs this with `apply: true` on every boot, so affected
+ * instances heal on their next deploy; when there are no duplicates it is a
+ * single aggregate query and changes nothing. It can also be run by hand
+ * (from backend/):
  *   node src/scripts/dedupeRoles.js            # dry run, prints the plan
  *   node src/scripts/dedupeRoles.js --apply    # performs the cleanup
  */
@@ -60,7 +63,15 @@ const dedupeRoles = async ({ apply = false, log = (msg) => logger.info(msg) } = 
         } else {
           stats.userRolesMoved += 1;
           log(`  user ${row.user}: move assignment ${row._id} to kept role`);
-          if (apply) await UserRole.updateOne({ _id: row._id }, { $set: { role: keepId } });
+          if (apply) {
+            try {
+              await UserRole.updateOne({ _id: row._id }, { $set: { role: keepId } });
+            } catch (error) {
+              // A concurrent run already put this user on the kept role.
+              if (error.code !== 11000) throw error;
+              await UserRole.deleteOne({ _id: row._id });
+            }
+          }
         }
       }
       stats.rolesRemoved += 1;
@@ -69,13 +80,16 @@ const dedupeRoles = async ({ apply = false, log = (msg) => logger.info(msg) } = 
   }
 
   if (apply) {
-    await Role.syncIndexes();
+    // createIndexes (not syncIndexes) so unrelated indexes are never dropped.
+    await Role.createIndexes();
   }
 
-  log(
-    `${apply ? 'Done' : 'Dry run'}: ${stats.refs} duplicated ref(s), ${stats.rolesRemoved} role(s) removed, ` +
-      `${stats.userRolesMoved} assignment(s) moved, ${stats.userRolesDropped} duplicate assignment(s) dropped.`,
-  );
+  if (!apply || stats.refs > 0) {
+    log(
+      `${apply ? 'Done' : 'Dry run'}: ${stats.refs} duplicated ref(s), ${stats.rolesRemoved} role(s) removed, ` +
+        `${stats.userRolesMoved} assignment(s) moved, ${stats.userRolesDropped} duplicate assignment(s) dropped.`,
+    );
+  }
   if (!apply && stats.refs > 0) log('Re-run with --apply to perform the cleanup.');
   return stats;
 };

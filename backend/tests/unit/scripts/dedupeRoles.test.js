@@ -84,6 +84,23 @@ describe('dedupeRoles', () => {
 });
 
 describe('initializeRoles', () => {
+  test('heals existing duplicates on boot and keeps user assignments', async () => {
+    const { adminA, adminB } = await seedDuplicates();
+    const user = oid();
+    await UserRole.collection.insertOne({ user, role: adminB });
+
+    await initializeRoles();
+
+    expect(await Role.countDocuments({ ref: 'admin' })).toBe(1);
+    expect(await Role.countDocuments({ ref: 'model_member' })).toBe(1);
+    expect(await UserRole.exists({ user, role: adminA })).toBeTruthy();
+    // The kept copy is brought up to date with the current role definitions.
+    const member = await Role.findOne({ ref: 'model_member' }).lean();
+    expect(member.name).toBe('Model reader');
+    const indexes = await Role.collection.indexes();
+    expect(indexes.find((i) => i.key.ref === 1)).toMatchObject({ unique: true });
+  });
+
   test('concurrent runs do not create duplicate roles', async () => {
     await Role.syncIndexes();
     const errorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});

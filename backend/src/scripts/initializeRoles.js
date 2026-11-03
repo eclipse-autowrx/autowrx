@@ -10,6 +10,7 @@
 const { ROLES } = require('../config/roles');
 const Role = require('../models/role.model');
 const logger = require('../config/logger');
+const dedupeRoles = require('./dedupeRoles');
 
 // Atomic upsert keyed on `ref`: a separate find-then-create lets two
 // concurrent boots (or a boot racing a data import) insert the same role
@@ -36,6 +37,15 @@ const upsertRole = async (roleData) => {
 };
 
 const initializeRoles = async () => {
+  // Heal databases that already hold duplicate roles (e.g. from an older
+  // backend or a data import) before upserting. Isolated so a failure here
+  // never blocks role initialization.
+  try {
+    await dedupeRoles({ apply: true, log: (msg) => logger.info(`[roles dedupe] ${msg}`) });
+  } catch (error) {
+    logger.error(`Error merging duplicate roles: ${error}`);
+  }
+
   try {
     // eslint-disable-next-line no-restricted-syntax
 
