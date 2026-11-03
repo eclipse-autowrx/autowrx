@@ -49,11 +49,52 @@ const quadrants: Plugin = {
   },
 }
 
+type ChartThemeColors = {
+  primary: string
+  primaryForeground: string
+  muted: string
+  mutedForeground: string
+  border: string
+}
+
+// Canvas can't resolve CSS variables or Tailwind dark: variants, so read the
+// theme tokens (oklch values, admin-editable) as concrete color strings.
+const readChartThemeColors = (): ChartThemeColors => {
+  const token = (name: string, fallback: string) =>
+    getCSSVariable(name) || fallback
+  return {
+    primary: token('--primary', '#005072'),
+    primaryForeground: token('--primary-foreground', '#ffffff'),
+    muted: token('--muted', '#f3f4f6'),
+    mutedForeground: token('--muted-foreground', '#6b7280'),
+    border: token('--border', '#d1d5db'),
+  }
+}
+
+// Re-read the tokens whenever the theme changes (.dark class or inline vars on <html>)
+const useChartThemeColors = () => {
+  const [colors, setColors] = useState<ChartThemeColors>(readChartThemeColors)
+
+  useEffect(() => {
+    const observer = new MutationObserver(() =>
+      setColors(readChartThemeColors()),
+    )
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'style'],
+    })
+    return () => observer.disconnect()
+  }, [])
+
+  return colors
+}
+
 const PrototypeLibraryPortfolio = () => {
   const { data: model } = useCurrentModel()
   const { data: prototypes } = useListModelPrototypes(model ? model.id : '')
   const [data, setData] = useState<any>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const colors = useChartThemeColors()
 
   useEffect(() => {
     if (!prototypes) return
@@ -146,7 +187,6 @@ const PrototypeLibraryPortfolio = () => {
       datasets: [
         {
           data: protoData,
-          backgroundColor: 'hsl(var(--primary))',
         },
       ],
     })
@@ -158,13 +198,18 @@ const PrototypeLibraryPortfolio = () => {
         title: {
           text: 'Relevance',
           display: true,
+          color: colors.mutedForeground,
         },
         beginAtZero: true,
         grid: {
           display: false,
         },
+        border: {
+          color: colors.border,
+        },
         ticks: {
           stepSize: 1,
+          color: colors.mutedForeground,
         },
         min: 0,
         max: 6,
@@ -173,13 +218,18 @@ const PrototypeLibraryPortfolio = () => {
         title: {
           text: 'Needs addressed?',
           display: true,
+          color: colors.mutedForeground,
         },
         beginAtZero: true,
         grid: {
           display: false,
         },
+        border: {
+          color: colors.border,
+        },
         ticks: {
           stepSize: 1,
+          color: colors.mutedForeground,
         },
         min: 0,
         max: 6,
@@ -216,14 +266,14 @@ const PrototypeLibraryPortfolio = () => {
           left: 8,
         },
         backgroundColor: (context) =>
-          context.dataIndex === hoveredIndex
-            ? `hsl(${getCSSVariable('--primary')})`
-            : '#f3f4f6',
-        borderColor: '#d1d5db',
+          context.dataIndex === hoveredIndex ? colors.primary : colors.muted,
+        borderColor: colors.border,
         borderRadius: 4,
         borderWidth: 1,
         color: (context) =>
-          context.dataIndex === hoveredIndex ? '#ffffff' : '#374151',
+          context.dataIndex === hoveredIndex
+            ? colors.primaryForeground
+            : colors.mutedForeground,
         font: {
           size: 12,
           weight: 'normal',
@@ -257,7 +307,12 @@ const PrototypeLibraryPortfolio = () => {
         data.datasets[0].data.length > 0 ? (
           <Bubble
             options={options}
-            data={data}
+            data={{
+              ...data,
+              datasets: [
+                { ...data.datasets[0], backgroundColor: colors.primary },
+              ],
+            }}
             plugins={[quadrants, ChartDataLabels]}
           />
         ) : (
