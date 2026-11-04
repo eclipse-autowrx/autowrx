@@ -64,6 +64,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
 import { getComputedAPIs, getModel } from '@/services/model.service'
 
+// Signals listed in the Deploy icon tooltip before "and N more".
+const MAX_TOOLTIP_SIGNALS = 3
+
 export interface DaPrototypeCardProps {
   prototype: Prototype
   className?: string
@@ -181,8 +184,14 @@ export const DaPrototypeCard = ({
   const deployTooltipMessage = useMemo(() => {
     if (!user) return 'Sign in to deploy'
     if (!canEditPrototype) return 'You do not have permission to deploy'
+    // Keep the tooltip short: list a few signals and count the rest.
+    if (hasCode && unknownDeployApis.length > MAX_TOOLTIP_SIGNALS) {
+      const shown = unknownDeployApis.slice(0, MAX_TOOLTIP_SIGNALS).join(', ')
+      const more = unknownDeployApis.length - MAX_TOOLTIP_SIGNALS
+      return `Unknown signals: ${shown} and ${more} more. Fix them before deploying.`
+    }
     return deployBlockReason ?? 'Deploy'
-  }, [user, canEditPrototype, deployBlockReason])
+  }, [user, canEditPrototype, hasCode, unknownDeployApis, deployBlockReason])
 
   const stagingRenderPlugin = useMemo(() => {
     const buttons =
@@ -469,6 +478,8 @@ export const DaPrototypeCard = ({
               <DaTooltip
                 tooltipMessage={deployTooltipMessage}
                 tooltipDelay={300}
+                tooltipContainerClassName="max-w-[min(24rem,calc(100vw-2rem))]"
+                tooltipClassName="block text-left break-words"
               >
                 <span className="inline-flex">
                   <button
