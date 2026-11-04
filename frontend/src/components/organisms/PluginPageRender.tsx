@@ -45,6 +45,7 @@ import {
   listExtendedApis,
 } from '@/services/extendedApis.service'
 import useRuntimeStore from '@/stores/runtimeStore'
+import useModelStore from '@/stores/modelStore'
 import { configManagementService } from '@/services/configManagement.service'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import useCanEditPrototype from '@/hooks/useCanEditPrototype'
@@ -166,6 +167,14 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({
           prototype_id,
           updates,
         )
+        // Update the model store (read by the Deploy button) immediately, but
+        // not the query cache feeding plugins, since the plugin would mistake
+        // its own save for an external edit.
+        const { prototype: storePrototype, setActivePrototype } =
+          useModelStore.getState()
+        if (storePrototype?.id === prototype_id) {
+          setActivePrototype({ ...storePrototype, ...updatedPrototype })
+        }
         // Invalidate React Query cache so parent re-fetches and passes fresh data.prototype to the plugin
         await queryClient.invalidateQueries({
           queryKey: ['prototype', prototype_id],

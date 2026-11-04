@@ -27,9 +27,15 @@ type ModelState = {
   prototype?: Prototype | null
   supportApis: any[]
   prototypeHasUnsavedChanges: boolean
+  /** Live (possibly unsaved) code currently shown in the Code tab editor */
+  prototypeDraft?: { id: string; code: string } | null
+  /** Registered by the Code tab editor: persists pending code immediately */
+  flushPrototypeCode?: (() => Promise<void>) | null
 }
 
 type Actions = {
+  setPrototypeDraft: (draft?: { id: string; code: string } | null) => void
+  setFlushPrototypeCode: (fn?: (() => Promise<void>) | null) => void
   setActiveModel: (_: Model) => Promise<void>
   setActivePrototype: (_: Prototype) => void
   refreshModel: () => Promise<void>
@@ -45,6 +51,10 @@ const useModelStore = createWithEqualityFn<ModelState & Actions>()(
     supportApis: [],
     prototype: undefined,
     prototypeHasUnsavedChanges: false,
+    prototypeDraft: null,
+    flushPrototypeCode: null,
+    setPrototypeDraft: (draft) => set({ prototypeDraft: draft ?? null }),
+    setFlushPrototypeCode: (fn) => set({ flushPrototypeCode: fn ?? null }),
     setActiveModel: async (model) => {
       let ret: any
       let supportApis = [

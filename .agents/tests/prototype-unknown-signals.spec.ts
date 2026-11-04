@@ -93,9 +93,15 @@ test.describe('Prototype unknown signal deployment guard', () => {
       // Cards validate against their own model without an active-model store.
       await page.goto(`/model/${modelId}/library/list`);
       const card = page.locator(`[data-id="prototype-item-${prototypeId}"]`);
-      await card.getByRole('button', { name: 'Deploy prototype' }).click();
+      await card.hover();
+      await expect(card.getByRole('button', { name: 'Deploy prototype' })).toBeDisabled({ timeout: 20000 });
       const dialog = page.getByRole('dialog');
-      await expect(dialog.getByRole('alert')).toHaveText(UNKNOWN_MESSAGE);
+
+      // The card's actions menu disables Deploy and names the unknown signals.
+      await card.getByRole('button', { name: 'Prototype actions' }).click();
+      const menuDeploy = page.getByRole('menuitem').filter({ hasText: 'Deploy' });
+      await expect(menuDeploy.getByTestId('prototype-menu-deploy-reason')).toHaveText(UNKNOWN_MESSAGE);
+      await expect(menuDeploy).toHaveAttribute('aria-disabled', 'true');
       await page.keyboard.press('Escape');
 
       // Known leaves, branches and wishlist/custom APIs remain deployable.
@@ -120,7 +126,15 @@ test.describe('Prototype unknown signal deployment guard', () => {
       await expect(page.locator('[title^="Unknown signals:"]')).toHaveCount(0);
 
       await page.goto(`/model/${modelId}/library/list`);
-      await card.getByRole('button', { name: 'Deploy prototype' }).click();
+      await card.getByRole('button', { name: 'Prototype actions' }).click();
+      await expect(menuDeploy).not.toHaveAttribute('aria-disabled', 'true');
+      await expect(menuDeploy.getByTestId('prototype-menu-deploy-reason')).toHaveCount(0);
+      await page.keyboard.press('Escape');
+
+      await card.hover();
+      const deployButton = card.getByRole('button', { name: 'Deploy prototype' });
+      await expect(deployButton).toBeEnabled({ timeout: 20000 });
+      await deployButton.click();
       await expect(dialog).toBeVisible();
       await expect(dialog.getByText('Stages', { exact: true })).toBeVisible();
       await expect(dialog.getByRole('alert')).toHaveCount(0);

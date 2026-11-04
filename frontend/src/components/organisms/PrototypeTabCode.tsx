@@ -129,7 +129,27 @@ const PrototypeTabCode: FC = () => {
 
   useEffect(() => {
     codeRef.current = code
-  }, [code])
+    // Publish live editor code so other UI (e.g. Deploy button) validates what the user sees
+    const state = useModelStore.getState()
+    if (prototype?.id && code !== undefined) {
+      state.setPrototypeDraft({ id: prototype.id, code })
+    } else {
+      state.setPrototypeDraft(null)
+    }
+  }, [code, prototype?.id])
+
+  // Expose a flush so callers (Deploy click) can persist pending code first
+  useEffect(() => {
+    useModelStore.getState().setFlushPrototypeCode(() => saveCodeToDb())
+  })
+
+  useEffect(() => {
+    return () => {
+      const state = useModelStore.getState()
+      state.setPrototypeDraft(null)
+      state.setFlushPrototypeCode(null)
+    }
+  }, [])
 
   useEffect(() => {
     if (!prototype) {
