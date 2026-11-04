@@ -5,7 +5,7 @@ in everyday words, what each one checks. No technical background needed.
 
 - **What is an E2E test?** A robot opens the website in a real browser, clicks
   around like a human, and checks that the right thing appears on screen.
-- **How many are there?** 158 tests in 40 groups.
+- **How many are there?** 206 tests in 31 groups.
 - **How do I run them?** One command (`yarn test` inside the `.agents` folder).
   The system prepares everything by itself: it starts the website and its
   backend if they are not running, signs in as the test administrator, and
@@ -363,14 +363,35 @@ this line when you re-run).
 | #272 API without write access (member and unrelated user) returns no contributor or member lists | A reader and an unrelated user get the model without any contributor or member lists and without any of those people's full email addresses. |
 | #272 UI as owner shows masked emails and never the full address | The model overview's Contributor and Reader tabs show the masked emails, and the full addresses appear nowhere in the page. |
 | #272 UI as owner shows contributor and member names masked | Known gap (expected to fail): the list prints each person's name unmasked next to the masked email, so names are not hidden. |
-+- **How many are there?** 194 test declarations across the suites.
-+| Non-admin cannot upload ZIPs or register same-origin plugins | Rejects upload and registration attempts that would give untrusted code application-origin privileges. |
-+| Admin-created plugin renders in-page | A trusted plugin still renders without an isolated frame. |
-+| Non-admin plugin uses an isolated frame and restricted API | Host storage, cookies and DOM stay inaccessible, while allowed API calls work and denied methods remain unavailable. |
-+## 28. Production Content Security Policy
-+
-+Run these checks with `playwright.csp.config.ts` against an isolated backend
-+serving the production build with `CSP_MODE=enforce`.
-+| Blocks injected scripts, eval and unapproved network destinations | The enforced browser policy prevents inline JavaScript, dynamic code evaluation and connections/scripts to unapproved origins. |
-+| Loads the editor and language workers without vendor CDN requests | The code editor renders using local Monaco assets without CDN requests. |
-+| Runs bundled widget scripts with no inline-script exemption | The shipped fan widget runs its local script under the strict policy. |
+
+## 29. Plugin authorization and sandbox (#626)
+
+| Test case | What it checks |
+|---|---|
+| Non-admin cannot upload ZIPs or register same-origin plugins | Rejects upload and registration attempts that would give untrusted code application-origin privileges. |
+| Admin-created plugin renders in-page | A trusted plugin still renders without an isolated frame. |
+| Non-admin plugin uses an isolated frame and restricted API | Host storage, cookies and DOM stay inaccessible, while allowed API calls work and denied methods remain unavailable. |
+
+## 30. Production Content Security Policy
+
+Run these checks with `playwright.csp.config.ts` against an isolated backend
+serving the production build with `CSP_MODE=enforce`.
+
+| Test case | What it checks |
+|---|---|
+| Blocks injected scripts, eval and unapproved network destinations | The enforced browser policy prevents inline JavaScript, dynamic code evaluation and connections/scripts to unapproved origins. |
+| Loads the editor and language workers without vendor CDN requests | The code editor renders using local Monaco assets without CDN requests. |
+| Runs bundled widget scripts with no inline-script exemption | The shipped fan widget runs its local script under the strict policy. |
+
+## 31. Dashboard pop-up security, AI generation and runtime server restriction
+
+| Test case | What it checks |
+|---|---|
+| AC1: Pop-up request from the page itself is ignored; widget request opens it | A message sent by the page is ignored, but the same request from a real dashboard widget opens the image pop-up. |
+| AC2: Disallowed media addresses from a widget do not open the pop-up | Unsafe or insecure picture addresses sent by a widget never open a pop-up. |
+| AC3: Embedded-page pop-up is shown in a locked-down frame | A widget's embedded content opens in a sandboxed frame that cannot reach the app's own data. |
+| Anonymous AI generation request is rejected | A signed-out request to the AI code generator is refused as unauthorised. |
+| SDV Copilot generation uses only the backend, with no address or key from the browser | Generating code with ProtoPilot talks only to the app's own server, sends no outside address or secret key, and shows the result. |
+| Non-admin with no allowed list cannot set a custom runtime server | Without an allowed list, a normal user gets no runtime server option, and a planted browser value is ignored with no outside calls. |
+| Non-admin with an allowed list can save only allowed runtime servers | A normal user can save a listed server (a warning chip appears) but a server not on the list is refused with an error. |
+| Admin with an empty allowed list can save any runtime server | An administrator can save any server address and sees the warning chip. |
