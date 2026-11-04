@@ -120,6 +120,13 @@ export const DaPrototypeCard = ({
   const [isUploading, setIsUploading] = useState(false)
   const [deployOpen, setDeployOpen] = useState(false)
   const [dotsMenuOpen, setDotsMenuOpen] = useState(false)
+  const [contextMenuOpen, setContextMenuOpen] = useState(false)
+  const hasCode = !!prototype.code?.trim()
+  // Validate signals as soon as a menu opens, so its Deploy item can be
+  // disabled instead of opening a dialog that only reports the problem.
+  const shouldValidateDeploy =
+    (deployOpen || ((dotsMenuOpen || contextMenuOpen) && hasCode)) &&
+    !!prototype.model_id
 
   const {
     data: deployModel,
@@ -128,7 +135,7 @@ export const DaPrototypeCard = ({
   } = useQuery({
     queryKey: ['model', prototype.model_id],
     queryFn: () => getModel(prototype.model_id),
-    enabled: deployOpen && !!prototype.model_id,
+    enabled: shouldValidateDeploy,
   })
 
   const {
@@ -138,7 +145,7 @@ export const DaPrototypeCard = ({
   } = useQuery({
     queryKey: ['computed-apis', prototype.model_id],
     queryFn: () => getComputedAPIs(prototype.model_id),
-    enabled: deployOpen && !!prototype.model_id,
+    enabled: shouldValidateDeploy,
   })
 
   const unknownDeployApis = useMemo(() => {
@@ -151,6 +158,25 @@ export const DaPrototypeCard = ({
     return filterAndCompareVehicleApis(prototype.code || '', apis)
       .apisNotInModel
   }, [deployModel, deployModelApiTree, prototype.code])
+
+  // Why the menu's Deploy item is disabled; undefined when it is enabled.
+  const deployMenuBlockReason = useMemo(() => {
+    if (!hasCode) return 'Add code to deploy'
+    if (isDeployModelError || isDeployApisError)
+      return 'Unable to validate vehicle signals'
+    if (isDeployModelLoading || isDeployApisLoading)
+      return 'Checking vehicle signals...'
+    if (unknownDeployApis.length)
+      return `Unknown signals: ${unknownDeployApis.join(', ')}. Fix them before deploying.`
+    return undefined
+  }, [
+    hasCode,
+    isDeployModelError,
+    isDeployApisError,
+    isDeployModelLoading,
+    isDeployApisLoading,
+    unknownDeployApis,
+  ])
 
   const stagingRenderPlugin = useMemo(() => {
     const buttons =
@@ -300,11 +326,28 @@ export const DaPrototypeCard = ({
       <MenuSeparator />
       <MenuItem
         className="cursor-pointer gap-2"
-        disabled={!prototype.code || !prototype.code.trim()}
+        disabled={!!deployMenuBlockReason}
         onSelect={() => wrapAction(() => setDeployOpen(true))}
       >
-        <TbCloudDown className="size-4" />
-        Deploy
+        <TbCloudDown className="size-4 shrink-0 self-start mt-0.5" />
+        <div className="flex min-w-0 flex-col">
+          <span>Deploy</span>
+          {hasCode && deployMenuBlockReason && (
+            <span
+              className={cn(
+                'text-xs line-clamp-3 break-words',
+                unknownDeployApis.length ||
+                  isDeployModelError ||
+                  isDeployApisError
+                  ? 'text-destructive'
+                  : 'text-muted-foreground',
+              )}
+              data-testid="prototype-menu-deploy-reason"
+            >
+              {deployMenuBlockReason}
+            </span>
+          )}
+        </div>
       </MenuItem>
       <MenuItem
         className="cursor-pointer gap-2"
@@ -496,7 +539,7 @@ export const DaPrototypeCard = ({
       }}
     >
       {isOwner ? (
-        <ContextMenu>
+        <ContextMenu onOpenChange={setContextMenuOpen}>
           <ContextMenuTrigger asChild>{cardContent}</ContextMenuTrigger>
           <ContextMenuContent
             className="w-52"

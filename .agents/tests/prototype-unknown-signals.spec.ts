@@ -98,6 +98,13 @@ test.describe('Prototype unknown signal deployment guard', () => {
       await expect(dialog.getByRole('alert')).toHaveText(UNKNOWN_MESSAGE);
       await page.keyboard.press('Escape');
 
+      // The card's actions menu disables Deploy and names the unknown signals.
+      await card.getByRole('button', { name: 'Prototype actions' }).click();
+      const menuDeploy = page.getByRole('menuitem').filter({ hasText: 'Deploy' });
+      await expect(menuDeploy.getByTestId('prototype-menu-deploy-reason')).toHaveText(UNKNOWN_MESSAGE);
+      await expect(menuDeploy).toHaveAttribute('aria-disabled', 'true');
+      await page.keyboard.press('Escape');
+
       // Known leaves, branches and wishlist/custom APIs remain deployable.
       // Markdown and comments mentioning unknown signals do not block projects.
       const validCode = JSON.stringify([
@@ -120,6 +127,11 @@ test.describe('Prototype unknown signal deployment guard', () => {
       await expect(page.locator('[title^="Unknown signals:"]')).toHaveCount(0);
 
       await page.goto(`/model/${modelId}/library/list`);
+      await card.getByRole('button', { name: 'Prototype actions' }).click();
+      await expect(menuDeploy).not.toHaveAttribute('aria-disabled', 'true');
+      await expect(menuDeploy.getByTestId('prototype-menu-deploy-reason')).toHaveCount(0);
+      await page.keyboard.press('Escape');
+
       await card.getByRole('button', { name: 'Deploy prototype' }).click();
       await expect(dialog).toBeVisible();
       await expect(dialog.getByText('Stages', { exact: true })).toBeVisible();
