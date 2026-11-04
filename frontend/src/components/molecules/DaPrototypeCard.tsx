@@ -96,15 +96,6 @@ export const DaPrototypeCard = ({
   const canEditPrototype = useCanEditPrototype(prototype)
   const isOwner = canEditPrototype
   const isPrototypeOwner = canEditPrototype
-  const isDeployDisabled =
-    !canEditPrototype || !prototype.code || !prototype.code.trim()
-
-  const deployTooltipMessage = useMemo(() => {
-    if (!user) return 'Sign in to deploy'
-    if (!canEditPrototype) return 'You do not have permission to deploy'
-    if (!prototype.code?.trim()) return 'Add code to deploy'
-    return 'Deploy'
-  }, [user, canEditPrototype, prototype.code])
 
   const menuTooltipMessage = useMemo(() => {
     if (!user) return 'Sign in to manage prototype'
@@ -124,13 +115,20 @@ export const DaPrototypeCard = ({
   const hasCode = !!prototype.code?.trim()
   // Validate signals as soon as a menu opens, so its Deploy item can be
   // disabled instead of opening a dialog that only reports the problem.
+  // The icon button starts validating on hover/focus intent (sticky, no flicker).
+  const [deployIntent, setDeployIntent] = useState(false)
+  const markDeployIntent = useCallback(() => setDeployIntent(true), [])
   const shouldValidateDeploy =
-    (deployOpen || ((dotsMenuOpen || contextMenuOpen) && hasCode)) &&
+    (deployOpen ||
+      ((dotsMenuOpen ||
+        contextMenuOpen ||
+        (deployIntent && canEditPrototype)) &&
+        hasCode)) &&
     !!prototype.model_id
 
   const {
     data: deployModel,
-    isPending: isDeployModelLoading,
+    isLoading: isDeployModelLoading,
     isError: isDeployModelError,
   } = useQuery({
     queryKey: ['model', prototype.model_id],
@@ -140,7 +138,7 @@ export const DaPrototypeCard = ({
 
   const {
     data: deployModelApiTree,
-    isPending: isDeployApisLoading,
+    isLoading: isDeployApisLoading,
     isError: isDeployApisError,
   } = useQuery({
     queryKey: ['computed-apis', prototype.model_id],
@@ -159,8 +157,8 @@ export const DaPrototypeCard = ({
       .apisNotInModel
   }, [deployModel, deployModelApiTree, prototype.code])
 
-  // Why the menu's Deploy item is disabled; undefined when it is enabled.
-  const deployMenuBlockReason = useMemo(() => {
+  // Why Deploy (menu item and icon button) is disabled; undefined when enabled.
+  const deployBlockReason = useMemo(() => {
     if (!hasCode) return 'Add code to deploy'
     if (isDeployModelError || isDeployApisError)
       return 'Unable to validate vehicle signals'
@@ -177,6 +175,14 @@ export const DaPrototypeCard = ({
     isDeployApisLoading,
     unknownDeployApis,
   ])
+
+  const isDeployDisabled = !canEditPrototype || !!deployBlockReason
+
+  const deployTooltipMessage = useMemo(() => {
+    if (!user) return 'Sign in to deploy'
+    if (!canEditPrototype) return 'You do not have permission to deploy'
+    return deployBlockReason ?? 'Deploy'
+  }, [user, canEditPrototype, deployBlockReason])
 
   const stagingRenderPlugin = useMemo(() => {
     const buttons =
@@ -326,13 +332,13 @@ export const DaPrototypeCard = ({
       <MenuSeparator />
       <MenuItem
         className="cursor-pointer gap-2"
-        disabled={!!deployMenuBlockReason}
+        disabled={!!deployBlockReason}
         onSelect={() => wrapAction(() => setDeployOpen(true))}
       >
         <TbCloudDown className="size-4 shrink-0 self-start mt-0.5" />
         <div className="flex min-w-0 flex-col">
           <span>Deploy</span>
-          {hasCode && deployMenuBlockReason && (
+          {hasCode && deployBlockReason && (
             <span
               className={cn(
                 'text-xs line-clamp-3 break-words',
@@ -344,7 +350,7 @@ export const DaPrototypeCard = ({
               )}
               data-testid="prototype-menu-deploy-reason"
             >
-              {deployMenuBlockReason}
+              {deployBlockReason}
             </span>
           )}
         </div>
@@ -392,6 +398,7 @@ export const DaPrototypeCard = ({
       data-id={`prototype-item-${prototype.id}`}
       aria-label={prototype.name || 'Unnamed'}
       id={prototype.id}
+      onPointerEnter={canEditPrototype ? markDeployIntent : undefined}
     >
       <div className="flex flex-col items-center space-y-1 text-muted-foreground overflow-hidden">
         <div className="flex w-full h-full relative overflow-hidden aspect-video rounded-lg">
@@ -468,6 +475,7 @@ export const DaPrototypeCard = ({
                     type="button"
                     tabIndex={-1}
                     disabled={isDeployDisabled}
+                    onFocus={canEditPrototype ? markDeployIntent : undefined}
                     onClick={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
