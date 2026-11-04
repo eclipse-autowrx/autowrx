@@ -13,7 +13,6 @@ import { DaText } from '@/components/atoms/DaText'
 import DaStarsRating from '@/components/atoms/DaStarsRating'
 import { Feedback, Prototype } from '@/types/model.type'
 import DaDialog from '@/components/molecules/DaDialog'
-import { DaButton } from '../atoms/DaButton'
 import useListPrototypeFeedback from '@/hooks/useListPrototypeFeedback'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { TbChartDots, TbTrash } from 'react-icons/tb'
@@ -139,17 +138,22 @@ const PrototypeTabFeedback = () => {
                       key={feedback.id}
                       className="border p-4 mb-4 rounded-lg"
                     >
-                      <div className="flex w-full">
-                        <div className="space-x-6">
+                      <div className="flex w-full items-start justify-between gap-4 border-b pb-3 mb-1">
+                        <div className="flex min-w-0 flex-col">
                           <DaText
                             variant="sub-title"
-                            className="text-da-primary-500"
+                            className="text-da-primary-500 truncate"
                           >
                             {feedback.interviewee.name}
                           </DaText>
-                          <DaText variant="small" className="ml-auto">
-                            Organization: {feedback.interviewee.organization}
-                          </DaText>
+                          {feedback.interviewee.organization && (
+                            <DaText
+                              variant="small"
+                              className="text-muted-foreground truncate"
+                            >
+                              {feedback.interviewee.organization}
+                            </DaText>
+                          )}
                         </div>
                         {profile && profile?.id === feedbackCreatorId && (
                           <DaConfirmPopup
@@ -157,14 +161,15 @@ const PrototypeTabFeedback = () => {
                             onConfirm={() => handleDeleteFeedback(feedback.id)}
                             label="Are you sure you want to delete this feedback?"
                           >
-                            <DaButton
-                              variant="destructive"
+                            <Button
+                              variant="ghost"
                               size="sm"
-                              className="ml-auto"
+                              className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              aria-label="Delete your feedback"
                             >
-                              <TbTrash className="w-4 h-4 mr-1" /> Delete Your
-                              Feedback
-                            </DaButton>
+                              <TbTrash className="w-4 h-4" />
+                              Delete
+                            </Button>
                           </DaConfirmPopup>
                         )}
                       </div>
