@@ -38,8 +38,10 @@ const DaRelatedPrototypes = ({ signal }: DaRelatedPrototypesProps) => {
     )
 
   return (
-    <div className="mt-2">
-      <div className="text-sm font-medium text-foreground">Dependencies</div>
+    <div className="mt-4">
+      <h3 className="border-b border-border pb-1 text-base font-semibold text-primary">
+        Dependencies
+      </h3>
       {prototypes &&
       prototypes.length > 0 &&
       truncatedPrototypes &&
