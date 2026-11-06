@@ -5,7 +5,7 @@ in everyday words, what each one checks. No technical background needed.
 
 - **What is an E2E test?** A robot opens the website in a real browser, clicks
   around like a human, and checks that the right thing appears on screen.
-- **How many are there?** 206 tests in 31 groups.
+- **How many are there?** 210 tests in 32 groups.
 - **How do I run them?** One command (`yarn test` inside the `.agents` folder).
   The system prepares everything by itself: it starts the website and its
   backend if they are not running, signs in as the test administrator, and
@@ -129,7 +129,7 @@ in everyday words, what each one checks. No technical background needed.
 
 | Test case | What it checks |
 |---|---|
-| Guest sees public released prototypes only | Visitors only see released prototypes. |
+| Guest sees public released prototypes only | Visitors only see released, public prototypes of public models. |
 | Admin sees category tabs | Signed-in users get All / My Prototypes tabs. |
 | My Prototypes shows only owned prototypes | The tab filters to your own work. |
 | All remains available when My Prototypes is empty | Having no own prototypes doesn't break the tabs. |
@@ -395,3 +395,12 @@ serving the production build with `CSP_MODE=enforce`.
 | Non-admin with no allowed list cannot set a custom runtime server | Without an allowed list, a normal user gets no runtime server option, and a planted browser value is ignored with no outside calls. |
 | Non-admin with an allowed list can save only allowed runtime servers | A normal user can save a listed server (a warning chip appears) but a server not on the list is refused with an error. |
 | Admin with an empty allowed list can save any runtime server | An administrator can save any server address and sees the warning chip. |
+
+## 32. Prototype visibility (private / public)
+
+| Test case | What it checks |
+|---|---|
+| New prototype is private and hidden from other users | A freshly created prototype is private: its creator sees a lock icon on the card, while another user can neither open it nor see it in the library. |
+| Model owner sees the private prototype and can manage it | The owner of the model (here the administrator) still sees someone else's private prototype and gets "Change visibility to public" in the card menu. |
+| Creator makes it public; others can see and edit but not manage | After "Change visibility to public", any signed-in user sees the prototype and may edit it, but gets no visibility or delete option and cannot switch it back to private. |
+| Creator switches it back to private | "Change visibility to private" hides the prototype from other users again. |

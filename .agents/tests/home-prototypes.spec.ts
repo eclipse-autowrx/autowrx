@@ -5,6 +5,7 @@ import {
   createTestModelViaApi,
   createTestPrototype,
   setPrototypeStateViaApi,
+  setPrototypeVisibilityViaApi,
   boostPrototypePopularity,
   expectPrototypeInPopular,
   configureHomePopularSection,
@@ -47,6 +48,8 @@ test.describe('Home Popular Prototypes', () => {
     const modelId = await createTestModelViaApi(page, modelName, 'public');
     const { prototypeId } = await createTestPrototype(page, protoName, modelId);
     await setPrototypeStateViaApi(page, prototypeId, 'Released');
+    // Popular lists public prototypes only; new ones start private.
+    await setPrototypeVisibilityViaApi(page, prototypeId, 'public');
     await boostPrototypePopularity(page, prototypeId);
     await waitForPrototypeInPopularApi(page, protoName);
 
@@ -62,6 +65,8 @@ test.describe('Home Popular Prototypes', () => {
     const modelId = await createTestModelViaApi(page, modelName, 'private');
     const { prototypeId } = await createTestPrototype(page, protoName, modelId);
     await setPrototypeStateViaApi(page, prototypeId, 'Released');
+    // Popular lists public prototypes only; new ones start private.
+    await setPrototypeVisibilityViaApi(page, prototypeId, 'public');
 
     await expectPrototypeInPopular(page, protoName, false);
     await saveScreenshot(page, 'home-popular-private-hidden');
@@ -73,7 +78,8 @@ test.describe('Home Popular Prototypes', () => {
     const protoName = `HomeDeveloping_${timestamp}`;
 
     const modelId = await createTestModelViaApi(page, modelName, 'public');
-    await createTestPrototype(page, protoName, modelId);
+    const { prototypeId } = await createTestPrototype(page, protoName, modelId);
+    await setPrototypeVisibilityViaApi(page, prototypeId, 'public');
 
     await expectPrototypeInPopular(page, protoName, false);
     await saveScreenshot(page, 'home-popular-developing-hidden');
