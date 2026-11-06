@@ -138,12 +138,17 @@ const PrototypeTabCode: FC = () => {
     }
   }, [code, prototype?.id])
 
-  // Expose a flush so callers (Deploy click) can persist pending code first
-  useEffect(() => {
-    useModelStore.getState().setFlushPrototypeCode(() => saveCodeToDb())
-  })
+  // Expose a flush so callers (Deploy click) can persist pending code first.
+  // Register one stable function that calls the latest saveCodeToDb via a ref;
+  // re-registering a new function every render updates the store on each
+  // render and loops forever (React error #185).
+  const saveCodeToDbRef = useRef<() => Promise<void>>(async () => {})
+  saveCodeToDbRef.current = () => saveCodeToDb()
 
   useEffect(() => {
+    useModelStore
+      .getState()
+      .setFlushPrototypeCode(() => saveCodeToDbRef.current())
     return () => {
       const state = useModelStore.getState()
       state.setPrototypeDraft(null)
