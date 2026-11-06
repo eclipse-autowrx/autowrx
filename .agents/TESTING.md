@@ -30,6 +30,7 @@ npx playwright test tests/home-model-list.spec.ts
 npx playwright test tests/home-prototype-list.spec.ts
 npx playwright test tests/image-fallback.spec.ts
 npx playwright test tests/model-editable-visibility.spec.ts
+npx playwright test tests/prototype-visibility.spec.ts
 
 # Admin visibility variants (starts two dedicated Vite servers)
 npx playwright test --config=playwright.admin-visibility.config.ts
@@ -86,6 +87,7 @@ npx playwright test tests/model-editable-visibility.spec.ts
 | `tests/home-prototype-list.spec.ts` | Home prototype-list: guest visibility, category tabs, My Prototypes filter, all 6 sort options, navigation |
 | `tests/image-fallback.spec.ts` | Model and prototype cards fall back to default images when primary image fails to load |
 | `tests/model-editable-visibility.spec.ts` | Editable model visibility: non-owner prototype create, guest home shows editable+public, template inheritance |
+| `tests/prototype-visibility.spec.ts` | Prototype private/public visibility: private by default, owner/admin access, card-menu toggle, public edit by any signed-in user |
 | `tests/admin-visibility.spec.ts` | Site Config sections and Manage Features categories under clean mode and explicit overrides; run with `playwright.admin-visibility.config.ts` |
 | `tests/layout.spec.ts` | Layout, responsive, visual snapshots |
 

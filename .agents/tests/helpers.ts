@@ -302,6 +302,21 @@ export async function setPrototypeStateViaApi(
   }
 }
 
+export async function setPrototypeVisibilityViaApi(
+  page: Page,
+  prototypeId: string,
+  visibility: 'public' | 'private',
+) {
+  const token = await getAuthToken(page);
+  const res = await page.request.patch(`${API_URL}/v2/prototypes/${prototypeId}`, {
+    data: { visibility },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to update prototype visibility: ${res.status()} ${await res.text()}`);
+  }
+}
+
 export async function setPrototypeStateViaUI(
   page: Page,
   state: 'Released' | 'development',

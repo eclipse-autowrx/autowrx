@@ -19,6 +19,7 @@ import {
   deleteModelViaApi,
   deleteTestUserViaApi,
   setPrototypeStateViaApi,
+  setPrototypeVisibilityViaApi,
   configureHomePrototypeListSection,
   getSiteConfigJson,
   setSiteConfigJson,
@@ -99,6 +100,8 @@ test.describe('Home Prototype List', () => {
       publicModelId,
     );
     await setPrototypeStateViaApi(adminPage, publicPrototypeId, 'Released');
+    // New prototypes are private; publish so only the model visibility decides.
+    await setPrototypeVisibilityViaApi(adminPage, publicPrototypeId, 'public');
 
     const privateModelId = await createTestModelViaApi(
       adminPage,
@@ -112,6 +115,7 @@ test.describe('Home Prototype List', () => {
       privateModelId,
     );
     await setPrototypeStateViaApi(adminPage, privatePrototypeId, 'Released');
+    await setPrototypeVisibilityViaApi(adminPage, privatePrototypeId, 'public');
     await configureHomePrototypeListSection(adminPage);
     await adminContext.close();
 
@@ -216,6 +220,8 @@ test.describe('Home Prototype List', () => {
     createdModelIds.push(modelId);
     const { prototypeId } = await createTestPrototype(page, protoName, modelId);
     await setPrototypeStateViaApi(page, prototypeId, 'Released');
+    // Other users only see public prototypes.
+    await setPrototypeVisibilityViaApi(page, prototypeId, 'public');
 
     const testUser = await createTestUserViaApi(page, {
       email: `e2e_home_empty_my_proto_${timestamp}@example.com`,

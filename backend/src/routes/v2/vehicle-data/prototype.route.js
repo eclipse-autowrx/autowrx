@@ -48,12 +48,7 @@ router
     validate(prototypeValidation.getPrototype),
     prototypeController.getPrototype,
   )
-  .patch(
-    auth(),
-    checkPermission(PERMISSIONS.WRITE_MODEL),
-    validate(prototypeValidation.updatePrototype),
-    prototypeController.updatePrototype,
-  )
+  .patch(auth(), validate(prototypeValidation.updatePrototype), prototypeController.updatePrototype)
   .delete(
     auth(),
     checkPermission(PERMISSIONS.WRITE_MODEL),

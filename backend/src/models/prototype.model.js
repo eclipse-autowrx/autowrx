@@ -8,7 +8,7 @@
 
 const mongoose = require('mongoose');
 const { toJSON, paginate, captureChange } = require('./plugins');
-const { stateTypes } = require('../config/enums');
+const { stateTypes, prototypeVisibilityTypes } = require('../config/enums');
 
 const apiSchema = mongoose.Schema(
   {
@@ -163,6 +163,13 @@ const prototypeSchema = new mongoose.Schema(
       required: true,
       default: stateTypes.DEVELOPMENT,
       enums: Object.values(stateTypes),
+    },
+    // No schema default on purpose: documents created before this field existed
+    // have no value and are treated as public. New prototypes are set to private
+    // by the service layer.
+    visibility: {
+      type: String,
+      enum: Object.values(prototypeVisibilityTypes),
     },
     tags: {
       type: [tagSchema],
