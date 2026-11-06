@@ -212,17 +212,19 @@ const hasPermission = async (userId, permission, id, type) => {
   if (!isValidObjectId(id)) {
     return false;
   }
+  // Explicit cast so the query never receives a caller-controlled object.
+  const objectId = new mongoose.Types.ObjectId(String(id));
 
   if (type === 'asset') {
-    const asset = await Asset.findById(id).select('created_by');
+    const asset = await Asset.findById(objectId).select('created_by');
     if (!asset) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Resource not found');
     }
     return checkAssetPermission(asset, userId, permission);
   }
 
-  const model = await Model.findById(id).select('created_by');
-  const prototype = await Prototype.findById(id).populate('model_id').select('created_by model_id visibility');
+  const model = await Model.findById(objectId).select('created_by');
+  const prototype = await Prototype.findById(objectId).populate('model_id').select('created_by model_id visibility');
 
   if (model) {
     return checkModelPermission(model, userId, permission);
