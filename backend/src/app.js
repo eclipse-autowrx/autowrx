@@ -256,6 +256,7 @@ const {
   PREVIEW_ACCESS_COOKIE,
   runtimeNameFromReq,
   rewriteRuntimePreviewPath,
+  rewritePreviewRedirectLocation,
   stripKitUpstreamCredentials,
 } = require('./utils/runtimePreviewProxy');
 
@@ -382,6 +383,17 @@ app.use(
     on: {
       proxyReq: (proxyReq) => {
         stripKitUpstreamCredentials(proxyReq);
+      },
+      proxyRes: (proxyRes, req) => {
+        // Kit redirects are absolute http:// URLs (mixed content on https) - keep them same-origin.
+        if (proxyRes.headers.location) {
+          const runtimeName = runtimeNameFromReq(req);
+          proxyRes.headers.location = rewritePreviewRedirectLocation(proxyRes.headers.location, {
+            runtimeName,
+            publicHost: req.headers.host,
+            targetUrl: runtimeName ? resolveRuntimeTarget(runtimeName) : null,
+          });
+        }
       },
       proxyReqWs: (proxyReq) => {
         // Only strip credentials here. Do NOT re-resolve the runtime name:

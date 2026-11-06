@@ -101,11 +101,54 @@ function stripKitUpstreamCredentials(proxyReq) {
   }
 }
 
+/**
+ * Turn a kit redirect into a same-origin path under /runtime-preview/:name.
+ * Kit web apps (e.g. NiceGUI's trailing-slash redirect) build absolute Location
+ * headers from the plain-http hop behind the proxy, so an https page gets sent to
+ * http:// and the browser blocks it as mixed content. Absolute URLs pointing at
+ * this host or the kit itself become relative; anything else is left alone.
+ * @param {string|undefined} location Location header from the kit
+ * @param {{ runtimeName: string|null, publicHost?: string, targetUrl?: string|null }} ctx
+ * @returns {string|undefined}
+ */
+function rewritePreviewRedirectLocation(location, { runtimeName, publicHost, targetUrl } = {}) {
+  if (typeof location !== 'string' || !location || !runtimeName) return location;
+
+  const isAbsolute = /^https?:\/\//i.test(location);
+  const isPathAbsolute = location.startsWith('/') && !location.startsWith('//');
+  if (!isAbsolute && !isPathAbsolute) return location;
+
+  let parsed;
+  try {
+    parsed = new URL(location, 'http://placeholder.invalid');
+  } catch {
+    return location;
+  }
+
+  if (isAbsolute) {
+    const ownHosts = new Set();
+    if (publicHost) ownHosts.add(String(publicHost).toLowerCase());
+    if (targetUrl) {
+      try {
+        ownHosts.add(new URL(targetUrl).host.toLowerCase());
+      } catch {
+        // ignore malformed target
+      }
+    }
+    if (!ownHosts.has(parsed.host.toLowerCase())) return location;
+  }
+
+  const prefix = `/runtime-preview/${runtimeName}`;
+  const path = parsed.pathname.startsWith('/runtime-preview/') ? parsed.pathname : `${prefix}${parsed.pathname}`;
+  return `${path}${parsed.search}${parsed.hash}`;
+}
+
 module.exports = {
   RUNTIME_NAME_RE,
   PREVIEW_ACCESS_COOKIE,
   runtimeNameFromReq,
   stripAccessTokenQuery,
   rewriteRuntimePreviewPath,
+  rewritePreviewRedirectLocation,
   stripKitUpstreamCredentials,
 };
