@@ -8,7 +8,7 @@
 
 /* eslint-disable security/detect-non-literal-regexp */
 const mongoose = require('mongoose');
-const { modelService } = require('.');
+const { modelService, permissionService } = require('.');
 const { Prototype, User } = require('../models');
 
 const search = async (query, options, userId) => {
@@ -20,6 +20,7 @@ const search = async (query, options, userId) => {
     {},
     userId,
   );
+  const visibilityFilter = await permissionService.buildPrototypeVisibilityFilter(userId);
   const prototypes = await Prototype.paginate(
     {
       $and: [
@@ -27,6 +28,7 @@ const search = async (query, options, userId) => {
         {
           model_id: { $in: accessibleModels.map((model) => new mongoose.Types.ObjectId(model._id || model.id)) },
         },
+        ...(visibilityFilter ? [visibilityFilter] : []),
       ],
     },
     {
@@ -57,9 +59,11 @@ const searchUserByEmail = async (email) => {
 /**
  *
  * @param {string} signal
+ * @param {string} [userId]
  */
-const searchPrototypesBySignal = async (signal) => {
-  const prototypes = await Prototype.find()
+const searchPrototypesBySignal = async (signal, userId) => {
+  const visibilityFilter = await permissionService.buildPrototypeVisibilityFilter(userId);
+  const prototypes = await Prototype.find(visibilityFilter || {})
     .select('model_id code name image_file')
     .sort('-editors_choice createdAt')
     .populate('model_id');

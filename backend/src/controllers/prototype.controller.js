@@ -51,6 +51,11 @@ const listPrototypes = catchAsync(async (req, res) => {
     }
   }
 
+  const visibilityFilter = await permissionService.buildPrototypeVisibilityFilter(req.user?.id);
+  if (visibilityFilter) {
+    filter.$and = [visibilityFilter];
+  }
+
   const prototypes = await prototypeService.queryPrototypes(filter, {
     ...options,
     populate: ['created_by', 'name image_file'],
@@ -68,6 +73,13 @@ const getPrototype = catchAsync(async (req, res) => {
 });
 
 const updatePrototype = catchAsync(async (req, res) => {
+  const access = {
+    changesVisibility: req.body.visibility !== undefined,
+    changesEditorsChoice: req.body.editors_choice !== undefined,
+  };
+  if (!(await permissionService.canUpdatePrototype(req.user.id, req.params.id, access))) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+  }
   const prototype = await prototypeService.updatePrototypeById(req.params.id, req.body, req.user.id);
   res.send(prototype);
 });

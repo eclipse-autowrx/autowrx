@@ -225,14 +225,14 @@ describe('Prototype routes', () => {
       expect((await Prototype.findById(prototype.id)).name).toBe('Existing prototype');
     });
 
-    test('should return 403 for a model_member (read-only) on the model', async () => {
+    test('should return 200 for a model_member (read-only) on a public prototype', async () => {
       await grantRole(userTwo._id, 'model_member', privateModel._id);
 
       await request(app)
         .patch(`/v2/prototypes/${prototype.id}`)
         .set('Authorization', `Bearer ${userTwoAccessToken}`)
         .send({ name: 'Reader edit' })
-        .expect(httpStatus.FORBIDDEN);
+        .expect(httpStatus.OK);
     });
 
     test('should return 404 for an unknown id', async () => {
@@ -241,6 +241,188 @@ describe('Prototype routes', () => {
         .set('Authorization', `Bearer ${userOneAccessToken}`)
         .send({ name: 'Ghost' })
         .expect(httpStatus.NOT_FOUND);
+    });
+  });
+
+  describe('Prototype visibility', () => {
+    let publicModel;
+
+    beforeEach(async () => {
+      publicModel = await insertModel({ created_by: userOne._id, visibility: 'public' });
+    });
+
+    const createAs = (token, body, path = '/v2/prototypes') =>
+      request(app).post(path).set('Authorization', `Bearer ${token}`).send(body).expect(httpStatus.CREATED);
+
+    test('should create new prototypes as private', async () => {
+      const res = await createAs(userOneAccessToken, { name: 'New one', model_id: publicModel.id });
+
+      expect((await Prototype.findById(res.body.id)).visibility).toBe('private');
+    });
+
+    test('should create bulk prototypes as private', async () => {
+      const res = await createAs(
+        userOneAccessToken,
+        [{ name: 'Bulk one', model_id: publicModel.id }],
+        '/v2/prototypes/bulk',
+      );
+
+      expect((await Prototype.findById(res.body[0])).visibility).toBe('private');
+    });
+
+    test('should treat prototypes without a visibility as public', async () => {
+      const legacy = await insertPrototype(publicModel, { name: 'Legacy' });
+
+      await request(app)
+        .get(`/v2/prototypes/${legacy.id}`)
+        .set('Authorization', `Bearer ${userTwoAccessToken}`)
+        .expect(httpStatus.OK);
+    });
+
+    describe('private prototype', () => {
+      let prototype;
+
+      beforeEach(async () => {
+        // userTwo creates it on userOne's model (userTwo = creator, userOne = model owner).
+        await grantRole(userTwo._id, 'model_contributor', publicModel._id);
+        prototype = await insertPrototype(publicModel, { name: 'Secret', created_by: userTwo._id, visibility: 'private' });
+      });
+
+      test.each([
+        ['creator', () => userTwoAccessToken],
+        ['model owner', () => userOneAccessToken],
+        ['admin', () => adminAccessToken],
+      ])('should be readable and editable by the %s', async (_role, token) => {
+        await request(app)
+          .get(`/v2/prototypes/${prototype.id}`)
+          .set('Authorization', `Bearer ${token()}`)
+          .expect(httpStatus.OK);
+        await request(app)
+          .patch(`/v2/prototypes/${prototype.id}`)
+          .set('Authorization', `Bearer ${token()}`)
+          .send({ code: 'print(2)' })
+          .expect(httpStatus.OK);
+      });
+
+      describe('for others', () => {
+        let otherToken;
+
+        beforeEach(async () => {
+          // Hand the prototype to another creator so userTwo is only a model contributor.
+          await Prototype.updateOne({ _id: prototype._id }, { created_by: admin._id });
+          otherToken = userTwoAccessToken;
+        });
+
+        test('should hide it from a model contributor on GET by id', async () => {
+          await request(app)
+            .get(`/v2/prototypes/${prototype.id}`)
+            .set('Authorization', `Bearer ${otherToken}`)
+            .expect(httpStatus.FORBIDDEN);
+        });
+
+        test('should hide it from a model contributor in the list and search', async () => {
+          const list = await request(app)
+            .get('/v2/prototypes')
+            .query({ model_id: publicModel.id })
+            .set('Authorization', `Bearer ${otherToken}`)
+            .expect(httpStatus.OK);
+          expect(list.body.results).toHaveLength(0);
+
+          const search = await request(app)
+            .get('/v2/search')
+            .query({ q: 'Secret' })
+            .set('Authorization', `Bearer ${otherToken}`)
+            .expect(httpStatus.OK);
+          expect(search.body.prototypes).toHaveLength(0);
+        });
+
+        test('should return 403 on PATCH and DELETE for a model contributor', async () => {
+          await request(app)
+            .patch(`/v2/prototypes/${prototype.id}`)
+            .set('Authorization', `Bearer ${otherToken}`)
+            .send({ code: 'print(3)' })
+            .expect(httpStatus.FORBIDDEN);
+          await request(app)
+            .delete(`/v2/prototypes/${prototype.id}`)
+            .set('Authorization', `Bearer ${otherToken}`)
+            .expect(httpStatus.FORBIDDEN);
+          expect(await Prototype.findById(prototype.id)).not.toBeNull();
+        });
+      });
+    });
+
+    describe('public prototype', () => {
+      let prototype;
+
+      beforeEach(async () => {
+        prototype = await insertPrototype(publicModel, { name: 'Shared', visibility: 'public' });
+      });
+
+      test('should be listed for a stranger', async () => {
+        const res = await request(app)
+          .get('/v2/prototypes')
+          .query({ model_id: publicModel.id })
+          .set('Authorization', `Bearer ${userTwoAccessToken}`)
+          .expect(httpStatus.OK);
+
+        expect(res.body.results.map((p) => p.name)).toEqual(['Shared']);
+      });
+
+      test('should be editable by any signed-in user', async () => {
+        await request(app)
+          .patch(`/v2/prototypes/${prototype.id}`)
+          .set('Authorization', `Bearer ${userTwoAccessToken}`)
+          .send({ code: 'print(4)' })
+          .expect(httpStatus.OK);
+
+        expect((await Prototype.findById(prototype.id)).code).toBe('print(4)');
+      });
+
+      test('should return 403 when a stranger changes the visibility', async () => {
+        await request(app)
+          .patch(`/v2/prototypes/${prototype.id}`)
+          .set('Authorization', `Bearer ${userTwoAccessToken}`)
+          .send({ visibility: 'private' })
+          .expect(httpStatus.FORBIDDEN);
+
+        expect((await Prototype.findById(prototype.id)).visibility).toBe('public');
+      });
+
+      test('should return 403 when a stranger sets editors_choice', async () => {
+        await request(app)
+          .patch(`/v2/prototypes/${prototype.id}`)
+          .set('Authorization', `Bearer ${userTwoAccessToken}`)
+          .send({ editors_choice: true })
+          .expect(httpStatus.FORBIDDEN);
+      });
+
+      test('should return 403 when a stranger deletes it', async () => {
+        await request(app)
+          .delete(`/v2/prototypes/${prototype.id}`)
+          .set('Authorization', `Bearer ${userTwoAccessToken}`)
+          .expect(httpStatus.FORBIDDEN);
+      });
+
+      test('should let the creator switch it to private and back', async () => {
+        for (const visibility of ['private', 'public']) {
+          // eslint-disable-next-line no-await-in-loop
+          await request(app)
+            .patch(`/v2/prototypes/${prototype.id}`)
+            .set('Authorization', `Bearer ${userOneAccessToken}`)
+            .send({ visibility })
+            .expect(httpStatus.OK);
+          // eslint-disable-next-line no-await-in-loop
+          expect((await Prototype.findById(prototype.id)).visibility).toBe(visibility);
+        }
+      });
+
+      test('should return 400 for an unknown visibility value', async () => {
+        await request(app)
+          .patch(`/v2/prototypes/${prototype.id}`)
+          .set('Authorization', `Bearer ${userOneAccessToken}`)
+          .send({ visibility: 'editable' })
+          .expect(httpStatus.BAD_REQUEST);
+      });
     });
   });
 
