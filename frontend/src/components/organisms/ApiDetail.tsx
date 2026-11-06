@@ -310,9 +310,9 @@ const ApiDetail = ({
       </div>
 
       <div className="flex h-fit w-full flex-col p-4">
-        <div className="text-sm font-medium flex text-foreground">
+        <h3 className="border-b border-border pb-1 text-base font-semibold text-primary">
           VSS Specification
-        </div>
+        </h3>
         {isEditing ? (
           <DaVehicleAPIEditor
             onCancel={() => setIsEditing(false)}
@@ -325,6 +325,7 @@ const ApiDetail = ({
           />
         ) : (
           <DaTableProperty
+            className="pl-2"
             diffDetail={translatedDiffDetail}
             properties={[
               ...vssSpecificationProperties,
@@ -335,10 +336,13 @@ const ApiDetail = ({
           />
         )}
 
-        <div className="text-sm font-medium flex pt-4 text-foreground">
+        <h3 className="mt-4 border-b border-border pb-1 text-base font-semibold text-primary">
           Implementation
-        </div>
-        <DaTableProperty properties={implementationProperties} />
+        </h3>
+        <DaTableProperty
+          className="pl-2"
+          properties={implementationProperties}
+        />
 
         <DaConsumedPrototypes
           signal={
