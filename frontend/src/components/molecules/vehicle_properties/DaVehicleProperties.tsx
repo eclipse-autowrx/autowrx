@@ -16,6 +16,7 @@ import FormUpdateVehicleProperties from '../forms/FormUpdateVehicleProperties'
 import { CustomPropertyType } from '@/types/property.type'
 import { updateModelService } from '@/services/model.service'
 import useCurrentModel from '@/hooks/useCurrentModel'
+import { useToast } from '@/components/molecules/toaster/use-toast'
 
 interface VehiclePropertiesProps {
   category: string
@@ -33,6 +34,7 @@ const DaVehicleProperties = ({
   const [isVisible, setIsVisible] = useState(false)
   const [isOpenUpdateForm, setIsOpenUpdateForm] = useState(false)
   const { data: model, refetch } = useCurrentModel()
+  const { toast } = useToast()
   const [vehicleProperties, setVehicleProperties] = useState<
     CustomPropertyType[]
   >([])
@@ -44,16 +46,30 @@ const DaVehicleProperties = ({
     setIsVisible(!isVisible)
   }
 
-  const handleSave = async () => {
-    if (!model) return
+  const handleSave = async (): Promise<boolean> => {
+    if (!model) return false
     try {
       await updateModelService(model.id, {
         property: JSON.stringify(vehicleProperties),
         vehicle_category: vehicleCategory,
       })
       await refetch()
+      toast({ title: 'Vehicle properties saved', duration: 3000 })
+      setIsOpenUpdateForm(false)
+      return true
     } catch (error) {
       console.error('Error updating model properties', error)
+      toast({
+        variant: 'destructive',
+        title: 'Failed to save vehicle properties',
+        description:
+          (error as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message ||
+          (error as Error)?.message ||
+          'Please try again.',
+        duration: 3000,
+      })
+      return false
     }
   }
 
@@ -122,9 +138,7 @@ const DaVehicleProperties = ({
         className="max-w-[800px]"
       >
         <FormUpdateVehicleProperties
-          onSaveProperties={() => {
-            handleSave()
-          }}
+          onSaveProperties={handleSave}
           customProperties={vehicleProperties}
           setCustomProperties={setVehicleProperties}
           vehicleCategory={vehicleCategory}

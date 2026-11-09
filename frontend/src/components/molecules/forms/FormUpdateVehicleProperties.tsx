@@ -19,7 +19,7 @@ import DaCustomPropertyItem from '../vehicle_properties/DaCustomPropertyItem'
 import { CustomPropertyType } from '@/types/property.type'
 import * as lodash from 'lodash'
 import { vehicleClasses } from '@/data/vehicle_classification'
-import { TbPlus } from 'react-icons/tb'
+import { TbLoader, TbPlus } from 'react-icons/tb'
 
 interface FormUpdateVehiclePropertiesProps {
   customProperties: CustomPropertyType[]
@@ -28,7 +28,7 @@ interface FormUpdateVehiclePropertiesProps {
   >
   vehicleCategory: string
   setVehicleCategory: React.Dispatch<React.SetStateAction<string>>
-  onSaveProperties: () => void
+  onSaveProperties: () => Promise<boolean>
 }
 
 const isPropertyEmpty = (property: CustomPropertyType) => {
@@ -59,6 +59,8 @@ const FormUpdateVehicleProperties = ({
 
   const [initialVehicleType, setInitialVehicleType] =
     useState<string>(vehicleCategory)
+
+  const [isSaving, setIsSaving] = useState(false)
 
   // Reset initial values when new props are received (optional)
   useEffect(() => {
@@ -108,10 +110,17 @@ const FormUpdateVehicleProperties = ({
   }
 
   // Save changes and reset the initial state variables
-  const handleSaveProperties = () => {
-    onSaveProperties()
-    setInitialCustomProperties(lodash.cloneDeep(customProperties))
-    setInitialVehicleType(vehicleCategory)
+  const handleSaveProperties = async () => {
+    setIsSaving(true)
+    try {
+      const saved = await onSaveProperties()
+      if (saved) {
+        setInitialCustomProperties(lodash.cloneDeep(customProperties))
+        setInitialVehicleType(vehicleCategory)
+      }
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const vehicleTypes = vehicleClasses.map((vehicleClass) => vehicleClass.name)
@@ -168,7 +177,7 @@ const FormUpdateVehicleProperties = ({
           <Button
             variant="outline"
             onClick={handleCancelChanges}
-            disabled={!hasChanges}
+            disabled={!hasChanges || isSaving}
             size="sm"
           >
             Cancel
@@ -176,11 +185,11 @@ const FormUpdateVehicleProperties = ({
           <Button
             variant="default"
             onClick={handleSaveProperties}
-            disabled={!hasChanges}
+            disabled={!hasChanges || isSaving}
             className="w-20"
             size="sm"
           >
-            Save
+            {isSaving ? <TbLoader className="size-4 animate-spin" /> : 'Save'}
           </Button>
         </div>
       </div>
