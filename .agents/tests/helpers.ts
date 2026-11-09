@@ -1178,7 +1178,12 @@ export async function deleteDashboardTemplateViaApi(
 
 export async function createTestPrototypeViaApi(
   page: Page,
-  opts: { name: string; modelId: string; auth?: AuthCredentials },
+  opts: {
+    name: string;
+    modelId: string;
+    auth?: AuthCredentials;
+    visibility?: 'public' | 'private';
+  },
 ): Promise<{ prototypeId: string; protoName: string }> {
   const token = opts.auth
     ? await getTokenForUser(page, opts.auth.email, opts.auth.password)
@@ -1187,6 +1192,7 @@ export async function createTestPrototypeViaApi(
     data: {
       name: opts.name,
       model_id: opts.modelId,
+      ...(opts.visibility ? { visibility: opts.visibility } : {}),
     },
     headers: { Authorization: `Bearer ${token}` },
   });

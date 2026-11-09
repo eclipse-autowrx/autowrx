@@ -51,6 +51,8 @@ test.describe('Custom kit-server URL restriction', () => {
       const proto = await createTestPrototypeViaApi(page, {
         name: `E2E_KitServerProto_${ts}`,
         modelId,
+        // The non-admin user opens this prototype; new prototypes default to private.
+        visibility: 'public',
       });
       prototypeId = proto.prototypeId;
     } finally {
