@@ -507,17 +507,6 @@ export const DaPrototypeCard = ({
           >
             {prototype.name ?? ''}
           </p>
-          {isPrivate && (
-            <DaTooltip tooltipMessage="Private prototype" tooltipDelay={300}>
-              <span
-                className="inline-flex ml-1 shrink-0"
-                data-testid="prototype-private-badge"
-                aria-label="Private prototype"
-              >
-                <TbLock className="size-4 text-muted-foreground" />
-              </span>
-            </DaTooltip>
-          )}
           <div className="grow" />
           {showStats && (
             <div className="flex items-center gap-1">
@@ -586,7 +575,7 @@ export const DaPrototypeCard = ({
                   </span>
                 </DaTooltip>
                 <DropdownMenuContent
-                  className="w-52"
+                  className="w-56"
                   align="end"
                   onClick={(e) => e.stopPropagation()}
                   onPointerDown={(e) => e.stopPropagation()}

@@ -107,7 +107,11 @@ test.describe('Prototype Visibility', () => {
     await openLibrary(page);
     const card = getPrototypeCard(page, protoName);
     await expect(card).toBeVisible({ timeout: 20000 });
-    await expect(card.getByTestId('prototype-private-badge')).toBeVisible();
+    await openPrototypeContextMenu(page, protoName);
+    await expect(
+      page.getByRole('menuitem', { name: 'Change visibility to public' }),
+    ).toBeVisible();
+    await page.keyboard.press('Escape');
     await saveScreenshot(page, 'prototype-visibility-tc1-creator');
 
     await logout(page);
@@ -135,9 +139,6 @@ test.describe('Prototype Visibility', () => {
     await loginAs(page, creator.email, TEST_USER.password);
     await openLibrary(page);
     await changeVisibilityViaMenu(page, 'public');
-    await expect(
-      getPrototypeCard(page, protoName).getByTestId('prototype-private-badge'),
-    ).toHaveCount(0);
     expect((await getPrototypeViaApi(page, prototypeId, asCreator())).visibility).toBe('public');
 
     await logout(page);
@@ -168,9 +169,7 @@ test.describe('Prototype Visibility', () => {
     await loginAs(page, creator.email, TEST_USER.password);
     await openLibrary(page);
     await changeVisibilityViaMenu(page, 'private');
-    await expect(
-      getPrototypeCard(page, protoName).getByTestId('prototype-private-badge'),
-    ).toBeVisible();
+    expect((await getPrototypeViaApi(page, prototypeId, asCreator())).visibility).toBe('private');
 
     await logout(page);
     await loginAs(page, stranger.email, TEST_USER.password);
