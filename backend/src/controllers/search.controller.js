@@ -30,7 +30,7 @@ const searchUserByEmail = catchAsync(async (req, res) => {
 
 const searchPrototypesBySignal = catchAsync(async (req, res) => {
   const { signal } = req.params;
-  const prototypes = await searchService.searchPrototypesBySignal(signal);
+  const prototypes = await searchService.searchPrototypesBySignal(signal, req.user?.id);
   res.send(
     prototypes.map((prototype) => {
       const json = prototype.toJSON();

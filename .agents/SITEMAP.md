@@ -99,6 +99,7 @@
 | Prototype card visible | Card shows after creation | ✅ `prototype.spec.ts` |
 | Rename prototype | Via API (context menu requires site config) | ✅ `prototype.spec.ts` |
 | Rename prototype updates immediately | Card context menu rename → card name and prototype header/breadcrumb update without reload | ✅ `model-delete-recreate-and-prototype-rename.spec.ts` |
+| Prototype visibility | New prototypes private (lock icon); card menu "Change visibility to public/private" for creator/model owner/admin; private hidden from others; public editable by any signed-in user | ✅ `prototype-visibility.spec.ts` |
 | Delete prototype | Via API, card removed from UI | ✅ `prototype.spec.ts` |
 | Prototype ZIP import / export | Library card export and import round-trip | ✅ `import-export.spec.ts` |
 | Copy prototype (menu entry) | `Copy Prototype` shown in card context / ⋮ menu | ✅ `prototype-copy.spec.ts` |

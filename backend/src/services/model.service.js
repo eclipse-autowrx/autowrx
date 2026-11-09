@@ -20,11 +20,14 @@ const { Model, Role, UserRole, Prototype, ModelTemplate, CustomApiSet } = requir
 const ApiError = require('../utils/ApiError');
 const { PERMISSIONS } = require('../config/roles');
 const { createExtendedApi } = require('../validations/extendedApi.validation');
-const { publiclyVisibleVisibilities, visibilityTypes } = require('../config/enums');
+const { publiclyVisibleVisibilities, visibilityTypes, prototypeVisibilityTypes } = require('../config/enums');
 const logger = require('../config/logger');
 const config = require('../config/config');
 const customApiSetService = require('./customApiSet.service');
 const { validateVss } = require('./vssValidation.service');
+
+// Model stats are visible to every model reader, so they never include private prototypes.
+const notPrivatePrototype = { visibility: { $ne: prototypeVisibilityTypes.PRIVATE } };
 
 /**
  *
@@ -97,7 +100,7 @@ const getModelStats = async (model) => {
 
   // Query prototypes
   try {
-    prototypes = await prototypeService.queryPrototypes({ model_id: modelId }, { limit: 1000 });
+    prototypes = await prototypeService.queryPrototypes({ model_id: modelId, ...notPrivatePrototype }, { limit: 1000 });
     stats.prototypes.count = prototypes.results.length || 0;
   } catch (error) {
     logger.warn(`Error in querying prototypes ${error}`);
@@ -229,6 +232,7 @@ const getModelStatsSummaryByIds = async (modelsOrIds = []) => {
       {
         $match: {
           model_id: { $in: objectIds },
+          ...notPrivatePrototype,
         },
       },
       {
@@ -240,6 +244,7 @@ const getModelStatsSummaryByIds = async (modelsOrIds = []) => {
     ]),
     Prototype.find({
       model_id: { $in: objectIds },
+      ...notPrivatePrototype,
     })
       .select('model_id code apis.VSS')
       .lean(),

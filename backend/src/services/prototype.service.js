@@ -16,7 +16,7 @@ const { PERMISSIONS } = require('../config/roles');
 const config = require('../config/config');
 const logger = require('../config/logger');
 const modelService = require('./model.service');
-const { publiclyVisibleVisibilities } = require('../config/enums');
+const { publiclyVisibleVisibilities, prototypeVisibilityTypes } = require('../config/enums');
 
 /**
  * Strip trailing number suffix from a prototype name.
@@ -96,6 +96,7 @@ const createPrototype = async (userId, prototypeBody) => {
   }
 
   const prototype = await Prototype.create({
+    visibility: prototypeVisibilityTypes.PRIVATE,
     ...prototypeBody,
     created_by: userId,
   });
@@ -120,6 +121,7 @@ const bulkCreatePrototypes = async (userId, prototypes) => {
 
   const data = await Prototype.insertMany(
     prototypes.map((prototype) => ({
+      visibility: prototypeVisibilityTypes.PRIVATE,
       ...prototype,
       created_by: userId,
     })),
@@ -185,7 +187,7 @@ const getPrototypeById = async (id, userId) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Prototype not found');
   }
 
-  if (prototype.model_id.visibility === 'private') {
+  if (prototype.visibility === prototypeVisibilityTypes.PRIVATE || prototype.model_id.visibility === 'private') {
     if (!(await permissionService.hasPermission(userId, PERMISSIONS.READ_MODEL, id))) {
       throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
     }
@@ -286,7 +288,11 @@ const listRecentPrototypes = async (userId) => {
     prototypeMap.set(data.referenceId, data);
   });
 
-  const prototypes = await Prototype.find({ _id: { $in: Array.from(prototypeMap.keys()) } })
+  const visibilityFilter = await permissionService.buildPrototypeVisibilityFilter(userId);
+  const prototypes = await Prototype.find({
+    _id: { $in: Array.from(prototypeMap.keys()) },
+    ...(visibilityFilter && { $and: [visibilityFilter] }),
+  })
     .select('name model_id description image_file executed_turns code')
     .populate('model', 'name visibility')
     .populate('created_by', 'name image_file');
@@ -329,6 +335,7 @@ const listPopularPrototypes = async () => {
   ).map((model) => String(model._id));
   return Prototype.find({
     model_id: { $in: publicModelIds },
+    visibility: { $ne: prototypeVisibilityTypes.PRIVATE },
     state: 'Released',
   })
     .sort({ executed_turns: -1 })

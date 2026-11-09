@@ -87,6 +87,8 @@ export type Prototype = {
   portfolio: any
   skeleton: any
   state: string
+  /** Missing on prototypes created before visibility existed: treated as public. */
+  visibility?: 'public' | 'private'
   widget_config: string
   image_file: string
   created_by?: {

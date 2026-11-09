@@ -22,6 +22,8 @@ import {
   TbDownload,
   TbEdit,
   TbLoader,
+  TbLock,
+  TbLockOpen,
   TbPhotoEdit,
   TbTerminal2,
   TbTrashX,
@@ -30,7 +32,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '../atoms/avatar'
 import { useNavigate } from 'react-router-dom'
 import DaTooltip from './DaTooltip'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import useCanEditPrototype from '@/hooks/useCanEditPrototype'
+import usePrototypeAccess, {
+  isPrivatePrototype,
+} from '@/hooks/usePrototypeAccess'
 import { useDefaultPrototypeImage } from '@/utils/siteConfig'
 import {
   ContextMenu,
@@ -96,7 +100,12 @@ export const DaPrototypeCard = ({
   const navigate = useNavigate()
   const { toast } = useToast()
 
-  const canEditPrototype = useCanEditPrototype(prototype)
+  const {
+    canEdit: canEditPrototype,
+    canManage: canManagePrototype,
+    canDelete: canDeletePrototype,
+  } = usePrototypeAccess(prototype)
+  const isPrivate = isPrivatePrototype(prototype)
   const isOwner = canEditPrototype
   const isPrototypeOwner = canEditPrototype
 
@@ -264,6 +273,31 @@ export const DaPrototypeCard = ({
     }
   }
 
+  const handleToggleVisibility = async () => {
+    const visibility = isPrivate ? 'public' : 'private'
+    try {
+      await updatePrototypeService(prototype.id, { visibility })
+      await invalidatePrototypeListQueries(queryClient)
+      await queryClient.invalidateQueries({
+        queryKey: ['prototype', prototype.id],
+      })
+      onUpdate?.()
+      toast({
+        title: `Prototype is now ${visibility}`,
+        description:
+          visibility === 'public'
+            ? 'Every signed-in user can view and edit it.'
+            : 'Only you, the model owner and admins can view and edit it.',
+      })
+    } catch (error) {
+      console.error('Failed to change prototype visibility:', error)
+      toast({
+        variant: 'destructive',
+        title: 'Failed to change visibility',
+      })
+    }
+  }
+
   const handleImageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ''
@@ -338,6 +372,22 @@ export const DaPrototypeCard = ({
         <TbPhotoEdit className="size-4 shrink-0" />
         Update Image
       </MenuItem>
+      {canManagePrototype && (
+        <MenuItem
+          className="cursor-pointer gap-2"
+          data-testid="prototype-menu-visibility"
+          onSelect={() => wrapAction(handleToggleVisibility)}
+        >
+          {isPrivate ? (
+            <TbLockOpen className="size-4 shrink-0" />
+          ) : (
+            <TbLock className="size-4 shrink-0" />
+          )}
+          {isPrivate
+            ? 'Change visibility to public'
+            : 'Change visibility to private'}
+        </MenuItem>
+      )}
       <MenuSeparator />
       <MenuItem
         className="cursor-pointer gap-2"
@@ -388,13 +438,15 @@ export const DaPrototypeCard = ({
         <TbDownload className="size-4" />
         Export Prototype
       </MenuItem>
-      <MenuItem
-        className="cursor-pointer gap-2 text-red-600 focus:text-red-600 focus:bg-red-50"
-        onSelect={() => wrapAction(() => setDeleteOpen(true))}
-      >
-        <TbTrashX className="size-4" />
-        Delete Prototype
-      </MenuItem>
+      {canDeletePrototype && (
+        <MenuItem
+          className="cursor-pointer gap-2 text-red-600 focus:text-red-600 focus:bg-red-50"
+          onSelect={() => wrapAction(() => setDeleteOpen(true))}
+        >
+          <TbTrashX className="size-4" />
+          Delete Prototype
+        </MenuItem>
+      )}
     </>
   )
 
@@ -523,7 +575,7 @@ export const DaPrototypeCard = ({
                   </span>
                 </DaTooltip>
                 <DropdownMenuContent
-                  className="w-52"
+                  className="w-56"
                   align="end"
                   onClick={(e) => e.stopPropagation()}
                   onPointerDown={(e) => e.stopPropagation()}
@@ -561,7 +613,7 @@ export const DaPrototypeCard = ({
         <ContextMenu onOpenChange={setContextMenuOpen}>
           <ContextMenuTrigger asChild>{cardContent}</ContextMenuTrigger>
           <ContextMenuContent
-            className="w-52"
+            className="w-56"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
           >

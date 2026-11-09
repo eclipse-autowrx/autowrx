@@ -302,6 +302,21 @@ export async function setPrototypeStateViaApi(
   }
 }
 
+export async function setPrototypeVisibilityViaApi(
+  page: Page,
+  prototypeId: string,
+  visibility: 'public' | 'private',
+) {
+  const token = await getAuthToken(page);
+  const res = await page.request.patch(`${API_URL}/v2/prototypes/${prototypeId}`, {
+    data: { visibility },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to update prototype visibility: ${res.status()} ${await res.text()}`);
+  }
+}
+
 export async function setPrototypeStateViaUI(
   page: Page,
   state: 'Released' | 'development',
@@ -1163,7 +1178,12 @@ export async function deleteDashboardTemplateViaApi(
 
 export async function createTestPrototypeViaApi(
   page: Page,
-  opts: { name: string; modelId: string; auth?: AuthCredentials },
+  opts: {
+    name: string;
+    modelId: string;
+    auth?: AuthCredentials;
+    visibility?: 'public' | 'private';
+  },
 ): Promise<{ prototypeId: string; protoName: string }> {
   const token = opts.auth
     ? await getTokenForUser(page, opts.auth.email, opts.auth.password)
@@ -1172,6 +1192,7 @@ export async function createTestPrototypeViaApi(
     data: {
       name: opts.name,
       model_id: opts.modelId,
+      ...(opts.visibility ? { visibility: opts.visibility } : {}),
     },
     headers: { Authorization: `Bearer ${token}` },
   });

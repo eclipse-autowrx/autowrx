@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 const Joi = require('joi');
-const { stateTypes } = require('../config/enums');
+const { stateTypes, prototypeVisibilityTypes } = require('../config/enums');
 const { objectId, jsonString } = require('./custom.validation');
 
 const bodyValidation = Joi.object().keys({
@@ -15,6 +15,7 @@ const bodyValidation = Joi.object().keys({
   requirements_data: Joi.any(),
   flow: Joi.any(),
   state: Joi.string().allow(...Object.values(stateTypes)),
+  visibility: Joi.string().valid(...Object.values(prototypeVisibilityTypes)),
   apis: Joi.object().keys({
     VSC: Joi.array().items(Joi.string()),
     VSS: Joi.array().items(Joi.string()),
@@ -91,6 +92,7 @@ const updatePrototype = {
     extend: Joi.any(),
     requirements_data: Joi.any(),
     state: Joi.string().allow(...Object.values(stateTypes)),
+    visibility: Joi.string().valid(...Object.values(prototypeVisibilityTypes)),
     apis: Joi.object().keys({
       VSC: Joi.array().items(Joi.string()),
       VSS: Joi.array().items(Joi.string()),
