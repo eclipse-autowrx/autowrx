@@ -73,10 +73,7 @@ const getPrototype = catchAsync(async (req, res) => {
 });
 
 const updatePrototype = catchAsync(async (req, res) => {
-  const access = {
-    changesVisibility: req.body.visibility !== undefined,
-    changesEditorsChoice: req.body.editors_choice !== undefined,
-  };
+  const access = { changesVisibility: req.body.visibility !== undefined };
   if (!(await permissionService.canUpdatePrototype(req.user.id, req.params.id, access))) {
     throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
   }

@@ -613,7 +613,7 @@ export const DaPrototypeCard = ({
         <ContextMenu onOpenChange={setContextMenuOpen}>
           <ContextMenuTrigger asChild>{cardContent}</ContextMenuTrigger>
           <ContextMenuContent
-            className="w-52"
+            className="w-56"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
           >

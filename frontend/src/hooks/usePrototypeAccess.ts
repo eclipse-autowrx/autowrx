@@ -25,8 +25,8 @@ export type PrototypeAccess = {
 /**
  * Mirrors the backend prototype rules:
  * - private: creator, model owner and admin only;
- * - public (or no visibility, i.e. legacy): any signed-in user may edit,
- *   model writers may delete, only creator/model owner/admin change visibility.
+ * - public (or no visibility, i.e. legacy): model writers may edit and delete,
+ *   only creator/model owner/admin change visibility.
  */
 const usePrototypeAccess = (prototype?: Prototype | null): PrototypeAccess => {
   const { data: user } = useSelfProfileQuery()
@@ -45,7 +45,8 @@ const usePrototypeAccess = (prototype?: Prototype | null): PrototypeAccess => {
   if (isPrivatePrototype(prototype)) {
     return { canEdit: canManage, canManage, canDelete: canManage }
   }
-  return { canEdit: true, canManage, canDelete: canManage || hasWriteModel }
+  const canWrite = canManage || hasWriteModel
+  return { canEdit: canWrite, canManage, canDelete: canWrite }
 }
 
 export default usePrototypeAccess

@@ -332,15 +332,15 @@ const canCreatePrototypeOnModel = async (userId, modelId) => {
  * Whether a user may update the given prototype.
  * - Creator, model owner and global admins may always update it, including its visibility.
  * - Private prototypes: nobody else.
- * - Public prototypes: any signed-in user who can read the model may edit the content,
- *   but only the roles above may change the visibility, and editors_choice still needs WRITE_MODEL.
+ * - Public prototypes: users with WRITE_MODEL on the model may edit the content (as before
+ *   visibility existed), but only the roles above may change the visibility.
  *
  * @param {string} userId
  * @param {string} prototypeId
- * @param {{ changesVisibility?: boolean, changesEditorsChoice?: boolean }} [options]
+ * @param {{ changesVisibility?: boolean }} [options]
  * @returns {Promise<boolean>}
  */
-const canUpdatePrototype = async (userId, prototypeId, { changesVisibility = false, changesEditorsChoice = false } = {}) => {
+const canUpdatePrototype = async (userId, prototypeId, { changesVisibility = false } = {}) => {
   if (!userId) {
     return false;
   }
@@ -361,14 +361,7 @@ const canUpdatePrototype = async (userId, prototypeId, { changesVisibility = fal
     return false;
   }
 
-  const model = prototype.model_id;
-  if (changesEditorsChoice) {
-    return check(userId, PERMISSIONS.WRITE_MODEL, model._id);
-  }
-  if (publiclyVisibleVisibilities.includes(model.visibility)) {
-    return true;
-  }
-  return check(userId, PERMISSIONS.READ_MODEL, model._id);
+  return check(userId, PERMISSIONS.WRITE_MODEL, prototype.model_id._id);
 };
 
 /**

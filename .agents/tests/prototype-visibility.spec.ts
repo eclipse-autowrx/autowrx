@@ -133,7 +133,7 @@ test.describe('Prototype Visibility', () => {
     await page.keyboard.press('Escape');
   });
 
-  test('TC3: creator makes it public; stranger can see and edit but not manage', async ({
+  test('TC3: creator makes it public; stranger can see it but not edit or manage', async ({
     page,
   }) => {
     await loginAs(page, creator.email, TEST_USER.password);
@@ -145,19 +145,16 @@ test.describe('Prototype Visibility', () => {
     await loginAs(page, stranger.email, TEST_USER.password);
     expect(await getStatusAs(page, asStranger())).toBe(200);
     await openLibrary(page);
-    await openPrototypeContextMenu(page, protoName);
-    await expect(page.getByRole('menuitem', { name: 'Rename' })).toBeVisible();
-    await expect(page.getByRole('menuitem', { name: /Change visibility/ })).toHaveCount(0);
-    await expect(page.getByRole('menuitem', { name: 'Delete Prototype' })).toHaveCount(0);
-    await saveScreenshot(page, 'prototype-visibility-tc3-stranger-menu');
-    await page.keyboard.press('Escape');
+    await expect(getPrototypeCard(page, protoName)).toBeVisible({ timeout: 20000 });
+    await saveScreenshot(page, 'prototype-visibility-tc3-stranger-library');
 
     const token = await getTokenForUser(page, stranger.email, TEST_USER.password);
     const edit = await page.request.patch(`${API_URL}/v2/prototypes/${prototypeId}`, {
       data: { code: 'print("edited by stranger")' },
       headers: { Authorization: `Bearer ${token}` },
     });
-    expect(edit.status()).toBe(200);
+    // Content edits on public prototypes still need WRITE_MODEL on the model.
+    expect(edit.status()).toBe(403);
     const hide = await page.request.patch(`${API_URL}/v2/prototypes/${prototypeId}`, {
       data: { visibility: 'private' },
       headers: { Authorization: `Bearer ${token}` },

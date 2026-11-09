@@ -165,8 +165,8 @@ const prototypeSchema = new mongoose.Schema(
       enums: Object.values(stateTypes),
     },
     // No schema default on purpose: documents created before this field existed
-    // have no value and are treated as public. New prototypes are set to private
-    // by the service layer.
+    // have no value and are treated as public. New prototypes default to private
+    // in the service layer; the creator may choose 'public' at create time.
     visibility: {
       type: String,
       enum: Object.values(prototypeVisibilityTypes),

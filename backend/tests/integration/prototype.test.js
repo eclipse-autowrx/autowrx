@@ -225,14 +225,14 @@ describe('Prototype routes', () => {
       expect((await Prototype.findById(prototype.id)).name).toBe('Existing prototype');
     });
 
-    test('should return 200 for a model_member (read-only) on a public prototype', async () => {
+    test('should return 403 for a model_member (read-only) on a public prototype', async () => {
       await grantRole(userTwo._id, 'model_member', privateModel._id);
 
       await request(app)
         .patch(`/v2/prototypes/${prototype.id}`)
         .set('Authorization', `Bearer ${userTwoAccessToken}`)
         .send({ name: 'Reader edit' })
-        .expect(httpStatus.OK);
+        .expect(httpStatus.FORBIDDEN);
     });
 
     test('should return 404 for an unknown id', async () => {
@@ -368,7 +368,19 @@ describe('Prototype routes', () => {
         expect(res.body.results.map((p) => p.name)).toEqual(['Shared']);
       });
 
-      test('should be editable by any signed-in user', async () => {
+      test('should return 403 when a stranger edits the content', async () => {
+        await request(app)
+          .patch(`/v2/prototypes/${prototype.id}`)
+          .set('Authorization', `Bearer ${userTwoAccessToken}`)
+          .send({ code: 'print(4)' })
+          .expect(httpStatus.FORBIDDEN);
+
+        expect((await Prototype.findById(prototype.id)).code).not.toBe('print(4)');
+      });
+
+      test('should be editable by a model_contributor', async () => {
+        await grantRole(userTwo._id, 'model_contributor', publicModel._id);
+
         await request(app)
           .patch(`/v2/prototypes/${prototype.id}`)
           .set('Authorization', `Bearer ${userTwoAccessToken}`)
@@ -376,6 +388,28 @@ describe('Prototype routes', () => {
           .expect(httpStatus.OK);
 
         expect((await Prototype.findById(prototype.id)).code).toBe('print(4)');
+      });
+
+      test('should return 403 when a model_contributor changes the visibility', async () => {
+        await grantRole(userTwo._id, 'model_contributor', publicModel._id);
+
+        await request(app)
+          .patch(`/v2/prototypes/${prototype.id}`)
+          .set('Authorization', `Bearer ${userTwoAccessToken}`)
+          .send({ visibility: 'private' })
+          .expect(httpStatus.FORBIDDEN);
+      });
+
+      test('should leave private prototypes out of model stats', async () => {
+        await insertPrototype(publicModel, { name: 'Hidden', visibility: 'private', code: 'Vehicle.Speed' });
+
+        const res = await request(app)
+          .post('/v2/models/stats')
+          .set('Authorization', `Bearer ${userTwoAccessToken}`)
+          .send({ ids: [publicModel.id] })
+          .expect(httpStatus.OK);
+
+        expect(res.body.statsById[publicModel.id].prototypes.count).toBe(1);
       });
 
       test('should return 403 when a stranger changes the visibility', async () => {
