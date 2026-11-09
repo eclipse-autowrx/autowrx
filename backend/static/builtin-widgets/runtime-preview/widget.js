@@ -64,8 +64,8 @@ function computePreviewPath(name) {
   // name, while the kit registers as RUNTIME_PREFIX + name. "Runtime-" is the
   // syncer's default prefix; a custom one must be mapped explicitly.
   // Guessing is safe: verifyAndLoadPreview() checks the response first.
-  // Trailing slash: the kit app redirects "/name" to "/name/", so request the
-  // final URL directly and skip a redirect round-trip.
+  // Trailing slash: a front proxy may normalize "/name" to "/name/" with an
+  // absolute http:// redirect (blocked on https) - request the final URL directly.
   const basePath = match ? match.path : '/runtime-preview/' + name.replace(/runtime-/i, '') + '/';
   // app-core's ApplicationRuntime.mount() always registers a fixed default
   // route alongside the base path, so Default UI is reached by appending
