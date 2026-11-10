@@ -163,7 +163,13 @@ test.describe('API Architecture diagram (Vehicle API)', () => {
     const urlInput = page.locator('textarea[placeholder="Enter URL."]');
     await expect(hoverInput).toBeVisible({ timeout: 10000 });
     await hoverInput.fill(HOVER_MESSAGE);
-    await urlInput.fill(SHAPE_URL);
+    // Delete inside the URL field edits the text only; it must not open the
+    // "remove this shape?" dialog.
+    await urlInput.fill(`${SHAPE_URL}x`);
+    await urlInput.press('ArrowLeft');
+    await urlInput.press('Delete');
+    await expect(urlInput).toHaveValue(SHAPE_URL);
+    await expect(page.getByText('Do you want to remove this shape?')).toBeHidden();
     await page.keyboard.press('Escape');
     await expect(hoverInput).toBeHidden({ timeout: 10000 });
 
