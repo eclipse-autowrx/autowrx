@@ -71,6 +71,9 @@ export interface ImageAreaEditorProps {
   bgImage?: string
   bgColor?: string
   onSave?: (data: ImageAreaSaveData) => void
+  // Fires with the current draft after each user edit, so a host page can
+  // save it from its own Save button.
+  onChange?: (data: ImageAreaSaveData) => void
   handleUploadImage?: (file: File) => void
 }
 
