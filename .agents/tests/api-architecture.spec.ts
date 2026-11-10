@@ -169,7 +169,11 @@ test.describe('API Architecture diagram (Vehicle API)', () => {
     await urlInput.press('ArrowLeft');
     await urlInput.press('Delete');
     await expect(urlInput).toHaveValue(SHAPE_URL);
-    await expect(page.getByText('Do you want to remove this shape?')).toBeHidden();
+    // Two remove dialogs (settings panel + stage) stay mounted with
+    // display:none, so assert that none of them is visible.
+    await expect(
+      page.getByText('Do you want to remove this shape?').filter({ visible: true }),
+    ).toHaveCount(0);
     await page.keyboard.press('Escape');
     await expect(hoverInput).toBeHidden({ timeout: 10000 });
 
