@@ -1026,7 +1026,13 @@ export async function getModelViaApi(
   page: Page,
   modelId: string,
   auth?: AuthCredentials,
-): Promise<{ id: string; visibility?: string; state?: string; model_template_id?: string }> {
+): Promise<{
+  id: string;
+  visibility?: string;
+  state?: string;
+  model_template_id?: string;
+  property?: string;
+}> {
   const token = auth
     ? await getTokenForUser(page, auth.email, auth.password)
     : await getAuthToken(page);
@@ -1042,6 +1048,7 @@ export async function getModelViaApi(
     visibility: data?.visibility,
     state: data?.state,
     model_template_id: data?.model_template_id,
+    property: data?.property,
   };
 }
 

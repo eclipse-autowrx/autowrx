@@ -75,6 +75,7 @@
 | Delete model | Confirm dialog → delete | ✅ `vehicle-models.spec.ts` |
 | Model image | Thumbnail / cover image | ❌ |
 | Model description | Edit model description | ❌ |
+| Vehicle properties save feedback (#57) | Save shows success toast and closes dialog; failure shows error toast and keeps dialog open | ✅ `vehicle-properties.spec.ts` |
 | Add plugin tab to model | Attach admin plugin via + button | ✅ `plugin-management.spec.ts` |
 | Model plugin detail page | Plugin renders on `/model/:id/plugin` | ✅ `plugin-management.spec.ts` |
 | More-actions menu | Kebab menu: Manage Addons, Save Model as Template | ✅ `model-customization-menu.spec.ts` |
