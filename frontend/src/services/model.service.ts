@@ -180,9 +180,16 @@ export const deleteModelService = async (model_id: string) => {
   return await serverAxios.delete(`/models/${model_id}`)
 }
 
-export const validateVss = async (spec: unknown): Promise<void> => {
+// allowEmptyRoot: accept a blank-model export (import only; runtime builds need signals).
+export const validateVss = async (
+  spec: unknown,
+  { allowEmptyRoot = false }: { allowEmptyRoot?: boolean } = {},
+): Promise<void> => {
   try {
-    await serverAxios.post('/models/validate-vss', { spec })
+    await serverAxios.post('/models/validate-vss', {
+      spec,
+      ...(allowEmptyRoot && { allowEmptyRoot }),
+    })
   } catch (error) {
     if (isAxiosError<{ message?: string }>(error)) {
       throw new Error(

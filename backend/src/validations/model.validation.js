@@ -176,7 +176,7 @@ const replaceApi = {
 };
 
 const validateVssSpec = {
-  body: Joi.object().keys({ spec: Joi.any().required() }),
+  body: Joi.object().keys({ spec: Joi.any().required(), allowEmptyRoot: Joi.boolean().default(false) }),
 };
 
 module.exports = {

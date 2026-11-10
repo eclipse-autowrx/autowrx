@@ -42,6 +42,7 @@ import { PERMISSIONS } from '@/data/permission'
 import { Spinner } from '@/components/atoms/spinner'
 import PluginPageRender from '@/components/organisms/PluginPageRender'
 import { useConfiguredPlugins } from '@/hooks/useConfiguredPlugins'
+import { describeVssError } from '@/utils/vssError'
 
 const ViewApiCovesa = () => {
   const { model_id, api: apiParam } = useParams<{
@@ -103,17 +104,7 @@ const ViewApiCovesa = () => {
       const serverMessage = isAxiosError<{ message?: unknown }>(error)
         ? error.response?.data?.message
         : undefined
-      const summary =
-        typeof serverMessage === 'string'
-          ? serverMessage.split('\n')[0].trim()
-          : ''
-      const emptyBranch = summary.match(
-        /Invalid VSS at (.+?): branch must contain children\./,
-      )
-      const message = emptyBranch
-        ? `${emptyBranch[1]} is an empty branch. Add at least one signal, then upload the file again.`
-        : summary ||
-          'Check that the file contains valid VSS JSON and try again.'
+      const message = describeVssError(serverMessage)
       toast.error(
         <div>
           <p className="font-medium">Unable to import VSS</p>
