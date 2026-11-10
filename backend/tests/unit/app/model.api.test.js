@@ -272,6 +272,8 @@ describe('lossless custom VSS import/export', () => {
     await expectRawExport(response.body.id, exported.body);
     // The empty tree still cannot be built: runtime preflight rejects it.
     await request().post('/models/validate-vss').send({ spec: exported.body }).expect(400);
+    // Import preflight opts in, matching what model create/replace accept.
+    await request().post('/models/validate-vss').send({ spec: exported.body, allowEmptyRoot: true }).expect(204);
   });
 
   test('non-raw output still refines nodes without mutating the stored base', async () => {

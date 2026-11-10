@@ -19,7 +19,8 @@ import {
 import { CVI } from '@/data/CVI'
 import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
-import { createModelService } from '@/services/model.service'
+import { createModelService, validateVss } from '@/services/model.service'
+import { describeVssError } from '@/utils/vssError'
 import { ModelCreate } from '@/types/model.type'
 import { isAxiosError } from 'axios'
 import { FormEvent, useEffect, useMemo, useState } from 'react'
@@ -182,7 +183,12 @@ const FormCreateModel = () => {
       })
     } catch (error) {
       if (isAxiosError(error)) {
-        setError(error.response?.data?.message || 'Something went wrong')
+        const message = error.response?.data?.message
+        setError(
+          typeof message === 'string' && message.startsWith('Invalid VSS at')
+            ? describeVssError(message)
+            : message || 'Something went wrong',
+        )
         return
       }
       setError('Something went wrong')
@@ -191,15 +197,15 @@ const FormCreateModel = () => {
     }
   }
 
-  const signalFileValidator = async (file: File) => {
+  const checkSignalFile = async (file: File): Promise<string | null> => {
     if (file.type !== 'application/json') {
       return 'File must be a JSON file'
     }
 
     // Read file as text
+    let fileText: string
     try {
-      // Read file content
-      const fileText = await new Promise<string>((resolve, reject) => {
+      fileText = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader()
         reader.onload = () => resolve(reader.result as string)
         reader.onerror = () => reject('Error reading file')
@@ -208,12 +214,30 @@ const FormCreateModel = () => {
 
       // Validate JSON format
       JSON.parse(fileText)
-
-      return null // Validation successful
     } catch (error) {
       console.error(error)
       return typeof error === 'string' ? error : 'Invalid JSON file'
     }
+
+    // Check the VSS tree before uploading, so a bad spec is never stored.
+    try {
+      await validateVss(fileText, { allowEmptyRoot: true })
+      return null // Validation successful
+    } catch (error) {
+      const message = describeVssError(
+        error instanceof Error ? error.message : undefined,
+      )
+      setError(message)
+      return message
+    }
+  }
+
+  const signalFileValidator = async (file: File) => {
+    setError('')
+    const message = await checkSignalFile(file)
+    // A rejected file never reaches onFileUpload, so end the upload state here.
+    if (message !== null) setUploading(false)
+    return message
   }
 
   return (

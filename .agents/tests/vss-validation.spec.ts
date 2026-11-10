@@ -7,7 +7,19 @@
 // SPDX-License-Identifier: MIT
 
 import { test, expect } from '@playwright/test';
-import { API_URL, loginAsAdmin, getAuthToken, createTestModelViaApi, deleteModelViaApi, goToVehicleApiTab } from './helpers';
+import {
+  API_URL,
+  loginAsAdmin,
+  getAuthToken,
+  createTestModelViaApi,
+  deleteModelViaApi,
+  goToVehicleApiTab,
+  getSiteConfigJson,
+  setSiteConfigJson,
+  configureHomeModelListSection,
+  gotoHomeModelList,
+  getHomeModelListSection,
+} from './helpers';
 
 const invalid = { Vehicle: { type: 'branch', children: { Cabin: { type: 'branch', children: {} } } } };
 const valid = { Vehicle: { type: 'branch', children: { Speed: { type: 'sensor', datatype: 'float' } } } };
@@ -45,6 +57,40 @@ test('invalid VSS replacement shows its path and preserves the existing model', 
     expect(after).toEqual(before);
   } finally {
     await deleteModelViaApi(page, modelId);
+  }
+});
+
+test('create-model upload rejects invalid VSS before storing the file', async ({ page }) => {
+  await loginAsAdmin(page);
+  const originalHomeContent = await getSiteConfigJson(page, 'CFG_HOME_CONTENT');
+  try {
+    await configureHomeModelListSection(page);
+    await gotoHomeModelList(page);
+    await getHomeModelListSection(page).getByRole('button', { name: /Add Model/i }).click();
+    const dialog = page.getByRole('dialog').filter({ has: page.getByRole('heading', { name: 'Create New Model' }) });
+    await expect(dialog).toBeVisible({ timeout: 15000 });
+    await dialog.locator('[data-id="form-create-model-input-name"]').fill(`E2E_VssCreate_${Date.now()}`);
+
+    const uploads: string[] = [];
+    page.on('request', r => { if (r.url().includes('/file/upload')) uploads.push(r.url()); });
+    const preflight = page.waitForResponse(r => r.url().endsWith('/models/validate-vss'));
+    await dialog.locator('input[type="file"]').setInputFiles({ name: 'invalid-vss.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(invalid)) });
+    expect((await preflight).status()).toBe(400);
+    const message = 'Vehicle.Cabin is an empty branch. Add at least one signal, then upload the file again.';
+    await expect(dialog.getByText(message, { exact: true })).toBeVisible();
+    expect(uploads).toHaveLength(0);
+    // The rejected file must not leave the form stuck in its uploading state.
+    await expect(dialog.locator('[data-id="form-create-model-btn-submit"]')).toBeEnabled();
+
+    // A blank-model export (empty root) is still importable.
+    const blankPreflight = page.waitForResponse(r => r.url().endsWith('/models/validate-vss'));
+    const stored = page.waitForResponse(r => r.url().includes('/file/upload') && r.request().method() === 'POST');
+    await dialog.locator('input[type="file"]').setInputFiles({ name: 'blank-vss.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ Vehicle: { type: 'branch', children: {} } })) });
+    expect((await blankPreflight).status()).toBe(204);
+    expect((await stored).ok()).toBeTruthy();
+    await expect(dialog.getByText(message, { exact: true })).toHaveCount(0);
+  } finally {
+    if (originalHomeContent !== null) await setSiteConfigJson(page, 'CFG_HOME_CONTENT', originalHomeContent);
   }
 });
 

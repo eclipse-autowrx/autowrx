@@ -382,7 +382,8 @@ const getApiDetail = catchAsync(async (req, res) => {
 });
 
 const validateVssSpec = catchAsync(async (req, res) => {
-  validateVss(req.body.spec);
+  // Import callers opt in to the empty-root blank-model export; runtime preflight does not.
+  validateVss(req.body.spec, { allowEmptyRoot: req.body.allowEmptyRoot === true });
   res.status(httpStatus.NO_CONTENT).send();
 });
 
