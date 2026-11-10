@@ -213,11 +213,25 @@ const ShapeSettings = ({
   )
 }
 
+// Same invalid-shape filter as the lib's save path: drops id-less drafts,
+// shapes without size, and text shapes with empty text.
+const validShapes = (shapes: ImageAreaShape[]) =>
+  shapes.filter(
+    (s) =>
+      !(
+        !s.id ||
+        !s.width ||
+        !s.height ||
+        (s.type === SHAPE.TEXT && isEmpty(s.text))
+      ),
+  )
+
 const ImageAreaEditor = ({
   shapes,
   bgImage,
   bgColor,
   onSave,
+  onChange,
   handleUploadImage,
 }: ImageAreaEditorProps) => {
   const [displayShapes, setDisplayShapes] = useState<ImageAreaShape[]>([])
@@ -248,6 +262,20 @@ const ImageAreaEditor = ({
   useEffect(() => {
     setLoaded(!bgImage)
   }, [bgImage])
+
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
+
+  // Report the draft only after a user edit, so prop resets don't mark the
+  // host page dirty.
+  useEffect(() => {
+    if (!isChanged) return
+    onChangeRef.current?.({
+      shapes: validShapes(displayShapes),
+      bgImage,
+      bgColor: displayBgColor,
+    })
+  }, [isChanged, displayShapes, displayBgColor, bgImage])
 
   const selectType = (type: ShapeType) => {
     setSourceType(type)
@@ -297,17 +325,7 @@ const ImageAreaEditor = ({
 
   const handleSave = () => {
     if (!onSave) return
-    // Same invalid-shape filter as the lib's save path: drops id-less drafts,
-    // shapes without size, and text shapes with empty text.
-    const kept = displayShapes.filter(
-      (s) =>
-        !(
-          !s.id ||
-          !s.width ||
-          !s.height ||
-          (s.type === SHAPE.TEXT && isEmpty(s.text))
-        ),
-    )
+    const kept = validShapes(displayShapes)
     setDisplayShapes(kept)
     setIsChanged(false)
     onSave({ shapes: kept, bgImage, bgColor: displayBgColor })

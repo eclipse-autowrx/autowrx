@@ -574,6 +574,16 @@ const ImageAreaStage = ({
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      // Delete inside a text field (shape settings, picker inputs, text
+      // shape editor) edits the text; it must not offer to remove the shape.
+      const target = e.target as HTMLElement | null
+      if (
+        target?.isContentEditable ||
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA'
+      ) {
+        return
+      }
       if (!viewOnly && e.keyCode === 46 && selectedId) setConfirmOpen(true)
     }
     window.addEventListener('keydown', handler)

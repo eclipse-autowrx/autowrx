@@ -26,6 +26,9 @@ test.use({ viewport: { width: 1920, height: 1080 } });
 
 const PICKED_COLOR = '#50E3C2';
 const PICKED_COLOR_RGB = 'rgb(80, 227, 194)';
+const OUTER_SAVE_COLOR = '#F5A623';
+const OUTER_SAVE_COLOR_RGB = 'rgb(245, 166, 35)';
+const CANCELLED_COLOR = '#9013FE';
 const HOVER_MESSAGE = 'E2E hover';
 const SHAPE_URL = 'https://e2e.example.com/signal';
 const UPLOAD_IMAGE_PATH = join(
@@ -85,6 +88,7 @@ async function waitForVehicleSkeleton(
 
 test.describe('API Architecture diagram (Vehicle API)', () => {
   let modelId: string | null = null;
+  const extraModelIds: string[] = [];
   let originalHomeContent: unknown = null;
 
   test.beforeAll(async ({ browser }) => {
@@ -101,6 +105,9 @@ test.describe('API Architecture diagram (Vehicle API)', () => {
     if (modelId) {
       await deleteModelViaApi(page, modelId).catch(() => {});
       modelId = null;
+    }
+    for (const id of extraModelIds.splice(0)) {
+      await deleteModelViaApi(page, id).catch(() => {});
     }
     if (originalHomeContent !== null) {
       await setSiteConfigJson(page, 'CFG_HOME_CONTENT', originalHomeContent);
@@ -156,7 +163,17 @@ test.describe('API Architecture diagram (Vehicle API)', () => {
     const urlInput = page.locator('textarea[placeholder="Enter URL."]');
     await expect(hoverInput).toBeVisible({ timeout: 10000 });
     await hoverInput.fill(HOVER_MESSAGE);
-    await urlInput.fill(SHAPE_URL);
+    // Delete inside the URL field edits the text only; it must not open the
+    // "remove this shape?" dialog.
+    await urlInput.fill(`${SHAPE_URL}x`);
+    await urlInput.press('ArrowLeft');
+    await urlInput.press('Delete');
+    await expect(urlInput).toHaveValue(SHAPE_URL);
+    // Two remove dialogs (settings panel + stage) stay mounted with
+    // display:none, so assert that none of them is visible.
+    await expect(
+      page.getByText('Do you want to remove this shape?').filter({ visible: true }),
+    ).toHaveCount(0);
     await page.keyboard.press('Escape');
     await expect(hoverInput).toBeHidden({ timeout: 10000 });
 
@@ -213,5 +230,65 @@ test.describe('API Architecture diagram (Vehicle API)', () => {
     expect(hasLegacyStyle).toBe(false);
     const containerWidth = await section.evaluate((el) => el.getBoundingClientRect().width);
     expect(containerWidth).toBeLessThanOrEqual(1400);
+  });
+  // Issue #54: the outer Save (next to Cancel) ignored edits unless the
+  // toolbar Save had been clicked first, so a color change was lost.
+  test('outer Save persists a background color change; Cancel discards it', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await loginAsAdmin(page);
+
+    const id = await createTestModelViaApi(page, `E2E_ApiArchOuterSave_${Date.now()}`, 'public');
+    extraModelIds.push(id);
+    await page.goto(`/model/${id}/api/covesa/Vehicle`);
+    await waitForVehicleSkeleton(page, id);
+    await page.reload();
+    const container = getStageContainer(page);
+    await expect(container).toBeVisible({ timeout: 30000 });
+
+    const editBtn = page.getByRole('button', { name: 'Edit', exact: true }).first();
+    const toolbar = getEditorToolbar(page);
+    // The outer pair renders before the editor toolbar in DOM order.
+    const outerSave = page.getByRole('button', { name: 'Save', exact: true }).first();
+    const outerCancel = page.getByRole('button', { name: 'Cancel', exact: true });
+
+    const pickColor = async (hex: string) => {
+      await toolbar.locator('div.relative.cursor-pointer').click();
+      const picker = page.locator('.sketch-picker');
+      await expect(picker).toBeVisible({ timeout: 10000 });
+      await picker.locator(`div[title="${hex}"]`).click();
+      await page.keyboard.press('Escape');
+      await expect(picker).toBeHidden({ timeout: 10000 });
+    };
+
+    // --- Outer Save: disabled until an edit, then persists the color.
+    await editBtn.click();
+    await expect(toolbar).toBeVisible({ timeout: 15000 });
+    await expect(toolbar.locator('button').first()).toBeEnabled({ timeout: 15000 });
+    await expect(outerSave).toBeDisabled();
+    await pickColor(OUTER_SAVE_COLOR);
+    await expect(container).toHaveCSS('background-color', OUTER_SAVE_COLOR_RGB);
+    await expect(outerSave).toBeEnabled();
+    await outerSave.click();
+    await expect(editBtn).toBeVisible({ timeout: 30000 });
+
+    const saved = await getVehicleExtendedApi(page, id);
+    expect(saved.skeleton.nodes[0].bgColor).toBe(OUTER_SAVE_COLOR);
+
+    // --- Cancel: a picked color is not saved.
+    await editBtn.click();
+    await expect(toolbar).toBeVisible({ timeout: 15000 });
+    await expect(toolbar.locator('button').first()).toBeEnabled({ timeout: 15000 });
+    await pickColor(CANCELLED_COLOR);
+    await outerCancel.click();
+    await expect(editBtn).toBeVisible({ timeout: 15000 });
+
+    const afterCancel = await getVehicleExtendedApi(page, id);
+    expect(afterCancel.skeleton.nodes[0].bgColor).toBe(OUTER_SAVE_COLOR);
+    await page.reload();
+    await expect(getStageContainer(page)).toHaveCSS('background-color', OUTER_SAVE_COLOR_RGB, {
+      timeout: 30000,
+    });
   });
 });

@@ -319,7 +319,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
     node.bgColor = data.bgColor
     await saveAPISkeleton(tmpSkele)
     setSkeleton(tmpSkele)
-    setPendingSkeletonUpdate(data)
+    setPendingSkeletonUpdate(null)
     setIsEditMode(false)
   }
 
@@ -339,7 +339,10 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
               <Button
                 variant="default"
                 size="sm"
-                onClick={() => setIsEditMode(true)}
+                onClick={() => {
+                  setPendingSkeletonUpdate(null)
+                  setIsEditMode(true)
+                }}
               >
                 <TbEdit className="size-4 mr-0.5" />
                 Edit
@@ -350,7 +353,10 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
                   variant="outline"
                   size="sm"
                   className="w-16"
-                  onClick={() => setIsEditMode(false)}
+                  onClick={() => {
+                    setPendingSkeletonUpdate(null)
+                    setIsEditMode(false)
+                  }}
                 >
                   Cancel
                 </Button>
@@ -358,6 +364,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
                   variant="default"
                   size="sm"
                   className="w-16"
+                  disabled={!pendingSkeletonUpdate}
                   onClick={() => {
                     onSaveRequested(pendingSkeletonUpdate)
                   }}
@@ -382,6 +389,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
                   bgImage={activeSkeleton?.nodes[0]?.bgImage}
                   bgColor={activeSkeleton?.nodes[0]?.bgColor}
                   onSave={onSaveRequested}
+                  onChange={setPendingSkeletonUpdate}
                   handleUploadImage={handleUploadImage}
                 />
               </>
