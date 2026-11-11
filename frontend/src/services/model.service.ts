@@ -11,6 +11,7 @@ import { List } from '@/types/common.type'
 import { serverAxios } from './base'
 import { Model, ModelCreate, ModelLite } from '@/types/model.type'
 import { VehicleAPI } from '@/types/api.type'
+import { describeVssError, VssErrorContext } from '@/utils/vssError'
 
 export const listModelsLite = async (
   params?: Record<string, unknown>,
@@ -181,9 +182,13 @@ export const deleteModelService = async (model_id: string) => {
 }
 
 // allowEmptyRoot: accept a blank-model export (import only; runtime builds need signals).
+// The thrown Error carries a user-facing message worded for the given context.
 export const validateVss = async (
   spec: unknown,
-  { allowEmptyRoot = false }: { allowEmptyRoot?: boolean } = {},
+  {
+    allowEmptyRoot = false,
+    context = 'build',
+  }: { allowEmptyRoot?: boolean; context?: VssErrorContext } = {},
 ): Promise<void> => {
   try {
     await serverAxios.post('/models/validate-vss', {
@@ -192,9 +197,11 @@ export const validateVss = async (
     })
   } catch (error) {
     if (isAxiosError<{ message?: string }>(error)) {
+      const message = error.response?.data?.message
       throw new Error(
-        error.response?.data?.message ||
-          'Unable to validate VSS. Please try again.',
+        message
+          ? describeVssError(message, context)
+          : 'Unable to validate VSS. Please try again.',
       )
     }
     throw error
