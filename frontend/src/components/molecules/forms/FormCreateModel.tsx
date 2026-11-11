@@ -19,8 +19,9 @@ import {
 import { CVI } from '@/data/CVI'
 import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
-import { createModelService, validateVss } from '@/services/model.service'
+import { createModelService } from '@/services/model.service'
 import { describeVssError } from '@/utils/vssError'
+import { checkVssFile } from '@/utils/vssFile'
 import { ModelCreate } from '@/types/model.type'
 import { isAxiosError } from 'axios'
 import { FormEvent, useEffect, useMemo, useState } from 'react'
@@ -61,6 +62,7 @@ const FormCreateModel = () => {
   const [uploading, setUploading] = useState(false)
 
   const [error, setError] = useState<string>('')
+  const [fileError, setFileError] = useState<string>('')
   const [data, setData] = useState(initialState)
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
     null,
@@ -197,46 +199,18 @@ const FormCreateModel = () => {
     }
   }
 
-  const checkSignalFile = async (file: File): Promise<string | null> => {
-    if (file.type !== 'application/json') {
-      return 'File must be a JSON file'
-    }
-
-    // Read file as text
-    let fileText: string
-    try {
-      fileText = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = () => reject('Error reading file')
-        reader.readAsText(file)
-      })
-
-      // Validate JSON format
-      JSON.parse(fileText)
-    } catch (error) {
-      console.error(error)
-      return typeof error === 'string' ? error : 'Invalid JSON file'
-    }
-
-    // Check the VSS tree before uploading, so a bad spec is never stored.
-    try {
-      await validateVss(fileText, { allowEmptyRoot: true })
-      return null // Validation successful
-    } catch (error) {
-      const message = describeVssError(
-        error instanceof Error ? error.message : undefined,
-      )
-      setError(message)
-      return message
-    }
-  }
-
   const signalFileValidator = async (file: File) => {
-    setError('')
-    const message = await checkSignalFile(file)
-    // A rejected file never reaches onFileUpload, so end the upload state here.
-    if (message !== null) setUploading(false)
+    setFileError('')
+    const message =
+      file.type !== 'application/json'
+        ? 'File must be a JSON file'
+        : await checkVssFile(file)
+    if (message !== null) {
+      // A rejected file never reaches onFileUpload: end the upload state and
+      // block Create until a valid file is picked or the user opts out.
+      setFileError(message)
+      setUploading(false)
+    }
     return message
   }
 
@@ -322,6 +296,24 @@ const FormCreateModel = () => {
             />
           </div>
         </div>
+        {fileError && (
+          <div className="mt-2 flex flex-col gap-1">
+            <p
+              className="text-sm text-destructive"
+              data-id="form-create-model-file-error"
+            >
+              {fileError}
+            </p>
+            <button
+              type="button"
+              onClick={() => setFileError('')}
+              className="self-start text-xs text-muted-foreground underline hover:text-foreground"
+              data-id="form-create-model-use-vss-version"
+            >
+              Use the selected VSS version instead
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="grow"></div>
@@ -357,7 +349,13 @@ const FormCreateModel = () => {
       {error && <p className="text-sm mt-2 text-destructive">{error}</p>}
       {/* Action */}
       <Button
-        disabled={loading || uploading || !data.name.trim() || isDuplicateName}
+        disabled={
+          loading ||
+          uploading ||
+          !!fileError ||
+          !data.name.trim() ||
+          isDuplicateName
+        }
         type="submit"
         className="mt-8 w-full da-form-create-model-submit"
         data-id="form-create-model-btn-submit"

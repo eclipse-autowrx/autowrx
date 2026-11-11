@@ -36,7 +36,7 @@ test('VSS preflight requires authentication and reports invalid paths', async ({
   expect(accepted.status()).toBe(204);
 });
 
-test('invalid VSS replacement shows its path and preserves the existing model', async ({ page }) => {
+test('invalid VSS replacement is rejected before upload and preserves the existing model', async ({ page }) => {
   await loginAsAdmin(page);
   const modelId = await createTestModelViaApi(page, `E2E_VssValidation_${Date.now()}`, 'private');
   const headers = { Authorization: `Bearer ${await getAuthToken(page)}` };
@@ -45,14 +45,18 @@ test('invalid VSS replacement shows its path and preserves the existing model', 
     await goToVehicleApiTab(page, modelId);
     await page.getByRole('link', { name: 'Replace Vehicle API', exact: true }).click();
     const dialog = page.getByRole('dialog');
+    const uploads: string[] = [];
+    page.on('request', r => { if (r.url().includes('/file/upload')) uploads.push(r.url()); });
+    const preflight = page.waitForResponse(r => r.url().endsWith('/models/validate-vss'));
     await dialog.locator('input[type="file"]').setInputFiles({ name: 'invalid-vss.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(invalid)) });
-    const response = page.waitForResponse(r => r.url().endsWith(`/models/${modelId}/replace-api`) && r.request().method() === 'POST');
-    await dialog.getByRole('button', { name: 'Replace Vehicle API', exact: true }).click();
-    expect((await response).status()).toBe(400);
-    const alert = page.getByRole('alert').filter({ hasText: 'Unable to import VSS' });
+    expect((await preflight).status()).toBe(400);
+    const alert = page.getByRole('alert').filter({ hasText: 'Invalid file:' });
     await expect(alert).toBeVisible();
-    await expect(alert).toContainText('Vehicle.Cabin is an empty branch. Add at least one signal, then upload the file again.');
+    await expect(alert).toContainText('Vehicle.Cabin is an empty branch. Add at least one signal to it, then upload the file again.');
     await expect(alert).not.toContainText(/Error:|\bat Object\.|node:internal|model\.service\.js|model\.controller\.js/);
+    // The file is checked before upload, so nothing is stored and Replace stays disabled.
+    expect(uploads).toHaveLength(0);
+    await expect(dialog.getByRole('button', { name: 'Replace Vehicle API', exact: true })).toBeDisabled();
     const after = await (await page.request.get(`${API_URL}/v2/models/${modelId}/api?raw=true`, { headers })).json();
     expect(after).toEqual(before);
   } finally {
@@ -76,11 +80,15 @@ test('create-model upload rejects invalid VSS before storing the file', async ({
     const preflight = page.waitForResponse(r => r.url().endsWith('/models/validate-vss'));
     await dialog.locator('input[type="file"]').setInputFiles({ name: 'invalid-vss.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(invalid)) });
     expect((await preflight).status()).toBe(400);
-    const message = 'Vehicle.Cabin is an empty branch. Add at least one signal, then upload the file again.';
+    const message = 'Vehicle.Cabin is an empty branch. Add at least one signal to it, then upload the file again.';
     await expect(dialog.getByText(message, { exact: true })).toBeVisible();
     expect(uploads).toHaveLength(0);
-    // The rejected file must not leave the form stuck in its uploading state.
-    await expect(dialog.locator('[data-id="form-create-model-btn-submit"]')).toBeEnabled();
+    // Create stays blocked while the file is rejected, so no model silently falls back to the default VSS.
+    const submit = dialog.locator('[data-id="form-create-model-btn-submit"]');
+    await expect(submit).toBeDisabled();
+    await dialog.locator('[data-id="form-create-model-use-vss-version"]').click();
+    await expect(dialog.getByText(message, { exact: true })).toHaveCount(0);
+    await expect(submit).toBeEnabled();
 
     // A blank-model export (empty root) is still importable.
     const blankPreflight = page.waitForResponse(r => r.url().endsWith('/models/validate-vss'));
@@ -88,7 +96,7 @@ test('create-model upload rejects invalid VSS before storing the file', async ({
     await dialog.locator('input[type="file"]').setInputFiles({ name: 'blank-vss.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ Vehicle: { type: 'branch', children: {} } })) });
     expect((await blankPreflight).status()).toBe(204);
     expect((await stored).ok()).toBeTruthy();
-    await expect(dialog.getByText(message, { exact: true })).toHaveCount(0);
+    await expect(submit).toBeEnabled();
   } finally {
     if (originalHomeContent !== null) await setSiteConfigJson(page, 'CFG_HOME_CONTENT', originalHomeContent);
   }
@@ -120,7 +128,7 @@ test('built-in Play and rebuild reject invalid VSS before sending runtime comman
     const play = panel.locator('[data-id="btn-run-prototype"]');
     await expect(play).toBeEnabled();
     await play.click();
-    await expect(page.getByText('Invalid VSS at Vehicle.Cabin: branch must contain children.', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('The vehicle model cannot be built: Vehicle.Cabin is an empty branch. Add at least one signal to it, then try again.', { exact: true }).first()).toBeVisible();
     await expect(play).toBeEnabled();
     await panel.getByText('Send Request', { exact: true }).click();
     const rejected = page.waitForResponse(r => r.url().endsWith('/models/validate-vss'));

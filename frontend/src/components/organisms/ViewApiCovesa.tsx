@@ -43,6 +43,7 @@ import { Spinner } from '@/components/atoms/spinner'
 import PluginPageRender from '@/components/organisms/PluginPageRender'
 import { useConfiguredPlugins } from '@/hooks/useConfiguredPlugins'
 import { describeVssError } from '@/utils/vssError'
+import { checkVssFile } from '@/utils/vssFile'
 
 const ViewApiCovesa = () => {
   const { model_id, api: apiParam } = useParams<{
@@ -312,6 +313,8 @@ const ViewApiCovesa = () => {
             <div className="space-y-4 py-4">
               <DaFileUpload
                 onFileUpload={(url) => setUrl(url)}
+                // Check the VSS before upload, so a rejected file is never stored.
+                validate={checkVssFile}
                 accept=".json"
                 className="w-full"
               />
