@@ -233,6 +233,83 @@ const ensureParentApiHierarchy = (root, api) => {
   return parentNode;
 };
 
+const defineChild = (target, key, value) => {
+  Object.defineProperty(target, key, {
+    value,
+    enumerable: true,
+    configurable: true,
+    writable: true,
+  });
+};
+
+// VSS fields an ExtendedApi row owns. Every other key on an imported wishlist node (custom keys,
+// name, children) stays as it was imported.
+const WISHLIST_ROW_FIELDS = [
+  'type',
+  'datatype',
+  'description',
+  'unit',
+  'min',
+  'max',
+  'allowed',
+  'comment',
+  'default',
+  'deprecation',
+  'isWishlist',
+  'custom_properties',
+];
+
+/**
+ * Merge an ExtendedApi row into the imported wishlist node, keeping the node's key order.
+ * @param {object} node - wishlist node from the stored custom VSS tree
+ * @param {object} row - ExtendedApi row as JSON
+ * @returns {object}
+ */
+const mergeWishlistNode = (node, row) => {
+  const merged = {};
+  Object.keys(node).forEach((key) => {
+    if (!WISHLIST_ROW_FIELDS.includes(key)) {
+      defineChild(merged, key, node[key]);
+    } else if (row[key] !== undefined) {
+      defineChild(merged, key, row[key]);
+    }
+  });
+  WISHLIST_ROW_FIELDS.forEach((key) => {
+    if (!Object.prototype.hasOwnProperty.call(node, key) && row[key] !== undefined) {
+      defineChild(merged, key, row[key]);
+    }
+  });
+  return merged;
+};
+
+/**
+ * Replace wishlist nodes of the stored custom VSS tree with their current ExtendedApi rows, in place.
+ * Nodes whose row was deleted are removed.
+ * @param {object} node
+ * @param {string} prefix
+ * @param {Map<string, object>} rowsByName
+ * @param {Set<string>} mergedApiNames - receives the apiNames that were merged
+ */
+const overlayWishlistNodes = (node, prefix, rowsByName, mergedApiNames) => {
+  if (!node || typeof node !== 'object' || !node.children || typeof node.children !== 'object') return;
+  Object.keys(node.children).forEach((key) => {
+    const child = node.children[key];
+    const childPrefix = `${prefix}.${key}`;
+    if (!child || typeof child !== 'object') return;
+    if (child.isWishlist) {
+      const apiName = child.name || childPrefix;
+      const row = rowsByName.get(apiName);
+      if (!row) {
+        delete node.children[key];
+        return;
+      }
+      defineChild(node.children, key, mergeWishlistNode(child, row));
+      mergedApiNames.add(apiName);
+    }
+    overlayWishlistNodes(node.children[key], childPrefix, rowsByName, mergedApiNames);
+  });
+};
+
 const traverse = (api, callback, prefix = '') => {
   if (!api) return;
   if (api.children) {
@@ -273,7 +350,13 @@ const computeVSSApi = async (modelId, { raw = false } = {}) => {
   const extendedApis = await ExtendedApi.find({
     model: modelId,
   });
+  const mergedApiNames = new Set();
+  if (model.custom_vss && ret[mainApi]) {
+    const rowsByName = new Map(extendedApis.map((extendedApi) => [extendedApi.apiName, extendedApi.toJSON()]));
+    overlayWishlistNodes(ret[mainApi], mainApi, rowsByName, mergedApiNames);
+  }
   extendedApis.forEach((extendedApi) => {
+    if (mergedApiNames.has(extendedApi.apiName)) return;
     try {
       const name = extendedApi.apiName.split('.').slice(1).join('.');
       if (!name) return;
