@@ -103,6 +103,35 @@ const bsonRoundTrip = (value) => mongoose.mongo.BSON.deserialize(mongoose.mongo.
 const modelBody = { name: 'Custom VSS', main_api: 'Vehicle', api_data_url: '/custom.json' };
 const wishlist = { apiName: 'Vehicle.New.Wanted', type: 'sensor', datatype: 'float', isWishlist: true };
 
+// Fixture with wishlist nodes (custom keys, mid-position, nested under a wishlist branch).
+const withCustomWishlist = () => {
+  const { Zebra, ...rest } = clone(fixture.Vehicle.children);
+  const data = clone(fixture);
+  data.Vehicle.children = {
+    Zebra,
+    Wanted: {
+      uuid: 'wanted-uuid',
+      type: 'sensor',
+      'x-vendor': { keep: true },
+      datatype: 'float',
+      unit: 'km/h',
+      isWishlist: true,
+    },
+    Future: {
+      type: 'branch',
+      description: 'Future',
+      isWishlist: true,
+      'x-note': 'branch note',
+      children: {
+        Child: { type: 'actuator', datatype: 'boolean', isWishlist: true, 'x-list': [1, 'two'] },
+        Plain: { type: 'sensor', datatype: 'int8', 'x-plain': 1 },
+      },
+    },
+    ...rest,
+  };
+  return data;
+};
+
 let storedModel;
 let storedApis;
 
@@ -312,11 +341,67 @@ describe('lossless custom VSS import/export', () => {
     data.Vehicle.children.Wanted = { type: 'sensor', datatype: 'float', isWishlist: true };
     fetch.mockResolvedValue({ ok: true, json: async () => clone(data) });
     const response = await request().post('/models').send(modelBody).expect(201);
-    expect(storedModel.custom_vss).toEqual(fixture);
+    expect(storedModel.custom_vss).toEqual(data);
     expect(storedApis).toHaveLength(1);
     expect(storedApis[0].apiName).toBe('Vehicle.Wanted');
     const exported = await request().get(`/models/${response.body.id}/api?raw=true`).expect(200);
     expect(exported.body.Vehicle.children.Wanted.isWishlist).toBe(true);
+  });
+
+  test('wishlist nodes with custom keys export identically, in place and nested', async () => {
+    const data = withCustomWishlist();
+    fetch.mockResolvedValue({ ok: true, json: async () => clone(data) });
+    const response = await request().post('/models').send(modelBody).expect(201);
+    expect(storedApis.map((api) => api.apiName).sort()).toEqual([
+      'Vehicle.Future',
+      'Vehicle.Future.Child',
+      'Vehicle.Wanted',
+    ]);
+    await expectRawExport(response.body.id, data);
+  });
+
+  test('replace-api keeps custom keys on wishlist nodes', async () => {
+    const response = await request().post('/models').send(modelBody).expect(201);
+    const data = withCustomWishlist();
+    fetch.mockResolvedValue({ ok: true, json: async () => clone(data) });
+    await request().post(`/models/${response.body.id}/replace-api`).send({ api_data_url: '/custom.json' }).expect(200);
+    await expectRawExport(response.body.id, data);
+  });
+
+  test('edited wishlist rows update their fields and keep custom keys and key order', async () => {
+    fetch.mockResolvedValue({ ok: true, json: async () => withCustomWishlist() });
+    const response = await request().post('/models').send(modelBody).expect(201);
+    const row = storedApis.find((api) => api.apiName === 'Vehicle.Wanted');
+    row.unit = 'm/s';
+    row.comment = 'added';
+    const exported = await request().get(`/models/${response.body.id}/api?raw=true`).expect(200);
+    const expected = withCustomWishlist();
+    expected.Vehicle.children.Wanted.unit = 'm/s';
+    expected.Vehicle.children.Wanted.comment = 'added';
+    expect(JSON.stringify(exported.body)).toBe(JSON.stringify(expected));
+  });
+
+  test('deleted wishlist rows are removed from the export', async () => {
+    fetch.mockResolvedValue({ ok: true, json: async () => withCustomWishlist() });
+    const response = await request().post('/models').send(modelBody).expect(201);
+    storedApis = storedApis.filter((api) => api.apiName !== 'Vehicle.Wanted');
+    const exported = await request().get(`/models/${response.body.id}/api?raw=true`).expect(200);
+    const expected = withCustomWishlist();
+    delete expected.Vehicle.children.Wanted;
+    expect(JSON.stringify(exported.body)).toBe(JSON.stringify(expected));
+  });
+
+  test('non-raw output shows custom keys on wishlist nodes', async () => {
+    fetch.mockResolvedValue({ ok: true, json: async () => withCustomWishlist() });
+    const response = await request().post('/models').send(modelBody).expect(201);
+    const exported = await request().get(`/models/${response.body.id}/api`).expect(200);
+    expect(exported.body.Vehicle.children.Wanted).toMatchObject({
+      'x-vendor': { keep: true },
+      uuid: 'wanted-uuid',
+      isWishlist: true,
+      name: 'Vehicle.Wanted',
+    });
+    expect(exported.body.Vehicle.children.Future.children.Plain).toMatchObject({ 'x-plain': 1 });
   });
 
   test('invalid wishlist nodes are rejected before create or replace mutates data', async () => {

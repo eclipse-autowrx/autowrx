@@ -128,7 +128,7 @@ Model owners (define the signal set); end users (consume signals in dashboards/c
 
 - `POST /v2/apis` (auth) → `201` the new API; `GET /v2/apis/:id` → `200`; `PATCH` → `200`; `DELETE` → `204`; `GET /v2/apis/model_id/:modelId` → `200` the model's API.
 - `GET /v2/models/:id/api` (optional auth) → `200` the computed CVI (standard VSS or stored custom VSS + extended merged); `GET /v2/models/:id/api/:apiName` → `200` one API's detail (`name`, `datatype`, `type`, `unit?`, `min?`, `max?`, `description?`).
-- `GET /v2/models/:id/api?raw=true` uses the same model-access check and skips UI refinement and sorting. Unmodified custom imports retain their original fields, empty objects, and JSON key order; extended nodes are overlaid unless their names collide with a base node. Without `raw=true`, names, IDs, and defaults are still added for UI consumers.
+- `GET /v2/models/:id/api?raw=true` uses the same model-access check and skips UI refinement and sorting. Unmodified custom imports retain their original fields, empty objects, and JSON key order; imported wishlist nodes stay in the stored tree and their ExtendedApi rows are merged back in place, keeping custom keys and key order (a node whose row was deleted is dropped); other extended nodes are overlaid unless their names collide with a base node. Without `raw=true`, names, IDs, and defaults are still added for UI consumers.
 - Custom imports made before `custom_vss` storage was introduced remain lossy because their original trees were not retained.
 
 ### Quality control
@@ -202,7 +202,7 @@ Model owners (swap the signal set to a new VSS version).
 
 ### API contract
 
-- `POST /v2/models/:id/replace-api {api_data_url}` (requires `WRITE_MODEL`) → `200`; missing URLs or VSS data larger than 10 MiB return `400`. Matching standard imports store `api_version` and clear `custom_vss`; custom imports store the tree in `custom_vss` and wishlist nodes as ExtendedApi rows. This replaces the previous base and extended APIs.
+- `POST /v2/models/:id/replace-api {api_data_url}` (requires `WRITE_MODEL`) → `200`; missing URLs or VSS data larger than 10 MiB return `400`. Matching standard imports store `api_version` and clear `custom_vss`; custom imports store the full tree (wishlist nodes included) in `custom_vss` and also create ExtendedApi rows for wishlist nodes. This replaces the previous base and extended APIs.
 
 ### Quality control
 

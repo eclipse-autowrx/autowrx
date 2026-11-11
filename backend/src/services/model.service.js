@@ -794,9 +794,12 @@ const processApiData = (data) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'VSS root must be an object');
   }
 
-  // Detached wishlist APIs
+  // Wishlist nodes become ExtendedApi rows. The stored tree keeps them (with any custom keys and
+  // their key order) so an unmodified import exports identically; the standard-version check uses
+  // a copy without them.
+  const baseData = _.cloneDeep(data);
   traverse(
-    data[mainApi],
+    baseData[mainApi],
     (api, prefix) => {
       for (const [key, value] of Object.entries(api.children || {})) {
         if (value.isWishlist) {
@@ -835,7 +838,7 @@ const processApiData = (data) => {
         logger.debug('No VSS versions available, treating uploaded file as custom');
       } else {
         // Compare root keys before checking each standard version.
-        const dataKeys = Object.keys(data);
+        const dataKeys = Object.keys(baseData);
 
         // Only check versions that actually exist on disk
         let matched = false;
@@ -857,7 +860,7 @@ const processApiData = (data) => {
               continue;
             }
 
-            const isEqual = _.isEqual(file, data);
+            const isEqual = _.isEqual(file, baseData);
             if (isEqual) {
               result.api_version = version.name;
               matched = true;
