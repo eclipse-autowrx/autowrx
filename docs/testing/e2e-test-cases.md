@@ -318,8 +318,9 @@ this line when you re-run).
 | Test case | What it checks |
 |---|---|
 | VSS preflight requires authentication and reports invalid paths | Anonymous requests are rejected; signed-in users receive the failing path for invalid data and successful preflight for valid data. |
-| Invalid VSS replacement shows its path and preserves the existing model | Replacing a model API with an empty VSS branch shows an actionable error and leaves the existing specification unchanged. |
-| Built-in Play and rebuild reject invalid VSS before sending runtime commands | Both actions show the invalid path and send no generation or run commands; this case requires a disposable runtime server. |
+| Invalid VSS replacement is rejected before upload and preserves the existing model | Picking a VSS file with an empty branch in Replace Vehicle API shows an actionable error, uploads nothing, keeps Replace disabled and leaves the existing specification unchanged. |
+| Create-model upload rejects invalid VSS before storing the file | Picking an invalid VSS file in Create New Model shows an actionable error, uploads nothing and blocks Create until the user opts back into the VSS version; a blank-model export is still accepted. |
+| Built-in Play and rebuild reject invalid VSS before sending runtime commands | Both actions show a "vehicle model cannot be built" message with the invalid path and send no generation or run commands; this case requires a disposable runtime server. |
 
 ## 25. Home and navigation regressions
 
