@@ -31,6 +31,7 @@ import {
   setSiteConfigJson,
   waitForModelInHomeList,
   getHomeModelListSection,
+  MODEL_CARD_MENU,
 } from './helpers';
 
 // Reuse Playwright's bundled ZIP extractor without adding a dependency.
@@ -98,7 +99,7 @@ test.describe('Import / Export - Model & Prototype', () => {
 
     const section = getHomeModelListSection(page);
     await openModelContextMenu(page, modelName, section);
-    const zipPath = await downloadViaContextMenuItem(page, 'Export Model');
+    const zipPath = await downloadViaContextMenuItem(page, MODEL_CARD_MENU.export);
     expect(zipPath).toMatch(/model_.*\.zip$/i);
 
     await deleteModelViaApi(page, modelId);
@@ -153,7 +154,7 @@ test.describe('Import / Export - Model & Prototype', () => {
       await waitForModelInHomeList(page, modelName);
       const section = getHomeModelListSection(page);
       await openModelContextMenu(page, modelName, section);
-      zipPath = await downloadViaContextMenuItem(page, 'Export Model');
+      zipPath = await downloadViaContextMenuItem(page, MODEL_CARD_MENU.export);
       expect(zipPath).toMatch(/model_.*\.zip$/i);
 
       const extractedDir = join(dirname(zipPath), 'extracted');
