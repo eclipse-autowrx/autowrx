@@ -718,8 +718,15 @@ export async function openSiteConfigNavBarActions(page: Page) {
 }
 
 export async function reloadForNavBarConfig(page: Page) {
+  // The first load rotates the refresh token (the server deletes the old one).
+  // Reloading before that response lands keeps the old cookie, so the reload
+  // gets a 401 and the session is lost. Wait for the refresh to finish first.
+  const refreshed = page
+    .waitForResponse((res) => res.url().includes('/v2/auth/refresh-tokens'), { timeout: 10000 })
+    .catch(() => undefined);
   await page.goto('/');
   await page.waitForLoadState('domcontentloaded');
+  await refreshed;
   await page.reload();
   await page.waitForTimeout(2500);
 }
