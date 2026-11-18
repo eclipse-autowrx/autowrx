@@ -45,7 +45,8 @@ const getUsers = {
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
-    search: Joi.string(),
+    // An empty search means "no filter"; the Select user dialog sends it on open.
+    search: Joi.string().allow(''),
     id: Joi.string(),
     includeFullDetails: Joi.boolean().default(false),
   }),
