@@ -25,11 +25,11 @@ import {
 } from '@/components/atoms/tooltip'
 import {
   TbAffiliate,
-  TbApi,
   TbCode,
   TbDotsVertical,
   TbDownload,
   TbEdit,
+  TbFileExport,
   TbHistoryToggle,
   TbPhotoEdit,
   TbTrashX,
@@ -344,7 +344,7 @@ export const DaModelCard = React.memo(
             wrapAction(() => onAction?.('rename', model?.id ?? ''))
           }
         >
-          <TbEdit className="size-4" /> Rename
+          <TbEdit className="size-4" /> Edit
         </MenuItem>
         <MenuItem
           className="gap-2 cursor-pointer"
@@ -355,29 +355,27 @@ export const DaModelCard = React.memo(
         <MenuSeparator />
         <MenuItem
           className="gap-2 cursor-pointer"
-          disabled={isDownloading}
-          onSelect={handleDownload}
-        >
-          {isDownloading ? (
-            <TbLoader className="size-4 animate-spin" />
-          ) : (
-            <TbApi className="size-4" />
-          )}
-          {isDownloading
-            ? 'Downloading Vehicle API...'
-            : 'Download Vehicle API'}
-        </MenuItem>
-        <MenuItem
-          className="gap-2 cursor-pointer"
           disabled={isExporting}
           onSelect={handleExport}
         >
           {isExporting ? (
             <TbLoader className="size-4 animate-spin" />
           ) : (
+            <TbFileExport className="size-4" />
+          )}
+          {isExporting ? 'Exporting...' : 'Export'}
+        </MenuItem>
+        <MenuItem
+          className="gap-2 cursor-pointer"
+          disabled={isDownloading}
+          onSelect={handleDownload}
+        >
+          {isDownloading ? (
+            <TbLoader className="size-4 animate-spin" />
+          ) : (
             <TbDownload className="size-4" />
           )}
-          {isExporting ? 'Exporting...' : 'Export Model'}
+          {isDownloading ? 'Downloading...' : 'Download'}
         </MenuItem>
         <MenuItem
           className="gap-2 cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
@@ -385,7 +383,7 @@ export const DaModelCard = React.memo(
             wrapAction(() => onAction?.('delete', model?.id ?? ''))
           }
         >
-          <TbTrashX className="size-4" /> Delete Model
+          <TbTrashX className="size-4" /> Delete
         </MenuItem>
       </>
     )
