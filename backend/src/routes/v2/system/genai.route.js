@@ -26,7 +26,6 @@ const genaiValidation = require('../../../validations/genai.validation');
 const router = express.Router();
 
 router.use(auth());
-router.use(checkPermission(PERMISSIONS.GENERATIVE_AI));
 
 router.use((req, res, next) => {
   logger.info('[genai] %s %s configured=%s', req.method, redactUrl(req.originalUrl), genaiService.isConfigured());
@@ -91,7 +90,14 @@ const ensureGenAIAvailable = (req, res, next) => {
 };
 
 // Code generation resolves its own upstream server-side, so it works without EXTERNAL_GENAI_URL.
-router.post('/generate', validate(genaiValidation.generate), genaiController.generate);
+// It is AutoWRX's own GenAI feature, so it requires the generativeAI permission. The routes below
+// proxy the third-party GenAI service used by extensions and stay open to any signed-in user.
+router.post(
+  '/generate',
+  checkPermission(PERMISSIONS.GENERATIVE_AI),
+  validate(genaiValidation.generate),
+  genaiController.generate,
+);
 
 router.use(ensureGenAIAvailable);
 
