@@ -22,6 +22,7 @@ import {
   selectHomeModelCategory,
   getHomeModelListSection,
   openModelContextMenu,
+  MODEL_CARD_MENU,
 } from './helpers';
 
 const DUPLICATE_MODEL_MSG = 'A model with this name already exists';
@@ -212,7 +213,9 @@ test.describe('Name validation regressions', () => {
 
     const section = getHomeModelListSection(page);
     await openModelContextMenu(page, nameA, section);
-    await page.getByRole('menuitem', { name: 'Rename' }).click();
+    await page
+      .getByRole('menuitem', { name: MODEL_CARD_MENU.edit, exact: true })
+      .click();
     const renameDialog = page.getByRole('dialog').filter({
       has: page.getByRole('heading', { name: 'Rename Model' }),
     });

@@ -1749,6 +1749,18 @@ export async function waitForPrototypeInHomeList(
   ).toBeVisible({ timeout: 20000 });
 }
 
+/**
+ * Model card "..." / right-click menu labels. Kept in sync with the action
+ * buttons on the model detail page (Edit, Export, Download, Delete).
+ */
+export const MODEL_CARD_MENU = {
+  edit: 'Edit',
+  updateImage: 'Update Image',
+  export: 'Export',
+  download: 'Download',
+  delete: 'Delete',
+} as const;
+
 export async function renameModelViaHomeContextMenu(
   page: Page,
   oldName: string,
@@ -1757,7 +1769,9 @@ export async function renameModelViaHomeContextMenu(
 ): Promise<void> {
   const section = getHomeModelListSection(page, title);
   await openModelContextMenu(page, oldName, section);
-  await page.getByRole('menuitem', { name: 'Rename' }).click();
+  await page
+    .getByRole('menuitem', { name: MODEL_CARD_MENU.edit, exact: true })
+    .click();
   const dialog = page.getByRole('dialog').filter({
     has: page.getByRole('heading', { name: 'Rename Model' }),
   });
@@ -1774,7 +1788,9 @@ export async function deleteModelViaHomeContextMenu(
 ): Promise<void> {
   const section = getHomeModelListSection(page, title);
   await openModelContextMenu(page, modelName, section);
-  await page.getByRole('menuitem', { name: 'Delete Model' }).click();
+  await page
+    .getByRole('menuitem', { name: MODEL_CARD_MENU.delete, exact: true })
+    .click();
   await confirmNameDialog(page, modelName);
 }
 
@@ -1816,7 +1832,7 @@ export async function downloadViaContextMenuItem(
 
   const [download] = await Promise.all([
     page.waitForEvent('download', { timeout: 60000 }),
-    page.getByRole('menuitem', { name: menuLabel }).click(),
+    page.getByRole('menuitem', { name: menuLabel, exact: true }).click(),
   ]);
 
   const suggestedName = download.suggestedFilename();
