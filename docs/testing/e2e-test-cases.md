@@ -405,3 +405,13 @@ serving the production build with `CSP_MODE=enforce`.
 | Model owner sees the private prototype and can manage it | The owner of the model (here the administrator) still sees someone else's private prototype and gets "Change visibility to public" in the card menu. |
 | Creator makes it public; others can see and edit but not manage | After "Change visibility to public", any signed-in user sees the prototype and may edit it, but gets no visibility or delete option and cannot switch it back to private. |
 | Creator switches it back to private | "Change visibility to private" hides the prototype from other users again. |
+
+## 33. AI chat service for normal users
+
+| Test case | What it checks |
+|---|---|
+| Normal user can reach the AI chat service status | A signed-in user without the Generative AI role is not refused when the AI chat checks that its service is up. |
+| Normal user can send an AI chat message | A signed-in user without the Generative AI role is not refused when sending a chat message to the AI service. |
+| Normal user can get a speech token for AI chat | A signed-in user without the Generative AI role is not refused when asking for a speech-input token. |
+| Signed-out AI chat requests are rejected | Each AI chat request made while signed out is refused as unauthorised. |
+| Normal user still cannot use ProtoPilot code generation | The same normal user is refused when using the app's own AI code generator, which still needs the Generative AI role. |

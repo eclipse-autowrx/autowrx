@@ -27,6 +27,8 @@ const app = require('../../src/app');
 const { roles } = require('../../src/config/roles');
 const apiService = require('../../src/services/api.service');
 const modelService = require('../../src/services/model.service');
+const genaiService = require('../../src/services/genai.service');
+const serviceTokenService = require('../../src/services/serviceToken.service');
 const ApiError = require('../../src/utils/ApiError');
 const setupTestDB = require('../utils/setupTestDB');
 const { SiteConfig, Asset } = require('../../src/models');
@@ -232,5 +234,60 @@ describe('POST /v2/genai/generate', () => {
       expect(vssSpy).not.toHaveBeenCalled();
       expect(axios).not.toHaveBeenCalled();
     });
+  });
+});
+
+// The /v2/genai/* proxy forwards to the third-party GenAI service used by extensions
+// (genai-wizard). It must stay open to every signed-in user; only POST /generate
+// (AutoWRX's own code generation) needs the generativeAI permission. Regressed twice.
+describe('third-party GenAI proxy (/v2/genai/*)', () => {
+  // Every route the genai-wizard extension calls.
+  const proxyCalls = [
+    ['GET', '/v2/genai/actuator/info'],
+    ['POST', '/v2/genai/generation'],
+  ];
+
+  const call = (method, url, token) => {
+    const req = request(app)[method.toLowerCase()](url);
+    return token ? req.set('Authorization', `Bearer ${token}`) : req;
+  };
+
+  beforeEach(async () => {
+    await insertUsers([userOne]);
+    jest.spyOn(genaiService, 'isConfigured').mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test.each(proxyCalls)('%s %s should return 401 for anonymous requests', async (method, url) => {
+    const handle = jest.spyOn(genaiService, 'handle');
+    await call(method, url).expect(httpStatus.UNAUTHORIZED);
+    expect(handle).not.toHaveBeenCalled();
+  });
+
+  test.each(proxyCalls)('%s %s should reach the proxy for a normal user without generativeAI', async (method, url) => {
+    const handle = jest.spyOn(genaiService, 'handle').mockImplementation(async (req, res) => res.send({ ok: true }));
+
+    const res = await call(method, url, userOneAccessToken).expect(httpStatus.OK);
+
+    expect(res.body).toEqual({ ok: true });
+    expect(handle).toHaveBeenCalledTimes(1);
+  });
+
+  test('GET /v2/genai/token should issue a service token for a normal user without generativeAI', async () => {
+    const issue = jest
+      .spyOn(serviceTokenService, 'issueServiceToken')
+      .mockResolvedValue({ token: 'speech-token', region: 'westeurope' });
+
+    const res = await call('GET', '/v2/genai/token?service=azure-speech', userOneAccessToken).expect(httpStatus.OK);
+
+    expect(res.body).toEqual({ token: 'speech-token', region: 'westeurope' });
+    expect(issue).toHaveBeenCalledWith('azure-speech');
+  });
+
+  test('POST /v2/genai/generate should still return 403 for the same normal user', async () => {
+    await post(validBody).expect(httpStatus.FORBIDDEN);
   });
 });
