@@ -26,7 +26,10 @@ const refreshAxios = axios.create({
   withCredentials: true,
 })
 
-let isRefreshing = false
+// One refresh at a time. Every query that failed with 401 waits for it and is
+// then refetched; queries that fail while a refresh is running must not be
+// dropped, or they keep their error (e.g. an empty user list) until a reload.
+let refreshPromise: Promise<boolean> | null = null
 
 const QueryProvider = ({ children }: QueryProviderProps) => {
   const [setAccess, logOut] = useAuthStore(
@@ -39,22 +42,33 @@ const QueryProvider = ({ children }: QueryProviderProps) => {
         queryCache: new QueryCache({
           onError: async (error, query) => {
             if (isAxiosError(error) && error?.response?.status === 401) {
-              if (isRefreshing) return
+              if (!refreshPromise) {
+                refreshPromise = (async () => {
+                  try {
+                    const res = await refreshAxios.post(
+                      '/auth/refresh-tokens',
+                      {},
+                    )
+                    if (res.data?.access?.token) {
+                      setAccess(res.data.access)
+                      return true
+                    }
+                    if (res.data?.user) {
+                      useAuthStore.getState().setUser(res.data.user, null)
+                      return true
+                    }
+                    return false
+                  } catch {
+                    logOut()
+                    return false
+                  } finally {
+                    refreshPromise = null
+                  }
+                })()
+              }
 
-              isRefreshing = true
-              try {
-                const res = await refreshAxios.post('/auth/refresh-tokens', {})
-                if (res.data?.access?.token) {
-                  setAccess(res.data.access)
-                  query.invalidate()
-                } else if (res.data?.user) {
-                  useAuthStore.getState().setUser(res.data.user, null)
-                  query.invalidate()
-                }
-              } catch {
-                logOut()
-              } finally {
-                isRefreshing = false
+              if (await refreshPromise) {
+                query.invalidate()
               }
             }
           },
