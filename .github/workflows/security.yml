@@ -1,8 +1,8 @@
 name: security
 
-# Advisory security scans: CodeQL, yarn audit, TruffleHog. Findings are
-# reported (step summary + warning annotation) without failing the job until
-# the existing backlog is triaged; then drop continue-on-error to enforce.
+# Security scans: CodeQL, yarn audit, TruffleHog. CodeQL and TruffleHog are
+# blocking. yarn audit stays advisory (step summary + warning annotation)
+# until the existing backlog is triaged; then drop continue-on-error there too.
 
 on:
   pull_request:
@@ -21,7 +21,6 @@ concurrency:
 jobs:
   codeql:
     runs-on: ubuntu-latest
-    continue-on-error: true
     timeout-minutes: 30
     permissions:
       contents: read
@@ -67,7 +66,6 @@ jobs:
 
   secret-scan:
     runs-on: ubuntu-latest
-    continue-on-error: true
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
