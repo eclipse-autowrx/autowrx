@@ -1,8 +1,8 @@
 name: ci
 
 # Quality gates. BLOCKING (mark as required checks in branch protection):
-# `backend-format`, `backend-lint`, `frontend-build`. ADVISORY jobs (`backend-test`,
-# `frontend-lint`) run their check with step-level continue-on-error: the job
+# `backend-format`, `backend-lint`, `frontend-build`, `backend-test`. The ADVISORY
+# job `frontend-lint` runs its check with step-level continue-on-error: the job
 # stays green and a warning annotation reports failures that already exist on
 # main. Drop it once fixed. Playwright E2E is opt-in per PR: see e2e.yml.
 # Node 22 + yarn --frozen-lockfile match backend/Dockerfile.
@@ -106,11 +106,7 @@ jobs:
           cache-dependency-path: backend/yarn.lock
       - run: yarn install --frozen-lockfile
       - name: Jest
-        id: jest
-        continue-on-error: true
         run: yarn test
-      - if: steps.jest.outcome == 'failure'
-        run: echo "::warning title=backend-test (advisory)::Jest failures exist on main (legacy /v1 auth and user integration tests); see the Jest step log"
 
   # advisory until the remaining no-explicit-any and jsx-a11y errors are fixed (#642 follow-up)
   frontend-lint:

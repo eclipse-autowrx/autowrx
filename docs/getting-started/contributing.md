@@ -41,8 +41,8 @@ git checkout -b <short-descriptive-branch>
 ## 3. Verify locally (CI only partly covers it)
 
 > **Important:** PR CI only blocks on a few checks (see [CI gates](#ci-gates)).
-> Jest and lint are still advisory, so you must verify locally before opening
-> the PR.
+> Frontend lint is still advisory and E2E is opt-in, so you must verify locally
+> before opening the PR.
 
 ```bash
 # frontend
@@ -64,6 +64,8 @@ Besides the Eclipse **ECA** check, PRs run:
   - `backend-format`: `yarn prettier`
   - `backend-lint`: `yarn lint` (ESLint, 0 errors)
   - `frontend-build`: `yarn build` (`tsc` + vite)
+  - `backend-test`: `yarn test` (Jest unit + integration tests against a
+    MongoDB 7 service)
   - `codeql` (`security.yml`): CodeQL JavaScript/TypeScript analysis; alerts
     show in the Security tab
   - `secret-scan` (`security.yml`): TruffleHog, verified secrets only, on the
@@ -76,8 +78,6 @@ Besides the Eclipse **ECA** check, PRs run:
     dependency files, on every push to `main`, and weekly to catch new CVEs.
 - **Advisory, pending fix** (`ci.yml`, step-level `continue-on-error`: the job
   stays green and a warning annotation reports the failure):
-  - `backend-test`: the legacy `/v1` `auth` and `user` integration tests still
-    fail (31/33 suites pass).
   - `frontend-lint`: remaining `no-explicit-any` and `jsx-a11y` errors.
 - **E2E on demand** (`.github/workflows/e2e.yml`): the full Playwright suite
   (`.agents/`, ~35 min) against a disposable backend + MongoDB. It runs on every
