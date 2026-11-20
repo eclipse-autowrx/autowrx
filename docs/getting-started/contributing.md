@@ -41,12 +41,11 @@ git checkout -b <short-descriptive-branch>
 ## 3. Verify locally (CI only partly covers it)
 
 > **Important:** PR CI only blocks on a few checks (see [CI gates](#ci-gates)).
-> Frontend lint is still advisory and E2E is opt-in, so you must verify locally
-> before opening the PR.
+> E2E is opt-in, so you must verify locally before opening the PR.
 
 ```bash
 # frontend
-cd frontend && npx tsc --noEmit && yarn build
+cd frontend && npx tsc --noEmit && yarn build && yarn lint:ratchet
 
 # backend
 cd backend && yarn test
@@ -66,6 +65,14 @@ Besides the Eclipse **ECA** check, PRs run:
   - `frontend-build`: `yarn build` (`tsc` + vite)
   - `backend-test`: `yarn test` (Jest unit + integration tests against a
     MongoDB 7 service)
+  - `frontend-lint`: an ESLint **ratchet** (`yarn lint:ratchet` in `frontend/`,
+    `scripts/frontend-lint-ratchet.mjs`). It lints only the frontend files your PR
+    changes and compares per-file, per-rule problem counts (errors and warnings)
+    with the merge base: the job fails if a file gets **more** problems of any
+    rule than before. Existing problems in a file you touch are tolerated, but
+    don't add new ones (and fixing old ones is welcome). Run it locally before
+    pushing; it diffs against `upstream/main`, then `origin/main` (or pass a ref,
+    or set `LINT_BASE_REF`). `yarn lint` still reports the whole backlog.
   - `codeql` (`security.yml`): CodeQL JavaScript/TypeScript analysis; alerts
     show in the Security tab
   - `secret-scan` (`security.yml`): TruffleHog, verified secrets only, on the
@@ -76,9 +83,6 @@ Besides the Eclipse **ECA** check, PRs run:
   - `trivy` (`image-scan.yml`): Trivy scan of the backend image for fixable
     HIGH/CRITICAL vulnerabilities. It runs on PRs that change the Dockerfile or
     dependency files, on every push to `main`, and weekly to catch new CVEs.
-- **Advisory, pending fix** (`ci.yml`, step-level `continue-on-error`: the job
-  stays green and a warning annotation reports the failure):
-  - `frontend-lint`: remaining `no-explicit-any` and `jsx-a11y` errors.
 - **E2E on demand** (`.github/workflows/e2e.yml`): the full Playwright suite
   (`.agents/`, ~35 min) against a disposable backend + MongoDB. It runs on every
   push to `main`, and on a PR only when opted in: the author ticks a
@@ -88,8 +92,6 @@ Besides the Eclipse **ECA** check, PRs run:
   workflow* with a PR number. Any failing spec fails the job. Runtime specs skip
   (no kit-manager). The report, test results and backend log are uploaded as the
   `e2e-report` artifact. Opt in when a PR changes a user-facing flow.
-
-Each advisory check becomes blocking once its `continue-on-error` is removed.
 
 ---
 

@@ -13,7 +13,7 @@ Style and structure conventions for this repo. Load always (imported by `AGENTS.
 - PRs target **`main`**.
 - Title: `<type>(<scope>): <summary>`.
 - Body: **What / Why / How verified**. Note if the change touches security, data, runtime, or plugins. Link the issue (`Closes #nnn` / `Ref #nnn`).
-- PR checks: the **ECA check**, plus `ci.yml` (**blocking:** backend `prettier` + ESLint + Jest, frontend `tsc`+build, plus CodeQL, TruffleHog secret scan and `yarn audit` (high+) in `security.yml` and the Trivy backend image scan in `image-scan.yml`; **advisory until fixed:** frontend ESLint), opt-in Playwright E2E (`e2e.yml`: tick `- [x] Run E2E` in the PR body, or the `e2e` label). Because frontend lint is advisory and E2E is opt-in, the agent/author must still run tests locally and state how it was verified. See [`docs/getting-started/contributing.md`](../docs/getting-started/contributing.md#ci-gates).
+- PR checks: the **ECA check**, plus `ci.yml` (**blocking:** backend `prettier` + ESLint + Jest, frontend `tsc`+build, frontend ESLint ratchet (no new lint problems in changed files; `cd frontend && yarn lint:ratchet`), plus CodeQL, TruffleHog secret scan and `yarn audit` (high+) in `security.yml` and the Trivy backend image scan in `image-scan.yml`), and opt-in Playwright E2E (`e2e.yml`: tick `- [x] Run E2E` in the PR body, or the `e2e` label). Because E2E is opt-in, the agent/author must still run the affected flows locally and state how it was verified. See [`docs/getting-started/contributing.md`](../docs/getting-started/contributing.md#ci-gates).
 
 ## Backend (`backend/`, Node.js + Express + MongoDB)
 
@@ -28,7 +28,7 @@ Style and structure conventions for this repo. Load always (imported by `AGENTS.
 - **Atomic design:** `components/{atoms,molecules,organisms}`, `pages/`, `layouts/`, `stores/`, `hooks/`. Don't put page logic in atoms.
 - **State:** Zustand stores under `stores/` (`authStore.ts`, …). Permissions via `hooks/usePermissionHook.ts`.
 - **Routing:** `configs/routes.tsx`.
-- **Build/lint:** `npm run build` (`tsc && vite build`), `npm run lint` (ESLint, `--max-warnings 0`). Dev server on port **3210**.
+- **Build/lint:** `npm run build` (`tsc && vite build`), `npm run lint` (ESLint, `--max-warnings 0`; the ~955-error backlog remains, so CI gates with `yarn lint:ratchet`, which fails only on new problems vs the merge base). Dev server on port **3210**.
 
 ## E2E (`.agents/`, Playwright)
 
