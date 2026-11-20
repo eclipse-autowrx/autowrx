@@ -1,8 +1,9 @@
 name: image-scan
 
-# Advisory Trivy scan of the backend image (HIGH/CRITICAL, fixable only).
+# Blocking Trivy scan of the backend image (HIGH/CRITICAL, fixable only).
 # Runs only when image inputs change, plus weekly to catch new CVEs.
-# Findings are reported (summary + warning annotation), not blocking.
+# Any finding fails the job (exit-code 1); the report is also published
+# to the job summary.
 
 on:
   pull_request:
@@ -44,7 +45,6 @@ jobs:
           cache-to: type=gha,mode=max
       - name: Trivy scan
         id: trivy
-        continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: autowrx-backend:scan
@@ -62,5 +62,3 @@ jobs:
             cat trivy.txt 2>/dev/null || echo "no report"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-      - if: steps.trivy.outcome == 'failure'
-        run: echo "::warning title=trivy (advisory)::HIGH/CRITICAL fixable vulnerabilities in the backend image; see the job summary"

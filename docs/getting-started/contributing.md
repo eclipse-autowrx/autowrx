@@ -64,6 +64,16 @@ Besides the Eclipse **ECA** check, PRs run:
   - `backend-format`: `yarn prettier`
   - `backend-lint`: `yarn lint` (ESLint, 0 errors)
   - `frontend-build`: `yarn build` (`tsc` + vite)
+  - `codeql` (`security.yml`): CodeQL JavaScript/TypeScript analysis; alerts
+    show in the Security tab
+  - `secret-scan` (`security.yml`): TruffleHog, verified secrets only, on the
+    PR or pushed commit range
+  - `dependency-audit` (`security.yml`): `yarn audit --level high --groups
+    dependencies` in `backend/` and `frontend/`. Fix a finding by upgrading the
+    dependency or adding a `resolutions` entry.
+  - `trivy` (`image-scan.yml`): Trivy scan of the backend image for fixable
+    HIGH/CRITICAL vulnerabilities. It runs on PRs that change the Dockerfile or
+    dependency files, on every push to `main`, and weekly to catch new CVEs.
 - **Advisory, pending fix** (`ci.yml`, step-level `continue-on-error`: the job
   stays green and a warning annotation reports the failure):
   - `backend-test`: the legacy `/v1` `auth` and `user` integration tests still
@@ -78,10 +88,6 @@ Besides the Eclipse **ECA** check, PRs run:
   workflow* with a PR number. Any failing spec fails the job. Runtime specs skip
   (no kit-manager). The report, test results and backend log are uploaded as the
   `e2e-report` artifact. Opt in when a PR changes a user-facing flow.
-- **Advisory security scans** (`security.yml`, `image-scan.yml`): CodeQL,
-  `yarn audit` (high+), TruffleHog (verified secrets only), Trivy on the backend
-  image (when Dockerfile/dependency files change, and weekly). Findings go to the
-  job summary and a warning annotation; CodeQL alerts show in the Security tab.
 
 Each advisory check becomes blocking once its `continue-on-error` is removed.
 

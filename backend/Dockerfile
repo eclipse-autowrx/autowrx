@@ -22,22 +22,27 @@ COPY build-frontend.sh ./
 # The script will build into backend/static/frontend-dist/
 RUN chmod +x build-frontend.sh && ./build-frontend.sh
 
-# Stage 2: Build Backend (only backend code, no frontend source)
+# Stage 2: Install production backend dependencies
+# Python and build tools are only needed to compile native dependencies
+# (bufferutil, utf-8-validate); they stay in this stage and out of the final image.
+FROM node:22-alpine AS backend-deps
+RUN apk add --no-cache python3 make g++
+WORKDIR /usr/src/playground-be
+COPY backend/package.json backend/yarn.lock ./
+RUN yarn install --frozen-lockfile --production
+
+# Stage 3: Runtime image (only backend code, no frontend source)
 FROM node:22-alpine
 
-# Install Python and build tools needed for native dependencies (bufferutil, utf-8-validate)
-RUN apk add --no-cache python3 make g++
+# Pick up OS package security fixes released after the base image was built
+RUN apk upgrade --no-cache
 
 RUN mkdir -p /usr/src/playground-be && chown -R node:node /usr/src/playground-be
 
 WORKDIR /usr/src/playground-be
 
+COPY --from=backend-deps --chown=node:node /usr/src/playground-be/node_modules ./node_modules
 COPY backend/package.json backend/yarn.lock ./
-
-RUN yarn install --frozen-lockfile --production
-
-# Remove build tools to reduce image size (optional, but keeps python3 for runtime if needed)
-RUN apk del make g++
 
 # Remove the npm CLI bundled in the base image and the yarn download cache.
 # Nothing at runtime uses npm (CMD runs node via yarn), and npm ships its own
