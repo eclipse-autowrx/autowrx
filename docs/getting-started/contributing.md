@@ -41,12 +41,12 @@ git checkout -b <short-descriptive-branch>
 ## 3. Verify locally (CI only partly covers it)
 
 > **Important:** PR CI only blocks on a few checks (see [CI gates](#ci-gates)).
-> Jest and lint are still advisory, so you must verify locally before opening
+> Jest is still advisory, so you must verify locally before opening
 > the PR.
 
 ```bash
 # frontend
-cd frontend && npx tsc --noEmit && yarn build
+cd frontend && npx tsc --noEmit && yarn build && yarn lint:ratchet
 
 # backend
 cd backend && yarn test
@@ -64,11 +64,18 @@ Besides the Eclipse **ECA** check, PRs run:
   - `backend-format`: `yarn prettier`
   - `backend-lint`: `yarn lint` (ESLint, 0 errors)
   - `frontend-build`: `yarn build` (`tsc` + vite)
+  - `frontend-lint`: an ESLint **ratchet** (`yarn lint:ratchet` in `frontend/`,
+    `scripts/frontend-lint-ratchet.mjs`). It lints only the frontend files your PR
+    changes and compares per-file, per-rule problem counts (errors and warnings)
+    with the merge base: the job fails if a file gets **more** problems of any
+    rule than before. Existing problems in a file you touch are tolerated, but
+    don't add new ones (and fixing old ones is welcome). Run it locally before
+    pushing; it diffs against `upstream/main`, then `origin/main` (or pass a ref,
+    or set `LINT_BASE_REF`). `yarn lint` still reports the whole backlog.
 - **Advisory, pending fix** (`ci.yml`, step-level `continue-on-error`: the job
   stays green and a warning annotation reports the failure):
   - `backend-test`: the legacy `/v1` `auth` and `user` integration tests still
     fail (31/33 suites pass).
-  - `frontend-lint`: remaining `no-explicit-any` and `jsx-a11y` errors.
 - **E2E on demand** (`.github/workflows/e2e.yml`): the full Playwright suite
   (`.agents/`, ~35 min) against a disposable backend + MongoDB. It runs on every
   push to `main`, and on a PR only when opted in: the author ticks a
