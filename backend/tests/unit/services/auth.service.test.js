@@ -186,7 +186,7 @@ describe('auth.service', () => {
       await authService.verifyEmail('tok');
       expect(tokenService.verifyToken).toHaveBeenCalledWith('tok', tokenTypes.VERIFY_EMAIL);
       expect(Token.deleteMany).toHaveBeenCalledWith({ user: 'u1', type: tokenTypes.VERIFY_EMAIL });
-      expect(userService.updateUserById).toHaveBeenCalledWith('u1', { isEmailVerified: true });
+      expect(userService.updateUserById).toHaveBeenCalledWith('u1', { email_verified: true });
     });
   });
 
