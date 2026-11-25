@@ -363,7 +363,6 @@ this line when you re-run).
 | #272 API as owner returns masked contributor and member emails and no full address | The owner's model response lists the contributor and the reader with their emails masked (first characters, then `***@domain`), the owner's own email is masked too, and no full address appears anywhere in the response. |
 | #272 API without write access (member and unrelated user) returns no contributor or member lists | A reader and an unrelated user get the model without any contributor or member lists and without any of those people's full email addresses. |
 | #272 UI as owner shows masked emails and never the full address | The model overview's Contributor and Reader tabs show the masked emails, and the full addresses appear nowhere in the page. |
-| #272 UI as owner shows contributor and member names masked | Known gap (expected to fail): the list prints each person's name unmasked next to the masked email, so names are not hidden. |
 
 ## 29. Plugin authorization and sandbox (#626)
 
