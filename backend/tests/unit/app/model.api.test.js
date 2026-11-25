@@ -20,6 +20,7 @@ jest.mock('../../../src/services/permission.service', () => ({
   hasPermission: jest.fn(),
 }));
 jest.mock('../../../src/sync', () => ({
+  plugin: () => {},
   runWithSkipSync: (fn) => fn(),
   triggerSync: jest.fn(),
 }));

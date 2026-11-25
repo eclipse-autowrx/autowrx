@@ -55,8 +55,7 @@ const start = async () => {
   require('./services/metrics.service').attachMongoPoolMonitor(mongoose.connection.getClient());
 
   // Load database-dependent modules only after MongoDB is connected.
-  // Some modules initialize Casbin or Mongoose plugins during require().
-  const { init: initDataSync } = require('./sync');
+  // Some modules initialize Casbin during require().
   const initializeRoles = require('./scripts/initializeRoles');
   const { setupScheduledCheck, assignAdmins, convertLogsCap } = require('./scripts');
   const { init: initSocket } = require('./config/socket');
@@ -65,8 +64,6 @@ const start = async () => {
   const PREDEFINED_SITE_CONFIGS = require('./config/predefinedSiteConfigs');
   const PREDEFINED_PROJECT_TEMPLATES = require('./config/predefinedProjectTemplates');
 
-  // Register sync hooks before loading routes and models through the application.
-  initDataSync();
   const app = require('./app');
 
   logger.info('Connected to MongoDB ');

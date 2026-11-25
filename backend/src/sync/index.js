@@ -9,7 +9,7 @@
 /**
  * External data sync — single module.
  *
- * - Registers a global Mongoose plugin on Model / ExtendedApi / Api schemas
+ * - Provides the Mongoose plugin used by the Model / ExtendedApi / Api schemas
  * - Binds per-request context via AsyncLocalStorage
  * - Attaches X-Sync-Warning response header on sync failure (frontend shows toast)
  *
@@ -42,7 +42,6 @@ const { AsyncLocalStorage } = require('async_hooks');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-const mongoose = require('mongoose');
 const config = require('../config/config');
 const logger = require('../config/logger');
 
@@ -231,7 +230,6 @@ const storage = new AsyncLocalStorage();
 
 /** @type {Object | null} */
 let cachedHandler = null;
-let pluginRegistered = false;
 
 const getContext = () => {
   const store = storage.getStore();
@@ -395,17 +393,13 @@ const triggerSyncForDocument = async (doc, action) => {
   });
 };
 
-const isSyncSchema = (schema) => {
-  if (schema.paths.main_api && schema.paths.vehicle_category) return true;
-  if (schema.paths.apiName && schema.paths.model) return true;
-  if (schema.paths.cvi && schema.paths.model && !schema.paths.apiName) return true;
-  return false;
-};
-
-const applySyncHooks = (schema) => {
-  const schemaName = schema.options?.collection || Object.keys(schema.paths).slice(0, 3).join(',');
-  logger.info('Data sync hooks registered for schema (%s)', schemaName);
-
+/**
+ * Mongoose plugin: sync a document after it is created, updated or deleted.
+ * Apply it in the model file, before mongoose.model() compiles the schema -
+ * hooks added after that never run.
+ * @param {import('mongoose').Schema} schema
+ */
+const plugin = (schema) => {
   schema.pre('save', function captureWasNew(next) {
     this.$locals._syncWasNew = this.isNew;
     next();
@@ -427,15 +421,6 @@ const applySyncHooks = (schema) => {
       logger.warn('Data sync delete hook error: DELETE %s %s — %s', doc.constructor?.modelName, doc._id, err.message);
     }
   });
-};
-
-/** Call once before any Mongoose models are loaded. */
-const init = () => {
-  if (pluginRegistered) return;
-  mongoose.plugin((schema) => {
-    if (isSyncSchema(schema)) applySyncHooks(schema);
-  });
-  pluginRegistered = true;
 };
 
 /**
@@ -493,4 +478,4 @@ const middleware = (req, res, next) => {
   storage.run(store, () => next());
 };
 
-module.exports = { init, middleware, triggerSync, runWithSkipSync, SYNC_WARNING_HEADER, encodeSyncWarningHeader };
+module.exports = { plugin, middleware, triggerSync, runWithSkipSync, SYNC_WARNING_HEADER, encodeSyncWarningHeader };
