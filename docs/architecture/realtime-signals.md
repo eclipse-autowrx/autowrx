@@ -110,6 +110,10 @@ Use `"no-name"` / `"no-id"` / `"no"` as fallbacks when prototype or user context
 When `has_error` is true, `result` contains the error message. Older runtimes may nest
 content under `data: { path, content }` — both shapes are supported by the frontend parser.
 
+**`write-file` reply**: same fields, with `result: "Success"` and the path in `file_path` or `data.path`.
+A kit may leave out `has_error`, so a `result` starting with `Error`, `Invalid` or `No file path` also
+counts as a failure. The Kit Manager shows both outcomes as a toast.
+
 Commands are exposed to the rest of the app through a `useImperativeHandle` ref
 (`runApp`, `stopApp`, `deploy`, `writeSignalsValue`, `builldVehicleModel`, …).
 

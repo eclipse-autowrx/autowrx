@@ -51,3 +51,38 @@ export function parseReadFileReply(payload: any): ReadFileReply | null {
     error: hasError ? String(payload.result ?? 'Read file failed') : undefined,
   }
 }
+
+interface WriteFilePayload {
+  cmd?: string
+  result?: unknown
+  has_error?: boolean
+  file_path?: string
+  data?: { path?: string } | null
+}
+
+export interface WriteFileReply {
+  filePath: string
+  hasError: boolean
+  error?: string
+}
+
+/**
+ * Parse write-file kit replies. Kits may leave out has_error and report a
+ * failure only in the result text.
+ */
+export function parseWriteFileReply(
+  payload: WriteFilePayload | null | undefined,
+): WriteFileReply | null {
+  if (payload?.cmd !== 'write-file' && payload?.cmd !== 'write_file')
+    return null
+
+  const result = String(payload.result ?? '')
+  const hasError =
+    Boolean(payload.has_error) || /^(error|invalid|no file path)/i.test(result)
+
+  return {
+    filePath: payload.file_path ?? payload.data?.path ?? '',
+    hasError,
+    error: hasError ? result || 'Write file failed' : undefined,
+  }
+}

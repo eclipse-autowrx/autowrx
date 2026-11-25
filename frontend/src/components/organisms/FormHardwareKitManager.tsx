@@ -255,6 +255,10 @@ const FormHardwareKitManager = ({
           onAppRunningStateChanged={() => {}}
           onRuntimeInfoReceived={() => {}}
           onReadFileResponse={onReadFileResponse}
+          onWriteFileResponse={(filePath: string) => {
+            const fileName = filePath.split('/').pop() || 'File'
+            toast.success(`${fileName} saved to the device`)
+          }}
         />
       </div>
 

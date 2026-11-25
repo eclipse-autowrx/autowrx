@@ -25,6 +25,7 @@ import { validateVss } from '@/services/model.service'
 import { useSiteConfig } from '@/utils/siteConfig'
 import {
   parseReadFileReply,
+  parseWriteFileReply,
   prepareKitFileContentForWrite,
 } from '@/utils/kitReply'
 
@@ -55,6 +56,7 @@ interface KitConnectProps {
   onRuntimeInfoReceived?: (payload: any) => void
   onDeployResponse?: (log: string, isDone: boolean) => void
   onReadFileResponse?: (filePath: string, fileContent: string) => void
+  onWriteFileResponse?: (filePath: string) => void
   isDeployMode?: boolean
 }
 
@@ -78,6 +80,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       onRuntimeInfoReceived,
       onDeployResponse,
       onReadFileResponse,
+      onWriteFileResponse,
       isDeployMode = false,
     },
     ref,
@@ -790,6 +793,16 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         } else if (reply && onReadFileResponse) {
           onReadFileResponse(reply.filePath, reply.content)
         }
+      }
+
+      const writeReply = parseWriteFileReply(payload)
+      if (writeReply?.hasError) {
+        onError?.(
+          `WRITE_FILE ERROR: ${writeReply.error}`,
+          payload.kit_id || activeRtIdRef.current,
+        )
+      } else if (writeReply) {
+        onWriteFileResponse?.(writeReply.filePath)
       }
     }
 
