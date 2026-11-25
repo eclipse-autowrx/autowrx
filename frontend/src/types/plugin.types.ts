@@ -310,6 +310,21 @@ export interface PluginAPI {
   listWishlistApis?: (model_id?: string) => Promise<List<ExtendedApi>>
 
   // ========================================
+  // Permissions
+  // ========================================
+
+  /**
+   * Check whether the current user has a permission. Use it to hide controls
+   * the user may not use; it is not a security boundary.
+   * @param permission Permission name, e.g. 'manageUsers' for admins
+   * @returns Promise resolving to true only if the permission is granted
+   *
+   * @example
+   * const isAdmin = await api.hasPermission('manageUsers')
+   */
+  hasPermission?: (permission: string) => Promise<boolean>
+
+  // ========================================
   // Asset Operations
   // ========================================
 

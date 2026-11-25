@@ -1,6 +1,6 @@
 # Plugin API Reference
 
-The host passes a `PluginAPI` object to your plugin component as `props.api`. It exposes **27 methods across 7 categories**. Every method is **optional** — a method is only attached when the context it needs exists (see the "Present when" note on each). Always guard calls: `api.updateModel?.(...)`.
+The host passes a `PluginAPI` object to your plugin component as `props.api`. It exposes **28 methods across 8 categories**. Every method is **optional** — a method is only attached when the context it needs exists (see the "Present when" note on each). Always guard calls: `api.updateModel?.(...)`.
 
 > Source of truth: [`frontend/src/types/plugin.types.ts`](../../../frontend/src/types/plugin.types.ts). The construction and context-gating live in `frontend/src/components/organisms/PluginPageRender.tsx`.
 
@@ -29,6 +29,9 @@ interface PluginAPI {
   deleteWishlistApi?: (id: string) => Promise<void>
   getWishlistApi?: (name: string, model_id?: string) => Promise<ExtendedApi>
   listWishlistApis?: (model_id?: string) => Promise<List<ExtendedApi>>
+
+  // Permissions (1)
+  hasPermission?: (permission: string) => Promise<boolean>
 
   // Assets (8)
   listAssets?: (params?: Pick<QueryAssetsParams, 'type' | 'name'>) => Promise<Asset[]>
@@ -86,6 +89,12 @@ interface PluginAPI {
 | `deleteWishlistApi(id): Promise<void>` | Delete a custom signal (permanent). | always |
 | `getWishlistApi(name, model_id?): Promise<ExtendedApi>` | Get one custom signal by name. | `model_id` exists |
 | `listWishlistApis(model_id?): Promise<List<ExtendedApi>>` | List custom signals for the model. `List<T> = { results: T[]; page; limit; totalPages; totalResults }`. | `model_id` exists |
+
+## Permissions
+
+| Method | Description | Present when |
+|---|---|---|
+| `hasPermission(permission): Promise<boolean>` | Whether the current user has a permission, for example `'manageUsers'` (admins). Rejects if the check fails; treat that as not allowed. Use it to hide controls, not as a security boundary. | always |
 
 ## Assets (hardware kits / cloud runtimes + sharing)
 
