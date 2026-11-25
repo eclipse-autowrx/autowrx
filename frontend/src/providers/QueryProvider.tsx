@@ -36,57 +36,62 @@ const QueryProvider = ({ children }: QueryProviderProps) => {
     (state) => [state.setAccess, state.logOut],
     shallow,
   )
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        queryCache: new QueryCache({
-          onError: async (error, query) => {
-            if (isAxiosError(error) && error?.response?.status === 401) {
-              if (!refreshPromise) {
-                refreshPromise = (async () => {
-                  try {
-                    const res = await refreshAxios.post(
-                      '/auth/refresh-tokens',
-                      {},
-                    )
-                    if (res.data?.access?.token) {
-                      setAccess(res.data.access)
-                      return true
-                    }
-                    if (res.data?.user) {
-                      useAuthStore.getState().setUser(res.data.user, null)
-                      return true
-                    }
-                    return false
-                  } catch {
-                    logOut()
-                    return false
-                  } finally {
-                    refreshPromise = null
+  const [queryClient] = useState(() => {
+    const client: QueryClient = new QueryClient({
+      queryCache: new QueryCache({
+        onError: async (error, query) => {
+          if (isAxiosError(error) && error?.response?.status === 401) {
+            if (!refreshPromise) {
+              refreshPromise = (async () => {
+                try {
+                  const res = await refreshAxios.post(
+                    '/auth/refresh-tokens',
+                    {},
+                  )
+                  if (res.data?.access?.token) {
+                    setAccess(res.data.access)
+                    return true
                   }
-                })()
-              }
-
-              if (await refreshPromise) {
-                query.invalidate()
-              }
+                  if (res.data?.user) {
+                    useAuthStore.getState().setUser(res.data.user, null)
+                    return true
+                  }
+                  return false
+                } catch {
+                  logOut()
+                  return false
+                } finally {
+                  refreshPromise = null
+                }
+              })()
             }
-          },
-        }),
-        defaultOptions: {
-          queries: {
-            staleTime: 30000,
-            retry: (failureCount, error) => {
-              if (isAxiosError(error) && error?.response?.status === 401) {
-                return false
-              }
 
-              return failureCount <= 1
-            },
-          },
+            if (await refreshPromise) {
+              // query.invalidate() only marks the query stale; refetch it
+              // so the request that got the 401 runs again with the new token.
+              void client.invalidateQueries({
+                queryKey: query.queryKey,
+                exact: true,
+              })
+            }
+          }
         },
       }),
-  )
+      defaultOptions: {
+        queries: {
+          staleTime: 30000,
+          retry: (failureCount, error) => {
+            if (isAxiosError(error) && error?.response?.status === 401) {
+              return false
+            }
+
+            return failureCount <= 1
+          },
+        },
+      },
+    })
+    return client
+  })
 
   return (
     <QueryClientProvider client={queryClient}>
