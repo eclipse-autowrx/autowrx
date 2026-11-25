@@ -30,6 +30,7 @@ import {
   getAssetById,
 } from '@/services/asset.service'
 import { searchUserByEmailService } from '@/services/search.service'
+import { checkPermissionService } from '@/services/permission.service'
 import {
   updatePrototypeService,
   countCodeExecution,
@@ -366,6 +367,14 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({
       }
     },
     [model_id],
+  )
+
+  const handleHasPermission = useCallback(
+    async (permission: string): Promise<boolean> => {
+      const [allowed] = await checkPermissionService([[permission]])
+      return allowed === true
+    },
+    [],
   )
 
   // Asset operations
@@ -890,6 +899,9 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({
     deleteWishlistApi: handleDeleteWishlistApi,
     getWishlistApi: model_id ? handleGetWishlistApi : undefined,
     listWishlistApis: model_id ? handleListWishlistApis : undefined,
+
+    // Permissions
+    hasPermission: handleHasPermission,
 
     // Asset operations
     listAssets: handleListAssets,
