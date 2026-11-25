@@ -112,7 +112,8 @@ content under `data: { path, content }` — both shapes are supported by the fro
 
 **`write-file` reply**: same fields, with `result: "Success"` and the path in `file_path` or `data.path`.
 A kit may leave out `has_error`, so a `result` starting with `Error`, `Invalid` or `No file path` also
-counts as a failure. The Kit Manager shows both outcomes as a toast.
+counts as a failure. The Kit Manager shows both outcomes as a toast, and a warning when the kit does
+not reply within 10 seconds.
 
 Commands are exposed to the rest of the app through a `useImperativeHandle` ref
 (`runApp`, `stopApp`, `deploy`, `writeSignalsValue`, `builldVehicleModel`, …).

@@ -15,9 +15,13 @@ import CodeEditor from '@/components/molecules/CodeEditor'
 import DaRuntimeConnector from '@/components/molecules/DaRuntimeConnector'
 import { toast } from 'react-toastify'
 import { validateVss } from '@/services/model.service'
+import type { WriteFileReply } from '@/utils/kitReply'
+
+const WRITE_REPLY_TIMEOUT_MS = 10000
 
 interface iPropTabConfig {
   hidden?: boolean
+  settingToDevice: boolean
   edgeConfig?: any
   sendConfigToDevice?: (config: string) => void
   requestReadConfigFromDevice?: () => void
@@ -25,13 +29,13 @@ interface iPropTabConfig {
 
 const TabConfig = ({
   hidden,
+  settingToDevice,
   edgeConfig,
   sendConfigToDevice,
   requestReadConfigFromDevice,
 }: iPropTabConfig) => {
   const [configContent, setConfigContent] = useState('')
   const [loadingFromDevice, setLoadingFromDevice] = useState(false)
-  const [settingToDevice, setSettingToDevice] = useState(false)
 
   useEffect(() => {
     if (edgeConfig && edgeConfig !== configContent) {
@@ -51,11 +55,7 @@ const TabConfig = ({
 
   const handleSetToDevice = () => {
     if (sendConfigToDevice) {
-      setSettingToDevice(true)
       sendConfigToDevice(configContent)
-      setTimeout(() => {
-        setSettingToDevice(false)
-      }, 3000)
     }
   }
 
@@ -102,6 +102,7 @@ const TabConfig = ({
 
 interface iPropTabVSS {
   hidden?: boolean
+  settingToDevice: boolean
   edgeVss?: any
   sendVssToDevice?: (vss: string) => void
   requestReadVssFromDevice?: () => void
@@ -109,13 +110,13 @@ interface iPropTabVSS {
 
 const TabVSS = ({
   hidden,
+  settingToDevice,
   edgeVss,
   sendVssToDevice,
   requestReadVssFromDevice,
 }: iPropTabVSS) => {
   const [vss, setVss] = useState('')
   const [loadingFromDevice, setLoadingFromDevice] = useState(false)
-  const [settingToDevice, setSettingToDevice] = useState(false)
 
   useEffect(() => {
     if (edgeVss && edgeVss !== vss) {
@@ -135,11 +136,7 @@ const TabVSS = ({
 
   const handleSetToDevice = () => {
     if (sendVssToDevice) {
-      setSettingToDevice(true)
       sendVssToDevice(vss)
-      setTimeout(() => {
-        setSettingToDevice(false)
-      }, 3000)
     }
   }
 
@@ -203,8 +200,32 @@ const FormHardwareKitManager = ({
   const CONFIG_PATH = '/app/remote_access/signal-config.json'
   const VSS_PATH = '/app/remote_access/vss.json'
 
+  const [settingToDevice, setSettingToDevice] = useState(false)
+  const writeTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  useEffect(() => () => clearTimeout(writeTimerRef.current), [])
+
   const writeFile = (filePath: string, fileContent: string) => {
     runTimeRef.current?.writeFile(filePath, fileContent)
+    setSettingToDevice(true)
+    clearTimeout(writeTimerRef.current)
+    writeTimerRef.current = setTimeout(() => {
+      setSettingToDevice(false)
+      // Not an error: older kits save the file without replying.
+      toast.warning(
+        'No reply from the device. The file may not have been saved.',
+      )
+    }, WRITE_REPLY_TIMEOUT_MS)
+  }
+
+  const onWriteFileResponse = (reply: WriteFileReply) => {
+    clearTimeout(writeTimerRef.current)
+    setSettingToDevice(false)
+    if (reply.hasError) {
+      toast.error(`WRITE_FILE ERROR: ${reply.error}`)
+      return
+    }
+    const fileName = reply.filePath.split('/').pop() || 'File'
+    toast.success(`${fileName} saved to the device`)
   }
 
   const triggerRebuildVehicleModel = (vss: string) => {
@@ -255,10 +276,7 @@ const FormHardwareKitManager = ({
           onAppRunningStateChanged={() => {}}
           onRuntimeInfoReceived={() => {}}
           onReadFileResponse={onReadFileResponse}
-          onWriteFileResponse={(filePath: string) => {
-            const fileName = filePath.split('/').pop() || 'File'
-            toast.success(`${fileName} saved to the device`)
-          }}
+          onWriteFileResponse={onWriteFileResponse}
         />
       </div>
 
@@ -277,12 +295,14 @@ const FormHardwareKitManager = ({
       <div className="grow mt-4 overflow-auto">
         <TabConfig
           hidden={activeTab !== 'Config'}
+          settingToDevice={settingToDevice}
           edgeConfig={edgeConfig}
           sendConfigToDevice={(cfg) => writeFile(CONFIG_PATH, cfg)}
           requestReadConfigFromDevice={() => readFile(CONFIG_PATH)}
         />
         <TabVSS
           hidden={activeTab !== 'VSS'}
+          settingToDevice={settingToDevice}
           edgeVss={edgeVss}
           sendVssToDevice={async (vss: string) => {
             try {

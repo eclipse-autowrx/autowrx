@@ -27,6 +27,7 @@ import {
   parseReadFileReply,
   parseWriteFileReply,
   prepareKitFileContentForWrite,
+  type WriteFileReply,
 } from '@/utils/kitReply'
 
 export interface Runtime {
@@ -56,7 +57,7 @@ interface KitConnectProps {
   onRuntimeInfoReceived?: (payload: any) => void
   onDeployResponse?: (log: string, isDone: boolean) => void
   onReadFileResponse?: (filePath: string, fileContent: string) => void
-  onWriteFileResponse?: (filePath: string) => void
+  onWriteFileResponse?: (reply: WriteFileReply) => void
   isDeployMode?: boolean
 }
 
@@ -796,14 +797,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       }
 
       const writeReply = parseWriteFileReply(payload)
-      if (writeReply?.hasError) {
-        onError?.(
-          `WRITE_FILE ERROR: ${writeReply.error}`,
-          payload.kit_id || activeRtIdRef.current,
-        )
-      } else if (writeReply) {
-        onWriteFileResponse?.(writeReply.filePath)
-      }
+      if (writeReply) onWriteFileResponse?.(writeReply)
     }
 
     useEffect(() => {
