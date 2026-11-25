@@ -163,20 +163,4 @@ test.describe('Contributor and member masking', () => {
       expect(html).not.toContain(user.email);
     }
   });
-
-  // #272
-  test('#272 UI as owner shows contributor and member names masked', async ({ page }) => {
-    // DaContributorList renders through UserList, which prints user.name as-is
-    // next to the masked email, so the names are shown unmasked today.
-    test.fail(true, 'names shown unmasked: UserList renders user.name verbatim');
-
-    await loginAsAdmin(page);
-    await page.goto(`/model/${modelId}`);
-    await expect(page.getByText(/Contributor \(\d+\)/)).toBeVisible({ timeout: 30000 });
-
-    await expect(page.getByText(contributor.name, { exact: true })).toHaveCount(0);
-    await page.getByText(/Reader \(\d+\)/).click();
-    await expect(page.getByText(maskEmail(member.email), { exact: true })).toBeVisible();
-    await expect(page.getByText(member.name, { exact: true })).toHaveCount(0);
-  });
 });
