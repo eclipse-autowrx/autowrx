@@ -8,6 +8,7 @@
 
 const mongoose = require('mongoose');
 const { toJSON, paginate, captureChange } = require('./plugins');
+const dataSync = require('../sync');
 
 const extendedApiSchema = mongoose.Schema(
   {
@@ -68,6 +69,7 @@ const extendedApiSchema = mongoose.Schema(
 // add plugin that converts mongoose to json
 extendedApiSchema.plugin(toJSON);
 extendedApiSchema.plugin(paginate);
+extendedApiSchema.plugin(dataSync.plugin);
 
 extendedApiSchema.pre('save', captureChange.captureUpdates);
 extendedApiSchema.post('remove', captureChange.captureRemove);

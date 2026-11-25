@@ -8,6 +8,7 @@
 
 const mongoose = require('mongoose');
 const { toJSON, paginate, captureChange } = require('./plugins');
+const dataSync = require('../sync');
 const { visibilityTypes } = require('../config/enums');
 
 const tagSchema = mongoose.Schema(
@@ -122,6 +123,7 @@ const modelSchema = new mongoose.Schema(
 // add plugin that converts mongoose to json
 modelSchema.plugin(toJSON);
 modelSchema.plugin(paginate);
+modelSchema.plugin(dataSync.plugin);
 
 modelSchema.pre('save', captureChange.captureUpdates);
 modelSchema.post('save', captureChange.captureCreate);

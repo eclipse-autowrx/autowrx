@@ -8,6 +8,7 @@
 
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const dataSync = require('../sync');
 
 const apiSchema = mongoose.Schema(
   {
@@ -34,6 +35,7 @@ const apiSchema = mongoose.Schema(
 // add plugin that converts mongoose to json
 apiSchema.plugin(toJSON);
 apiSchema.plugin(paginate);
+apiSchema.plugin(dataSync.plugin);
 
 /**
  * @typedef Api
