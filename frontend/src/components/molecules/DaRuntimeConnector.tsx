@@ -24,8 +24,12 @@ import { io } from 'socket.io-client'
 import { validateVss } from '@/services/model.service'
 import { useSiteConfig } from '@/utils/siteConfig'
 import {
+  parseBuildModelReply,
   parseReadFileReply,
+  parseWriteFileReply,
   prepareKitFileContentForWrite,
+  type BuildModelReply,
+  type WriteFileReply,
 } from '@/utils/kitReply'
 
 export interface Runtime {
@@ -55,6 +59,8 @@ interface KitConnectProps {
   onRuntimeInfoReceived?: (payload: any) => void
   onDeployResponse?: (log: string, isDone: boolean) => void
   onReadFileResponse?: (filePath: string, fileContent: string) => void
+  onWriteFileResponse?: (reply: WriteFileReply) => void
+  onBuildModelResponse?: (reply: BuildModelReply) => void
   isDeployMode?: boolean
 }
 
@@ -78,6 +84,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       onRuntimeInfoReceived,
       onDeployResponse,
       onReadFileResponse,
+      onWriteFileResponse,
+      onBuildModelResponse,
       isDeployMode = false,
     },
     ref,
@@ -791,6 +799,12 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           onReadFileResponse(reply.filePath, reply.content)
         }
       }
+
+      const writeReply = parseWriteFileReply(payload)
+      if (writeReply) onWriteFileResponse?.(writeReply)
+
+      const buildReply = parseBuildModelReply(payload)
+      if (buildReply) onBuildModelResponse?.(buildReply)
     }
 
     useEffect(() => {

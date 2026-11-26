@@ -51,3 +51,66 @@ export function parseReadFileReply(payload: any): ReadFileReply | null {
     error: hasError ? String(payload.result ?? 'Read file failed') : undefined,
   }
 }
+
+interface WriteFilePayload {
+  cmd?: string
+  result?: unknown
+  has_error?: boolean
+  file_path?: string
+  data?: { path?: string } | null
+}
+
+export interface WriteFileReply {
+  filePath: string
+  hasError: boolean
+  error?: string
+}
+
+/**
+ * Parse write-file kit replies. Kits may leave out has_error and report a
+ * failure only in the result text.
+ */
+export function parseWriteFileReply(
+  payload: WriteFilePayload | null | undefined,
+): WriteFileReply | null {
+  if (payload?.cmd !== 'write-file' && payload?.cmd !== 'write_file')
+    return null
+
+  const result = String(payload.result ?? '')
+  const hasError =
+    Boolean(payload.has_error) || /^(error|invalid|no file path)/i.test(result)
+
+  return {
+    filePath: payload.file_path ?? payload.data?.path ?? '',
+    hasError,
+    error: hasError ? result || 'Write file failed' : undefined,
+  }
+}
+
+export interface BuildModelReply {
+  hasError: boolean
+  message: string
+}
+
+/**
+ * Parse the final reply to a vehicle model rebuild. The progress message
+ * ("Start to rebuild vehicle model...") is sent with cmd revert_vehicle_model
+ * and is not a result, so it is ignored. Kits report success only in the
+ * result text ("Generate new model Successful").
+ */
+export function parseBuildModelReply(
+  payload:
+    { cmd?: string; result?: unknown; has_error?: boolean } | null | undefined,
+): BuildModelReply | null {
+  if (
+    payload?.cmd !== 'generate_vehicle_model' &&
+    payload?.cmd !== 'generate-vehicle-model'
+  )
+    return null
+
+  const message = String(payload.result ?? '').trim()
+  return {
+    hasError: Boolean(payload.has_error) || !/success/i.test(message),
+    message,
+  }
+}

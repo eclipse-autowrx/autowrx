@@ -110,6 +110,16 @@ Use `"no-name"` / `"no-id"` / `"no"` as fallbacks when prototype or user context
 When `has_error` is true, `result` contains the error message. Older runtimes may nest
 content under `data: { path, content }` — both shapes are supported by the frontend parser.
 
+**`write-file` reply**: same fields, with `result: "Success"` and the path in `file_path` or `data.path`.
+A kit may leave out `has_error`, so a `result` starting with `Error`, `Invalid` or `No file path` also
+counts as a failure. The Kit Manager shows both outcomes as a toast, and a warning when the kit does
+not reply within 10 seconds.
+
+**`generate_vehicle_model` reply**: the kit first sends a progress line with `cmd: "revert_vehicle_model"`,
+then the result with `cmd: "generate_vehicle_model"` (`"Generate new model Successful"`, or a text starting
+with `Error`). On the VSS tab, Set to device starts the rebuild once the write succeeds, keeps the button busy
+until this reply, and shows the result as a toast (a warning after 60 seconds without a reply).
+
 Commands are exposed to the rest of the app through a `useImperativeHandle` ref
 (`runApp`, `stopApp`, `deploy`, `writeSignalsValue`, `builldVehicleModel`, …).
 
