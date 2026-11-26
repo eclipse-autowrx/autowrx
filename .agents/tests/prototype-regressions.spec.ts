@@ -26,6 +26,11 @@ import {
   goToPrototypeCodeTab,
   deleteModelViaApi,
   deletePrototypeViaApi,
+  configureRuntimeServerForTests,
+  isRuntimeServerReachable,
+  waitForRuntimeReady,
+  expandRuntimePanel,
+  RUNTIME_SERVER_URL,
   type CreatedTestUser,
 } from './helpers';
 
@@ -134,12 +139,32 @@ test.describe('Prototype regressions', () => {
   });
 
   // #262
-  // The Run button (data-id="btn-run-prototype") is enabled/disabled only by "is a runtime selected and not
-  // already running" (DaRuntimeControl: canRun = hasRuntimeSelected && !isRunning). It never looks at the code,
-  // so with a runtime online it is enabled for an empty prototype. There is no built-in Deploy button either
-  // (staging is an opt-in builtin via custom_template). The "Run/Deploy disabled for empty code" part of #262
-  // is therefore not implemented in core.
-  test.fixme('#262 Run button is disabled for a prototype with no code', async () => {});
+  // There is no built-in Deploy button (staging is an opt-in builtin via custom_template), so only Run is checked.
+  test('#262 Run button is disabled for a prototype with no code', async ({ page }) => {
+    test.setTimeout(120000);
+    test.skip(!(await isRuntimeServerReachable(page)), `kit-manager not reachable at ${RUNTIME_SERVER_URL}`);
+    await loginAsAdmin(page);
+    await configureRuntimeServerForTests(page);
+    const modelId = await createTestModelViaApi(page, `E2E_Run_Empty_Model_${stamp}`, 'private');
+    modelIds.push(modelId);
+    const withCode = await createTestPrototypeViaApi(page, { name: `E2E_Run_Empty_With_${stamp}`, modelId });
+    const blank = await createTestPrototypeViaApi(page, { name: `E2E_Run_Empty_Blank_${stamp}`, modelId });
+    prototypeIds.push(withCode.prototypeId, blank.prototypeId);
+    await setPrototypeCodeViaApi(page, withCode.prototypeId, 'print("run guard")\n');
+    await setPrototypeCodeViaApi(page, blank.prototypeId, '  \n');
+
+    // With code and an online runtime, Run is enabled (proves the check below can fail).
+    await goToPrototypeCodeTab(page, modelId, withCode.prototypeId);
+    await waitForRuntimeReady(page);
+    const run = page.locator('[data-id="btn-run-prototype"]');
+    await expect(run).toBeEnabled();
+
+    // Same runtime, whitespace-only code: Run is disabled and says why.
+    await goToPrototypeCodeTab(page, modelId, blank.prototypeId);
+    await expandRuntimePanel(page);
+    await expect(run).toBeDisabled({ timeout: 20000 });
+    await expect(run).toHaveAttribute('title', 'Require code to run');
+  });
 
   // #214
   test('#214 code page has no Save/Update button and edits are autosaved across reload', async ({ page }) => {
