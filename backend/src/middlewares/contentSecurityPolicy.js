@@ -45,7 +45,8 @@ const createSecurityHeaders = (config) => {
             frameAncestors: ["'self'"],
             formAction: ["'self'"],
             mediaSrc: ["'self'", 'blob:', ...csp.mediaOrigins],
-            workerSrc: ["'self'"],
+            // Plugins that bundle Monaco (code editor, requirements viewer) start their workers from blob: URLs.
+            workerSrc: ["'self'", 'blob:'],
             reportUri: ['/v2/security/csp-reports'],
             upgradeInsecureRequests: config.env === 'production' ? [] : null,
           },

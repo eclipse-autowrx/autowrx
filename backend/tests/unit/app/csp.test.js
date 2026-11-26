@@ -79,7 +79,7 @@ describe('CSP security headers', () => {
     const b = await request(app);
     expect(a.headers['content-security-policy-report-only']).toBeUndefined();
     expect(a.headers['content-security-policy']).toContain("connect-src 'self';");
-    expect(a.headers['content-security-policy']).toContain("worker-src 'self';");
+    expect(a.headers['content-security-policy']).toContain("worker-src 'self' blob:;");
     expect(a.headers['content-security-policy']).not.toEqual(b.headers['content-security-policy']);
   });
 
