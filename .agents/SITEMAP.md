@@ -81,7 +81,7 @@
 | More-actions menu | Kebab menu: Manage Addons, Save Model as Template | ✅ `model-customization-menu.spec.ts` |
 | Contributor/member masking | Owner sees contributors/readers with masked emails (API + Overview tabs); non-writers get no lists; names are still shown unmasked (#272, `test.fail`) | ✅ `member-email-masking.spec.ts` |
 | `ENABLE_MODEL_CUSTOMIZATION` gate | Flag off hides the kebab menu for everyone, admins included | ✅ `model-customization-menu.spec.ts` |
-| Empty code tab for new prototype (#262) | No stale code or used signals carried over from another prototype; Run-disabled-when-empty is not implemented | ✅ `prototype-regressions.spec.ts` (Run-disabled part `test.fixme`) |
+| Empty code tab for new prototype (#262) | No stale code or used signals carried over from another prototype; Run is disabled while the code is empty | ✅ `prototype-regressions.spec.ts` (Run part needs a kit-manager) |
 | Code autosave, no Save button (#214) | No Save/Update button; edits persist after reload | ✅ `prototype-regressions.spec.ts` |
 | Reopen code page (#308) | Navigate away/back and fresh load show code with no error toast or page error | ✅ `prototype-regressions.spec.ts` |
 | Feedback form required-field gating (#284) | Submit disabled until name, organization and all ratings are set | ✅ `prototype-regressions.spec.ts` |

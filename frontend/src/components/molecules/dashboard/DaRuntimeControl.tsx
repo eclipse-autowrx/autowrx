@@ -381,7 +381,8 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   }
 
   const hasRuntimeSelected = Boolean(activeRtId)
-  const canRun = hasRuntimeSelected && !isRunning
+  const isCodeEmpty = code.trim() === ''
+  const canRun = hasRuntimeSelected && !isRunning && !isCodeEmpty
 
   return (
     <div
@@ -619,7 +620,13 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
           <button
             data-id="btn-run-prototype"
             disabled={!canRun}
-            title={!hasRuntimeSelected ? 'Select a runtime to run' : undefined}
+            title={
+              !hasRuntimeSelected
+                ? 'Select a runtime to run'
+                : isCodeEmpty
+                  ? 'Require code to run'
+                  : undefined
+            }
             onClick={handleRun}
             className="mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm"
             style={{

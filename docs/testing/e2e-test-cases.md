@@ -340,7 +340,7 @@ this line when you re-run).
 | Test case | What it checks |
 |---|---|
 | Empty code tab for a new prototype (#262) | After viewing a prototype that has code and its signals, opening a prototype with no code shows an empty editor and no used signals, with nothing left over from the previous prototype, both in-app and after a reload. |
-| Run button disabled when there is no code (#262) | Not covered yet: the Run button only depends on a runtime being selected, not on the code being empty, so this case is parked as a known gap. |
+| Run button disabled when there is no code (#262) | With an online runtime selected, Run is enabled for a prototype with code and disabled, with the hint "Require code to run", for a prototype whose code is empty or only whitespace. Skipped when no kit-manager is reachable. |
 | No Save button and autosave (#214) | The code page has no Save or Update button; code typed into the editor is stored on its own and is still there after reloading the page. |
 | Reopening a prototype's code page (#308) | Leaving a prototype's code page and coming back (and loading it fresh) shows the saved code with no error message or page error. |
 | Model choice when creating a prototype (#283) | The new-prototype model list shows models you own or contribute to but not another user's private model, and creating a prototype with a chosen model puts it under that model. |
