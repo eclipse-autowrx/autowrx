@@ -15,9 +15,11 @@ import CodeEditor from '@/components/molecules/CodeEditor'
 import DaRuntimeConnector from '@/components/molecules/DaRuntimeConnector'
 import { toast } from 'react-toastify'
 import { validateVss } from '@/services/model.service'
-import type { WriteFileReply } from '@/utils/kitReply'
+import type { BuildModelReply, WriteFileReply } from '@/utils/kitReply'
 
 const WRITE_REPLY_TIMEOUT_MS = 10000
+// Rebuilding restarts the databroker and the mock service, which takes longer.
+const BUILD_REPLY_TIMEOUT_MS = 60000
 
 interface iPropTabConfig {
   hidden?: boolean
@@ -202,37 +204,78 @@ const FormHardwareKitManager = ({
 
   const [settingToDevice, setSettingToDevice] = useState(false)
   const writeTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  // VSS waiting to be rebuilt once its file is written.
+  const pendingVssRef = useRef<string | null>(null)
+  const rebuildingRef = useRef(false)
   useEffect(() => () => clearTimeout(writeTimerRef.current), [])
 
-  const writeFile = (filePath: string, fileContent: string) => {
+  const finishSetting = () => {
+    clearTimeout(writeTimerRef.current)
+    pendingVssRef.current = null
+    rebuildingRef.current = false
+    setSettingToDevice(false)
+  }
+
+  const writeFile = (filePath: string, fileContent: string, vss?: string) => {
     runTimeRef.current?.writeFile(filePath, fileContent)
     setSettingToDevice(true)
+    pendingVssRef.current = vss ?? null
+    rebuildingRef.current = false
     clearTimeout(writeTimerRef.current)
     writeTimerRef.current = setTimeout(() => {
-      setSettingToDevice(false)
+      const pendingVss = pendingVssRef.current
       // Not an error: older kits save the file without replying.
       toast.warning(
         'No reply from the device. The file may not have been saved.',
       )
+      if (pendingVss !== null) triggerRebuildVehicleModel(pendingVss)
+      else finishSetting()
     }, WRITE_REPLY_TIMEOUT_MS)
   }
 
   const onWriteFileResponse = (reply: WriteFileReply) => {
-    clearTimeout(writeTimerRef.current)
-    setSettingToDevice(false)
+    if (rebuildingRef.current) return
+    const pendingVss = pendingVssRef.current
     if (reply.hasError) {
+      finishSetting()
       toast.error(`WRITE_FILE ERROR: ${reply.error}`)
       return
     }
     const fileName = reply.filePath.split('/').pop() || 'File'
     toast.success(`${fileName} saved to the device`)
+    if (pendingVss !== null) triggerRebuildVehicleModel(pendingVss)
+    else finishSetting()
   }
 
   const triggerRebuildVehicleModel = (vss: string) => {
-    console.log('triggerRebuildVehicleModel')
-    void runTimeRef.current
-      ?.builldVehicleModel(vss)
-      .catch((error: Error) => toast.error(error.message))
+    pendingVssRef.current = null
+    rebuildingRef.current = true
+    setSettingToDevice(true)
+    clearTimeout(writeTimerRef.current)
+    writeTimerRef.current = setTimeout(() => {
+      finishSetting()
+      toast.warning(
+        'The device did not report the result of the vehicle model rebuild.',
+      )
+    }, BUILD_REPLY_TIMEOUT_MS)
+    toast.info('Rebuilding the vehicle model on the device...')
+    void runTimeRef.current?.builldVehicleModel(vss).catch((error: Error) => {
+      finishSetting()
+      toast.error(error.message)
+    })
+  }
+
+  const onBuildModelResponse = (reply: BuildModelReply) => {
+    // Kits without a prototype get both command spellings; take the first reply.
+    if (!rebuildingRef.current) return
+    finishSetting()
+    if (reply.hasError) {
+      toast.error(
+        `Vehicle model rebuild failed: ${reply.message || 'no details'}`,
+      )
+      return
+    }
+    toast.success('Vehicle model rebuilt on the device')
   }
 
   const readFile = (filePath: string) => {
@@ -277,6 +320,7 @@ const FormHardwareKitManager = ({
           onRuntimeInfoReceived={() => {}}
           onReadFileResponse={onReadFileResponse}
           onWriteFileResponse={onWriteFileResponse}
+          onBuildModelResponse={onBuildModelResponse}
         />
       </div>
 
@@ -315,10 +359,7 @@ const FormHardwareKitManager = ({
               )
               return
             }
-            writeFile(VSS_PATH, vss)
-            setTimeout(() => {
-              triggerRebuildVehicleModel(vss)
-            }, 3000)
+            writeFile(VSS_PATH, vss, vss)
           }}
           requestReadVssFromDevice={() => readFile(VSS_PATH)}
         />
