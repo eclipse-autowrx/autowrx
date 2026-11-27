@@ -9,6 +9,7 @@
 import config from '@/configs/config.ts'
 import useAuthStore from '@/stores/authStore.ts'
 import { isMutatingRequest, showSyncWarningToast } from '@/utils/syncWarning.ts'
+import { refreshSession } from '@/services/sessionRefresh'
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 
 export const serverAxios = axios.create({
@@ -99,20 +100,13 @@ serverAxios.interceptors.response.use(
       isRefreshing = true
 
       try {
-        // Create a temporary axios instance without interceptors to avoid recursion
-        const refreshAxios = axios.create({
-          baseURL: `${config.serverBaseUrl}/${config.serverVersion}`,
-          withCredentials: true,
-        })
+        // Shared with the other refresh callers, see refreshSession
+        const { access } = await refreshSession()
+        if (!access?.token) throw new Error('Token refresh returned no token')
 
-        // Attempt to refresh the token
-        const response = await refreshAxios.post<{
-          access: { token: string; expires: string }
-        }>('/auth/refresh-tokens', {})
-
-        const newToken = response.data.access.token
+        const newToken = access.token
         // Update the auth store with the new token
-        useAuthStore.getState().setAccess(response.data.access)
+        useAuthStore.getState().setAccess(access)
 
         // Ensure headers object exists and update with the new token
         if (!originalRequest.headers) {
