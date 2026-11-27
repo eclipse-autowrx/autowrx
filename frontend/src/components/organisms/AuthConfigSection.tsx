@@ -40,45 +40,15 @@ const AuthConfigSection: React.FC = () => {
     try {
       setIsLoading(true)
 
-      // Get existing auth configs from DB
-      const res = await configManagementService.getConfigs({
-        secret: false,
-        scope: 'site',
-        category: 'auth',
-        limit: 100,
-      })
+      // Creates only the predefined keys missing from the database
 
-      const existingConfigs = res.results || []
-      const existingKeys = new Set(existingConfigs.map((config) => config.key))
+      const configs = await configManagementService.loadSectionConfigs(
+        'auth',
 
-      // Find missing predefined auth configs and create them
-      const missingConfigs = PREDEFINED_AUTH_CONFIGS.filter(
-        (config) => !existingKeys.has(config.key),
+        PREDEFINED_AUTH_CONFIGS,
       )
 
-      if (missingConfigs.length > 0) {
-        await configManagementService.bulkUpsertConfigs({
-          configs: missingConfigs,
-        })
-
-        // Reload configs after creating missing ones
-        const updatedRes = await configManagementService.getConfigs({
-          secret: false,
-          scope: 'site',
-          category: 'auth',
-          limit: 100,
-        })
-
-        setConfigs(
-          (updatedRes.results || []).filter((c) =>
-            isSupportedSiteConfigKey(c.key),
-          ),
-        )
-      } else {
-        setConfigs(
-          existingConfigs.filter((c) => isSupportedSiteConfigKey(c.key)),
-        )
-      }
+      setConfigs(configs.filter((c) => isSupportedSiteConfigKey(c.key)))
     } catch (err) {
       toast({
         title: 'Load failed',
