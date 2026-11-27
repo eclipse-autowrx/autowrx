@@ -222,6 +222,7 @@
 | Default prototype image cache | Model & Prototype save takes effect in `/new-prototype` without reloading the app | ✅ `new-prototype-default-image.spec.ts` |
 | Site config section visibility | Build time clean mode or hidden section list filters sidebar and URL selection | ⚠️ `admin-visibility.spec.ts` added; guarded run pending |
 | Restore default (public config) | Factory reset reverts modified public configs | ✅ `site-config-restore-default.spec.ts` |
+| Section load keeps values | Opening a section never resets a predefined key stored under another category | ✅ `site-config-section-keeps-values.spec.ts` |
 | Navigation bar actions editor | Configure left/right navbar links and search | ✅ `nav-bar-actions.spec.ts` |
 | Navigation bar actions render | Custom links/search appear from NAV_BAR_ACTIONS | ✅ `nav-bar-actions.spec.ts` |
 | Global search navigate | Search prototype and open detail page | ✅ `global-search.spec.ts` |

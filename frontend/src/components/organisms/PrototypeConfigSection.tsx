@@ -55,44 +55,15 @@ const PrototypeConfigSection: React.FC = () => {
         (config) => config.category === 'model_prototype',
       )
 
-      // Get existing Prototype configs from DB
-      const res = await configManagementService.getConfigs({
-        secret: false,
-        scope: 'site',
-        category: 'model_prototype',
-        limit: 100,
-      })
+      // Creates only the predefined keys missing from the database
 
-      const existingConfigs = res.results || []
-      const existingKeys = new Set(existingConfigs.map((config) => config.key))
+      const configs = await configManagementService.loadSectionConfigs(
+        'model_prototype',
 
-      // Find missing predefined Prototype configs and create them
-      const missingConfigs = predefinedPrototypeConfigs.filter(
-        (config) => !existingKeys.has(config.key),
+        predefinedPrototypeConfigs,
       )
 
-      if (missingConfigs.length > 0) {
-        await configManagementService.bulkUpsertConfigs({
-          configs: missingConfigs,
-        })
-
-        const updatedRes = await configManagementService.getConfigs({
-          secret: false,
-          scope: 'site',
-          category: 'model_prototype',
-          limit: 100,
-        })
-
-        setConfigs(
-          (updatedRes.results || []).filter((c) =>
-            isSupportedSiteConfigKey(c.key),
-          ),
-        )
-      } else {
-        setConfigs(
-          existingConfigs.filter((c) => isSupportedSiteConfigKey(c.key)),
-        )
-      }
+      setConfigs(configs.filter((c) => isSupportedSiteConfigKey(c.key)))
     } catch (err) {
       toast({
         title: 'Load failed',

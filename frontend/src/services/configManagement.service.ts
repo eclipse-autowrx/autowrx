@@ -245,6 +245,50 @@ class ConfigManagementService {
     await serverAxios.delete(`${this.baseUrl}/key/${key}`)
   }
 
+  /**
+   * Load the site configs a settings section shows: the predefined keys of
+   * `category`, plus any other config stored under that category. A predefined
+   * key that is stored under another category (older seeds used "general") is
+   * shown with its stored value. Only keys missing from the database are
+   * created; bulk upsert overwrites values, so an existing key must never be
+   * passed to it.
+   */
+  async loadSectionConfigs(
+    category: string,
+    predefined: CreateConfigRequest[],
+  ): Promise<Config[]> {
+    const res = await this.getConfigs({
+      secret: false,
+      scope: 'site',
+      category,
+      limit: 100,
+    })
+    const configs = res.results || []
+    const found = new Set(configs.map((config) => config.key))
+
+    const notInCategory = predefined.filter((config) => !found.has(config.key))
+    const elsewhere = await Promise.all(
+      notInCategory.map((config) =>
+        this.getConfigByKey(config.key).catch((error) => {
+          if (error?.response?.status === 404) return null
+          throw error
+        }),
+      ),
+    )
+    elsewhere.forEach((config) => {
+      if (config) {
+        configs.push(config)
+        found.add(config.key)
+      }
+    })
+
+    const missing = predefined.filter((config) => !found.has(config.key))
+    if (missing.length > 0) {
+      configs.push(...(await this.bulkUpsertConfigs({ configs: missing })))
+    }
+    return configs
+  }
+
   async bulkUpsertConfigs(request: BulkUpsertRequest): Promise<Config[]> {
     const response = await serverAxios.post(
       `${this.baseUrl}/bulk-upsert`,
