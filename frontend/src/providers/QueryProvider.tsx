@@ -11,20 +11,15 @@ import {
   QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query'
-import axios, { isAxiosError } from 'axios'
+import { isAxiosError } from 'axios'
 import { useState } from 'react'
-import config from '@/configs/config'
+import { refreshSession } from '@/services/sessionRefresh'
 import useAuthStore from '@/stores/authStore'
 import { shallow } from 'zustand/shallow'
 
 type QueryProviderProps = {
   children: React.ReactNode
 }
-
-const refreshAxios = axios.create({
-  baseURL: `${config.serverBaseUrl}/${config.serverVersion}`,
-  withCredentials: true,
-})
 
 // One refresh at a time. Every query that failed with 401 waits for it and is
 // then refetched; queries that fail while a refresh is running must not be
@@ -44,16 +39,13 @@ const QueryProvider = ({ children }: QueryProviderProps) => {
             if (!refreshPromise) {
               refreshPromise = (async () => {
                 try {
-                  const res = await refreshAxios.post(
-                    '/auth/refresh-tokens',
-                    {},
-                  )
-                  if (res.data?.access?.token) {
-                    setAccess(res.data.access)
+                  const res = await refreshSession()
+                  if (res.access?.token) {
+                    setAccess(res.access)
                     return true
                   }
-                  if (res.data?.user) {
-                    useAuthStore.getState().setUser(res.data.user, null)
+                  if (res.user) {
+                    useAuthStore.getState().setUser(res.user, null)
                     return true
                   }
                   return false

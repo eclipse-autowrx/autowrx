@@ -17,7 +17,7 @@ import { RouteConfig } from '@/types/common.type.ts'
 import useGlobalStore from '@/stores/globalStore.ts'
 import ActiveObjectManagement from '@/components/organisms/ActiveObjectManagement.tsx'
 import packageInfo from '@/../package.json'
-import axios from 'axios'
+import { refreshSession } from '@/services/sessionRefresh'
 import useAuthStore from '@/stores/authStore.ts'
 
 // const ActiveObjectManagement = lazy(() =>
@@ -77,16 +77,10 @@ const RootLayout = () => {
 
     bootstrappingRef.current = true
 
-    const refreshAxios = axios.create({
-      baseURL: `${config.serverBaseUrl}/${config.serverVersion}`,
-      withCredentials: true,
-    })
-
-    refreshAxios
-      .post('/auth/refresh-tokens', {})
+    refreshSession()
       .then((res) => {
-        const access = res?.data?.access
-        const user = res?.data?.user
+        const access = res?.access
+        const user = res?.user
         if (access?.token) {
           setAccess(access)
         } else if (user) {
